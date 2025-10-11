@@ -150,13 +150,12 @@ jobs:
         shell: bash
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
-            echo "${{ secrets.GITHUB_TOKEN }}" > /tmp/REGISTRY_TOKEN
             echo "" > /tmp/PINGGY_TOKEN
           else
-            echo "${{ secrets.HOMESERVER_PAT }}" > /tmp/REGISTRY_TOKEN
             echo "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
           fi
 
+          echo "${{ secrets.HOMESERVER_PAT }}" > /tmp/REGISTRY_TOKEN
           cp "${HOME}/.docker/config.json" /tmp/creds
           chmod 600 /tmp/creds
           chmod 600 /tmp/REGISTRY_TOKEN
@@ -734,6 +733,7 @@ jobs:
             -daemonize > out/qemu-console.log 2>&1
 
       - name: Wait for SSH and run startup checks
+        timeout-minutes: 5
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
@@ -770,19 +770,19 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "sudo bootc status"
 
-          echo "--- system is-running ---"
+          echo "--- rpm-ostree status ---"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "rpm-ostree status"
 
-          echo "--- system is-running ---"
+          echo "--- systemctl is-system-running ---"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "systemctl is-system-running --wait"
+            "timeout 30 systemctl is-system-running --wait"
 
           echo "--- stats ---"
           ssh "${SSH_OPTS[@]}" \
@@ -791,10 +791,53 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "df -h"
 
-      - name: Verify ghcr auth
+      - name: Run system tests
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+          cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost
+
+      - name: Load private key
+        id: private_key_path
+        env:
+          SSH_PRIVATEKEY_B64: ${{ secrets.SSH_PRIVATEKEY_B64 }}
+        shell: bash
+        run: |
+          echo "${SSH_PRIVATEKEY_B64}" | base64 -d > /tmp/ssh_privatekey
+          chmod 600 /tmp/ssh_privatekey
+
+          echo "Public key derived from secret:"
+          ssh-keygen -y -f /tmp/ssh_privatekey
+
+          echo "private_key_path=/tmp/ssh_privatekey" >> $GITHUB_OUTPUT
+
+      - name: Verify real user can log in
+        env:
+          SSH_USERNAME: caspertdk
+          SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          
+          ssh -vvv "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "who"
+
+      - name: Verify ghcr auth
+        env:
+          SSH_USERNAME: caspertdk
+          SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
           IMAGE_FULL: ${{ env.IMAGE_FULL }}
         run: | #sh
@@ -806,42 +849,6 @@ jobs:
             "$SSH_USERNAME"@localhost \
               IMAGE_FULL="$IMAGE_FULL" \
               bash -s --
-
-      - name: Run system tests
-        env:
-          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-          SSH_USERNAME: ${{ env.SSH_USERNAME }}
-          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-        run: | #sh
-          # turn the env string into a Bash array
-          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost
-
-      # - name: /etc drift detector (fail on unexpected drift)
-      #   env:
-      #     SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-      #     SSH_USERNAME: ${{ env.SSH_USERNAME }}
-      #     SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-      #     # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
-      #     DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
-      #   run: | #sh
-      #     set -e
-      #     # turn the env string into a Bash array
-      #     read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-      #     ssh "${SSH_OPTS[@]}" \
-      #       -i "$SSH_KEY" \
-      #       -p 2222 \
-      #       ${SSH_USERNAME}@localhost \
-      #         'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
-      #     echo "---- Drift output ----"
-      #     cat out/etc-drift.txt || true
-      #     if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
-      #       echo "::error::Unexpected /etc drift detected (see artifact)."
-      #       exit 1
-      #     fi
 
       - name: Collect logs and stop QEMU
         if: always()

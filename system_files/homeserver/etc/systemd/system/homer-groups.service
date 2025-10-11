@@ -1,6 +1,6 @@
 [Unit]
 Description=Add wheel members to docker groups
-After=network.target
+After=network.target setup-caspertdk.service systemd-tmpfiles-setup.service
 
 [Service]
 Type=oneshot

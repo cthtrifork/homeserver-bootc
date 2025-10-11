@@ -61,10 +61,17 @@ jobs:
           type: ${{ inputs.type }}
           rootfs: xfs
           image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
+    
+      - name: Rename output
+        shell: bash
+        run: |
+          mv ${{ steps.create-image.outputs.output-path }} ${{ steps.create-image.outputs.output-directory }}/${{ inputs.image_name }}-${{ inputs.tag }}.${{ inputs.type }}
 
-      - name: Upload image artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: bacongobbler/azure-blob-storage-upload@main
         with:
-          name: ${{ inputs.image_name }}-${{ inputs.tag }}-${{ inputs.type }}
-          path: ${{ steps.create-image.outputs.output-path }}
-
+          source_dir: ${{ steps.create-image.outputs.output-directory }}
+          container_name: homeserver
+          connection_string: ${{ secrets.AZURE_STORAGE_CONNECTIONSTRING }}
+          extra_args: '--pattern *.tar.gz'
+          # WARNING: this will overwrite existing blobs in your blob storage
+          overwrite: 'true'

@@ -10,6 +10,9 @@ log() {
 ARCH="amd64"
 MACHINE="linux"
 
+log "Installing oh-my-bash"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local --unattended
+
 log "Installing age"
 AGE_VERSION="v1.2.1" # renovate: datasource=github-releases depName=FiloSottile/age
 curl -sLo /tmp/age.tar.gz \

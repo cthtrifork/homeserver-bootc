@@ -65,7 +65,6 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     PINGGY_HOST="${PINGGY_HOST}" \
     /ctx/build_files/build.sh
 
-
 # COSIGN
 ADD cosign.pub /etc/pki/cosign/cosign.pub
 ADD policy.json /etc/containers/policy.json

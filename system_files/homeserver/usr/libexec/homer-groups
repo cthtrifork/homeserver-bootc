@@ -1,47 +1,33 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 # SCRIPT VERSION
 GROUP_SETUP_VER=1
 mkdir -p /etc/homeserver
-GROUP_SETUP_VER_FILE="/etc/homeserver/dx-groups"
-touch "$GROUP_SETUP_VER_FILE"
-GROUP_SETUP_VER_RAN=$(cat "$GROUP_SETUP_VER_FILE")
 
 # Setup Groups
 wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
 
+BASE=1000001
+STEP=100000
+SIZE=65536
+
+#mv /etc/subuid /etc/subuid.bak || true
+#mv /etc/subgid /etc/subgid.bak || true
+
 # Setup home directory for each user in wheel group
+i=0
 for user in $wheelarray; do
   echo "Setting up home for user: $user"
-  if [[ ! -d /home/$user ]]; then
-    chown -R $user: /home/$user
-    echo "Created home directory for $user"
-  fi
 
-  install -o $user -g $user -m 0700 -d /home/$user/.docker
-  install -o $user -g $user -m 0700 -d /home/$user/.config
-  install -o $user -g $user -m 0700 -d /home/$user/.config/containers
+  start=$((BASE + i * STEP))
+  #echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
 
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
 
-  install -o $user -g $user -m 0600 /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
-  install -o $user -g $user -m 0600 /usr/lib/container-auth.json /home/$user/.docker/config.json       # for docker CLI
-  runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
-done
-
-# Run script if updated
-if [[ -f $GROUP_SETUP_VER_FILE && "$GROUP_SETUP_VER" = "$GROUP_SETUP_VER_RAN" ]]; then
-  echo "Group setup has already run. Exiting..."
-  exit 0
-fi
-
-for user in $wheelarray; do
+  /usr/libexec/setup-home.sh "$user"
   usermod -aG docker $user
-  # todo: add more groups here
-done
 
-# Prevent future executions
-echo "Writing state file"
-echo "$GROUP_SETUP_VER" >"$GROUP_SETUP_VER_FILE"
+  i=$((i + 1))
+done

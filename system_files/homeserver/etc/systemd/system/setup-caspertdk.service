@@ -1,0 +1,18 @@
+[Unit]
+Description=Ensure caspertdk user home setup
+After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service
+Wants=network-online.target
+Requires=systemd-sysusers.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemd-sysusers
+#ExecStart=/usr/bin/usermod -u 1010 -g 1010 caspertdk
+#ExecStart=/usr/sbin/usermod --add-subuids 1000001-10065536 caspertdk
+#ExecStart=/usr/sbin/usermod --add-subgids 1000001-10065536 caspertdk
+ExecStart=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/caspertdk-ssh.conf
+ExecStart=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/caspertdk-docker-login.conf
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
