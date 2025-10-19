@@ -1,0 +1,2 @@
+export AGE_PUB=age1qth3nzg27zdmlzpjl2gedzmt0e5nly84q82knja3fcq365kw6u9qeecy6j
+export SOPS_AGE_KEY_FILE=/usr/lib/sops/age/keys.txt
