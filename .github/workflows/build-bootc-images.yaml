@@ -835,7 +835,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "who; id; ssh -T git@github.com"
+            "who; id; ssh -o StrictHostKeyChecking=accept-new -vT git@github.com"
 
       - name: Verify ghcr.io auth
         env:
