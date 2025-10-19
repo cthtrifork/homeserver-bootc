@@ -19,8 +19,7 @@ echo "✅ core services are OK"
 #/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== caspertdk: home directory is valid =="
-sudo test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
-sudo tree -uag /home/caspertdk 
+sudo tree -uag /home/ -L 3 --si --du
 sudo getent passwd caspertdk
 sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
 echo "✅ homed user creation + authorized keys OK"

@@ -831,7 +831,7 @@ jobs:
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           
-          cat ./tests/${{ matrix.image }}/verify-github-ssh.sh | ssh "${SSH_OPTS[@]}" \
+          cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
             -p 2222 \
             ${SSH_USERNAME}@localhost
