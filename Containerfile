@@ -59,7 +59,7 @@ RUN pip3 install glances
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
     install -D -m 0600 /run/secrets/agekey /usr/lib/sops/age/keys.txt && \
     chown root:root /usr/lib/sops/age/keys.txt && \
-    chmod 0640 /usr/lib/sops/age/keys.txt &&
+    chmod 0640 /usr/lib/sops/age/keys.txt && \
     printf "export SOPS_AGE_KEY=%s\n" "$SOPS_AGE_KEY" | tee -a /etc/profile.d/91-age-sops.sh
 
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
