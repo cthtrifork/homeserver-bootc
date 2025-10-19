@@ -12,4 +12,14 @@ echo "== Github SSH Auth =="
 echo "Public key: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 echo "Trying to authenticate..."
-ssh -o StrictHostKeyChecking=accept-new -vT git@github.com || echo "❌ Github SSH auth is not working"
+
+
+output=$(ssh -o StrictHostKeyChecking=accept-new -vT git@github.com 2>&1)
+echo "$output"
+
+if echo "$output" | grep -q "successfully"; then
+  echo "✅ SSH authentication succeeded"
+else
+  echo "❌ SSH authentication failed"
+  exit 1
+fi
