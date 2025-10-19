@@ -836,9 +836,9 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "who && id"
+            "who; id; ssh -T git@github.com"
 
-      - name: Verify ghcr auth
+      - name: Verify ghcr.io auth
         env:
           SSH_USERNAME: caspertdk
           SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
