@@ -56,13 +56,14 @@ RUN dnf -y install \
 RUN pip3 install glances
 
 # AGE and SOPS
-RUN --mount=type=secret,id=agekey,required=true \
+RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
     install -D -m 0600 /run/secrets/agekey /usr/lib/sops/age/keys.txt && \
     chown root:root /usr/lib/sops/age/keys.txt && \
-    chmod 0640 /usr/lib/sops/age/keys.txt
+    chmod 0640 /usr/lib/sops/age/keys.txt && \
+    printf "export SOPS_AGE_KEY=%s\n" "$SOPS_AGE_KEY" | tee /etc/profile.d/61-age-sops-private.sh 1> /dev/null
 
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
-    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
+    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/62-registry-auth-private.sh 1> /dev/null
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     #--mount=type=cache,dst=/var/cache \

@@ -802,7 +802,7 @@ jobs:
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-          cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
+          cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
             -p 2222 \
             ${SSH_USERNAME}@localhost
@@ -821,7 +821,8 @@ jobs:
 
           echo "private_key_path=/tmp/ssh_privatekey" >> $GITHUB_OUTPUT
 
-      - name: Verify real user can log in
+      - name: Run user tests
+        if: "${{ matrix.image }} == 'homeserver'"
         env:
           SSH_USERNAME: caspertdk
           SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
@@ -830,14 +831,12 @@ jobs:
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           
-          #ssh -vvv
-          ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
+          cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            "who && id"
+            ${SSH_USERNAME}@localhost
 
-      - name: Verify ghcr auth
+      - name: Verify ghcr.io auth
         env:
           SSH_USERNAME: caspertdk
           SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}

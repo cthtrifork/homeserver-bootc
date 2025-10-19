@@ -18,14 +18,11 @@ echo "✅ core services are OK"
 
 #/usr/bin/systemd-tmpfiles --cat-config
 
-echo "== caspertdk: home directory is valid =="
-sudo test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
-sudo tree -uag /home/caspertdk 
-sudo getent passwd caspertdk
-sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
-echo "✅ homed user creation + authorized keys OK"
+echo "== home directory tree =="
+sudo tree -uag /home/ -L 3 --si --du
 
 echo "== debug =="
+sudo getent passwd
 echo "all users (/etc/passwd):"
 sudo cat /etc/passwd
 echo "getent group wheel"
@@ -44,7 +41,7 @@ if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"
     exit 1
 fi
-echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d is working as intended."
+echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
 echo "Checking if user is in docker group"
 docker run --rm hello-world && echo "✅ Docker is ready"
