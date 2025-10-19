@@ -830,7 +830,7 @@ jobs:
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           
-          #ssh -vvv
+          #for extra debugging: ssh -vvv
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
