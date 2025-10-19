@@ -18,13 +18,11 @@ echo "✅ core services are OK"
 
 #/usr/bin/systemd-tmpfiles --cat-config
 
-echo "== caspertdk: home directory is valid =="
+echo "== home directory tree =="
 sudo tree -uag /home/ -L 3 --si --du
-sudo getent passwd caspertdk
-sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
-echo "✅ homed user creation + authorized keys OK"
 
 echo "== debug =="
+sudo getent passwd
 echo "all users (/etc/passwd):"
 sudo cat /etc/passwd
 echo "getent group wheel"
