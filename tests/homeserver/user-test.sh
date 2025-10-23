@@ -13,7 +13,6 @@ echo "Public key: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 echo "Trying to authenticate..."
 
-
 output=$(ssh -o StrictHostKeyChecking=accept-new -vT git@github.com 2>&1)
 echo "$output"
 

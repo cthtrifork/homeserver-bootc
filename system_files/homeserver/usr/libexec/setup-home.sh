@@ -35,11 +35,6 @@ install_ohmybash() {
 
     chown "$TARGET_USER":"$TARGET_USER" "$HOME_DIR"/.bashrc
   fi
-
-  if [[ ! -f "$HOME_DIR"/.bash_profile ]]; then
-    echo 'source ~/.bashrc;' | tee "$HOME_DIR"/.bash_profile >/dev/null
-    chown "$TARGET_USER":"$TARGET_USER" "$HOME_DIR"/.bash_profile
-  fi
 }
 
 install_ohmybash
