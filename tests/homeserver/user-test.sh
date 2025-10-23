@@ -25,7 +25,6 @@ output=$(
 )
 
 echo "$output"
-echo "(ssh exit code: $ssh_status)"
 
 if echo "$output" | grep -q "successfully"; then
   echo "✅ SSH authentication succeeded"
