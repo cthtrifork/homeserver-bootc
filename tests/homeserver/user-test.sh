@@ -16,14 +16,17 @@ ssh-keygen -lf ~/.ssh/id_ed25519.pub
 echo "Trying to authenticate..."
 
 set +e
-output="$(
+if output="$(
   ssh -o IdentitiesOnly=yes \
       -i ~/.ssh/id_ed25519 \
       -o BatchMode=yes \
       -o StrictHostKeyChecking=accept-new \
       -vT git@github.com 2>&1
-)"
-ssh_status=$?
+)"; then
+  ssh_status=0
+else
+  ssh_status=$?
+fi
 set -e
 echo "SSH output:"
 echo "$output"
