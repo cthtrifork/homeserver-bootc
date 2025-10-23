@@ -20,7 +20,7 @@ output=$(
       -i ~/.ssh/id_ed25519 \
       -o BatchMode=yes \
       -o StrictHostKeyChecking=accept-new \
-      -vT git@github.com 2>&1 > /dev/null
+      -T git@github.com 2>&1 > /dev/null || true
 )
 
 echo "$output"
