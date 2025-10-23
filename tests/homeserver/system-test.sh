@@ -19,7 +19,7 @@ echo "✅ core services are OK"
 #/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== home directory tree =="
-sudo tree -uag /home/ -L 3 --si --du
+sudo tree -uag /home/ -L 4 --si --du
 
 echo "== debug =="
 sudo getent passwd
