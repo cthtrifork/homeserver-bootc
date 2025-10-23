@@ -1,3 +1,5 @@
+# NB: This is being managed and manual changes will be overwritten
+
 # Git aliases
 alias gl='git pull'
 alias gp='git push'

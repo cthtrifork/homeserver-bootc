@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# https://codeberg.org/EvanHahn/dotfiles/src/branch/main/home/bin/bin/copy
 set -e
 set -u
 
