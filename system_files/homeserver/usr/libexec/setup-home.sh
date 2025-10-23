@@ -7,7 +7,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 TARGET_USER="$1"
-HOME_DIR="/home/$TARGET_USER"
+HOME_DIR="/var/home/$TARGET_USER"
 
 cd "$HOME_DIR"
 
