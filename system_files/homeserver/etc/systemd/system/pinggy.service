@@ -7,7 +7,7 @@ After=network-online.target
 [Service]
 Type=simple
 EnvironmentFile=/etc/homeserver/metadata/pinggy
-ExecStart=/usr/libexec/pinggy
+ExecStart=/usr/libexec/pinggy.sh
 Restart=on-failure
 RestartSec=10s
 

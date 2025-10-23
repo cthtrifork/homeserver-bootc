@@ -26,8 +26,7 @@ for user in "${wheelarray[@]}"; do
     getent passwd $user | sudo tee -a /etc/passwd
   fi
 
-  /usr/libexec/setup-home.sh "$user"
-  usermod -aG docker $user
+  usermod -aG docker "$user"
 
   i=$((i + 1))
 done

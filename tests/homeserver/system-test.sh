@@ -5,7 +5,7 @@ echo "Running as"
 id
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="pinggy.service homer-groups.service setup-tmpfiles.service" # todo: detect
+CORE_SERVICES="pinggy.service setup-groups.service setup-tmpfiles.service" # todo: detect
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
@@ -19,7 +19,7 @@ echo "✅ core services are OK"
 #/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== home directory tree =="
-sudo tree -uag /home/ -L 3 --si --du
+sudo tree -uag /home/ -L 4 --si --du
 
 echo "== debug =="
 sudo getent passwd
