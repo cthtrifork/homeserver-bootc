@@ -6,14 +6,19 @@ if [[ $# -ne 1 ]]; then
   exit 1
 fi
 
-USER="$1"
-HOME_DIR="/home/$USER"
+TARGET_USER="$1"
+HOME_DIR="/home/$TARGET_USER"
 
 cd "$HOME_DIR"
 
 # Install dotfiles from /usr/share/dotfiles
+# Alternative: https://www.chezmoi.io/
 dotfiles_sync(){
-  rsync -a --exclude '.git/' /usr/share/dotfiles/ "$HOME_DIR"/
+  rsync -a \
+    --numeric-ids \
+    --chmod=F644,D755 \
+    --chown="${TARGET_USER}:${TARGET_USER}" \
+    /usr/share/dotfiles/ "${HOME_DIR}/"
 }
 
 # Setup OH-MY-BASH for user
@@ -28,16 +33,16 @@ install_ohmybash() {
     echo 'export OMB_USE_SUDO=false' >> "$HOME_DIR"/.bashrc
     echo 'export DISABLE_AUTO_UPDATE=true' >> "$HOME_DIR"/.bashrc
 
-    chown "$USER":"$USER" "$HOME_DIR"/.bashrc
+    chown "$TARGET_USER":"$TARGET_USER" "$HOME_DIR"/.bashrc
   fi
 
   if [[ ! -f "$HOME_DIR"/.bash_profile ]]; then
     echo 'source ~/.bashrc;' | tee "$HOME_DIR"/.bash_profile >/dev/null
-    chown "$USER":"$USER" "$HOME_DIR"/.bash_profile
+    chown "$TARGET_USER":"$TARGET_USER" "$HOME_DIR"/.bash_profile
   fi
 }
 
 install_ohmybash
 dotfiles_sync
 
-echo "Finished setting up home for $USER"
+echo "Finished setting up home for $TARGET_USER"
