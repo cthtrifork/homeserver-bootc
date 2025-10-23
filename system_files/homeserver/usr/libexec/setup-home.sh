@@ -11,6 +11,11 @@ HOME_DIR="/home/$USER"
 
 cd "$HOME_DIR"
 
+# Install dotfiles from /usr/share/dotfiles
+dotfiles_sync(){
+  rsync -a --exclude '.git/' /usr/share/dotfiles/ "$HOME_DIR"/
+}
+
 # Setup OH-MY-BASH for user
 install_ohmybash() {
   if [[ -f "/usr/local/share/oh-my-bash/bashrc" ]]; then
@@ -33,5 +38,6 @@ install_ohmybash() {
 }
 
 install_ohmybash
+dotfiles_sync
 
 echo "Finished setting up home for $USER"
