@@ -15,6 +15,7 @@ ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 echo "Trying to authenticate..."
 
+# SSH -t always returns an exit code, so we have to do bash magic
 output=$(
   ssh -o IdentitiesOnly=yes \
       -i ~/.ssh/id_ed25519 \
