@@ -4,7 +4,7 @@ After=network.target setup-tmpfiles.service systemd-tmpfiles-setup.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/bash -eu /usr/libexec/homer-groups
+ExecStart=/usr/bin/bash -eu /usr/libexec/setup-groups
 StandardError=inherit
 StandardOutput=journal
 RemainAfterExit=yes

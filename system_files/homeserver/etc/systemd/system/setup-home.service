@@ -1,0 +1,13 @@
+[Unit]
+Description=Setup home and dotfiles for %i
+After=network.target setup-tmpfiles.service systemd-tmpfiles-setup.service
+
+[Service]
+Type=oneshot
+User=%i
+Environment=HOME=%h
+WorkingDirectory=%h
+ExecStart=/usr/libexec/setup-home.sh %i
+
+[Install]
+WantedBy=multi-user.target

@@ -13,8 +13,9 @@ systemctl enable docker.socket
 systemctl enable qemu-guest-agent
 systemctl enable podman.socket
 systemctl enable sshd.service
-systemctl enable homer-groups.service
+systemctl enable setup-groups.service
 systemctl enable pinggy.service
 systemctl enable setup-tmpfiles.service
 systemctl enable systemd-userdbd.service
-systemctl --user enable ssh-agent
+
+systemctl enable setup-home@caspertdk.service
