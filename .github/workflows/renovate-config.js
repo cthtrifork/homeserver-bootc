@@ -1,6 +1,6 @@
 module.exports = {
   "repositories": [
-    "cthtrifork/homeserver-centos-bootc",
+    "cthtrifork/homeserver-bootc",
   ],
   hostRules: [
     {
