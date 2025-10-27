@@ -176,6 +176,7 @@ jobs:
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
             PINGGY_HOST=${{ vars.PINGGY_HOST }}
+            REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
           containerfiles: |
             ${{ env.CONTEXT }}/${{ env.CONTAINERFILE }}
           extra-args: |
