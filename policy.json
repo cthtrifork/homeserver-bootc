@@ -6,12 +6,12 @@
     ],
     "transports": {
         "docker": {
-            "ghcr.io/cthtrifork": [
+            "ghcr.io/cthtrifork-disabled": [
                 {
                     "type": "sigstoreSigned",
                     "keyPath": "/etc/pki/cosign/cosign.pub",
                     "signedIdentity": {
-                        "type": "insecureAcceptAnything"
+                        "type": "matchRepository"
                     }
                 }
             ],
