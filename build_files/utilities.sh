@@ -106,7 +106,7 @@ install -o root -g root -m 0755 /tmp/yq /usr/bin/yq
 /usr/bin/yq completion bash >/etc/bash_completion.d/yq.sh
 
 log "Installing cosign"
-COSIGN_VERSION="v2.6.1" # renovate: datasource=github-releases depName=sigstore/cosign
+COSIGN_VERSION="v3.0.2" # renovate: datasource=github-releases depName=sigstore/cosign
 curl -sLo /tmp/cosign \
     "$(/ctx/build_files/github-release-url.sh sigstore/cosign ${MACHINE}.${ARCH} $COSIGN_VERSION)"
 install -o root -g root -m 0755 /tmp/cosign /usr/bin/cosign
