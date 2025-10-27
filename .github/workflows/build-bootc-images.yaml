@@ -65,7 +65,7 @@ jobs:
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
         run: |
-          IMAGES="${{ fromJSON(steps.filter.outputs.changes) }}"
+          IMAGES="${{ steps.filter.outputs.changes }}"
           if [ "$IMAGES" == "[]" ]; then
             IMAGES='["homeserver"]'
           fi
