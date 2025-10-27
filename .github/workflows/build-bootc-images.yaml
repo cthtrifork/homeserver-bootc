@@ -386,6 +386,7 @@ jobs:
           COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
+          COSIGN_REPOSITORY: ghcr.io/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Attach build provenance attestation
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
@@ -410,6 +411,7 @@ jobs:
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_REPOSITORY: ghcr.io/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
