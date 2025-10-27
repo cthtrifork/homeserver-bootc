@@ -19,7 +19,7 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
     ln -sr /usr/lib/container-auth.json /etc/ostree/auth.json
 
 # Configure repositories
-RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
+RUN dnf -y install dnf5-plugins dnf-plugins-core procps-ng file qemu-guest-agent \
     # Used by github runner
     lttng-ust openssl-libs krb5-libs zlib libicu \
     # Dev tools
