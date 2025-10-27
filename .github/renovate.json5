@@ -39,7 +39,7 @@
       ],
       matchStrings: [
         '(?<depName>[^\\s"\']+)="?(?<currentValue>v?\\d+[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
-        '(?<depName>[^\\s"\']+)="?(?<currentValue>.+)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
+        '(?<depName>[^\\s"\']+)="?(?<currentValue>.?+[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
       ],
       datasourceTemplate: '{{{datasource}}}',
       packageNameTemplate: '{{{packageName}}}',
