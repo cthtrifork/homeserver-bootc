@@ -378,7 +378,7 @@ jobs:
       - name: Sign container image
         run: |
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }}
+          cosign sign -d -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }}
           for tag in ${{ needs.build-bootc-image.outputs.tags }}; do
             cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
