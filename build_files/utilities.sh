@@ -74,7 +74,7 @@ tar -zxvf /tmp/kustomize.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.
 /usr/bin/kustomize completion bash >/etc/bash_completion.d/kustomize.sh
 
 log "Installing k9s"
-K9S_VERSION=v0.50.13 # renovate: datasource=github-releases depName=derailed/k9s
+K9S_VERSION=v0.50.16 # renovate: datasource=github-releases depName=derailed/k9s
 curl -sLo /tmp/k9s.tar.gz \
     "$(/ctx/build_files/github-release-url.sh derailed/k9s ${MACHINE}.${ARCH}.tar.gz $K9S_VERSION)"
 tar -zxvf /tmp/k9s.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=licenses
