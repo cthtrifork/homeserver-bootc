@@ -11,7 +11,7 @@
                     "type": "sigstoreSigned",
                     "keyPath": "/etc/pki/cosign/cosign.pub",
                     "signedIdentity": {
-                        "type": "matchRepository"
+                        "type": "insecureAcceptAnything"
                     }
                 }
             ],
