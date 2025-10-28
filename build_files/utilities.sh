@@ -60,7 +60,7 @@ install -o root -g root -m 0755 /tmp/kind /usr/bin/kind
 /usr/bin/kind completion bash >/etc/bash_completion.d/kind.sh
 
 log "Installing flux"
-FLUX_VERSION="v2.7.2" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.7.3" # renovate: datasource=github-releases depName=fluxcd/flux2
 curl -sLo /tmp/flux.tar.gz \
     "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${ARCH}.tar.gz $FLUX_VERSION)"
 tar -zxvf /tmp/flux.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=licenses
