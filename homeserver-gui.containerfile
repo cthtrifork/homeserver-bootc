@@ -4,10 +4,8 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 # Install GUI components (GDM + basic desktop + Firefox)
 RUN dnf install -y \
       gdm \
-      gnome-session \
-      gnome-shell \
-      firefox \
-      plymouth-system-theme
+      budgie-desktop \
+      firefox
 
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
