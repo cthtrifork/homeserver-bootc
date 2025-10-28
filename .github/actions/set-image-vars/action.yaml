@@ -21,7 +21,6 @@ runs:
           homeserver-gui)
             IMAGE_NAME="homeserver-gui-bootc"
             CONTAINERFILE="homeserver.containerfile"
-            CONTAINERFILE2="homeserver-gui.containerfile"
             ;;
           jumphost)
             IMAGE_NAME="jumphost-centos-bootc"
@@ -43,4 +42,3 @@ runs:
         echo "BASE_IMAGE=ghcr.io/${{ github.repository }}/${IMAGE_NAME}:latest" >> "$GITHUB_ENV"
         echo "PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> "$GITHUB_ENV"
         echo "CONTAINERFILE=${CONTAINERFILE}" >> "$GITHUB_ENV"
-        echo "CONTAINERFILE2=${CONTAINERFILE2}" >> "$GITHUB_ENV"
