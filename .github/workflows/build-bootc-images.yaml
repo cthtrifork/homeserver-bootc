@@ -193,8 +193,8 @@ jobs:
             PINGGY_HOST=${{ vars.PINGGY_HOST }}
             REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
           containerfiles: |
-            ${{ env.CONTEXT }}/${{ env.CONTAINERFILE }}
-            ${{ env.CONTEXT }}/${{ env.CONTAINERFILE2 }}
+            ${{ env.CONTAINERFILE }}
+            ${{ env.CONTAINERFILE2 }}
           extra-args: |
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
