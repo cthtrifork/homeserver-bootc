@@ -194,7 +194,6 @@ jobs:
             REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
           containerfiles: |
             ${{ env.CONTAINERFILE }}
-            ${{ env.CONTAINERFILE2 }}
           extra-args: |
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
@@ -676,6 +675,9 @@ jobs:
 
           # workaround https://github.com/containers/podman/issues/21683
           echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
+
+      - name: Delete huge unnecessary tools folder
+        run: rm -rf /opt/hostedtoolcache          
 
       # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
       - name: Build Bootable Image
