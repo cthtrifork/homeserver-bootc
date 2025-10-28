@@ -1,15 +1,24 @@
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
-RUN dnf install -y gdm firefox plymouth-system-theme
+# Install GUI components (GDM + basic desktop + Firefox)
+RUN dnf install -y \
+      gdm \
+      gnome-session \
+      gnome-shell \
+      firefox \
+      plymouth-system-theme
+
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
-
-RUN systemctl set-default graphical.target
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/cleanup.sh 
+    /ctx/build_files/cleanup.sh
+
+# Enable GUI by default
+RUN systemctl set-default graphical.target && \
+    systemctl enable gdm.service
 
 RUN bootc container lint
