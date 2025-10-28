@@ -50,7 +50,13 @@ jobs:
           filters: |
             homeserver:
               - 'system_files/homeserver/**'
-              - 'Containerfile'
+              - 'homeserver.containerfile'
+              - '**/homeserver/**'
+              - 'build_files/**'
+            homeserver-gui:
+              - 'system_files/homeserver/**'
+              - 'homeserver.containerfile'
+              - 'homeserver-gui.containerfile'
               - '**/homeserver/**'
               - 'build_files/**'
             jumphost:
@@ -188,6 +194,7 @@ jobs:
             REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
           containerfiles: |
             ${{ env.CONTEXT }}/${{ env.CONTAINERFILE }}
+            ${{ env.CONTEXT }}/${{ env.CONTAINERFILE2 }}
           extra-args: |
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
