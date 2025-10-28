@@ -19,7 +19,7 @@ runs:
             CONTAINERFILE="homeserver.containerfile"
             ;;
           homeserver-gui)
-            IMAGE_NAME="homeserver-centos-bootc"
+            IMAGE_NAME="homeserver-gui-bootc"
             CONTAINERFILE="homeserver.containerfile"
             CONTAINERFILE2="homeserver-gui.containerfile"
             ;;
