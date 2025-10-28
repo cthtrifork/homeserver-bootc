@@ -21,6 +21,8 @@ on:
         options:
           - homeserver-centos-bootc
           - github-runner-centos-bootc
+          - homeserver-gui-bootc
+          - jumphost-centos-bootc
         default: homeserver-centos-bootc
       context:
         description: "Build context (path)"
