@@ -11,7 +11,7 @@ runs:
       id: set-env
       shell: bash
       run: | #sh
-        set -euo pipefail
+        set -eo pipefail
 
         case "${{ inputs.image }}" in
           homeserver)
