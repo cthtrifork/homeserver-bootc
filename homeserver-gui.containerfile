@@ -12,9 +12,10 @@ RUN dnf install -y \
       budgie-session \
       plymouth-system-theme \
       firefox \
-      ghostty
+      ghostty \
+      curl
 
-RUN curl https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64 -o /tmp/vscode.rpm && \
+RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf install -y /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
