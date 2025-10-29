@@ -4,7 +4,7 @@ COPY / /
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
-# Install GUI components (GDM + basic desktop + Firefox)
+# Install GUI components (GDM + basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
@@ -17,10 +17,12 @@ RUN dnf install -y \
       ghostty \
       ffmpeg
 
+# Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
-    dnf install -y /tmp/vscode.rpm && \
+    dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
+# Copy custom configuration files
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
 
