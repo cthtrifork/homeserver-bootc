@@ -15,9 +15,13 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/cleanup.sh
 
+# Do not run pinggy on a GUI client
+RUN systemctl disable pinggy.service
+
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
 
