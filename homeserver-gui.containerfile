@@ -7,12 +7,15 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 # Install GUI components (GDM + basic desktop + Firefox)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 RUN dnf copr enable -y scottames/ghostty
+RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
+    dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 RUN dnf install -y \
       gdm \
       budgie-session \
       plymouth-system-theme \
       firefox \
-      ghostty
+      ghostty \
+      ffmpeg
 
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf install -y /tmp/vscode.rpm && \
