@@ -20,7 +20,7 @@ runs:
             ;;
           homeserver-gui)
             IMAGE_NAME="homeserver-gui-bootc"
-            CONTAINERFILE="homeserver.containerfile"
+            CONTAINERFILE="homeserver-gui.containerfile"
             ;;
           jumphost)
             IMAGE_NAME="jumphost-centos-bootc"
