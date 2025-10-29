@@ -6,12 +6,13 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # Install GUI components (GDM + basic desktop + Firefox)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
-#RUN dnf install -y @budgie-desktop
+RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y \
       gdm \
       budgie-session \
       plymouth-system-theme \
-      firefox
+      firefox \
+      ghostty
 
 RUN curl https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64 -o /tmp/vscode.rpm && \
     dnf install -y /tmp/vscode.rpm && \
@@ -33,8 +34,3 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
-
-
-
-
-
