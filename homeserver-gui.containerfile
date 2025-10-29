@@ -6,12 +6,13 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # Install GUI components (GDM + basic desktop + Firefox)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
-#RUN dnf install -y @budgie-desktop
+RUN dnf copr enable scottames/ghostty
 RUN dnf install -y \
       gdm \
       budgie-session \
       plymouth-system-theme \
-      firefox
+      firefox \
+      ghostty
 
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
