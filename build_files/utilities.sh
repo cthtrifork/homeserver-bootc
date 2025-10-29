@@ -130,3 +130,9 @@ HELM_VERSION="v3.19.0" # renovate: datasource=github-releases depName=helm/helm
 curl -sLo /tmp/helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
 tar -zxvf /tmp/helm.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
 /usr/bin/helm completion bash >/etc/bash_completion.d/helm.sh
+
+log "Installing dysk"
+curl -Lo /tmp/dysk https://dystroy.org/dysk/download/x86_64-linux/dysk
+chmod +x /tmp/dysk
+mv /tmp/dysk /usr/local/bin/dysk
+/usr/bin/dysk completion bash >/etc/bash_completion.d/dysk.sh
