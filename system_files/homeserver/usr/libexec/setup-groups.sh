@@ -3,6 +3,11 @@ set -euo pipefail
 
 mkdir -p /etc/homeserver
 
+if [[ -f /etc/homeserver/setup-groups.done ]]; then
+  echo "Groups already set up, skipping."
+  exit 0
+fi
+
 # Setup Groups
 wheelarray=($(getent group wheel | cut -d: -f4 |  tr ',' '\n'))
 
@@ -28,5 +33,9 @@ for user in "${wheelarray[@]}"; do
 
   usermod -aG docker "$user"
 
+  echo "Password" | passwd $USER_NAME -s
+
   i=$((i + 1))
 done
+
+touch /etc/homeserver/setup-groups.done
