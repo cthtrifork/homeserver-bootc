@@ -6,7 +6,7 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # Install GUI components (GDM + basic desktop + Firefox)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
-RUN dnf copr enable scottames/ghostty
+RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y \
       gdm \
       budgie-session \
@@ -30,8 +30,3 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
-
-
-
-
-
