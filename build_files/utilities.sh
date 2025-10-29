@@ -135,4 +135,3 @@ log "Installing dysk"
 curl -Lo /tmp/dysk https://dystroy.org/dysk/download/x86_64-linux/dysk
 chmod +x /tmp/dysk
 mv /tmp/dysk /usr/local/bin/dysk
-/usr/bin/dysk completion bash >/etc/bash_completion.d/dysk.sh
