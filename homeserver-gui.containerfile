@@ -1,7 +1,11 @@
-# Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
+# syntax=docker/dockerfile:1.19@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6
+FROM scratch AS ctx
+COPY / /
+
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # Install GUI components (GDM + basic desktop + Firefox)
+# Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 #RUN dnf install -y @budgie-desktop
 RUN dnf install -y \
       gdm \
@@ -25,6 +29,7 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
 
 
 
