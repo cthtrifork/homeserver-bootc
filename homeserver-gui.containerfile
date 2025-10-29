@@ -11,7 +11,7 @@ RUN dnf install -y \
       gdm \
       budgie-session \
       plymouth-system-theme \
-      firefox \
+      vivaldi \
       ghostty
 
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
