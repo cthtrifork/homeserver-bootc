@@ -11,7 +11,11 @@ RUN dnf install -y \
       gdm \
       budgie-session \
       plymouth-system-theme \
-      firefox
+      firefox \
+      flatpak
+
+RUN flatpak install --installation=image -y https://flathub.org/repo/appstream/com.visualstudio.code.flatpakref
+
 
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
