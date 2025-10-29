@@ -9,7 +9,7 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 #RUN dnf install -y @budgie-desktop
 RUN dnf install -y \
       gdm \
-      gnome-session \
+      budgie-session \
       plymouth-system-theme \
       firefox
 
@@ -29,6 +29,7 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
 
 
 
