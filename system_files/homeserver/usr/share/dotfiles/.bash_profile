@@ -2,4 +2,6 @@
 source ~/.bashrc
 source ~/.bash_aliases
 
+export PATH="$PATH:$HOME/.local/bin"
+
 . ~/.local/bin/z.sh
