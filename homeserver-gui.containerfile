@@ -4,7 +4,7 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 # Install GUI components (GDM + basic desktop + Firefox)
 RUN dnf install -y \
       gdm \
-      budgie-desktop \
+      @budgie-desktop \
       firefox
 
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
@@ -20,3 +20,4 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
