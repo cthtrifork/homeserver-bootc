@@ -14,6 +14,10 @@ RUN dnf install -y \
       firefox \
       ghostty
 
+RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
+    dnf install -y /tmp/vscode.rpm && \
+    rm -f /tmp/vscode.rpm
+
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
 
