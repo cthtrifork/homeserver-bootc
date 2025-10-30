@@ -31,7 +31,6 @@ RUN dnf install -y \
       brightnessctl \
       pavucontrol \
       sway \
-      swaywm-extended \
       waybar \
       wlogout \
       grim \
@@ -67,5 +66,6 @@ RUN systemctl set-default graphical.target
 # systemctl enable gdm.service
 
 RUN bootc container lint
+
 
 
