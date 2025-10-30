@@ -35,9 +35,10 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl disable pinggy.service
 
 # Enable GUI by default
-RUN systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+# RUN systemctl set-default graphical.target && \
+RUN systemctl enable gdm.service
 
 RUN bootc container lint
+
 
 
