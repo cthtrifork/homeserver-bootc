@@ -11,6 +11,8 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf install -y \
+      lightdm \
+      lightdm-gtk \
       @budgie-desktop \
       brave-browser \
       ghostty \
@@ -33,10 +35,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl disable pinggy.service
 
 # Enable GUI by default
-RUN systemctl set-default graphical.target
+RUN systemctl set-default graphical.target && \
+    systemctl enable lightdm
 
 RUN bootc container lint
-
-
-
-
