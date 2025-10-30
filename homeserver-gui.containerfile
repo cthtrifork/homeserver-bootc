@@ -10,7 +10,7 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y \
+RUN dnf install -y --setopt install_weak_deps=false \
       lightdm \
       lightdm-gtk \
       @budgie-desktop \
@@ -39,3 +39,4 @@ RUN systemctl set-default graphical.target && \
     systemctl enable lightdm
 
 RUN bootc container lint
+
