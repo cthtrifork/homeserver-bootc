@@ -11,7 +11,6 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf install -y \
-      gdm \
       @budgie-desktop \
       brave-browser \
       ghostty \
@@ -23,7 +22,6 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
     rm -f /tmp/vscode.rpm
 
 # Copy custom configuration files
-RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
 COPY system_files/homeserver-gui/custom.conf /etc/gdm/
 
 # Cleanup
@@ -35,8 +33,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl disable pinggy.service
 
 # Enable GUI by default
-# RUN systemctl set-default graphical.target && \
-RUN systemctl enable gdm.service
+RUN systemctl set-default graphical.target
 
 RUN bootc container lint
 
