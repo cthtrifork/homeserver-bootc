@@ -38,7 +38,7 @@ RUN dnf install -y \
       slurp \
       wl-clipboard
 
-RUN dnf groupinstall -y "Sway Desktop"
+RUN dnf group install -y "Sway Desktop"
 RUN dnf swap @workstation-product-environment @"Sway Desktop"
 RUN dnf swap fedora-release-identity-workstation fedora-release-identity-sway
 RUN dnf remove gnome-*
