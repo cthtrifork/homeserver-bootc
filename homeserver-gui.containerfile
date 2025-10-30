@@ -11,7 +11,7 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf install -y \
-      @budgie-desktop \
+      budgie-session \
       brave-browser \
       ghostty \
       ffmpeg
