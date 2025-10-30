@@ -10,10 +10,10 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y \
-      gdm \
-      gnome-session \
-      plymouth-system-theme \
+RUN dnf install -y --setopt install_weak_deps=false \
+      lightdm \
+      lightdm-gtk \
+      @budgie-desktop \
       brave-browser \
       ghostty \
       ffmpeg
@@ -22,10 +22,6 @@ RUN dnf install -y \
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
-
-# Copy custom configuration files
-RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -37,7 +33,8 @@ RUN systemctl disable pinggy.service
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+    systemctl enable lightdm
 
 RUN bootc container lint
+
 
