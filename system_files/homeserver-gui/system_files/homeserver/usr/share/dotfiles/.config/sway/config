@@ -3,6 +3,11 @@ input * {
     xkb_layout dk
 }
 
+# Set the modifier key (Super/Win)
+set $mod Mod4
+
+# Terminal(s)
+set $term xterm-ghostt
 
 # Browser / webapps
 set $brave brave-browser --ozone-platform=wayland
@@ -25,6 +30,42 @@ exec mako
 
 # Clipboard manager (if you install wl-clipboard manager)
 # none needed – wl-copy / wl-paste are CLI
+
+# Start webapps on login
+# Teams on workspace 2
+exec $brave --app=https://teams.microsoft.com
+# Outlook / webmail on workspace 3
+exec $brave --app=https://outlook.office.com/mail
+
+### --------------------------------------------------
+### Workspace rules (put apps where they belong)
+### --------------------------------------------------
+# You can inspect app_id/class with:  `swaymsg -t get_tree | jq .`
+# Brave in app mode usually uses the domain as app_id
+assign [app_id="teams.microsoft.com"] 2
+assign [app_id="outlook.office.com"] 3
+
+# Your main coding workspace
+# (you can open VS Code here manually)
+# assign [class="code"] 1
+
+### --------------------------------------------------
+### Keybindings: launching
+### --------------------------------------------------
+# Terminal
+bindsym $mod+Return exec $term
+
+# App launcher (if you install wofi)
+bindsym $mod+d exec wofi --show drun
+
+# Browser standard window
+bindsym $mod+b exec $brave
+
+# Teams
+bindsym $mod+t exec $brave --app=https://teams.microsoft.com
+
+# Webmail
+bindsym $mod+m exec $brave --app=https://outlook.office.com/mail
 
 ### Bar
   bar {
