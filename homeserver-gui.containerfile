@@ -38,6 +38,11 @@ RUN dnf install -y \
       slurp \
       wl-clipboard
 
+RUN dnf groupinstall -y "Sway Desktop"
+RUN dnf swap @workstation-product-environment @"Sway Desktop"
+RUN dnf swap fedora-release-identity-workstation fedora-release-identity-sway
+RUN dnf remove gnome-*
+
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
@@ -62,3 +67,4 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
