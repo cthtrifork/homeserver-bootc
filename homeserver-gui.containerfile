@@ -10,22 +10,44 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+
+
+# wofi	App launcher (like rofi, but Wayland-native)
+# mako	Notification daemon
+# brightnessctl	Adjust screen brightness
+# pavucontrol	Manage audio (PulseAudio or PipeWire GUI)
+# waybar status bar
+# grim+slurp screenshot manager
+
+# https://gist.github.com/quangdinh/41cb26e0abb34c5242e55004bd411065
+# https://www.reddit.com/r/swaywm/comments/11rc1a9/just_a_rice_post_with_wofi_and_waybar_configs_i/
+
 RUN dnf install -y \
       gdm \
-      budgie-session \
-      plymouth-system-theme \
       brave-browser \
       ghostty \
-      ffmpeg
+      ffmpeg \
+      wofi \
+      mako \
+      brightnessctl \
+      pavucontrol \
+      sway \
+      waybar \
+      wlogout \
+      grim \
+      slurp \
+      wl-clipboard
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
-# Copy custom configuration files
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/
+
+# Install service
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    rsync -rvpK /ctx/system_files/homeserver-gui/ /
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \

@@ -1,0 +1,27 @@
+# Use your laptop keyboard layout (change if needed)
+input * {
+    xkb_layout dk
+}
+
+
+# Browser / webapps
+set $brave brave-browser --ozone-platform=wayland
+
+# Screenshot helpers
+set $screenshot grim
+set $region slurp
+
+# Default wallpaper (solid color fallback)
+output * bg #222222 solid_color
+
+### --------------------------------------------------
+### Autostart
+### --------------------------------------------------
+# Status bar
+exec waybar
+
+# Notifications (only if you install it)
+exec mako
+
+# Clipboard manager (if you install wl-clipboard manager)
+# none needed – wl-copy / wl-paste are CLI
