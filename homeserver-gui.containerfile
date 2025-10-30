@@ -23,9 +23,6 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
-# Copy custom configuration files
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/
-
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
@@ -39,4 +36,5 @@ RUN systemctl set-default graphical.target && \
     systemctl enable lightdm
 
 RUN bootc container lint
+
 
