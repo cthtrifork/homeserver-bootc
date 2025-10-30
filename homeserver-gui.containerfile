@@ -10,22 +10,49 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y \
-      gdm \
-      gnome-session \
-      plymouth-system-theme \
+
+
+# wofi	App launcher (like rofi, but Wayland-native)
+# mako	Notification daemon
+# brightnessctl	Adjust screen brightness
+# pavucontrol	Manage audio (PulseAudio or PipeWire GUI)
+# waybar status bar
+# grim+slurp screenshot manager
+
+# https://gist.github.com/quangdinh/41cb26e0abb34c5242e55004bd411065
+# https://www.reddit.com/r/swaywm/comments/11rc1a9/just_a_rice_post_with_wofi_and_waybar_configs_i/
+
+RUN dnf install -y --setopt install_weak_deps=false \
       brave-browser \
       ghostty \
-      ffmpeg
+      ffmpeg \
+      wofi \
+      mako \
+      brightnessctl \
+      pavucontrol \
+      sway \
+      waybar \
+      wlogout \
+      grim \
+      slurp \
+      wl-clipboard
+
+#RUN dnf5 group install -y sway-desktop-environment
+#RUN dnf5 swap -y @workstation-product-environment @sway-desktop-environment
+#RUN dnf5 swap -y fedora-release-identity-workstation fedora-release-identity-sway
+#RUN dnf5 remove -y gnome-shell gnome-classic-session || true
+RUN dnf remove gnome-*
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
-# Copy custom configuration files
-RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/
+# RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
+
+# Install service
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    rsync -rvpK /ctx/system_files/homeserver-gui/ /
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -36,8 +63,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl disable pinggy.service
 
 # Enable GUI by default
-RUN systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+RUN systemctl set-default graphical.target
+# systemctl enable gdm.service
 
 RUN bootc container lint
 
