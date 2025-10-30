@@ -37,9 +37,9 @@ RUN dnf install -y \
       slurp \
       wl-clipboard
 
-RUN dnf5 group install -y sway-desktop-environment
-RUN dnf5 swap -y @workstation-product-environment @sway-desktop-environment
-RUN dnf5 swap -y fedora-release-identity-workstation fedora-release-identity-sway
+#RUN dnf5 group install -y sway-desktop-environment
+#RUN dnf5 swap -y @workstation-product-environment @sway-desktop-environment
+#RUN dnf5 swap -y fedora-release-identity-workstation fedora-release-identity-sway
 #RUN dnf5 remove -y gnome-shell gnome-classic-session || true
 RUN dnf remove gnome-*
 
@@ -67,6 +67,7 @@ RUN systemctl set-default graphical.target
 # systemctl enable gdm.service
 
 RUN bootc container lint
+
 
 
 
