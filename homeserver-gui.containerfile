@@ -31,13 +31,14 @@ RUN dnf install -y \
       brightnessctl \
       pavucontrol \
       sway \
+      swaywm-extended \
       waybar \
       wlogout \
       grim \
       slurp \
       wl-clipboard
 
-RUN dnf group install -y "Sway Desktop"
+RUN dnf group install -y @"Sway Desktop"
 RUN dnf swap @workstation-product-environment @"Sway Desktop"
 RUN dnf swap fedora-release-identity-workstation fedora-release-identity-sway
 RUN dnf remove gnome-*
@@ -66,4 +67,5 @@ RUN systemctl set-default graphical.target
 # systemctl enable gdm.service
 
 RUN bootc container lint
+
 
