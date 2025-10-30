@@ -25,3 +25,26 @@ exec mako
 
 # Clipboard manager (if you install wl-clipboard manager)
 # none needed – wl-copy / wl-paste are CLI
+
+### Bar
+  bar {
+    swaybar_command waybar
+  }
+
+
+### Styling
+  # Gaps
+  gaps inner 5
+  gaps outer 0
+  smart_gaps on
+
+  # Borders
+  default_border pixel 3
+  for_window [class=".*"] border pixel 3
+
+### Colors
+  # Class                   Border      BG          Text        Indicator   Child border
+  client.focused            #c5c8c6bf   #1d1f21bb   #ffffff     #fffffff2   #c5c8c6bf
+  client.unfocused          #1d1f2166   #1d1f2188   #ffffff     #000000ee   #1d1f2166
+  client.focused_inactive   #c5c8c644   #1d1f2199   #ffffff     #ffffff88   #c5c8c644
+  client.background         #1d1f21f2
