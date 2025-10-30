@@ -7,7 +7,7 @@ input * {
 set $mod Mod4
 
 # Terminal(s)
-set $term xterm-ghostt
+set $term xterm-ghostty
 
 # Browser / webapps
 set $brave brave-browser --ozone-platform=wayland
@@ -17,8 +17,6 @@ set $screenshot grim
 set $region slurp
 
 
-
-
 # Default wallpaper (solid color fallback)
 output * bg #222222 solid_color
 
@@ -26,7 +24,7 @@ output * bg #222222 solid_color
 ### Autostart
 ### --------------------------------------------------
 # Status bar
-exec waybar
+#exec waybar
 
 # Notifications (only if you install it)
 exec mako
@@ -38,7 +36,7 @@ exec mako
 # Teams on workspace 2
 exec $brave --app=https://teams.microsoft.com
 # Outlook / webmail on workspace 3
-exec $brave --app=https://outlook.office.com/mail
+exec $brave --app=https://webmail.trifork.com/
 
 ### --------------------------------------------------
 ### Workspace rules (put apps where they belong)
@@ -53,6 +51,23 @@ assign [app_id="outlook.office.com"] 3
 # assign [class="code"] 1
 
 ### --------------------------------------------------
+### Workspaces
+### --------------------------------------------------
+set $ws1 1:main
+set $ws2 2:teams
+set $ws3 3:mail
+
+### --------------------------------------------------
+### Screenshots (grim + slurp)
+### --------------------------------------------------
+# Fullscreen to ~/Pictures
+bindsym Print exec mkdir -p ~/Pictures && $screenshot ~/Pictures/screenshot-$(date +'%F-%T').png
+
+# Select area
+bindsym Shift+Print exec mkdir -p ~/Pictures && $screenshot -g "$($region)" ~/Pictures/screenshot-$(date +'%F-%T').png
+
+
+### --------------------------------------------------
 ### Keybindings: launching
 ### --------------------------------------------------
 # Terminal
@@ -63,12 +78,6 @@ bindsym $mod+d exec wofi --show drun
 
 # Browser standard window
 bindsym $mod+b exec $brave
-
-# Teams
-bindsym $mod+t exec $brave --app=https://teams.microsoft.com
-
-# Webmail
-bindsym $mod+m exec $brave --app=https://outlook.office.com/mail
 
 ### Bar
   bar {
