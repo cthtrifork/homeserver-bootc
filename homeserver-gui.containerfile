@@ -22,7 +22,7 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
 # https://gist.github.com/quangdinh/41cb26e0abb34c5242e55004bd411065
 # https://www.reddit.com/r/swaywm/comments/11rc1a9/just_a_rice_post_with_wofi_and_waybar_configs_i/
 
-RUN dnf install -y \
+RUN dnf install -y --setopt install_weak_deps=false \
       brave-browser \
       ghostty \
       ffmpeg \
@@ -67,8 +67,4 @@ RUN systemctl set-default graphical.target
 # systemctl enable gdm.service
 
 RUN bootc container lint
-
-
-
-
 
