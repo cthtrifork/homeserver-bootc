@@ -81,7 +81,7 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    runs-on: ubuntu-latest
+    runs-on: arc-ubuntu
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -261,7 +261,7 @@ jobs:
 
   push-image:
     name: Push image ${{ matrix.image }} to registry
-    runs-on: ubuntu-latest
+    runs-on: arc-ubuntu
     # only run on main branch or if PR has "push" label
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
     needs: 
@@ -431,7 +431,7 @@ jobs:
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
-    runs-on: ubuntu-latest
+    runs-on: arc-ubuntu
     needs: 
       - changes
       - build-bootc-image
@@ -580,10 +580,9 @@ jobs:
           path: comment.md
           skip_unchanged: true
 
-
   test:
     name: "E2E Test on: ${{ matrix.image }}"
-    runs-on: ubuntu-latest
+    runs-on: arc-ubuntu
     needs: 
       - changes
       - build-bootc-image
