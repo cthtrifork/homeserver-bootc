@@ -112,7 +112,7 @@ jobs:
           echo "Running as"
           id
           echo "Home:"
-          ls -lha $HOME
+          tree -uag /home/ -L 4 --si --du
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
