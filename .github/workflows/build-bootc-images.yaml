@@ -112,7 +112,7 @@ jobs:
           echo "Running as"
           id
           echo "Home:"
-          tree -uag /home/ -L 2 --si --du && true
+          tree -uag /home/runner -L 2 --si --du
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
