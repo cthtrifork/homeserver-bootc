@@ -118,6 +118,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Load image
         shell: bash
