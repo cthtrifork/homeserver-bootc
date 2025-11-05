@@ -188,6 +188,8 @@ jobs:
       - name: Use buildah build to create the image
         id: build-image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
+        env:
+          DOCKER_BUILDKIT: "1"
         with:
           context: ${{ env.CONTEXT }}
           image: ${{ env.IMAGE_NAME }}
