@@ -52,7 +52,8 @@ RUN dnf -y --setopt install_weak_deps=false install \
       git \
       make \
       xclip \
-      xsel
+      xsel \
+      xvfb
 
 # pip3 dependencies
 RUN pip3 install glances

@@ -1,0 +1,12 @@
+[Unit]
+Description=Virtual framebuffer X server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/virtualbuffer.sh
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
