@@ -85,7 +85,7 @@ jobs:
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -107,17 +107,11 @@ jobs:
         with:
           image: ${{ matrix.image }}
 
-      - name: debugging
-        run: |
-          echo "Running as"
-          id
-          echo "Home:"
-          tree -uag /home/runner -L 2 --si --du
-
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
-        with:
-          cache: true
+        #with:
+          #cache: true
+          #version: v0.67.2
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
