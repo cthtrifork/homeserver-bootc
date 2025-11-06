@@ -50,8 +50,7 @@ RUN dnf -y --setopt install_weak_deps=false install \
       python3-pip \
       tree \
       git \
-      make \
-      xclip
+      make
 
 # pip3 dependencies
 RUN pip3 install glances
@@ -85,5 +84,6 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
 
 
