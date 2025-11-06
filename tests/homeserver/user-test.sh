@@ -15,6 +15,7 @@ printf "%s\n" "$DISPLAY"
 echo "Copy and paste date:"
 date | xclip # copy
 xclip -o # paste
+xdpyinfo >/dev/null && echo OK
 
 echo "== Github SSH Auth =="
 echo "Public key and SHA: "
