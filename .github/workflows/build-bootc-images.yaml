@@ -232,9 +232,9 @@ jobs:
           scanners: "vuln"
           vuln-type: 'library'
           severity: 'CRITICAL,HIGH,MEDIUM'
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
+        #env:
+        #  TRIVY_SKIP_DB_UPDATE: true
+        #  TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Trivy vuln scan (JSON)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
