@@ -9,6 +9,13 @@ echo "== Github CLI =="
 echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
 gh auth status && echo "✅ Github CLI is ready"
 
+
+echo "== utilities =="
+printf "%s\n" "$DISPLAY"
+echo "Copy and paste date:"
+date | xclip # copy
+xclip -o # paste
+
 echo "== Github SSH Auth =="
 echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
@@ -32,3 +39,4 @@ else
   echo "❌ SSH authentication failed"
   exit 1
 fi
+
