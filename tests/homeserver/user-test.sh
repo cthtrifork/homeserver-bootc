@@ -21,14 +21,14 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
-ssh_github_auth() {
-  ssh -o IdentitiesOnly=yes \
-	  -i ~/.ssh/id_ed25519 \
-	  -o BatchMode=yes \
-	  -o ConnectTimeout=10 \
-	  -o StrictHostKeyChecking=accept-new \
-	  -T git@github.com
-}
+#ssh_github_auth() {
+#  ssh -o IdentitiesOnly=yes \
+#	  -i ~/.ssh/id_ed25519 \
+#	  -o BatchMode=yes \
+#	  -o ConnectTimeout=10 \
+#	  -o StrictHostKeyChecking=accept-new \
+#	  -T git@github.com
+#}
 
 #echo "Trying to authenticate..."
 # output=$(ssh_github_auth 2>&1)
