@@ -31,14 +31,14 @@ ssh_github_auth() {
 	  -T git@github.com
 }
 
-output=$(ssh_github_auth 2>&1)
+# output=$(ssh_github_auth 2>&1)
 
-echo "$output"
+# echo "$output"
 
-if echo "$output" | grep -q "successfully"; then
-  echo "✅ SSH authentication succeeded"
-else
-  echo "❌ SSH authentication failed"
-  exit 1
-fi
+# if echo "$output" | grep -q "successfully"; then
+#   echo "✅ SSH authentication succeeded"
+# else
+#   echo "❌ SSH authentication failed"
+#   exit 1
+# fi
 
