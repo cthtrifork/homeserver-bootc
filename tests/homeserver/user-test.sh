@@ -22,14 +22,16 @@ ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 echo "Trying to authenticate..."
 
-# SSH -t always returns an exit code, so we have to do bash magic
-output=$(
+ssh_github_auth() {
   ssh -o IdentitiesOnly=yes \
-      -i ~/.ssh/id_ed25519 \
-      -o BatchMode=yes \
-      -o StrictHostKeyChecking=accept-new \
-      -T git@github.com 2>&1 > /dev/null || true
-)
+	  -i ~/.ssh/id_ed25519 \
+	  -o BatchMode=yes \
+	  -o ConnectTimeout=10 \
+	  -o StrictHostKeyChecking=accept-new \
+	  -T git@github.com
+}
+
+output=$(ssh_github_auth 2>&1)
 
 echo "$output"
 
