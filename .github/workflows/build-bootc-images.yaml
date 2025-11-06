@@ -77,7 +77,6 @@ jobs:
           fi
           echo "image=$IMAGES" >> $GITHUB_OUTPUT
 
-
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
@@ -110,8 +109,8 @@ jobs:
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         #with:
-          #cache: true
-          #version: v0.67.2
+        #cache: true
+        #version: v0.67.2
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
@@ -224,8 +223,8 @@ jobs:
           output: trivy-results.txt
           skip-setup-trivy: true
           scanners: "vuln"
-          vuln-type: 'library'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: "library"
+          severity: "CRITICAL,HIGH,MEDIUM"
         #env:
         #  TRIVY_SKIP_DB_UPDATE: true
         #  TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -239,8 +238,8 @@ jobs:
           ignore-unfixed: true
           skip-setup-trivy: true
           scanners: "vuln"
-          vuln-type: 'library'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: "library"
+          severity: "CRITICAL,HIGH,MEDIUM"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -250,7 +249,7 @@ jobs:
         with:
           key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
           path: "${{ github.workspace }}/trivy.json"
-    
+
       - name: Publish Trivy Output to Summary
         run: | #sh
           {
@@ -268,7 +267,7 @@ jobs:
     runs-on: arc-ubuntu
     # only run on main branch or if PR has "push" label
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
-    needs: 
+    needs:
       - changes
       - build-bootc-image
     continue-on-error: false
@@ -298,6 +297,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
@@ -349,8 +349,8 @@ jobs:
           output: "trivy-results.sarif"
           skip-setup-trivy: true
           scanners: "vuln"
-          vuln-type: 'library'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: "library"
+          severity: "CRITICAL,HIGH,MEDIUM"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -373,8 +373,8 @@ jobs:
           github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
           scanners: "vuln"
           skip-setup-trivy: true
-          vuln-type: 'library'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: "library"
+          severity: "CRITICAL,HIGH,MEDIUM"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -436,7 +436,7 @@ jobs:
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
     runs-on: arc-ubuntu
-    needs: 
+    needs:
       - changes
       - build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
@@ -459,6 +459,15 @@ jobs:
         uses: ./.github/actions/set-image-vars
         with:
           image: ${{ matrix.image }}
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: ${{ runner.temp }}/auth.json
+
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
@@ -477,13 +486,6 @@ jobs:
           path: ${{ github.workspace }}/trivy.json
           key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
           fail-on-cache-miss: true
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Load images
         shell: bash
@@ -537,7 +539,7 @@ jobs:
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
-          
+
       - name: Build report
         id: report
         shell: bash
@@ -587,7 +589,7 @@ jobs:
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     runs-on: arc-ubuntu
-    needs: 
+    needs:
       - changes
       - build-bootc-image
     # only run if tagged for testing
@@ -615,19 +617,20 @@ jobs:
         with:
           image: ${{ matrix.image }}
 
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
-
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: ${{ runner.temp }}/auth.json
+
+      - name: Download PR image
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/${{ matrix.image }}.tar
+          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
+          fail-on-cache-miss: true
 
       #- name: Maximize build space
       #  uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
@@ -857,7 +860,7 @@ jobs:
         run: | #sh
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          
+
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
             -p 2222 \
