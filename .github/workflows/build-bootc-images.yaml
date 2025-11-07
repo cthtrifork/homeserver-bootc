@@ -208,10 +208,9 @@ jobs:
             --secret id=agekey,src=/tmp/AGE_KEY
 
 
-      - name: tmp debugging
+      - name: Enable Podman socket
         shell: bash
         run: |
-          #export XDG_RUNTIME_DIR="/tmp/run-$(id -u)"
           install -d -m 700 "$XDG_RUNTIME_DIR/podman"
           loginctl enable-linger $(whoami) || true
           sleep 1
@@ -308,7 +307,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          auth_file_path: ${{ runner.temp }}/auth.json
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
@@ -481,7 +480,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          auth_file_path: ${{ runner.temp }}/auth.json
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
@@ -634,7 +633,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          auth_file_path: ${{ runner.temp }}/auth.json
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
       #- name: Maximize build space
       #  uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
