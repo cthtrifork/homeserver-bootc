@@ -215,9 +215,9 @@ jobs:
           #install -d -m 700 "$XDG_RUNTIME_DIR"
           loginctl enable-linger $(whoami)
           sleep 1
-          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman.sock" &
-          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman.sock"
-          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman.sock" >> $GITHUB_ENV
+          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
+          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
           podman info
           podman images ls
 
