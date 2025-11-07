@@ -206,21 +206,10 @@ jobs:
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
 
-      - name: Save PR image as tar
-        run: |
-          #podman save --format docker-archive -o app-all-tags.tar $(podman images --format '{{.Repository}}:{{.Tag}}' | grep '^localhost/${{ env.IMAGE_NAME }}:')
-          podman save "${{ env.PR_IMAGE }}" > "${{ matrix.image }}.tar"
-
-      - name: Upload PR image
-        uses: actions/cache/save@v4
-        with:
-          path: "${{ github.workspace }}/${{ matrix.image }}.tar"
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: "${{ matrix.image }}.tar"
+          input: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           ignore-unfixed: true
           format: table
           output: trivy-results.txt
@@ -235,7 +224,7 @@ jobs:
       - name: Trivy vuln scan (JSON)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: "${{ matrix.image }}.tar"
+          input: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           format: json
           output: ${{ github.workspace }}/trivy.json
           ignore-unfixed: true
@@ -269,7 +258,7 @@ jobs:
     name: Push image ${{ matrix.image }} to registry
     runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
     # only run on main branch or if PR has "push" label
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
+    #if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
     needs:
       - changes
       - build-bootc-image
@@ -311,14 +300,6 @@ jobs:
         with:
           cache: true
 
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-
-          fail-on-cache-miss: true
-
       - name: Download trivy report
         uses: actions/cache/restore@v4
         with:
@@ -330,7 +311,7 @@ jobs:
         shell: bash
         run: | #sh
           set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
+          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
           for tag in $TAGS; do
             podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
           done
@@ -379,7 +360,7 @@ jobs:
       - name: Trivy SBOM (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: ${{ matrix.image }}.tar
+          input: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           scan-type: image
           format: "github"
           output: "dependency-results.sbom.json"
@@ -490,13 +471,6 @@ jobs:
         with:
           cache: true
 
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
-
       - name: Download trivy.json
         uses: actions/cache/restore@v4
         with:
@@ -507,8 +481,7 @@ jobs:
       - name: Load images
         shell: bash
         run: | #sh
-          podman pull -q ${{ env.BASE_IMAGE }} || true
-          podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
+          podman pull -q ${{ env.FULL_IMAGE }}:${{ env.VERSION }}
           podman images
 
       - name: Inspect images (Podman)
@@ -646,21 +619,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           auth_file_path: ${{ runner.temp }}/auth.json
 
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
-
       #- name: Maximize build space
       #  uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
 
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
-          rm ${{ github.workspace }}/${{ matrix.image }}.tar
+          sudo podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
