@@ -40,5 +40,3 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
-
-
