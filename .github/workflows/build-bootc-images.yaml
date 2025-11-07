@@ -98,8 +98,10 @@ jobs:
       tags: ${{ steps.build-image.outputs.tags }}
     permissions:
       contents: read
-      packages: read
+      packages: write
       id-token: write
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      attestations: write
 
     steps:
       - name: Clone the repository
@@ -164,7 +166,6 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
-      # Write secrets to temp files for --secret src=
       - name: Prepare build secrets
         shell: bash
         run: |
@@ -206,7 +207,6 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
-
 
       - name: Enable Podman socket
         shell: bash
@@ -268,70 +268,8 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-  push-image:
-    name: Push image ${{ matrix.image }} to registry
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
-    # only run on main branch or if PR has "push" label
-    #if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
-    needs:
-      - changes
-      - build-bootc-image
-    continue-on-error: false
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      attestations: write
-
-    steps:
       - name: Clone the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-
-      - name: Set image vars
-        uses: ./.github/actions/set-image-vars
-        with:
-          image: ${{ matrix.image }}
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          #auth_file_path: ${{ runner.temp }}/auth.json
-
-      - name: Manual Trivy Setup
-        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
-        with:
-          cache: true
-
-      - name: Download trivy report
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
-
-      - name: Load images
-        shell: bash
-        run: | #sh
-          set -euo pipefail
-          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
-          for tag in $TAGS; do
-            podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
-          done
-          podman images
-        env:
-          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
 
       - name: Push to Container registry
         id: push-to-ghcr
@@ -362,8 +300,6 @@ jobs:
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
