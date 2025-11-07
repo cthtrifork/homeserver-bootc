@@ -356,7 +356,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@4e94bd11f71e507f7f87df81788dff88d1dacbfb # v4
+        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
         if: ${{ always() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -853,6 +853,7 @@ jobs:
 
       - name: Run user tests
         if: "${{ matrix.image }} == 'homeserver'"
+        timeout-minutes: 5
         env:
           SSH_USERNAME: caspertdk
           SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
@@ -864,7 +865,8 @@ jobs:
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost
+            ${SSH_USERNAME}@localhost \
+            bash -l -s --
 
       - name: Verify ghcr.io auth
         env:
@@ -880,7 +882,7 @@ jobs:
             -p 2222 \
             "$SSH_USERNAME"@localhost \
               IMAGE_FULL="$IMAGE_FULL" \
-              bash -s --
+              bash -l -s --
 
       - name: Collect logs and stop QEMU
         if: always()
