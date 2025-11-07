@@ -7,6 +7,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
       - main
+      - cthtrifork-patch-2 # tmp
     paths:
       - "Containerfile"
       - "*.containerfile"
