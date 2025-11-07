@@ -268,9 +268,6 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-      - name: Clone the repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-
       - name: Push to Container registry
         id: push-to-ghcr
         run: |
@@ -284,6 +281,8 @@ jobs:
           done
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        env:
+          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
 
       - name: Trivy REPORT (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -387,7 +386,7 @@ jobs:
       - build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
