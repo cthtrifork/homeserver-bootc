@@ -348,6 +348,8 @@ jobs:
             --type vuln \
             --predicate trivy.json \
             ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
+        env:
+          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
 
       - name: Verify
         run: |
