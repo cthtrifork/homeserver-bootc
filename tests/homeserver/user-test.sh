@@ -21,6 +21,8 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
+echo "finished testing"
+
 #ssh_github_auth() {
 #  ssh -o IdentitiesOnly=yes \
 #	  -i ~/.ssh/id_ed25519 \

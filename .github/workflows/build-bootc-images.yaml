@@ -847,6 +847,7 @@ jobs:
 
       - name: Run user tests
         if: "${{ matrix.image }} == 'homeserver'"
+        timeout-minutes: 5
         env:
           SSH_USERNAME: caspertdk
           SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
@@ -858,7 +859,8 @@ jobs:
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost
+            ${SSH_USERNAME}@localhost \
+            bash -s --
 
       - name: Verify ghcr.io auth
         env:
