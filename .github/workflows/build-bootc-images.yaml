@@ -249,7 +249,7 @@ jobs:
         uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ steps.build-bootc-image.outputs.tags }}
+          tags: ${{ steps.metadata.outputs.tags }}
           registry: ghcr.io/${{ github.repository }}
 
       - name: Push to Container registry
