@@ -319,16 +319,10 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
-      - name: Compose immutable image ref (by digest)
-        id: ref
-        run: |
-          export DIGEST=$(cat digest.txt)
-          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@$DIGEST" >> $GITHUB_OUTPUT
-
       - name: Sign container image
         run: |
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
           for tag in ${{ steps.build-image.outputs.tags }}; do
             cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
@@ -353,7 +347,7 @@ jobs:
             --yes \
             --type vuln \
             --predicate trivy.json \
-            ${{ steps.ref.outputs.IMAGE_REF }}
+            ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
 
       - name: Verify
         run: |
