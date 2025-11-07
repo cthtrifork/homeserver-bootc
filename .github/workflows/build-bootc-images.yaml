@@ -247,10 +247,7 @@ jobs:
       - name: Push to Container registry
         id: push-to-ghcr
         run: |
-          echo "podman images ls --all"
-          podman images ls --all
-          echo "sudo podman images ls --all"
-          sudo podman images ls --all
+          podman images
           for tag in ${{ steps.build-image.outputs.tags }}; do
             podman tag \
               localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
