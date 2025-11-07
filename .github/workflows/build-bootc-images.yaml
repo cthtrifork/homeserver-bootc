@@ -245,7 +245,8 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
 
       - name: Push to Container registry
-        id: push-to-ghcr
+        if: false 
+        id: push-to-ghcr-old
         uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           image: ${{ env.IMAGE_NAME }}
@@ -254,8 +255,7 @@ jobs:
           digestfile: digest.txt
 
       - name: Push to Container registry
-        if: false # disabled in favor of redhat-actions/push-to-registry
-        #id: push-to-ghcr
+        id: push-to-ghcr
         run: |
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
