@@ -17,5 +17,6 @@ systemctl enable setup-groups.service
 systemctl enable pinggy.service
 systemctl enable setup-tmpfiles.service
 systemctl enable systemd-userdbd.service
+systemctl enable virtualframe.service
 
 systemctl enable setup-home@caspertdk.service
