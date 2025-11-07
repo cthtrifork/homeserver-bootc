@@ -1,4 +1,4 @@
-name: Build homeserver bootable container image
+øname: Build homeserver bootable container image
 on:
   schedule:
     - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
@@ -207,6 +207,13 @@ jobs:
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
 
+
+      - name: tmp debugging
+        shell: bash
+        run: |
+          podman info
+          podman images ls -a
+
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -350,11 +357,7 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
-      - name: tmp debugging
-        shell: bash
-        run: |
-          podman info
-          podman images ls -a
+      
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
