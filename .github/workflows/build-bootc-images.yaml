@@ -251,6 +251,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ghcr.io/${{ github.repository }}
+          digestfile: digest.txt
 
       - name: Push to Container registry
         if: false # disabled in favor of redhat-actions/push-to-registry
@@ -321,7 +322,8 @@ jobs:
       - name: Compose immutable image ref (by digest)
         id: ref
         run: |
-          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
+          export DIGEST=$(cat digest.txt)
+          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Sign container image
         run: |
@@ -331,7 +333,7 @@ jobs:
             cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
         env:
-          TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
+          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
@@ -854,6 +856,7 @@ jobs:
     if: ${{ always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
     runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
     needs:
+      - changes
       - build-bootc-image
       - run-on-pr
       - test
