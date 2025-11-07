@@ -80,7 +80,7 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    runs-on: arc-ubuntu
+    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -89,6 +89,9 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
+        include:
+          - image: homeserver-gui
+            runner_name: arc-ubuntu
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
@@ -264,7 +267,7 @@ jobs:
 
   push-image:
     name: Push image ${{ matrix.image }} to registry
-    runs-on: arc-ubuntu
+    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
     # only run on main branch or if PR has "push" label
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
     needs:
@@ -276,12 +279,16 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
+        include:
+          - image: homeserver-gui
+            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: write
       id-token: write
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       attestations: write
+
     steps:
       - name: Clone the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -435,7 +442,7 @@ jobs:
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
-    runs-on: arc-ubuntu
+    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
@@ -446,11 +453,15 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
+        include:
+          - image: homeserver-gui
+            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: read
       id-token: write
       pull-requests: write
+
     steps:
       - name: Clone the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -588,7 +599,7 @@ jobs:
 
   test:
     name: "E2E Test on: ${{ matrix.image }}"
-    runs-on: arc-ubuntu
+    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
@@ -600,6 +611,9 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
+        include:
+          - image: homeserver-gui
+            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: read
@@ -608,6 +622,7 @@ jobs:
     env:
       SSH_USERNAME: runner
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+
     steps:
       - name: Clone the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
