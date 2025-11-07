@@ -245,25 +245,18 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
 
       - name: Push to Container registry
-        if: false 
-        id: push-to-ghcr-old
-        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ghcr.io/${{ github.repository }}
-          digestfile: digest.txt
-
-      - name: Push to Container registry
         id: push-to-ghcr
         run: |
+          echo "podman images ls --all"
           podman images ls --all
+          echo "sudo podman images ls --all"
+          sudo podman images ls --all
           for tag in ${{ steps.build-image.outputs.tags }}; do
             podman tag \
               localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
               ${{ env.IMAGE_FULL }}:$tag
           done
-          podman push \
+          podman push -q \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
@@ -352,7 +345,7 @@ jobs:
           cosign attest \
             --yes \
             --type vuln \
-            --predicate trivy.json \
+            --predicate ${{ github.workspace }}/current_trivy.json \
             ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
         env:
           DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
