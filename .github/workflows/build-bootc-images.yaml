@@ -271,7 +271,7 @@ jobs:
       - changes
       - build-bootc-image
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
