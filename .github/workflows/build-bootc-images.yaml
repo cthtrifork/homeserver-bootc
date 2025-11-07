@@ -249,7 +249,7 @@ jobs:
         uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ steps.metadata.outputs.tags }}
+          tags: ${{ steps.build-image.outputs.tags }}
           registry: ghcr.io/${{ github.repository }}
 
       - name: Push to Container registry
@@ -267,7 +267,7 @@ jobs:
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
         env:
-          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
+          TAGS: ${{ steps.build-image.outputs.tags }}
 
       - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -327,7 +327,7 @@ jobs:
         run: |
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
           cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
-          for tag in ${{ needs.build-bootc-image.outputs.tags }}; do
+          for tag in ${{ steps.build-image.outputs.tags }}; do
             cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
         env:
@@ -875,9 +875,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull and tag latest
+      - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} as latest
         shell: bash
         run: |
-          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
-          podman tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
-          podman push ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          crane cp ${{ env.IMAGE_FULL }}:${{ env.VERSION }} ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
