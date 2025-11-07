@@ -213,7 +213,7 @@ jobs:
         run: |
           #export XDG_RUNTIME_DIR="/tmp/run-$(id -u)"
           install -d -m 700 "$XDG_RUNTIME_DIR/podman"
-          loginctl enable-linger $(whoami)
+          loginctl enable-linger $(whoami) || true
           sleep 1
           podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
           export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
