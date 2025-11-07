@@ -207,14 +207,10 @@ jobs:
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
 
-      - name: debug delete me
-        run: |
-          podman images
-
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: ${{ env.PR_IMAGE }}
+          image-ref: ${{ env.PR_IMAGE }}
           ignore-unfixed: true
           format: table
           output: trivy-results.txt
@@ -229,7 +225,7 @@ jobs:
       - name: Trivy vuln scan (JSON)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: ${{ env.PR_IMAGE }}
+          image-ref: ${{ env.PR_IMAGE }}
           format: json
           output: ${{ github.workspace }}/trivy.json
           ignore-unfixed: true
@@ -365,7 +361,7 @@ jobs:
       - name: Trivy SBOM (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           scan-type: image
           format: "github"
           output: "dependency-results.sbom.json"
