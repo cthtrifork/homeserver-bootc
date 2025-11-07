@@ -211,11 +211,12 @@ jobs:
       - name: tmp debugging
         shell: bash
         run: |
-          # Launch the API server in the background and keep it alive for the job
-          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
-          sleep 1
+          export XDG_RUNTIME_DIR="/tmp/run-$(id -u)"
+          install -d -m 700 "$XDG_RUNTIME_DIR"
+          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman.sock" &
+          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman.sock"
           podman info
-          podman images ls -a
+          podman images ls
 
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
