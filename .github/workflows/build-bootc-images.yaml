@@ -126,7 +126,7 @@ jobs:
           password: ${{ secrets.PAT_RENOVATEBOT }}
           #auth_file_path: ${{ runner.temp }}/auth.json
 
-      - name: Load image
+      - name: Load latest image to speed up build
         shell: bash
         run: |
           podman pull -q ${{ env.BASE_IMAGE }} || true
@@ -147,10 +147,7 @@ jobs:
           # This generates all the tags for your image, you can add custom tags here too!
           # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
-            type=raw,value=${{ env.DEFAULT_TAG }},enable={{is_default_branch}}
             type=raw,value=${{ env.VERSION }}
-            type=raw,enable={{is_default_branch}},value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
-            type=raw,enable={{is_default_branch}},value={{date 'YYYYMMDD'}}
             type=sha,enable=${{ github.event_name == 'pull_request' }},format=long
             type=ref,event=pr
           labels: |
@@ -217,31 +214,16 @@ jobs:
           podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
           export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
           echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
-          podman info
-          podman images ls
+          #podman info
+          #podman images ls
 
-      - name: Trivy REPORT table (base:latest)
+      - name: Trivy REPORT table - ${{ env.VERSION }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.PR_IMAGE }}
+          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           ignore-unfixed: true
           format: table
-          output: trivy-results.txt
-          skip-setup-trivy: true
-          scanners: "vuln"
-          vuln-type: "library"
-          severity: "CRITICAL,HIGH,MEDIUM"
-        #env:
-        #  TRIVY_SKIP_DB_UPDATE: true
-        #  TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Trivy vuln scan (JSON)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.PR_IMAGE }}
-          format: json
-          output: ${{ github.workspace }}/trivy.json
-          ignore-unfixed: true
+          output: trivy-current-results.txt
           skip-setup-trivy: true
           scanners: "vuln"
           vuln-type: "library"
@@ -250,12 +232,6 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
-      - name: Upload trivy json report as a Github artifact
-        uses: actions/cache/save@v4
-        with:
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
-          path: "${{ github.workspace }}/trivy.json"
-
       - name: Publish Trivy Output to Summary
         run: | #sh
           {
@@ -263,13 +239,22 @@ jobs:
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```'
-            cat trivy-results.txt
+            cat trivy-current-results.txt
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
       - name: Push to Container registry
         id: push-to-ghcr
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ needs.build-bootc-image.outputs.tags }}
+          registry: ghcr.io/${{ github.repository }}
+
+      - name: Push to Container registry
+        if: false # disabled in favor of redhat-actions/push-to-registry
+        #id: push-to-ghcr
         run: |
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
@@ -284,10 +269,10 @@ jobs:
         env:
           TAGS: ${{ needs.build-bootc-image.outputs.tags }}
 
-      - name: Trivy REPORT (base:latest)
+      - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
+          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: "sarif"
@@ -302,19 +287,18 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
-        if: ${{ always() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sarif_file: "${{ github.workspace }}/trivy-results.sarif"
           category: trivy
 
-      - name: Trivy SBOM (base:latest)
+      - name: Trivy SBOM - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           scan-type: image
           format: "github"
-          output: "dependency-results.sbom.json"
+          output: "${{ github.workspace }}/dependency-results.sbom.json"
           github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
           scanners: "vuln"
           skip-setup-trivy: true
@@ -422,12 +406,33 @@ jobs:
         with:
           cache: true
 
-      - name: Download trivy.json
-        uses: actions/cache/restore@v4
+      - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
+          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          format: json
+          output: ${{ github.workspace }}/current_trivy.json
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          scanners: "vuln"
+          vuln-type: "library"
+          #severity: "CRITICAL,HIGH,MEDIUM"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
+      - name: Trivy vuln scan (JSON) - latest
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.BASE_IMAGE }}
+          format: json
+          output: ${{ github.workspace }}/latest_trivy.json
+          ignore-unfixed: true
+          #severity: HIGH,CRITICAL
+          scanners: "vuln"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Load images
         shell: bash
@@ -468,19 +473,6 @@ jobs:
           echo "pr_layers=$PR_LAYERS" >> $GITHUB_OUTPUT
           echo "labels_changed=$LABELS_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Trivy (base:latest)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          format: json
-          output: base_trivy.json
-          ignore-unfixed: true
-          #severity: HIGH,CRITICAL
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
       - name: Build report
         id: report
         shell: bash
@@ -497,8 +489,8 @@ jobs:
           elif [[ $delta -lt 0 ]]; then trend="-${delta_h}"
           else trend="±0"; fi
 
-          base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' base_trivy.json | sort || true)
-          pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' trivy.json   | sort || true)
+          base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' latest_trivy.json | sort || true)
+          pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' current_trivy.json   | sort || true)
           new=$(comm -13 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
           fix=$(comm -23 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
           new_n=$(printf "%s\n" "$new" | grep -c . || true)
@@ -569,9 +561,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           #auth_file_path: ${{ runner.temp }}/auth.json
-
-      #- name: Maximize build space
-      #  uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
 
       - name: Load PR image
         shell: bash
@@ -859,3 +848,36 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
+  push-latest:
+    name: "Push latest tag for: ${{ matrix.image }}"
+    if: ${{ always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    needs:
+      - build-bootc-image
+      - run-on-pr
+      - test
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
+        include:
+          - image: homeserver-gui
+            runner_name: arc-ubuntu
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and tag latest
+        shell: bash
+        run: |
+          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          podman tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          podman push ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
