@@ -351,6 +351,8 @@ jobs:
           done
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        env:
+          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
 
       - name: Trivy REPORT (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
