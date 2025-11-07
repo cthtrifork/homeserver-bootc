@@ -340,11 +340,17 @@ jobs:
 
       - name: Push to Container registry
         id: push-to-ghcr
-        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ needs.build-bootc-image.outputs.tags }}
-          registry: ghcr.io/${{ github.repository }}
+        run: |
+          podman push \
+            ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
+            --digestfile digest.txt
+          DIGEST=$(cat digest.txt)
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          for tag in $TAGS; do
+            crane cp ${{ env.IMAGE_FULL }}@$DIGEST "${{ env.IMAGE_FULL }}:$tag"
+          done
+
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Trivy REPORT (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
