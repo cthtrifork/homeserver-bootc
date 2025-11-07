@@ -436,12 +436,6 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
-      - name: Load images
-        shell: bash
-        run: | #sh
-          podman pull -q ${{ env.FULL_IMAGE }}:${{ env.VERSION }}
-          podman images
-
       - name: Inspect images (Podman)
         id: meta
         shell: bash
@@ -871,13 +865,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} as latest
         shell: bash
         run: |
