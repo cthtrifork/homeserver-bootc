@@ -95,6 +95,7 @@ jobs:
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
+      digest: ${{ steps.push-to-ghcr.outputs.digest }}
     permissions:
       contents: read
       packages: write
@@ -881,4 +882,4 @@ jobs:
         shell: bash
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          crane cp ${{ env.IMAGE_FULL }}:${{ env.VERSION }} ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          crane cp ${{ env.IMAGE_FULL }}:${{ needs.build-bootc-image.outputs.digest }} ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
