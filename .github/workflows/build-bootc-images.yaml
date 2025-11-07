@@ -860,7 +860,7 @@ jobs:
             -i "${SSH_KEY}" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            bash -s --
+            bash -l -s --
 
       - name: Verify ghcr.io auth
         env:
@@ -876,7 +876,7 @@ jobs:
             -p 2222 \
             "$SSH_USERNAME"@localhost \
               IMAGE_FULL="$IMAGE_FULL" \
-              bash -s --
+              bash -l -s --
 
       - name: Collect logs and stop QEMU
         if: always()
