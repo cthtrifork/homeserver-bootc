@@ -257,13 +257,19 @@ jobs:
       - name: Push to Container registry
         id: push-to-ghcr
         run: |
+          podman images ls --all
+          for tag in ${{ steps.build-image.outputs.tags }}; do
+            podman tag \
+              localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+              ${{ env.IMAGE_FULL }}:$tag
+          done
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
           echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
           for tag in $TAGS; do
-            crane cp ${{ env.IMAGE_FULL }}@$DIGEST "${{ env.IMAGE_FULL }}:$tag"
+            crane cp ${{ env.IMAGE_FULL }}@${DIGEST} "${{ env.IMAGE_FULL }}:$tag"
           done
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
