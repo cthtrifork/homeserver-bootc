@@ -39,6 +39,7 @@ runs:
 
     - name: Push to local registry
       shell: bash
+      if: "false" # Disable for now
       run: | #sh
         # Start a local registry
         podman run -d --name local-registry \
