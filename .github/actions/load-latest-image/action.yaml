@@ -31,9 +31,24 @@ runs:
         #skopeo copy \
         #  containers-storage:${{ env.IMAGE_FULL }}:latest \
         #  containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+        
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
         podman images
 
+    - name: Push to local registry
+      shell: bash
+      run: | #sh
+        # Start a local registry
+        podman run -d --name local-registry \
+          -p 5000:5000 \
+          -v registry-data:/var/lib/registry \
+          docker.io/library/registry:2
+  
+        # Tag the image for the local registry 
+        podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+
+        # Push to the local registry without tls
+        podman push --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
     - name: Enable Podman socket
       shell: bash
       run: | #sh
