@@ -7,8 +7,9 @@ runs:
       shell: bash
       run: |
         mkdir -p ~/.config/containers
-        mkdir -p /var/lib/mycontainers
+        sudo mkdir -p /var/lib/mycontainers
         sudo chmod -R a+rx /var/lib/mycontainers
+        sudo chown -R $(whoami):$(whoami) /var/lib/mycontainers
 
         cat > ~/.config/containers/storage.conf <<'EOF'
         [storage]
@@ -39,7 +40,6 @@ runs:
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
 
-
     - name: Push to local registry
       shell: bash
       if: "false" # Disable for now
@@ -49,7 +49,7 @@ runs:
           -p 5000:5000 \
           -v registry-data:/var/lib/registry \
           docker.io/library/registry:2
-  
+
         # Tag the image for the local registry 
         podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
 
