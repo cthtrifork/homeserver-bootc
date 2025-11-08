@@ -147,6 +147,7 @@ jobs:
           sudo mkdir -p /var/lib/mycontainers
           sudo chmod -R a+rx /var/lib/mycontainers 
           podman pull --root /var/lib/mycontainers -q ${{ env.BASE_IMAGE }} || true
+          #podman pull --root /var/lib/mycontainers -q ghcr.io/homeserver/larest || true
           sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
           podman images
 
@@ -265,19 +266,17 @@ jobs:
       - name: Push to Container registry
         id: push-to-ghcr
         run: |
-          for tag in $TAGS; do
-            podman tag \
-              localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
-              ${{ env.IMAGE_FULL }}:$tag
-          done
-          podman images
+          podman tag \
+            localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
           echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
           for tag in $TAGS; do
-            crane tag ${{ env.IMAGE_FULL }}@${DIGEST} "${{ env.IMAGE_FULL }}:$tag"
+            crane tag ${{ env.IMAGE_FULL }}@${DIGEST} "$tag"
           done
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
