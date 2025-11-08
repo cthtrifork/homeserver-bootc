@@ -187,7 +187,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          layers: true
+          layers: false
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"

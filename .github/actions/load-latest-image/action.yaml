@@ -35,9 +35,9 @@ runs:
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y skopeo
-        #skopeo copy \
-        #  containers-storage:${{ env.IMAGE_FULL }}:latest \
-        #  containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+        skopeo copy \
+          containers-storage:${{ env.IMAGE_FULL }}:latest \
+          containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
 
     - name: Push to local registry
       shell: bash
