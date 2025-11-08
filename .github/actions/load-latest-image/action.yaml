@@ -35,7 +35,7 @@ runs:
 
     - name: Move cache to local storage
       shell: bash
-      if: ${{ runner.environment }} == 'self-hosted'
+      if: "${{ runner.environment }} == 'self-hosted'"
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y skopeo
@@ -58,6 +58,7 @@ runs:
 
         # Push to the local registry without tls
         podman push --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+
     - name: Enable Podman socket
       shell: bash
       run: | #sh
