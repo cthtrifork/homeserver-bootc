@@ -7,7 +7,7 @@ runs:
       shell: bash
       run: |
         mkdir -p ~/.config/containers
-        sudo mkdir -p /var/lib/mycontainers
+        mkdir -p /var/lib/mycontainers
         sudo chmod -R a+rx /var/lib/mycontainers
 
         cat > ~/.config/containers/storage.conf <<'EOF'
@@ -24,18 +24,21 @@ runs:
     - name: Load latest image to speed up build
       shell: bash
       run: | #sh
-        #podman info
-        sudo apt-get update -qq
-        sudo apt-get install -y skopeo
         podman images
-       
         podman --root /var/lib/mycontainers pull -q ${{ env.IMAGE_FULL }}:latest || true
-        #skopeo copy \
-        #  containers-storage:${{ env.IMAGE_FULL }}:latest \
-        #  containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
-        
         sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
         podman images
+
+    - name: Move cache to local storage
+      shell: bash
+      if: "false" # Disable for now
+      run: | #sh
+        sudo apt-get update -qq
+        sudo apt-get install -y skopeo
+        skopeo copy \
+          containers-storage:${{ env.IMAGE_FULL }}:latest \
+          containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+
 
     - name: Push to local registry
       shell: bash
