@@ -10,6 +10,7 @@ runs:
         sudo mkdir -p /var/lib/shared
         sudo chmod -R a+rx /var/lib/shared
         sudo chown -R $(whoami):$(whoami) /var/lib/shared
+        mkdir -p /var/cache/dnf
 
         cat > ~/.config/containers/storage.conf <<'EOF'
         [storage]
@@ -65,3 +66,10 @@ runs:
         echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
         #podman info
         #podman images ls
+
+    - name: Enabled buildah support
+      shell: bash
+      run: | #sh
+        sudo apt-get update
+        sudo apt-get install -y buildah uidmap slirp4netns fuse-overlayfs
+        mkdir -p /home/runner/.cache/dnf

@@ -201,7 +201,8 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
-          #-v /var/cache/dnf:/var/cache/dnf:O # https://www.redhat.com/en/blog/speeding-container-buildah
+            -v /home/runner/.cache/dnf:/var/cache/dnf
+          # https://www.redhat.com/en/blog/speeding-container-buildah
           #--cache-from 127.0.0.1:5000/${{ env.IMAGE_NAME }}
 
       - name: Enable Podman socket
@@ -260,8 +261,6 @@ jobs:
               "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
               "docker://${{ env.IMAGE_FULL }}:${tag}"
           done
-
-
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
         env:
           TAGS: ${{ steps.metadata.outputs.tags }}
