@@ -12,7 +12,7 @@ runs:
         driver = "overlay"
 
         [storage.options]
-        additionalimagestores = [ "/var/lib/shared",]
+        additionalimagestores = [ "/var/lib/mycontainers",]
 
         [storage.options.overlay]
         mount_program = "/usr/bin/fuse-overlayfs"
