@@ -144,6 +144,7 @@ jobs:
         shell: bash
         run: |
           #podman info
+          sudo apt install -y skopeo
           podman images
           sudo mkdir -p /var/lib/mycontainers
           sudo chmod -R a+rx /var/lib/mycontainers 
