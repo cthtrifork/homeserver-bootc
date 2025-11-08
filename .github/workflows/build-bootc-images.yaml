@@ -273,13 +273,9 @@ jobs:
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
-          if [[ -z "${DIGEST}" ]]; then
-            echo "Failed to obtain image digest. Push may have failed or auth is missing." >&2
-            exit 1
-          fi
           echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
           for tag in $TAGS; do
-            crane cp ${{ env.IMAGE_FULL }}@${DIGEST} "${{ env.IMAGE_FULL }}:$tag"
+            crane tag ${{ env.IMAGE_FULL }}@${DIGEST} "${{ env.IMAGE_FULL }}:$tag"
           done
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
