@@ -28,9 +28,9 @@ runs:
         sudo mkdir -p /var/lib/shared
         sudo chmod -R a+rx /var/lib/shared 
         podman --root pull /var/lib/shared -q ${{ env.IMAGE_FULL }}:latest || true
-        skopeo copy \
-          containers-storage:${{ env.IMAGE_FULL }}:latest \
-          containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+        #skopeo copy \
+        #  containers-storage:${{ env.IMAGE_FULL }}:latest \
+        #  containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
         podman images
 
