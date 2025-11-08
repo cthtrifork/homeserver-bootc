@@ -148,7 +148,7 @@ jobs:
           sudo mkdir -p /var/lib/mycontainers
           sudo chmod -R a+rx /var/lib/mycontainers 
           podman pull --root /var/lib/mycontainers -q ${{ env.BASE_IMAGE }} || true
-          skopeo copy containers-storage:${{ env.BASE_IMAGE }} containers-storage:localhost/localhost/${{ env.IMAGE_NAME }}:latest
+          crane copy containers-storage:${{ env.BASE_IMAGE }} containers-storage:localhost/localhost/${{ env.IMAGE_NAME }}:latest
           sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
           podman images
 
