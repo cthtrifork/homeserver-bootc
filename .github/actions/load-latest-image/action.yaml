@@ -22,6 +22,9 @@ runs:
         mount_program = "/usr/bin/fuse-overlayfs"
         EOF
 
+        # workaround https://github.com/containers/podman/issues/21683
+        echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
+
     - name: Load latest image to speed up build
       shell: bash
       run: | #sh
