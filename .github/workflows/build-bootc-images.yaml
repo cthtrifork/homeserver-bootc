@@ -248,7 +248,7 @@ jobs:
         id: push-to-ghcr
         run: |
           podman images
-          for tag in ${{ steps.build-image.outputs.tags }}; do
+          for tag in $TAGS; do
             podman tag \
               localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
               ${{ env.IMAGE_FULL }}:$tag
@@ -264,7 +264,7 @@ jobs:
 
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
         env:
-          TAGS: ${{ steps.build-image.outputs.tags }}
+          TAGS: ${{ steps.metadata.outputs.tags }}
 
       - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
