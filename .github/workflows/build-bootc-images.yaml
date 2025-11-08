@@ -126,35 +126,8 @@ jobs:
           password: ${{ secrets.PAT_RENOVATEBOT }}
           #auth_file_path: ${{ runner.temp }}/auth.json
 
-      - name: Configure containers storage.conf
-        run: |
-          mkdir -p ~/.config/containers
-          cat > ~/.config/containers/storage.conf <<'EOF'
-          [storage]
-          driver = "overlay"
-
-          [storage.options]
-          additionalimagestores = [ "/var/lib/mycontainers",]
-
-          [storage.options.overlay]
-          mount_program = "/usr/bin/fuse-overlayfs"
-          EOF
-
       - name: Load latest image to speed up build
-        shell: bash
-        run: |
-          #podman info
-          sudo apt-get update -qq
-          sudo apt-get install -y skopeo
-          podman images
-          sudo mkdir -p /var/lib/mycontainers
-          sudo chmod -R a+rx /var/lib/mycontainers 
-          podman pull --root /var/lib/mycontainers -q ${{ env.BASE_IMAGE }} || true
-          skopeo copy \
-            containers-storage:${{ env.BASE_IMAGE }} \
-            containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
-          sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
-          podman images
+        uses: ./.github/actions/load-latest-image
 
       - name: Get current date
         id: date
@@ -238,13 +211,11 @@ jobs:
           podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
           export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
           echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
-          #podman info
-          #podman images ls
 
-      - name: Trivy REPORT table - ${{ env.VERSION }}
+      - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           ignore-unfixed: true
           format: table
           output: trivy-current-results.txt
@@ -272,13 +243,14 @@ jobs:
         id: push-to-ghcr
         run: |
           podman tag \
-            localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            ${{ env.LOCAL_PR_IMAGE }} \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
-          
+          echo "Push"
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
+          echo "Adding additional tags"
           echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
           for tag in $TAGS; do
             crane tag ${{ env.IMAGE_FULL }}@${DIGEST} "$tag"
@@ -290,8 +262,9 @@ jobs:
 
       - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        if: github.ref == 'refs/heads/main'
         with:
-          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: "sarif"
@@ -306,6 +279,7 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
+        if: github.ref == 'refs/heads/main'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sarif_file: "${{ github.workspace }}/trivy-results.sarif"
@@ -313,8 +287,9 @@ jobs:
 
       - name: Trivy SBOM - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        if: github.ref == 'refs/heads/main'
         with:
-          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           scan-type: image
           format: "github"
           output: "${{ github.workspace }}/dependency-results.sbom.json"
@@ -328,16 +303,17 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Upload trivy report as a Github artifact
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: trivy-${{ matrix.image }}-sbom-report
           path: "${{ github.workspace }}/dependency-results.sbom.json"
           retention-days: 20 # 90 is the default
 
-      - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
+      - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true
@@ -437,24 +413,15 @@ jobs:
         with:
           cache: true
 
+      - name: Load latest image to speed up build
+        uses: ./.github/actions/load-latest-image
+
       - name: Load PR image
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
-      - name: Enable Podman socket
-        shell: bash
-        run: |
-          install -d -m 700 "$XDG_RUNTIME_DIR/podman"
-          loginctl enable-linger $(whoami) || true
-          sleep 1
-          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
-          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
-          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
-          #podman info
-          #podman images ls
-
-      - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
+      - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
@@ -472,7 +439,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - latest
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
+          image-ref: ${{ env.IMAGE_FULL }}:latest
           format: json
           output: ${{ github.workspace }}/latest_trivy.json
           ignore-unfixed: true
@@ -489,7 +456,7 @@ jobs:
           set -euo pipefail
 
           BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:${{ env.VERSION }} | jq '.[0]')
-          PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
+          PR_RAW=$(podman image inspect "${{ env.LOCAL_PR_IMAGE }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
           PR_DIGEST=$(jq -r '.Digest // empty' <<<"$PR_RAW")
@@ -544,8 +511,8 @@ jobs:
             echo "### 🧾 Image diff"
             echo
             echo "**Repo:** ghcr.io/${{ github.repository }}"
-            echo "**Base:** \`${{ env.BASE_IMAGE }}\` (digest: ${{ steps.meta.outputs.base_digest || 'n/a' }})"
-            echo "**PR:** \`${{ env.PR_IMAGE }}\` (digest: ${{ steps.meta.outputs.pr_digest || 'n/a' }})"
+            echo "**Base:** \`${{ env.IMAGE_FULL }}:latest\` (digest: ${{ steps.meta.outputs.base_digest || 'n/a' }})"
+            echo "**PR:** \`${{ env.LOCAL_PR_IMAGE }}\` (digest: ${{ steps.meta.outputs.pr_digest || 'n/a' }})"
             #echo "- Trivy CVEs: ${pr_set}"
             echo
             echo "- Created: ${{ steps.meta.outputs.base_created }} → ${{ steps.meta.outputs.pr_created }}"
@@ -602,7 +569,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          #auth_file_path: ${{ runner.temp }}/auth.json
+
+      - name: Load latest image to speed up build
+        uses: ./.github/actions/load-latest-image
 
       - name: Load PR image
         shell: bash

@@ -1,0 +1,47 @@
+name: "Load latest image to speed up build"
+description: "Load latest image to speed up build"
+runs:
+  using: "composite"
+  steps:
+    - name: Configure containers storage.conf
+      shell: bash
+      run: |
+        mkdir -p ~/.config/containers
+        cat > ~/.config/containers/storage.conf <<'EOF'
+        [storage]
+        driver = "overlay"
+
+        [storage.options]
+        additionalimagestores = [ "/var/lib/shared",]
+
+        [storage.options.overlay]
+        mount_program = "/usr/bin/fuse-overlayfs"
+        EOF
+
+    - name: Load latest image to speed up build
+      shell: bash
+      run: | #sh
+        #podman info
+        sudo apt-get update -qq
+        sudo apt-get install -y skopeo
+        podman images
+        sudo mkdir -p /var/lib/shared
+        sudo chmod -R a+rx /var/lib/shared 
+        podman --root pull /var/lib/shared -q ${{ env.IMAGE_FULL }}:latest || true
+        skopeo copy \
+          containers-storage:${{ env.IMAGE_FULL:latest }} \
+          containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+        sudo chmod -R a+rx /var/lib/shared # podman bug workaround
+        podman images
+
+    - name: Enable Podman socket
+      shell: bash
+      run: | #sh
+        install -d -m 700 "$XDG_RUNTIME_DIR/podman"
+        loginctl enable-linger $(whoami) || true
+        sleep 1
+        podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
+        export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+        echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
+        #podman info
+        #podman images ls
