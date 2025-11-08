@@ -451,7 +451,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.IMAGE_FULL }}:${{ env.VERSION }
+          image-ref: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true
@@ -482,7 +482,7 @@ jobs:
         run: | #sh
           set -euo pipefail
 
-          BASE_RAW=$(podman image inspect localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} | jq '.[0]')
+          BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:${{ env.VERSION }} | jq '.[0]')
           PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
