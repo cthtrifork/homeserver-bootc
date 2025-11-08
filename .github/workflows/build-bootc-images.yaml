@@ -187,6 +187,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+          #layers: ${{ env.RUNNER_ENVIRONMENT == 'self-hosted' && 'false' || 'true' }}
           layers: false
           oci: false
           build-args: |
