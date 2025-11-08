@@ -316,6 +316,21 @@ jobs:
           path: "${{ github.workspace }}/dependency-results.sbom.json"
           retention-days: 20 # 90 is the default
 
+      - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          format: json
+          output: ${{ github.workspace }}/current_trivy.json
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          scanners: "vuln"
+          vuln-type: "library"
+          #severity: "CRITICAL,HIGH,MEDIUM"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
@@ -404,6 +419,11 @@ jobs:
         with:
           cache: true
 
+      - name: Load PR image
+        shell: bash
+        run: | #sh
+          sudo podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+
       - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -438,7 +458,7 @@ jobs:
         run: | #sh
           set -euo pipefail
 
-          BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]')
+          BASE_RAW=$(podman image inspect localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} | jq '.[0]')
           PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
