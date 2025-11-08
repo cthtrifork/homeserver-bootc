@@ -32,7 +32,7 @@ runs:
 
     - name: Move cache to local storage
       shell: bash
-      if: "false" # Disable for now
+      #if: "false" # Disable for now
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y skopeo
