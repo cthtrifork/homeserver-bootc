@@ -440,6 +440,19 @@ jobs:
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
+
+      - name: Enable Podman socket
+        shell: bash
+        run: |
+          install -d -m 700 "$XDG_RUNTIME_DIR/podman"
+          loginctl enable-linger $(whoami) || true
+          sleep 1
+          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
+          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
+          #podman info
+          #podman images ls
+
       - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -649,7 +662,7 @@ jobs:
         shell: bash
         env:
           CONFIG_FILE: ./out/config.toml
-          IMAGE: ${{ env.PR_IMAGE }}
+          IMAGE: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
           BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
           USE_LIBREPO: false
           IMAGE_TYPE: qcow2
