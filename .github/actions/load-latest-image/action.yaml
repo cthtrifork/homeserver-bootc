@@ -25,14 +25,14 @@ runs:
         sudo apt-get update -qq
         sudo apt-get install -y skopeo
         podman images
-        sudo mkdir -p /var/lib/shared
-        sudo chmod -R a+rx /var/lib/shared 
-        podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
+        sudo mkdir -p /var/lib/mycontainers
+        sudo chmod -R a+rx /var/lib/mycontainers
+        podman --root /var/lib/mycontainers pull -q ${{ env.IMAGE_FULL }}:latest || true
         #skopeo copy \
         #  containers-storage:${{ env.IMAGE_FULL }}:latest \
         #  containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
         
-        sudo chmod -R a+rx /var/lib/shared # podman bug workaround
+        sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
         podman images
 
     - name: Push to local registry
