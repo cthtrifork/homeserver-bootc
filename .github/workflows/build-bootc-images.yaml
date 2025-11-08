@@ -201,7 +201,6 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
-            --cache-from localhost/${{ env.IMAGE_NAME }}:latest
             -v /var/cache/dnf:/var/cache/dnf:O
 
       - name: Enable Podman socket
