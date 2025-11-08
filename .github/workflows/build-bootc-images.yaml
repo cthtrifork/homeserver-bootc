@@ -126,10 +126,26 @@ jobs:
           password: ${{ secrets.PAT_RENOVATEBOT }}
           #auth_file_path: ${{ runner.temp }}/auth.json
 
+      - name: Configure containers storage.conf
+        run: |
+          mkdir -p ~/.config/containers
+          cat > ~/.config/containers/storage.conf <<'EOF'
+          [storage]
+          driver = "overlay"
+
+          [storage.options]
+          additionalimagestores = [ "/var/lib/mycontainers",]
+
+          [storage.options.overlay]
+          mount_program = "/usr/bin/fuse-overlayfs"
+          EOF
+
       - name: Load latest image to speed up build
         shell: bash
         run: |
-          podman pull -q ${{ env.BASE_IMAGE }} || true
+          podman images
+          podman pull --root /var/lib/mycontainers -q ${{ env.BASE_IMAGE }} || true
+          sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
           podman images
 
       - name: Get current date
@@ -422,7 +438,7 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
       - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -577,7 +593,9 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          sudo podman pull -q \
+          --authfile /home/runner/.docker/config.json \
+          ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
