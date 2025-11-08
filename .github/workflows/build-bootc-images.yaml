@@ -126,8 +126,8 @@ jobs:
           password: ${{ secrets.PAT_RENOVATEBOT }}
           #auth_file_path: ${{ runner.temp }}/auth.json
 
-      - name: Load latest image to speed up build
-        uses: ./.github/actions/load-latest-image
+      #- name: Load latest image to speed up build
+      #  uses: ./.github/actions/load-latest-image
 
       - name: Get current date
         id: date
@@ -201,8 +201,8 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
-            --cache-from 127.0.0.1:5000/${{ env.IMAGE_NAME }}
             -v /var/cache/dnf:/var/cache/dnf:O
+          #--cache-from 127.0.0.1:5000/${{ env.IMAGE_NAME }}
 
       - name: Enable Podman socket
         shell: bash
