@@ -247,13 +247,12 @@ jobs:
       - name: Push to Container registry
         id: push-to-ghcr
         run: |
-          podman images
           for tag in $TAGS; do
             podman tag \
               localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
               ${{ env.IMAGE_FULL }}:$tag
           done
-          
+          podman images
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
