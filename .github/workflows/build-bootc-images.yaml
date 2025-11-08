@@ -149,7 +149,10 @@ jobs:
           sudo chmod -R a+rx /var/lib/mycontainers 
           podman pull --root /var/lib/mycontainers -q ${{ env.BASE_IMAGE }} || true
           podman tag ${{ env.BASE_IMAGE }} localhost/gui-bootc:latest
-          crane copy containers-storage:${{ env.BASE_IMAGE }} containers-storage:localhost/localhost/${{ env.IMAGE_NAME }}:latest
+          crane copy containers-storage:localhost/gui-bootc:latest containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+          skopeo copy \
+            containers-storage:ghcr.io/cthtrifork/homeserver-bootc/homeserver-gui-bootc:latest \
+            containers-storage:localhost/homeserver-gui-bootc:latest
           sudo chmod -R a+rx /var/lib/mycontainers # podman bug workaround
           podman images
 
