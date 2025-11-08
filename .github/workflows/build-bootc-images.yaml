@@ -440,7 +440,6 @@ jobs:
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
-
       - name: Enable Podman socket
         shell: bash
         run: |
@@ -456,7 +455,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - ${{ env.VERSION }}
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: localhost/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.IMAGE_FULL }}:${{ env.VERSION }
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true
@@ -632,7 +631,7 @@ jobs:
           {
             echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/"'
-            echo 'minsize   = "12 GiB"'
+            echo 'minsize   = "20 GiB"'
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
