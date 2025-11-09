@@ -24,10 +24,10 @@ jobs:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           older-than: 90 days
           delete-orphaned-images: true
-          #owner: ${{ github.repository_owner }}
+          owner: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
           #package: homeserver-bootc*
-          packages: homeserver-bootc*
+          packages: homeserver*
           expand-packages: true
           keep-n-tagged: 7
           keep-n-untagged: 7
