@@ -12,7 +12,7 @@ log "Starting system cleanup"
 
 # Clean package manager cache
 #dnf -y autoremove
-#dnf clean all
+dnf clean all
 
 # Clean temporary files
 rm -rf /tmp/*
