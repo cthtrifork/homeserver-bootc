@@ -43,6 +43,13 @@ runs:
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
 
+    - name: Copy fallback trivy db
+      if: ${{ runner.environment  == 'self-hosted' }}
+      shell: bash
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/.cache/trivy
+        cp -rv /home/runner/.cache/trivy/* $GITHUB_WORKSPACE/.cache/trivy/
+
     - name: Push to local registry
       shell: bash
       if: "false" # Disable for now
