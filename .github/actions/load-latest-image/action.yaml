@@ -46,7 +46,7 @@ runs:
     - name: Copy fallback trivy db
       if: ${{ runner.environment  == 'self-hosted' }}
       shell: bash
-      run: mkdir -p $GITHUB_WORKSPACE/.cache/trivy && cp -r $HOME/.cache/trivy $GITHUB_WORKSPACE/.cache/trivy
+      run: mkdir -p $GITHUB_WORKSPACE/.cache/trivy && cp -r /home/runner/.cache/trivy/ $GITHUB_WORKSPACE/.cache/trivy/
 
     - name: Push to local registry
       shell: bash
