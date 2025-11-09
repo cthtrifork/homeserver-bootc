@@ -586,7 +586,7 @@ jobs:
           sudo mkdir -p /var/lib/containers/storage
           echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
             | sudo tee /etc/containers/storage.conf
-          
+
           DB=/var/lib/containers/storage/db.sql
           if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
             # set GraphDriver if blank
@@ -901,6 +901,14 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Clone the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
+        with:
+          image: ${{ matrix.image }}
+
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} as latest
         shell: bash
         run: |
