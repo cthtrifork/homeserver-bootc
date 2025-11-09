@@ -384,7 +384,7 @@ jobs:
       - build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -914,4 +914,4 @@ jobs:
         shell: bash
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          skopeo copy "docker://${{ env.IMAGE_FULL }}:${{ needs.build-bootc-image.outputs.digest }}" "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+          skopeo copy "docker://${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}" "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
