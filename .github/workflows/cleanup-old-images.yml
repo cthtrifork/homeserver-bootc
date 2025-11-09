@@ -27,7 +27,7 @@ jobs:
           owner: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
           #package: homeserver-bootc*
-          packages: homeserver**
+          packages: homeserver-centos-bootc/**/*
           expand-packages: true
           keep-n-tagged: 7
           keep-n-untagged: 7
