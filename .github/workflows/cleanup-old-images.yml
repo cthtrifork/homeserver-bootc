@@ -27,7 +27,7 @@ jobs:
           #delete-untagged: true
           owner: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
-          packages: homeserver-centos-bootc/**/*,homeserver-centos-bootc/*,homeserver-*
+          packages: homeserver-centos-bootc/**/*,homeserver-centos-bootc/*,homeserver-*,homeserver-**
           expand-packages: true
           keep-n-tagged: 7
           #keep-n-untagged: 7
