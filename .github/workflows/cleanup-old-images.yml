@@ -25,8 +25,8 @@ jobs:
           #older-than: 90 days
           delete-orphaned-images: true
           delete-untagged: true
-          owner: ${{ github.repository_owner }}
-          repository: ${{ github.event.repository.name }}
+          #owner: ${{ github.repository_owner }}
+          #repository: ${{ github.event.repository.name }}
           #package: homeserver-bootc*
           packages: homeserver-centos-bootc/**/*
           expand-packages: true
