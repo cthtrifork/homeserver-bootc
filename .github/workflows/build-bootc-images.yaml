@@ -461,8 +461,8 @@ jobs:
         run: | #sh
           set -euo pipefail
 
-          BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:${{ env.VERSION }} | jq '.[0]')
-          PR_RAW=$(podman image inspect "${{ env.LOCAL_PR_IMAGE }}" | jq '.[0]')
+          BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:latest | jq '.[0]')
+          PR_RAW=$(podman image inspect "${{ env.IMAGE_FULL }}:${{ env.VERSION }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
           PR_DIGEST=$(jq -r '.Digest // empty' <<<"$PR_RAW")
@@ -579,6 +579,16 @@ jobs:
       - name: Load latest image to speed up build
         uses: ./.github/actions/load-latest-image
 
+      - name: Configure Podman
+        shell: bash
+        run: | #sh
+          sudo mkdir -p /etc/containers
+          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+            | sudo tee /etc/containers/storage.conf
+
+          # workaround https://github.com/containers/podman/issues/21683
+          echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
+
       - name: Load PR image
         shell: bash
         run: | #sh
@@ -617,16 +627,6 @@ jobs:
           } > out/config.toml
 
           cat ./out/config.toml
-
-      - name: Configure Podman
-        shell: bash
-        run: | #sh
-          sudo mkdir -p /etc/containers
-          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
-            | sudo tee /etc/containers/storage.conf
-
-          # workaround https://github.com/containers/podman/issues/21683
-          echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
       - name: Delete huge unnecessary tools folder
         run: |
