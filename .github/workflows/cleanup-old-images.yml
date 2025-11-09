@@ -26,7 +26,7 @@ jobs:
           delete-orphaned-images: true
           #owner: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
-          package: homeserver-bootc*
+          #package: homeserver-bootc*
           packages: homeserver-bootc*
           #expand-packages: true
           keep-n-tagged: 7
