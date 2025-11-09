@@ -1,9 +1,12 @@
 ---
 name: Cleanup Old Images
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   schedule:
-    - cron: "05 7 * * *"  # 7:05 UTC everyday
+    - cron: "05 7 * * *" # 7:05 UTC everyday
   workflow_dispatch:
+  push:
+    branches:
+      - main
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
 jobs:
