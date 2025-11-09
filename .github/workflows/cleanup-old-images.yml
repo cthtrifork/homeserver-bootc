@@ -31,5 +31,5 @@ jobs:
           packages: homeserver-centos-bootc/**/*
           expand-packages: true
           keep-n-tagged: 7
-          keep-n-untagged: 7
+          #keep-n-untagged: 7
           # dry-run: true
