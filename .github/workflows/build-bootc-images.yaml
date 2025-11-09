@@ -583,6 +583,7 @@ jobs:
         shell: bash
         run: | #sh
           sudo mkdir -p /etc/containers
+          sudo mkdir -p /var/lib/containers/storage
           echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
             | sudo tee /etc/containers/storage.conf
 
