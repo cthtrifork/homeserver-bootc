@@ -185,7 +185,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           #layers: ${{ runner.environment == 'self-hosted' && 'false' || 'true' }}
-          layers: false
+          layers: true
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
