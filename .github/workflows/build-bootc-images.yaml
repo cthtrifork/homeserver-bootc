@@ -95,10 +95,13 @@ jobs:
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
+      digest: ${{ steps.push-to-ghcr.outputs.digest }}
     permissions:
       contents: read
-      packages: read
+      packages: write
       id-token: write
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      attestations: write
 
     steps:
       - name: Clone the repository
@@ -121,13 +124,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
-          auth_file_path: ${{ runner.temp }}/auth.json
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
-      - name: Load image
-        shell: bash
-        run: |
-          podman pull -q ${{ env.BASE_IMAGE }} || true
-          podman images
+      - name: Load latest image to speed up build
+        uses: ./.github/actions/load-latest-image
 
       - name: Get current date
         id: date
@@ -144,10 +144,7 @@ jobs:
           # This generates all the tags for your image, you can add custom tags here too!
           # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
-            type=raw,value=${{ env.DEFAULT_TAG }},enable={{is_default_branch}}
             type=raw,value=${{ env.VERSION }}
-            type=raw,enable={{is_default_branch}},value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
-            type=raw,enable={{is_default_branch}},value={{date 'YYYYMMDD'}}
             type=sha,enable=${{ github.event_name == 'pull_request' }},format=long
             type=ref,event=pr
           labels: |
@@ -163,7 +160,6 @@ jobs:
           sep-tags: " "
           sep-annotations: " "
 
-      # Write secrets to temp files for --secret src=
       - name: Prepare build secrets
         shell: bash
         run: |
@@ -191,7 +187,8 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          layers: true
+          #layers: ${{ runner.environment == 'self-hosted' && 'false' || 'true' }}
+          layers: false
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
@@ -205,40 +202,27 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
+            -v /home/runner/.cache/dnf:/var/cache/dnf
+          # https://www.redhat.com/en/blog/speeding-container-buildah
+          #--cache-from 127.0.0.1:5000/${{ env.IMAGE_NAME }}
 
-      - name: Save PR image as tar
+      - name: Enable Podman socket
+        shell: bash
         run: |
-          #podman save --format docker-archive -o app-all-tags.tar $(podman images --format '{{.Repository}}:{{.Tag}}' | grep '^localhost/${{ env.IMAGE_NAME }}:')
-          podman save "${{ env.PR_IMAGE }}" > "${{ matrix.image }}.tar"
+          install -d -m 700 "$XDG_RUNTIME_DIR/podman"
+          loginctl enable-linger $(whoami) || true
+          sleep 1
+          podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
+          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
 
-      - name: Upload PR image
-        uses: actions/cache/save@v4
-        with:
-          path: "${{ github.workspace }}/${{ matrix.image }}.tar"
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-
-      - name: Trivy REPORT table (base:latest)
+      - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: "${{ matrix.image }}.tar"
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           ignore-unfixed: true
           format: table
-          output: trivy-results.txt
-          skip-setup-trivy: true
-          scanners: "vuln"
-          vuln-type: "library"
-          severity: "CRITICAL,HIGH,MEDIUM"
-        #env:
-        #  TRIVY_SKIP_DB_UPDATE: true
-        #  TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Trivy vuln scan (JSON)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          input: "${{ matrix.image }}.tar"
-          format: json
-          output: ${{ github.workspace }}/trivy.json
-          ignore-unfixed: true
+          output: trivy-current-results.txt
           skip-setup-trivy: true
           scanners: "vuln"
           vuln-type: "library"
@@ -247,12 +231,6 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
-      - name: Upload trivy json report as a Github artifact
-        uses: actions/cache/save@v4
-        with:
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
-          path: "${{ github.workspace }}/trivy.json"
-
       - name: Publish Trivy Output to Summary
         run: | #sh
           {
@@ -260,104 +238,39 @@ jobs:
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```'
-            cat trivy-results.txt
+            cat trivy-current-results.txt
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-  push-image:
-    name: Push image ${{ matrix.image }} to registry
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
-    # only run on main branch or if PR has "push" label
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
-    needs:
-      - changes
-      - build-bootc-image
-    continue-on-error: false
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      attestations: write
-
-    steps:
-      - name: Clone the repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-
-      - name: Set image vars
-        uses: ./.github/actions/set-image-vars
-        with:
-          image: ${{ matrix.image }}
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          auth_file_path: ${{ runner.temp }}/auth.json
-
-      - name: Manual Trivy Setup
-        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
-        with:
-          cache: true
-
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-
-          fail-on-cache-miss: true
-
-      - name: Download trivy report
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
-
-      - name: Load images
-        shell: bash
-        run: | #sh
-          set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
-          for tag in $TAGS; do
-            podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
-          done
-          podman images
-        env:
-          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
-
       - name: Push to Container registry
         id: push-to-ghcr
         run: |
+          podman tag \
+            ${{ env.LOCAL_PR_IMAGE }} \
+            ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          echo "Push"
           podman push \
             ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
-          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          echo "Adding additional tags"
+          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           for tag in $TAGS; do
-            crane cp ${{ env.IMAGE_FULL }}@$DIGEST "${{ env.IMAGE_FULL }}:$tag"
+            skopeo copy \
+              --all \
+              "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+              "docker://${{ env.IMAGE_FULL }}:${tag}"
           done
-
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
         env:
-          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
+          TAGS: ${{ steps.metadata.outputs.tags }}
 
-      - name: Trivy REPORT (base:latest)
+      - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        if: github.ref == 'refs/heads/main'
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: "sarif"
@@ -372,19 +285,20 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
-        if: ${{ always() }}
+        if: github.ref == 'refs/heads/main'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           sarif_file: "${{ github.workspace }}/trivy-results.sarif"
           category: trivy
 
-      - name: Trivy SBOM (base:latest)
+      - name: Trivy SBOM - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        if: github.ref == 'refs/heads/main'
         with:
-          input: ${{ matrix.image }}.tar
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
           scan-type: image
           format: "github"
-          output: "dependency-results.sbom.json"
+          output: "${{ github.workspace }}/dependency-results.sbom.json"
           github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
           scanners: "vuln"
           skip-setup-trivy: true
@@ -395,29 +309,40 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Upload trivy report as a Github artifact
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: trivy-${{ matrix.image }}-sbom-report
           path: "${{ github.workspace }}/dependency-results.sbom.json"
           retention-days: 20 # 90 is the default
 
+      - name: Trivy vuln scan (JSON) - current
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
+          format: json
+          output: ${{ github.workspace }}/current_trivy.json
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          scanners: "vuln"
+          vuln-type: "library"
+          #severity: "CRITICAL,HIGH,MEDIUM"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
-
-      - name: Compose immutable image ref (by digest)
-        id: ref
-        run: |
-          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
 
       - name: Sign container image
         run: |
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
-          for tag in ${{ needs.build-bootc-image.outputs.tags }}; do
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          for tag in ${{ steps.build-image.outputs.tags }}; do
             cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
         env:
-          TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
+          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
@@ -436,8 +361,10 @@ jobs:
           cosign attest \
             --yes \
             --type vuln \
-            --predicate trivy.json \
-            ${{ steps.ref.outputs.IMAGE_REF }}
+            --predicate ${{ github.workspace }}/current_trivy.json \
+            ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
+        env:
+          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
 
       - name: Verify
         run: |
@@ -485,33 +412,48 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          auth_file_path: ${{ runner.temp }}/auth.json
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
           cache: true
 
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
+      - name: Load latest image to speed up build
+        uses: ./.github/actions/load-latest-image
 
-      - name: Download trivy.json
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
-
-      - name: Load images
+      - name: Load PR image
         shell: bash
         run: | #sh
-          podman pull -q ${{ env.BASE_IMAGE }} || true
-          podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
-          podman images
+          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+
+      - name: Trivy vuln scan (JSON) - current
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          format: json
+          output: ${{ github.workspace }}/current_trivy.json
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          scanners: "vuln"
+          vuln-type: "library"
+          #severity: "CRITICAL,HIGH,MEDIUM"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
+      - name: Trivy vuln scan (JSON) - latest
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_FULL }}:latest
+          format: json
+          output: ${{ github.workspace }}/latest_trivy.json
+          ignore-unfixed: true
+          #severity: HIGH,CRITICAL
+          scanners: "vuln"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Inspect images (Podman)
         id: meta
@@ -519,8 +461,8 @@ jobs:
         run: | #sh
           set -euo pipefail
 
-          BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]')
-          PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
+          BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:latest | jq '.[0]')
+          PR_RAW=$(podman image inspect "${{ env.IMAGE_FULL }}:${{ env.VERSION }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
           PR_DIGEST=$(jq -r '.Digest // empty' <<<"$PR_RAW")
@@ -546,19 +488,6 @@ jobs:
           echo "pr_layers=$PR_LAYERS" >> $GITHUB_OUTPUT
           echo "labels_changed=$LABELS_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Trivy (base:latest)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          format: json
-          output: base_trivy.json
-          ignore-unfixed: true
-          #severity: HIGH,CRITICAL
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
       - name: Build report
         id: report
         shell: bash
@@ -575,8 +504,8 @@ jobs:
           elif [[ $delta -lt 0 ]]; then trend="-${delta_h}"
           else trend="±0"; fi
 
-          base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' base_trivy.json | sort || true)
-          pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' trivy.json   | sort || true)
+          base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' latest_trivy.json | sort || true)
+          pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' current_trivy.json   | sort || true)
           new=$(comm -13 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
           fix=$(comm -23 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
           new_n=$(printf "%s\n" "$new" | grep -c . || true)
@@ -588,8 +517,8 @@ jobs:
             echo "### 🧾 Image diff"
             echo
             echo "**Repo:** ghcr.io/${{ github.repository }}"
-            echo "**Base:** \`${{ env.BASE_IMAGE }}\` (digest: ${{ steps.meta.outputs.base_digest || 'n/a' }})"
-            echo "**PR:** \`${{ env.PR_IMAGE }}\` (digest: ${{ steps.meta.outputs.pr_digest || 'n/a' }})"
+            echo "**Base:** \`${{ env.IMAGE_FULL }}:latest\` (digest: ${{ steps.meta.outputs.base_digest || 'n/a' }})"
+            echo "**PR:** \`${{ env.LOCAL_PR_IMAGE }}\` (digest: ${{ steps.meta.outputs.pr_digest || 'n/a' }})"
             #echo "- Trivy CVEs: ${pr_set}"
             echo
             echo "- Created: ${{ steps.meta.outputs.base_created }} → ${{ steps.meta.outputs.pr_created }}"
@@ -655,14 +584,38 @@ jobs:
           key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
           fail-on-cache-miss: true
 
-      #- name: Maximize build space
-      #  uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
+      - name: Load latest image to speed up build
+        uses: ./.github/actions/load-latest-image
+
+      - name: Configure Podman
+        shell: bash
+        run: | #sh
+          sudo mkdir -p /etc/containers
+          sudo mkdir -p /var/lib/containers/storage
+          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+            | sudo tee /etc/containers/storage.conf
+          
+          DB=/var/lib/containers/storage/db.sql
+          if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
+            # set GraphDriver if blank
+            sudo sqlite3 "$DB" \
+              "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
+          fi
+
+          # initialize/upgrade storage metadata so the DB exists & matches the schema
+          sudo podman system migrate || true
+
+          # sanity check
+          sudo podman info
+          # workaround https://github.com/containers/podman/issues/21683
+          #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
-          rm ${{ github.workspace }}/${{ matrix.image }}.tar
+          sudo podman pull -q \
+          --authfile /home/runner/.docker/config.json \
+          ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
@@ -686,7 +639,7 @@ jobs:
           {
             echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/"'
-            echo 'minsize   = "12 GiB"'
+            echo 'minsize   = "20 GiB"'
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
@@ -695,16 +648,6 @@ jobs:
           } > out/config.toml
 
           cat ./out/config.toml
-
-      - name: Configure Podman
-        shell: bash
-        run: | #sh
-          sudo mkdir -p /etc/containers
-          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
-            | sudo tee /etc/containers/storage.conf
-
-          # workaround https://github.com/containers/podman/issues/21683
-          echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
       - name: Delete huge unnecessary tools folder
         run: |
@@ -716,7 +659,7 @@ jobs:
         shell: bash
         env:
           CONFIG_FILE: ./out/config.toml
-          IMAGE: ${{ env.PR_IMAGE }}
+          IMAGE: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
           BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
           USE_LIBREPO: false
           IMAGE_TYPE: qcow2
@@ -945,3 +888,29 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
+  push-latest:
+    name: "Push latest tag for: ${{ matrix.image }}"
+    if: ${{ always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    needs:
+      - changes
+      - build-bootc-image
+      - run-on-pr
+      - test
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
+        include:
+          - image: homeserver-gui
+            runner_name: arc-ubuntu
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} as latest
+        shell: bash
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          skopeo copy "docker://${{ env.IMAGE_FULL }}:${{ needs.build-bootc-image.outputs.digest }}" "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"

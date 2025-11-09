@@ -39,6 +39,5 @@ runs:
 
         echo "IMAGE_NAME=${IMAGE_NAME}" >> "$GITHUB_ENV"
         echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> "$GITHUB_ENV"
-        echo "BASE_IMAGE=ghcr.io/${{ github.repository }}/${IMAGE_NAME}:latest" >> "$GITHUB_ENV"
-        echo "PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> "$GITHUB_ENV"
+        echo "LOCAL_PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> "$GITHUB_ENV"
         echo "CONTAINERFILE=${CONTAINERFILE}" >> "$GITHUB_ENV"
