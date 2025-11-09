@@ -39,7 +39,7 @@ runs:
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y skopeo
-        skopeo copy \
+        skopeo copy -q \
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
 
@@ -81,6 +81,6 @@ runs:
     - name: Enabled buildah support
       shell: bash
       run: | #sh
-        sudo apt-get update
+        sudo apt-get update -qq
         sudo apt-get install -y buildah uidmap slirp4netns fuse-overlayfs
         mkdir -p /home/runner/.cache/dnf
