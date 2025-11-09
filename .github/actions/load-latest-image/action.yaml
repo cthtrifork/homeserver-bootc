@@ -27,6 +27,7 @@ runs:
 
     - name: Load latest image to speed up build
       shell: bash
+      if: "false"
       run: | #sh
         podman images
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
@@ -35,7 +36,8 @@ runs:
 
     - name: Move cache to local storage
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      if: "false"
+      #if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y skopeo
