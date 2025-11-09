@@ -914,4 +914,6 @@ jobs:
         shell: bash
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          skopeo copy "docker://${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}" "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+          skopeo copy --all \
+            "docker://${{ env.IMAGE_FULL }}:${{ env.VERSION }}" \
+            "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
