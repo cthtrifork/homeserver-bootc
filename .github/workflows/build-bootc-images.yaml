@@ -317,6 +317,7 @@ jobs:
           retention-days: 20 # 90 is the default
 
       - name: Trivy vuln scan (JSON) - current
+        if: github.ref == 'refs/heads/main'
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: ${{ env.LOCAL_PR_IMAGE }}
@@ -336,6 +337,7 @@ jobs:
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
       - name: Sign container image
+        if: github.ref == 'refs/heads/main'
         run: |
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
           cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
@@ -350,6 +352,7 @@ jobs:
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Attach build provenance attestation
+        if: github.ref == 'refs/heads/main'
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
@@ -357,6 +360,7 @@ jobs:
           push-to-registry: true
 
       - name: Cosign attest vulnerability results
+        if: github.ref == 'refs/heads/main'
         run: |
           # Attach the Trivy JSON as an attestation of type "vuln"
           cosign attest \
@@ -368,6 +372,7 @@ jobs:
           DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
 
       - name: Verify
+        if: github.ref == 'refs/heads/main'
         run: |
           cosign verify --key ./cosign.pub \
             ${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}
