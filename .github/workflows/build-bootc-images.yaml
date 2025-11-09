@@ -575,14 +575,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          auth_file_path: ${{ runner.temp }}/auth.json
-
-      - name: Download PR image
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-image-${{ matrix.image }}-${{ github.run_number }}
-          fail-on-cache-miss: true
 
       - name: Load latest image to speed up build
         uses: ./.github/actions/load-latest-image
