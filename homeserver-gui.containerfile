@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.19@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6
 FROM scratch AS ctx
-COPY / /
+COPY build_files/ /build_files/
+COPY system_files/ /system_files/
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
@@ -10,7 +11,7 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y \
+RUN dnf install -y --setopt install_weak_deps=false \
       gdm \
       gnome-session \
       plymouth-system-theme \
@@ -25,7 +26,7 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
 
 # Copy custom configuration files
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/
+COPY system_files/homeserver-gui/custom.conf /etc/gdm/    
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -40,4 +41,3 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
-
