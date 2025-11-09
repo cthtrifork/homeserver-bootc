@@ -885,7 +885,7 @@ jobs:
   push-latest:
     name: "Push latest tag for: ${{ matrix.image }}"
     if: ${{ always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     needs:
       - changes
       - build-bootc-image
