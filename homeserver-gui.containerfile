@@ -7,8 +7,6 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # Install GUI components (GDM + basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
-RUN dnf copr enable -y scottames/ghostty && \
-  dnf copr enable maveonair/jetbrains-mono-nerd-fonts
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
@@ -38,7 +36,15 @@ RUN dnf install -y --setopt install_weak_deps=false \
       grim \
       slurp \
       wl-clipboard \
-      fontconfig jetbrains-mono-nerd-fonts jetbrains-mononl-nerd-fonts
+			wget \
+      fontconfig
+
+# Jetbrains nerd font
+RUN wget -P ~/.local/share/fonts https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \
+	&& cd ~/.local/share/fonts \
+	&& unzip JetBrainsMono.zip \
+	&& rm JetBrainsMono.zip \
+	&& fc-cache -fv
 
 # Clone and install Segoe UI font
 RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux && \
