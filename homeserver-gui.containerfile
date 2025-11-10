@@ -39,11 +39,18 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service
 
-# Enable GUI by default
-RUN systemctl set-default graphical.target && \
-    systemctl enable lightdm.service
+# Ensure LightDM uses the gtk greeter
+RUN mkdir -p /etc/lightdm && \
+    printf "[Seat:*]\ngreeter-session=lightdm-gtk-greeter\n" > /etc/lightdm/lightdm.conf
+
+# Make graphical the default and ensure LightDM is enabled even if presets run
+RUN ln -sf /usr/lib/systemd/system/graphical.target /etc/systemd/system/default.target && \
+    systemctl enable lightdm.service && \
+    mkdir -p /usr/lib/systemd/system-preset && \
+    printf "enable lightdm.service\n" > /usr/lib/systemd/system-preset/99-lightdm.preset
+
+RUN mkdir -p /var/{lib,cache,log}/lightdm \
+  && chown lightdm:lightdm /var/{lib,cache,log}/lightdm
+  && restorecon -R /var/{lib,cache,log}/lightdm
 
 RUN bootc container lint
-
-
-
