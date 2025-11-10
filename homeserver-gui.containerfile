@@ -11,11 +11,19 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y --setopt install_weak_deps=false \
+RUN dnf -y --setopt=install_weak_deps=false install \
       lightdm \
-      lightdm-gtk \
-      @budgie-desktop \
-      brave-browser \
+      lightdm-gtk-greeter \
+      lightdm-gtk-greeter-settings \
+      budgie-desktop \
+      xorg-x11-server-Xorg \
+      xorg-x11-xauth \
+      xorg-x11-xinit \
+      mesa-dri-drivers \
+      mesa-libGL \
+      dbus-daemon \
+      polkit \
+      NetworkManager \
       ghostty \
       ffmpeg
 
@@ -36,5 +44,6 @@ RUN systemctl set-default graphical.target && \
     systemctl enable lightdm.service
 
 RUN bootc container lint
+
 
 
