@@ -885,12 +885,17 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
+        id: push-latest
         shell: bash
         run: | #sh
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
           skopeo copy --all \
+            --digestfile digest.txt \
             "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
             "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+
+          DIGEST=$(cat digest.txt)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
@@ -899,11 +904,11 @@ jobs:
         run: | #sh
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
           cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
-          #for tag in ${{ steps.build-image.outputs.tags }}; do
-          #  cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
-          #done
+        #for tag in ${{ steps.build-image.outputs.tags }}; do
+        #  cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
+        #done
         env:
-          DIGEST: ${{ needs.build-bootc-image.outputs.digest }}
+          DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
@@ -913,7 +918,7 @@ jobs:
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
-          subject-digest: ${{ needs.build-bootc-image.outputs.digest }}
+          subject-digest: ${{ steps.push-latest.outputs.digest }}
           push-to-registry: true
 
       - name: Cosign attest vulnerability results
@@ -925,7 +930,7 @@ jobs:
             --predicate ${{ github.workspace }}/current_trivy.json \
             ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
         env:
-          DIGEST: ${{ needs.build-bootc-image.outputs.digest }}
+          DIGEST: ${{ steps.push-latest.outputs.digest }}
 
       - name: Verify
         run: |
@@ -934,5 +939,5 @@ jobs:
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-          DIGEST: ${{ needs.build-bootc-image.outputs.digest }}
+          DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
