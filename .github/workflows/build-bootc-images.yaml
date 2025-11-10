@@ -28,7 +28,6 @@ env:
   IMAGE_DESC: "${{ github.event.repository.description }}"
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   DEFAULT_TAG: "latest"
-  VERSION: "0.1.${{ github.run_number }}"
   CONTEXT: ./
 
 jobs:
@@ -93,6 +92,8 @@ jobs:
         include:
           - image: homeserver-gui
             runner_name: arc-ubuntu
+          #- image: homeserver
+          #   runner_name: arc-ubuntu
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
@@ -113,23 +114,6 @@ jobs:
         with:
           image: ${{ matrix.image }}
 
-      - name: Manual Trivy Setup
-        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
-        #with:
-        #cache: true
-        #version: v0.67.2
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.PAT_RENOVATEBOT }}
-          #auth_file_path: ${{ runner.temp }}/auth.json
-
-      - name: Load latest image to speed up build
-        uses: ./.github/actions/load-latest-image
-
       - name: Get current date
         id: date
         run: |
@@ -138,6 +122,19 @@ jobs:
           # https://linux.die.net/man/1/date
           echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
+      - name: Ensure trivy is installed and DB is cached
+        uses: ./.github/actions/setup-trivy
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT_RENOVATEBOT }}
+
+      - name: Load latest image to speed up build
+        uses: ./.github/actions/load-latest-image
+
       - name: Image Metadata
         uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5
         id: metadata
@@ -145,7 +142,8 @@ jobs:
           # This generates all the tags for your image, you can add custom tags here too!
           # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
-            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.DOCKER_TAG }}
+            type=raw,value=${{ env.UNIQUE_VERSION }},enable={{is_default_branch}}
             type=sha,enable=${{ github.event_name == 'pull_request' }},format=long
             type=ref,event=pr
           labels: |
@@ -203,7 +201,7 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
-            -v /home/runner/.cache/dnf:/var/cache/dnf
+            -v /home/runner/.cache/dnf:/var/cache/dnf:O
           # https://www.redhat.com/en/blog/speeding-container-buildah
           #--cache-from 127.0.0.1:5000/${{ env.IMAGE_NAME }}
 
@@ -228,6 +226,7 @@ jobs:
           scanners: "vuln"
           vuln-type: "library"
           severity: "CRITICAL,HIGH,MEDIUM"
+          cache: "false"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -249,10 +248,10 @@ jobs:
         run: |
           podman tag \
             ${{ env.LOCAL_PR_IMAGE }} \
-            ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           echo "Push"
           podman push \
-            ${{ env.IMAGE_FULL }}:${{ env.VERSION }} \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
           echo "Adding additional tags"
@@ -280,6 +279,7 @@ jobs:
           scanners: "vuln"
           vuln-type: "library"
           severity: "CRITICAL,HIGH,MEDIUM"
+          cache: "false"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -305,6 +305,7 @@ jobs:
           skip-setup-trivy: true
           vuln-type: "library"
           severity: "CRITICAL,HIGH,MEDIUM"
+          cache: "false"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -318,6 +319,7 @@ jobs:
           retention-days: 20 # 90 is the default
 
       - name: Trivy vuln scan (JSON) - current
+        if: github.ref == 'refs/heads/main'
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: ${{ env.LOCAL_PR_IMAGE }}
@@ -327,54 +329,11 @@ jobs:
           skip-setup-trivy: true
           scanners: "vuln"
           vuln-type: "library"
+          cache: "false"
           #severity: "CRITICAL,HIGH,MEDIUM"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
-
-      - name: Sign container image
-        run: |
-          export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
-          for tag in ${{ steps.build-image.outputs.tags }}; do
-            cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
-          done
-        env:
-          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
-          COSIGN_EXPERIMENTAL: true
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-          COSIGN_PASSWORD: ""
-          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
-
-      - name: Attach build provenance attestation
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-        with:
-          subject-name: "${{ env.IMAGE_FULL }}"
-          subject-digest: ${{ steps.push-to-ghcr.outputs.digest }}
-          push-to-registry: true
-
-      - name: Cosign attest vulnerability results
-        run: |
-          # Attach the Trivy JSON as an attestation of type "vuln"
-          cosign attest \
-            --yes \
-            --type vuln \
-            --predicate ${{ github.workspace }}/current_trivy.json \
-            ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
-        env:
-          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
-
-      - name: Verify
-        run: |
-          cosign verify --key ./cosign.pub \
-            ${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}
-          cosign public-key --key env://COSIGN_PRIVATE_KEY
-        env:
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
@@ -384,7 +343,7 @@ jobs:
       - build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -415,28 +374,35 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           #auth_file_path: ${{ runner.temp }}/auth.json
 
-      - name: Manual Trivy Setup
-        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
-        with:
-          cache: true
+      - name: Get current date
+        id: date
+        run: |
+          # This generates a timestamp like
+          # 2022-02-08T15:38:15Z
+          # https://linux.die.net/man/1/date
+          echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
       - name: Load latest image to speed up build
         uses: ./.github/actions/load-latest-image
 
+      - name: Ensure trivy is installed and DB is cached
+        uses: ./.github/actions/setup-trivy
+
       - name: Load PR image
         shell: bash
         run: | #sh
-          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
 
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          image-ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true
           skip-setup-trivy: true
           scanners: "vuln"
+          cache: "false"
           vuln-type: "library"
           #severity: "CRITICAL,HIGH,MEDIUM"
         env:
@@ -449,6 +415,7 @@ jobs:
           image-ref: ${{ env.IMAGE_FULL }}:latest
           format: json
           output: ${{ github.workspace }}/latest_trivy.json
+          cache: "false"
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           scanners: "vuln"
@@ -463,7 +430,7 @@ jobs:
           set -euo pipefail
 
           BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:latest | jq '.[0]')
-          PR_RAW=$(podman image inspect "${{ env.IMAGE_FULL }}:${{ env.VERSION }}" | jq '.[0]')
+          PR_RAW=$(podman image inspect "${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
           PR_DIGEST=$(jq -r '.Digest // empty' <<<"$PR_RAW")
@@ -608,7 +575,7 @@ jobs:
         run: | #sh
           sudo podman pull -q \
           --authfile /home/runner/.docker/config.json \
-          ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
@@ -652,7 +619,7 @@ jobs:
         shell: bash
         env:
           CONFIG_FILE: ./out/config.toml
-          IMAGE: ${{ env.IMAGE_FULL }}:${{ env.VERSION }}
+          IMAGE: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
           USE_LIBREPO: false
           IMAGE_TYPE: qcow2
@@ -883,9 +850,9 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
 
   push-latest:
-    name: "Push latest tag for: ${{ matrix.image }}"
+    name: "Push and sign latest tag for: ${{ matrix.image }}"
     if: ${{ always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     needs:
       - changes
       - build-bootc-image
@@ -910,8 +877,55 @@ jobs:
         with:
           image: ${{ matrix.image }}
 
-      - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.VERSION }} as latest
+      - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
         shell: bash
-        run: |
+        run: | #sh
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          skopeo copy "docker://${{ env.IMAGE_FULL }}:${{ needs.build-bootc-image.outputs.digest }}" "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+          skopeo copy --all \
+            "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+            "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+
+      - name: Sign container image
+        run: | #sh
+          export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          #for tag in ${{ steps.build-image.outputs.tags }}; do
+          #  cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
+          #done
+        env:
+          DIGEST: ${{ needs.build-bootc-image.outputs.digest }}
+          COSIGN_EXPERIMENTAL: true
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ""
+          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
+
+      - name: Attach build provenance attestation
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: "${{ env.IMAGE_FULL }}"
+          subject-digest: ${{ needs.build-bootc-image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Cosign attest vulnerability results
+        run: |
+          # Attach the Trivy JSON as an attestation of type "vuln"
+          cosign attest \
+            --yes \
+            --type vuln \
+            --predicate ${{ github.workspace }}/current_trivy.json \
+            ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
+        env:
+          DIGEST: ${{ needs.build-bootc-image.outputs.digest }}
+
+      - name: Verify
+        run: |
+          cosign verify --key ./cosign.pub \
+            ${{ env.IMAGE_FULL }}@${DIGEST}
+          cosign public-key --key env://COSIGN_PRIVATE_KEY
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          DIGEST: ${{ needs.build-bootc-image.outputs.digest }}
+          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
