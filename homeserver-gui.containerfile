@@ -45,9 +45,9 @@ RUN mkdir -p /etc/lightdm && \
 
 # Make graphical the default and ensure LightDM is enabled even if presets run
 RUN ln -sf /usr/lib/systemd/system/graphical.target /etc/systemd/system/default.target && \
-    systemctl enable lightdm.service && \
-    mkdir -p /usr/lib/systemd/system-preset && \
-    printf "enable lightdm.service\n" > /usr/lib/systemd/system-preset/99-lightdm.preset
+    && systemctl enable lightdm.service && \
+    && mkdir -p /usr/lib/systemd/system-preset && \
+    && printf "enable lightdm.service\n" > /usr/lib/systemd/system-preset/99-lightdm.preset
 
 RUN mkdir -p /var/{lib,cache,log}/lightdm \
   && chown lightdm:lightdm /var/{lib,cache,log}/lightdm
