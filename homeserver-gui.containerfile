@@ -50,7 +50,7 @@ RUN ln -sf /usr/lib/systemd/system/graphical.target /etc/systemd/system/default.
     printf "enable lightdm.service\n" > /usr/lib/systemd/system-preset/99-lightdm.preset
 
 RUN mkdir -p /var/{lib,cache,log}/lightdm \
-  && chown lightdm:lightdm /var/{lib,cache,log}/lightdm
+  && chown lightdm:lightdm /var/{lib,cache,log}/lightdm \
   && restorecon -R /var/{lib,cache,log}/lightdm
 
 RUN bootc container lint
