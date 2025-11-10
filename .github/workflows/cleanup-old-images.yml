@@ -13,7 +13,8 @@ on: # yamllint disable-line rule:truthy
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
 jobs:
-  delete-older-than-90:
+  cleanup-homeserver-images:
+    name: Cleanup Homeserver Images
     runs-on: ubuntu-latest
     permissions:
       packages: write
