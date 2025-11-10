@@ -38,17 +38,17 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
         with:
           delete-untagged: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
 
       - name: Delete old PR Images
         uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
         with:
           delete-tags: pr-*
           older-than: 7 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
       
       - name: Delete ghost images
         uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
         with:
           delete-ghost-images: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
