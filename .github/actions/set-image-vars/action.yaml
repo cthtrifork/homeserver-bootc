@@ -36,8 +36,22 @@ runs:
             exit 1
             ;;
         esac
-
+        VERSION="v0.1"
+        UNIQUE_VERSION="${{github.ref_name}}-${VERSION}.${{ github.run_number }}" 
+        SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+        DOCKER_TAG=""
+        PR_NUMBER='${{ github.event.pull_request.number }}'
+        if [ -z "${PR_NUMBER}" ] || [ "${PR_NUMBER}" = "null" ]; then
+          DOCKER_TAG="${{github.ref_name}}-${VERSION}" # e.g., main-0.1
+        else
+          DOCKER_TAG="pr-${PR_NUMBER}-${VERSION}"
+        fi
+        echo "DOCKER_TAG=${DOCKER_TAG}" >> "$GITHUB_ENV"
+        echo "UNIQUE_VERSION=${UNIQUE_VERSION}" >> "$GITHUB_ENV"
+        
         echo "IMAGE_NAME=${IMAGE_NAME}" >> "$GITHUB_ENV"
         echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> "$GITHUB_ENV"
-        echo "LOCAL_PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> "$GITHUB_ENV"
+        echo "LOCAL_PR_IMAGE=localhost/${IMAGE_NAME}:${DOCKER_TAG}" >> "$GITHUB_ENV"
         echo "CONTAINERFILE=${CONTAINERFILE}" >> "$GITHUB_ENV"
+
+
