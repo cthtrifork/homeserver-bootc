@@ -880,6 +880,9 @@ jobs:
           DIGEST=$(cat digest.txt)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
+      - name: Ensure trivy is installed and DB is cached
+        uses: ./.github/actions/setup-trivy
+
       - name: Trivy vuln scan (JSON)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
