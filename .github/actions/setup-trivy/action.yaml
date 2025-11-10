@@ -1,0 +1,26 @@
+name: "Ensure trivy is installed and DB is cached"
+description: "Ensure trivy is installed and its database is cached for faster scans"
+runs:
+  using: "composite"
+  steps:
+    - name: Get current date
+      shell: bash
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+    - name: Manual Trivy Setup
+      uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
+
+    - name: Copy fallback trivy db
+      if: ${{ runner.environment  == 'self-hosted' }}
+      shell: bash
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/.cache/trivy
+        cp -rv /home/runner/.cache/trivy/* $GITHUB_WORKSPACE/.cache/trivy/
+
+    - name: Restore DB from cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ${{ github.workspace }}/.cache/trivy
+        key: cache-trivy-${{ steps.date.outputs.date }}
+        restore-keys: cache-trivy-

@@ -1,0 +1,14 @@
+name: Cleanup Pull Request Images
+on:
+  pull_request:
+    types: [closed]
+jobs:
+  ghcr-cleanup-image:
+    name: ghcr cleanup action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete image
+        uses: dataaxiom/ghcr-cleanup-action@cd0cdb900b5dbf3a6f2cc869f0dbb0b8211f50c4 # v1.0.16
+        with:
+          delete-tags: pr-${{github.event.pull_request.number}}
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc

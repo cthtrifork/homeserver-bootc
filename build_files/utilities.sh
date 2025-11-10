@@ -119,7 +119,7 @@ curl -sLo /tmp/shfmt \
 install -o root -g root -m 0755 /tmp/shfmt /usr/bin/shfmt
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.11.3" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.11.5" # renovate: datasource=github-releases depName=siderolabs/talos
 curl -sLo /tmp/talosctl \
     "$(/ctx/build_files/github-release-url.sh siderolabs/talos talosctl-${MACHINE}.${ARCH} $TALOSCTL_VERSION)"
 install -o root -g root -m 0755 /tmp/talosctl /usr/bin/talosctl

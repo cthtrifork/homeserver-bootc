@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.19@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6
 FROM scratch AS ctx
-COPY / /
+COPY build_files/ /build_files/
+COPY system_files/ /system_files/
 
 FROM quay.io/fedora/fedora-bootc:42
 
@@ -35,7 +36,7 @@ RUN --mount=type=secret,id=creds,required=true \
 
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
-RUN dnf -y install \
+RUN dnf -y --setopt install_weak_deps=false install \
       dnf5-plugins \
       ca-certificates \
       dnf-plugins-core \
@@ -50,7 +51,9 @@ RUN dnf -y install \
       python3-pip \
       tree \
       git \
-      make
+      make \
+      xclip \
+      xorg-x11-server-Xvfb
 
 # pip3 dependencies
 RUN pip3 install glances
@@ -84,3 +87,7 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
+
+
+
