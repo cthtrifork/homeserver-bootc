@@ -38,7 +38,7 @@ RUN dnf install -y --setopt install_weak_deps=false \
       grim \
       slurp \
       wl-clipboard \
-      jetbrains-mono-nerd-fonts jetbrains-mononl-nerd-fonts
+      fontconfig jetbrains-mono-nerd-fonts jetbrains-mononl-nerd-fonts
 
 # Clone and install Segoe UI font
 RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux && \
@@ -47,11 +47,7 @@ RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux && \
     ./install.sh && \
     rm -rf /tmp/segoe-ui-linux
 
-#RUN dnf5 group install -y sway-desktop-environment
-#RUN dnf5 swap -y @workstation-product-environment @sway-desktop-environment
-#RUN dnf5 swap -y fedora-release-identity-workstation fedora-release-identity-sway
-#RUN dnf5 remove -y gnome-shell gnome-classic-session || true
-RUN dnf remove gnome-*
+RUN dnf -y remove gnome-*
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
@@ -73,9 +69,10 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl disable pinggy.service
 
 # Enable GUI by default
+# Add service to launch sway? and what about lock-screen
 RUN systemctl set-default graphical.target
-# systemctl enable gdm.service
 
 RUN bootc container lint
+
 
 
