@@ -40,6 +40,13 @@ RUN dnf install -y --setopt install_weak_deps=false \
       wl-clipboard \
       jetbrains-mono-nerd-fonts jetbrains-mononl-nerd-fonts
 
+# Clone and install Segoe UI font
+RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux && \
+    cd /tmp/segoe-ui-linux && \
+    chmod +x install.sh && \
+    ./install.sh && \
+    rm -rf /tmp/segoe-ui-linux
+
 #RUN dnf5 group install -y sway-desktop-environment
 #RUN dnf5 swap -y @workstation-product-environment @sway-desktop-environment
 #RUN dnf5 swap -y fedora-release-identity-workstation fedora-release-identity-sway
@@ -70,4 +77,5 @@ RUN systemctl set-default graphical.target
 # systemctl enable gdm.service
 
 RUN bootc container lint
+
 
