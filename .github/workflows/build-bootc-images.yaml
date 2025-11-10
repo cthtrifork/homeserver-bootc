@@ -318,23 +318,6 @@ jobs:
           path: "${{ github.workspace }}/dependency-results.sbom.json"
           retention-days: 20 # 90 is the default
 
-      - name: Trivy vuln scan (JSON) - current
-        if: github.ref == 'refs/heads/main'
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.LOCAL_PR_IMAGE }}
-          format: json
-          output: ${{ github.workspace }}/current_trivy.json
-          ignore-unfixed: true
-          skip-setup-trivy: true
-          scanners: "vuln"
-          vuln-type: "library"
-          cache: "false"
-          #severity: "CRITICAL,HIGH,MEDIUM"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
     runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
@@ -896,6 +879,22 @@ jobs:
 
           DIGEST=$(cat digest.txt)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Trivy vuln scan (JSON)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
+          format: json
+          output: ${{ github.workspace }}/current_trivy.json
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          scanners: "vuln"
+          vuln-type: "library"
+          cache: "false"
+          #severity: "CRITICAL,HIGH,MEDIUM"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
