@@ -9,10 +9,12 @@
     "height": 41,
     "modules-left": [
         "custom/os_button",
-        "hyprland/workspaces",
-        "wlr/taskbar"
+        "sway/window",
+        "sway/mode"
     ],
-    "modules-center": [],
+    "modules-center": [
+        "sway/workspaces"
+    ],
     "modules-right": [
         "cpu",
         "memory",
@@ -23,11 +25,17 @@
         "battery",
         "clock"
     ],
-    "hyprland/workspaces": {
-        "icon-size": 32,
-        "spacing": 16,
-        "on-scroll-up": "hyprctl dispatch workspace r+1",
-        "on-scroll-down": "hyprctl dispatch workspace r-1"
+    "sway/window": {
+        "format": "{}",
+        "max-length": 50,
+        "rewrite": {
+            "": "\uf015  ",
+            "(.*) - Visual Studio Code": "\uf121  $1",
+            "(.*) - Brave": "\uf268  $1",
+            "xterm-ghostty - (.*)": "\uf120  $1",
+            "(.*) — Mozilla Firefox": "\ue007  $1",
+            "Volume Control": "\uf027  Volume Control"
+        }
     },
     "custom/os_button": {
         "format": "",
@@ -39,21 +47,13 @@
         "format": "  {usage}%",
         "max-length": 10
     },
-    "temperature": {
-        "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
-        "input-filename": "temp2_input",
-        "critical-threshold": 75,
-        "tooltip": false,
-        "format-critical": "({temperatureC}°C)",
-        "format": "({temperatureC}°C)"
-    },
     "disk": {
         "interval": 30,
         "format": "󰋊 {percentage_used}%",
         "path": "/",
         "tooltip": true,
         "unit": "GB",
-        "tooltip-format":  "Available {free} of {total}"
+        "tooltip-format": "Available {free} of {total}"
     },
     "memory": {
         "interval": 10,
