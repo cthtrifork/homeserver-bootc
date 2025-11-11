@@ -24,20 +24,22 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
 # https://www.reddit.com/r/swaywm/comments/11rc1a9/just_a_rice_post_with_wofi_and_waybar_configs_i/
 
 RUN dnf install -y --setopt install_weak_deps=false \
-      wget \
-      brave-browser \
-      ghostty \
-      ffmpeg \
-      wofi \
-      mako \
-      brightnessctl \
-      pavucontrol \
-      sway \
-      waybar \
-      wlogout \
-      grim \
-      slurp \
-      wl-clipboard
+    wget \
+    brave-browser \
+    ghostty \
+    ffmpeg \
+    wofi \
+    mako \
+    brightnessctl \
+    pavucontrol \
+    sway \
+    swayidle \
+    swaylock \
+    waybar \
+    wlogout \
+    grim \
+    slurp \
+    wl-clipboard
 
 # Jetbrains nerd font
 RUN wget -P /usr/share/fonts/ https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \

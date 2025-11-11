@@ -28,6 +28,11 @@
             "Volume Control": "\uf027  Volume Control"
         }
     },
+    "custom/os_button": {
+        "format": "",
+        "on-click": "wofi --show drun",
+        "tooltip": false
+    },
     "sway/workspaces": {
         "disable-scroll": true,
         "all-outputs": true,
@@ -48,6 +53,11 @@
             "default": ""
         }
     },
+    "cpu": {
+        "interval": 5,
+        "format": "  {usage}%",
+        "max-length": 10
+    },
     "clock": {
         "format": "{:%a %d %b  %H:%M}",
         "tooltip": false
@@ -57,7 +67,8 @@
     },
     "tray": {
         "spacing": 10,
-        "show-passive-items": true
+        "show-passive-items": true,
+        "icon-size": 15
     },
     "network": {
         "interval": 5,
