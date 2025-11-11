@@ -851,6 +851,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      attestations: write
     steps:
       - name: Clone the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -880,10 +883,13 @@ jobs:
           DIGEST=$(cat digest.txt)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
+      - name: Ensure trivy is installed and DB is cached
+        uses: ./.github/actions/setup-trivy
+
       - name: Trivy vuln scan (JSON)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.LOCAL_PR_IMAGE }}
+          image-ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true
