@@ -15,21 +15,14 @@
     "modules-center": [],
     "modules-right": [
         "cpu",
-        "temperature",
         "memory",
         "disk",
         "tray",
         "pulseaudio",
         "network",
         "battery",
-        "hyprland/language",
         "clock"
     ],
-    "hyprland/language": {
-        "format": "{}",
-        "format-en": "ENG",
-        "format-ru": "РУС"
-    },
     "hyprland/workspaces": {
         "icon-size": 32,
         "spacing": 16,
