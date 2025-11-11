@@ -1,103 +1,237 @@
-# Use your laptop keyboard layout (change if needed)
-input * {
-    xkb_layout dk
-}
+### Sway Configuration
 
-# Set the modifier key (Super/Win)
-set $mod Mod4
+### Variables
+	set $mod Mod4
+	# set $mod Mod1
 
-# Terminal(s)
-set $term xterm-ghostty
+	# Home row direction keys, like vim
+	set $left h
+	set $down j
+	set $up k
+	set $right l
 
-# Browser / webapps
-set $brave brave-browser --ozone-platform=wayland
+	# Sursor movement
+	set $fast 50
+	set $slow 10
+
+	# Preferred terminal emulator
+	set $term xterm-ghostty
+
+	# Browser / webapps
+	set $brave brave-browser --ozone-platform=wayland
 
 # Screenshot helpers
 set $screenshot grim
 set $region slurp
 
+	# Screensaver
 
-# Default wallpaper (solid color fallback)
-output * bg #222222 solid_color
+	# ScreenSaver preferences
+	set $screensave_time 2700
+	set $sleep_time 3500
 
-### --------------------------------------------------
-### Autostart
-### --------------------------------------------------
-# Status bar
-#exec waybar
+### Appearance
 
-# Notifications (only if you install it)
-exec mako
+	# Default wallpaper (solid color fallback)
+	output * bg #222222 solid_color
+    focus_wrapping no
 
-# Clipboard manager (if you install wl-clipboard manager)
-# none needed – wl-copy / wl-paste are CLI
+    # Window colors
+    # Class                 border  Backgr  Text    indicator   child_border
+    client.focused          #ffffff #ffffff #ffffff #0066ff     #ffffff
+    client.unfocused        #4080bf #4080bf #4080bf #4080bf     #4080bf
+    client.urgent           #33ccff #33ccff #33ccff #33ccff     #33ccff
 
-# Start webapps on login
-# Teams on workspace 2
-exec $brave --app=https://teams.microsoft.com
-# Outlook / webmail on workspace 3
-exec $brave --app=https://webmail.trifork.com/
+	# SwayFX
+	corner_radius 10
+	shadows enable
+	shadows_on_csd enable
+	shadow_blur_radius 20
+	shadow_color #0000007F
+	# inactive window fade amount. 0.0 = no dimming, 1.0 = fully dimmed
+	default_dim_inactive 0.0
+	dim_inactive_colors.unfocused #000000FF
+	dim_inactive_colors.urgent #900000FF
 
-### --------------------------------------------------
-### Workspace rules (put apps where they belong)
-### --------------------------------------------------
-# You can inspect app_id/class with:  `swaymsg -t get_tree | jq .`
-# Brave in app mode usually uses the domain as app_id
-assign [app_id="teams.microsoft.com"] 2
-assign [app_id="outlook.office.com"] 3
+	# Third-party SwayFx effects
+	layer_effects "gtk-layer-shell" blur enable; shadows enable; corner_radius 13
+	# layer_effects "fuzzel" blur enable; shadows enable; corner_radius 13
+	layer_effects "wlogout" blur enable; shadows enable; corner_radius 13
 
-# Your main coding workspace
-# (you can open VS Code here manually)
-# assign [class="code"] 1
+	# Gaps
+	gaps inner 10
+	gaps outer 4
+	smart_gaps on
+	default_border pixel 3
 
-### --------------------------------------------------
-### Workspaces
-### --------------------------------------------------
-set $ws1 1:main
-set $ws2 2:teams
-set $ws3 3:mail
+### Key bindings
+    ## Volume
+    bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+    bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+	bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
+	# Media playerctl  
+	bindsym XF86AudioNext exec playerctl next
+	bindsym XF86AudioPrev exec playerctl previous
+	bindsym XF86AudioPlay exec playerctl play-pause
 
-### --------------------------------------------------
-### Screenshots (grim + slurp)
-### --------------------------------------------------
-# Fullscreen to ~/Pictures
-bindsym Print exec mkdir -p ~/Pictures && $screenshot ~/Pictures/screenshot-$(date +'%F-%T').png
+	# Backlight
+	bindsym XF86MonBrightnessUp exec light -A 5
+	bindsym XF86MonBrightnessDown exec light -U 5
 
-# Select area
-bindsym Shift+Print exec mkdir -p ~/Pictures && $screenshot -g "$($region)" ~/Pictures/screenshot-$(date +'%F-%T').png
+    # Leds
+    bindsym XF86KbdBrightnessUp exec light -A 5 -s sysfs/leds/smc::kbd_backlight
+    bindsym XF86KbdBrightnessDown exec light -U 5 -s sysfs/leds/smc::kbd_backlight
 
+    # Screenshot
+    bindsym XF86LaunchA exec grim -g "$(slurp)" $HOME/Documents/Pictures/Screenshots/$(date +'screenshot_%y-%m-%d-%H:%M.png')
 
-### --------------------------------------------------
-### Keybindings: launching
-### --------------------------------------------------
-# Terminal
-bindsym $mod+Return exec $term
+    # Kill focused window
+    bindsym $mod+Shift+q kill
 
-# App launcher (if you install wofi)
-bindsym $mod+d exec wofi --show drun
+    # mouse button for dragging.
+    floating_modifier $mod normal
 
-# Browser standard window
-bindsym $mod+b exec $brave
+	# Lock screen
+	bindsym $mod+Shift+backspace exec swaylock -C $HOME/.swaylock/config
 
-### Bar
-  bar {
-    swaybar_command waybar
-  }
+    # Reload the configuration file
+    bindsym $mod+Shift+r reload
 
+    # Exit sway (logs you out of your Wayland session)
+    bindsym $mod+Shift+e exec wlogout
 
-### Styling
-  # Gaps
-  gaps inner 5
-  gaps outer 0
-  smart_gaps on
+### Applications shortcuts 
+	# Launcher
+	bindsym $mod+space exec --no-startup-id wofi --show drun -I -i
+	#bindsym $mod+space exec "fuzzel"
 
-  # Borders
-  default_border pixel 3
-  for_window [class=".*"] border pixel 3
+	# Start a terminal
+    bindsym $mod+Return exec $term
 
-### Colors
-  # Class                   Border      BG          Text        Indicator   Child border
-  client.focused            #c5c8c6bf   #1d1f21bb   #ffffff     #fffffff2   #c5c8c6bf
-  client.unfocused          #1d1f2166   #1d1f2188   #ffffff     #000000ee   #1d1f2166
-  client.focused_inactive   #c5c8c644   #1d1f2199   #ffffff     #ffffff88   #c5c8c644
-  client.background         #1d1f21f2
+	# Browsers
+	bindsym $mod+Shift+f exec $brave
+
+    # Explorer
+    #bindsym $mod+n exec kitty --class=ranger sh -c "source ~/.zshrc & source ranger"
+
+	# spotify-tui
+	# bindsym $mod+s exec kitty --class=spotify -e "spt"
+
+### Moving around:
+    # Move your focus around
+    bindsym $mod+$left focus left
+    bindsym $mod+$down focus down
+    bindsym $mod+$up focus up
+    bindsym $mod+$right focus right
+    bindsym $mod+Left focus left
+    bindsym $mod+Down focus down
+    bindsym $mod+Up focus up
+    bindsym $mod+Right focus right
+
+    # Move the focused window with the same, but add Shift
+    bindsym $mod+Shift+$left move left
+    bindsym $mod+Shift+$down move down
+    bindsym $mod+Shift+$up move up
+    bindsym $mod+Shift+$right move right
+
+### Workspaces:
+    # Switch to workspace
+    bindsym $mod+1 workspace number 1
+    bindsym $mod+2 workspace number 2
+    bindsym $mod+3 workspace number 3
+    bindsym $mod+4 workspace number 4
+    bindsym $mod+5 workspace number 5
+    bindsym $mod+6 workspace number 6
+    bindsym $mod+7 workspace number 7
+    bindsym $mod+8 workspace number 8
+    bindsym $mod+9 workspace number 9
+    bindsym $mod+0 workspace number 10
+    # Move focused container to workspace
+    bindsym $mod+Shift+1 move container to workspace number 1
+    bindsym $mod+Shift+2 move container to workspace number 2
+    bindsym $mod+Shift+3 move container to workspace number 3
+    bindsym $mod+Shift+4 move container to workspace number 4
+    bindsym $mod+Shift+5 move container to workspace number 5
+    bindsym $mod+Shift+6 move container to workspace number 6
+    bindsym $mod+Shift+7 move container to workspace number 7
+    bindsym $mod+Shift+8 move container to workspace number 8
+    bindsym $mod+Shift+9 move container to workspace number 9
+    bindsym $mod+Shift+0 move container to workspace number 10
+
+### Layout stuff:
+    # toggle next window split direction
+    bindsym $mod+backspace split toggle
+    # set current floating window to sticky
+    bindsym $mod+Shift+Up sticky toggle
+    #bindsym $mod+s layout stacking
+    bindsym $mod+t layout tabbed
+    bindsym $mod+e layout toggle split
+    bindsym $mod+f fullscreen
+    bindsym $mod+Shift+space floating toggle
+    bindsym $mod+ctrl+space focus mode_toggle
+
+### Scratchpad:
+	bindsym $mod+Shift+minus move scratchpad
+	bindsym $mod+minus scratchpad show
+
+	# Move cursor
+	mode "mouse" {
+	bindsym KP_Left seat - cursor move -10 0
+	bindsym KP_Down seat - cursor move 0 10
+	bindsym KP_Up seat - cursor move 0 -10
+	bindsym KP_Right seat - cursor move 10 0
+
+	bindsym Shift+KP_Left seat - cursor move -50 0
+	bindsym Shift+KP_Down seat - cursor move 0 50
+	bindsym Shift+KP_Up seat - cursor move 0 -50
+	bindsym Shift+KP_Right seat - cursor move 50 0
+
+	bindsym --release KP_Begin seat - cursor press button1, seat - cursor release button1
+	bindsym --release KP_DELETE seat - cursor press button3, seat - cursor release button3
+	bindsym Return mode "default"
+    bindsym Escape mode "default"
+	}
+	bindsym $mod+Shift+m mode "mouse"
+
+### Resizing containers:
+mode "resize" {
+    bindsym $left resize shrink width 40px
+    bindsym $down resize grow height 40px
+    bindsym $up resize shrink height 40px
+    bindsym $right resize grow width 40px
+    # Return to default mode
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+### Status Bar:
+bar {
+	swaybar_command waybar
+	workspace_buttons yes
+}
+
+### Startup commands
+	exec GDK_BACKEND=wayland
+	exec CLUTTER_BACKEND=wayland
+	exec --no-startup-id gammastep-indicator -l 38.89511:-77.03637
+    exec dbus-daemon --session --address=unix:path=$XDG_RUNTIME_DIR/bus
+    # exec light -S 75
+    # exec /usr/bin/Xwayland
+
+### Input/Output devices
+output HDMI-A-1 {
+	resolution 1920x1080
+    scale 1.0
+	pos 1600 0
+    scale_filter linear
+}
+
+input type:keyboard {
+	xkb_layout "dk"
+	xkb_numlock enable
+}
+
+# Browser picture-in-picture mode
+for_window [app_id="brave" title="^Picture-in-Picture$"] \
+    floating enable, move position 1400 700, resize set width 20 ppt height 22 ppt, sticky enable

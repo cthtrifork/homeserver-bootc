@@ -41,8 +41,8 @@ RUN dnf install -y --setopt install_weak_deps=false \
       fontconfig
 
 # Jetbrains nerd font
-RUN wget -P ~/.local/share/fonts https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \
-	&& cd ~/.local/share/fonts \
+RUN wget -P /usr/share/fonts/ https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \
+	&& cd /usr/share/fonts/ \
 	&& unzip JetBrainsMono.zip \
 	&& rm JetBrainsMono.zip \
 	&& fc-cache -fv
