@@ -1,183 +1,135 @@
-
-/*base background color*/
-@define-color bg_main rgba(25, 25, 25, 0.65);
-@define-color bg_main_tooltip rgba(0, 0, 0, 0.7);
-
-
-/*base background color of selections */
-@define-color bg_hover rgba(200, 200, 200, 0.3);
-/*base background color of active elements */
-@define-color bg_active rgba(100, 100, 100, 0.5);
-
-/*base border color*/
-@define-color border_main rgba(255, 255, 255, 0.2);
-
-/*text color for entries, views and content in general */
-@define-color content_main white;
-/*text color for entries that are unselected */
-@define-color content_inactive rgba(255, 255, 255, 0.25);
-
 * {
-	text-shadow: none;
-	box-shadow: none;
   border: none;
   border-radius: 0;
-	font-family: "Segoe UI", "Ubuntu";
-  font-weight: 600;
-  font-size: 12.7px;
-	
-	
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 14px;
 }
 
+window .modules-left,
+window .modules-center,
+window .modules-right {
+  background: rgba(55, 59, 65, 0.85);
+  padding: 0px 8px 0px 8px;
+}
+
+window .modules-left {
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+window .modules-right {
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+}
+
+window .modules-center {
+  border-radius: 16px;
+}
 window#waybar {
-  background:  @bg_main;
-  border-top: 1px solid @border_main;
-  color: @content_main;
+  background: transparent;
 }
 
-tooltip {
-  background: @bg_main_tooltip;
-  border-radius: 5px;
-  border-width: 1px;
-  border-style: solid;
-  border-color: @border_main;
-}
-tooltip label{
-  color: @content_main;
-}
-
-#custom-os_button {
-	font-family: "JetBrainsMono Nerd Font";
-  font-size: 24px;
-	padding-left: 12px;
-	padding-right: 20px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-#custom-os_button:hover {
-  background:  @bg_hover;
-	color: @content_main;
-}
-
-#workspaces {
-  color: transparent;
-	margin-right: 1.5px;
-	margin-left: 1.5px;
-}
-#workspaces button {
-  padding: 3px;
-  color: @content_inactive;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-#workspaces button.active {
-	color: @content_main;
-	border-bottom: 3px solid white;
-}
-#workspaces button.focused {
-  color: @bg_active;
-}
-#workspaces button.urgent {
-	background:  rgba(255, 200, 0, 0.35);
-	border-bottom: 3px dashed @warning_color;
-	color: @warning_color;
-}
-#workspaces button:hover {
-  background: @bg_hover;
-	color: @content_main;
-}
-
-#taskbar {
-}
-
-#taskbar button {
-	min-width: 130px;
-	border-bottom: 3px solid rgba(255, 255, 255, 0.3);
-	margin-left: 2px;
-	margin-right: 2px;
-  padding-left: 8px;
-  padding-right: 8px;
+window > box {
+  margin: 5px 0px 5px 0px;
+  padding: 0px 0px 0px 0px;
+  background: rgba(43, 48, 59, 0);
   color: white;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border-radius: 16px;
+  min-height: 32px;
 }
 
-#taskbar button.active {
-	border-bottom: 3px solid white;
-  background: @bg_active;
+#workspaces button {
+  font-weight: bolder;
+  margin: 3px;
+  padding: 0px 2px 0px 2px;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 24px;
+  box-shadow: inset 0 -3px transparent;
 }
 
-#taskbar button:hover {
-	border-bottom: 3px solid white;
-  background: @bg_hover;
-	color: @content_main;
+/* https://github.com/Alexays/Waybar/wiki/FAQ#the-workspace-buttons-have-a-strange-hover-effect */
+#workspaces button:hover {
+  background: transparent;
+  box-shadow: inset 0 -3px transparent;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-#cpu, #disk, #memory {
-	padding:3px;
+#workspaces button.focused {
+  background: transparent;
+  box-shadow: inset 0 -3px #ffffff;
+  color: rgba(255, 255, 255, 1);
 }
 
-#temperature {
-	color: transparent;
-	font-size: 0px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-#temperature.critical {
-	padding-right: 3px;
-	color: @warning_color;
-	font-size: initial;
-	border-bottom: 3px dashed @warning_color;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+#workspaces button.urgent {
+  box-shadow: inset 0 -3px #cc6666;
+  color: #cc6666;
 }
 
-#window {
-  border-radius: 10px;
-  margin-left: 20px;
-  margin-right: 20px;
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#backlight,
+#network,
+#pulseaudio,
+#custom-media,
+#tray,
+#mode,
+#idle_inhibitor,
+#mpd,
+#window,
+#workspaces,
+#custom-gammastep
+{
+  padding: 0px 8px 0px 8px;
+  margin: 0 5px;
+  color: #ffffff;
 }
 
-#tray{
-  margin-left: 5px;
-  margin-right: 5px;
-}
-#tray > .passive {
-	border-bottom: none;
-}
-#tray > .active {
-	border-bottom: 3px solid white;
-}
-#tray > .needs-attention {
-	border-bottom: 3px solid @warning_color;
-}
-#tray > widget {
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-#tray > widget:hover {
-	background: @bg_hover;
+#mode {
+  font-weight: bolder;
+  color: #f0c674;
 }
 
-#pulseaudio {
-	font-family: "JetBrainsMono Nerd Font";
-	padding-left: 3px;
-  padding-right: 3px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-#pulseaudio:hover {
- 	background: @bg_hover;
+#mpd.stopped {
+  color: rgba(255, 255, 255, 0.3);
 }
 
-#network {
-	padding-left: 3px;
-  padding-right: 3px;
+#idle_inhibitor.deactivated {
+  color: rgba(255, 255, 255, 0.3);
 }
 
-#language {
-  padding-left: 5px;
-  padding-right: 5px;
+#network.disconnected, #network.disabled {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 #clock {
-  padding-right: 5px;
-  padding-left: 5px;
-	transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+  font-weight: bolder;
 }
-#clock:hover {
-	background: @bg_hover;
+
+@keyframes blink {
+  to {
+    color: #ffffff;
+  }
+}
+
+#battery.critical:not(.charging) {
+  /* background-color: #f53c3c; */
+  color: #ffffff;
+  animation-name: blink;
+  animation-duration: 0.5s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+#tray > .passive {
+  -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+  -gtk-icon-effect: highlight;
 }
