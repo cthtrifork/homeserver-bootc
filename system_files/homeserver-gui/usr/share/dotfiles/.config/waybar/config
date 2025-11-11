@@ -77,8 +77,8 @@
         "format-source-muted": "",
         "format-icons": {
             "headphone": "",
-            "hands-free": "",
-            "headset": "",
+            "hands-free": "\ued9e",
+            "headset": "\uf02ce",
             "phone": "",
             "portable": "",
             "car": "",
