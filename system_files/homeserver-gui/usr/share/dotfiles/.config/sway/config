@@ -2,6 +2,7 @@
 # https://github.com/rbnis/legacy-dotfiles/blob/master/.config/sway/config
 # https://github.com/dpgraham4401/.dotfiles/blob/main/sway/.config/sway/config
 # https://github.com/plexus/dotfiles/blob/master/.config/waybar/config
+# https://github.com/gjpin/arch-linux/blob/main/configs/sway/config
 # # Read `man 5 sway` for a complete reference.
 # Use your laptop keyboard layout (change if needed)
 input * {
