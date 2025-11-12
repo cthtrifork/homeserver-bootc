@@ -20,7 +20,7 @@ curl -sLo /tmp/age.tar.gz \
 tar -zxvf /tmp/age.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE
 
 log "Installing kubectl"
-KUBECTL_VERSION="v1.34.1" # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION="v1.34.2" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 curl -sLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${ARCH}/kubectl"
 install -o root -g root -m 0755 /tmp/kubectl /usr/bin/kubectl
 /usr/bin/kubectl completion bash >/etc/bash_completion.d/kubectl.sh
