@@ -35,7 +35,7 @@ ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc_login
 /usr/bin/kubelogin completion bash >/etc/bash_completion.d/kubelogin.sh
 
 log "Installing kubectl virt"
-KUBEVIRT_VERSION="v1.6.2" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+KUBEVIRT_VERSION="v1.6.3" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 curl -sLo /tmp/kubectl-virt.tar.gz \
     "$(/ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin virtctl-${MACHINE}-${ARCH}.tar.gz $KUBEVIRT_VERSION)"
