@@ -2,11 +2,13 @@
     "layer": "top",
     "position": "top",
     "modules-left": [
+        "custom/os_button",
         "sway/window",
         "sway/mode"
     ],
     "modules-center": [
-        "sway/workspaces"
+        "sway/workspaces",
+        "wlr/taskbar"
     ],
     "modules-right": [
         "pulseaudio",
@@ -16,6 +18,25 @@
         "clock",
         "tray"
     ],
+    "wlr/taskbar": {
+        "all-outputs": false,
+        "format": "{icon} {title}",
+        "icon-size": 16,
+        "tooltip": true,
+        "tooltip-format": "{name}\n{title}",
+        "active-first": false,
+        "sort-by-app-id": false,
+        "on-click": "activate", 
+        "on-click-middle": "close",
+        "on-click-right": "minimize",
+        "ignore-list": [
+            "waybar"
+        ], 
+        "rewrite": {
+            "(.*) - Visual Studio Code": "VS Code",
+            "(.*) — Mozilla Firefox": "Firefox"
+        }
+    },
     "sway/window": {
         "format": "{}",
         "max-length": 50,
@@ -34,7 +55,7 @@
         "tooltip": false
     },
     "sway/workspaces": {
-        "disable-scroll": true,
+        "disable-scroll": false,
         "all-outputs": true,
         "format": "{value}",
         "format-icons": {

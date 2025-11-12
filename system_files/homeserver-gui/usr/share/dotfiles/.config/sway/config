@@ -11,113 +11,11 @@ input * {
 # Set the modifier key (Super/Win)
 set $mod Mod4
 
-# Terminal(s)
-set $term xterm-ghostty
-
-# Browser / webapps
-set $brave brave-browser --ozone-platform=wayland
-
-# Screenshot helpers
-set $screenshot grim
-set $region slurp
-
-
-# Default wallpaper (solid color fallback)
-output * bg #222222 solid_color
-
-### --------------------------------------------------
-### Autostart
-### --------------------------------------------------
-# Status bar
-#exec waybar
-
-# Notifications (only if you install it)
-exec mako
-
-# Clipboard manager (if you install wl-clipboard manager)
-# none needed – wl-copy / wl-paste are CLI
-
-# Start webapps on login
-# Teams on workspace 2
-#exec $brave --app=https://teams.microsoft.com
-# Outlook / webmail on workspace 3
-#exec $brave --app=https://webmail.trifork.com/
-
-### --------------------------------------------------
-### Workspace rules (put apps where they belong)
-### --------------------------------------------------
-# You can inspect app_id/class with:  `swaymsg -t get_tree | jq .`
-# Brave in app mode usually uses the domain as app_id
-#assign [app_id="teams.microsoft.com"] 2
-#assign [app_id="outlook.office.com"] 3
-
-# Your main coding workspace
-# (you can open VS Code here manually)
-# assign [class="code"] 1
-
-# Idle configuration
-exec swayidle \
-    timeout 300 'exec $lock' \
-    timeout 600 'swaymsg "output * dpms off"' \
-    after-resume 'swaymsg "output * dpms on"' \
-    before-sleep 'exec $lock'
-
-
-### --------------------------------------------------
-### Workspaces
-### --------------------------------------------------
-set $ws1 1:main
-set $ws2 2:teams
-set $ws3 3:mail
-
-### --------------------------------------------------
-### Screenshots (grim + slurp)
-### --------------------------------------------------
-# Fullscreen to ~/Pictures
-bindsym Print exec mkdir -p ~/Pictures && $screenshot ~/Pictures/screenshot-$(date +'%F-%T').png
-
-# Select area
-bindsym Shift+Print exec mkdir -p ~/Pictures && $screenshot -g "$($region)" ~/Pictures/screenshot-$(date +'%F-%T').png
-
-
-### --------------------------------------------------
-### Keybindings: launching
-### --------------------------------------------------
-# Terminal
-bindsym $mod+Return exec $term
-
-# App launcher (if you install wofi)
-bindsym $mod+d exec wofi --show drun
-bindsym $mod+space exec --no-startup-id wofi --show drun -I -i
-
-# Browser standard window
-bindsym $mod+b exec $brave
-
 ### Bar
   bar {
     swaybar_command waybar
 	workspace_buttons yes
   }
 
-
-### Styling
-  # Gaps
-  gaps inner 5
-  gaps outer 0
-  smart_gaps on
-
-  # Borders
-  default_border pixel 3
-  for_window [class=".*"] border pixel 3
-
-### Colors
-  # Class                   Border      BG          Text        Indicator   Child border
-  client.focused            #c5c8c6bf   #1d1f21bb   #ffffff     #fffffff2   #c5c8c6bf
-  client.unfocused          #1d1f2166   #1d1f2188   #ffffff     #000000ee   #1d1f2166
-  client.focused_inactive   #c5c8c644   #1d1f2199   #ffffff     #ffffff88   #c5c8c644
-  client.background         #1d1f21f2
-
 #include ~/.config/sway/$(hostname)/*
 include "/etc/sway/config.d/*"
-
-# https://github.com/plexus/dotfiles/blob/master/.config/sway/config
