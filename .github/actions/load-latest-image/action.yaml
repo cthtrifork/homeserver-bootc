@@ -30,6 +30,7 @@ runs:
       run: | #sh
         podman images
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
+        podman image prune -f # cleanup dangling images
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
         podman images
 
