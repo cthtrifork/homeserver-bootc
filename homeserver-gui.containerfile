@@ -18,6 +18,8 @@ RUN dnf -y --setopt=install_weak_deps=false install \
       budgie-desktop-view \
       budgie-backgrounds \
       budgie-session \
+      gnome-session-xsession \
+      gnome-shell \
       budgie-control-center \
       budgie-screensaver \
       xorg-x11-server-Xorg \
@@ -56,4 +58,5 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
 
