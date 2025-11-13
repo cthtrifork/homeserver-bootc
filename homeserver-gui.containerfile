@@ -12,9 +12,8 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf -y --setopt=install_weak_deps=false install \
-      lightdm \
-      lightdm-gtk-greeter \
-      lightdm-gtk-greeter-settings \
+      gdm \
+      gnome-session \
       budgie-desktop \
       xorg-x11-server-Xorg \
       xorg-x11-xauth \
@@ -27,10 +26,16 @@ RUN dnf -y --setopt=install_weak_deps=false install \
       ghostty \
       ffmpeg
 
+# todo: budgie-extras ?
+RUN dnf -y remove gnome-shell-extension-* gnome-tour
+
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
+
+COPY system_files/homeserver-gui/custom.conf /etc/gdm/
+
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
@@ -39,18 +44,10 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service
 
-# Ensure LightDM uses the gtk greeter
-RUN mkdir -p /etc/lightdm && \
-    printf "[Seat:*]\ngreeter-session=lightdm-gtk-greeter\n" > /etc/lightdm/lightdm.conf
 
-# Make graphical the default and ensure LightDM is enabled even if presets run
-RUN ln -sf /usr/lib/systemd/system/graphical.target /etc/systemd/system/default.target && \
-    systemctl enable lightdm.service && \
-    mkdir -p /usr/lib/systemd/system-preset && \
-    printf "enable lightdm.service\n" > /usr/lib/systemd/system-preset/99-lightdm.preset
-
-RUN mkdir -p /var/{lib,cache,log}/lightdm \
-  && chown lightdm:lightdm /var/{lib,cache,log}/lightdm \
-  && restorecon -R /var/{lib,cache,log}/lightdm
+# Enable GUI by default
+RUN systemctl set-default graphical.target && \
+    systemctl enable gdm.service
 
 RUN bootc container lint
+
