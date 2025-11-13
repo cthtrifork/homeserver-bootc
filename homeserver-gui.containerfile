@@ -14,7 +14,6 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
 RUN dnf -y --setopt=install_weak_deps=false install \
       gdm \
       gnome-session \
-      budgie-desktop \
       xorg-x11-server-Xorg \
       xorg-x11-xauth \
       xorg-x11-xinit \
@@ -26,6 +25,7 @@ RUN dnf -y --setopt=install_weak_deps=false install \
       ghostty \
       ffmpeg
 
+RUN dnf -y group install "Budgie Desktop"
 # todo: budgie-extras ?
 RUN dnf -y remove gnome-shell-extension-* gnome-tour
 
@@ -46,11 +46,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service
 
-
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
-
-
