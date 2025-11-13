@@ -11,13 +11,30 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y --setopt install_weak_deps=false \
+RUN dnf -y --setopt=install_weak_deps=false install \
       gdm \
       gnome-session \
-      plymouth-system-theme \
-      brave-browser \
+      budgie-desktop \
+      budgie-desktop-view \
+      budgie-backgrounds \
+      budgie-session \
+      gnome-session-xsession \
+      gnome-shell \
+      budgie-control-center \
+      budgie-screensaver \
+      xorg-x11-server-Xorg \
+      xorg-x11-xauth \
+      xorg-x11-xinit \
+      mesa-dri-drivers \
+      mesa-libGL \
+      dbus-daemon \
+      polkit \
+      NetworkManager \
       ghostty \
       ffmpeg
+
+# todo: budgie-extras ?
+RUN dnf -y remove gnome-shell-extension-* gnome-tour
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
@@ -26,7 +43,7 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
 
 # Copy custom configuration files
 RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/    
+COPY system_files/homeserver-gui/custom.conf /etc/gdm/
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -41,3 +58,5 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
+
