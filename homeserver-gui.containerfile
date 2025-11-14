@@ -17,7 +17,11 @@ RUN dnf install -y --setopt install_weak_deps=false \
       plymouth-system-theme \
       brave-browser \
       ghostty \
-      ffmpeg
+      gnome-shell-extension-dash-to-panel \
+	    gnome-extensions-app \
+	    gnome-tweaks \
+			networkmanager
+
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
