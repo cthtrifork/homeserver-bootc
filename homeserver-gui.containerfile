@@ -20,7 +20,7 @@ RUN dnf install -y --setopt install_weak_deps=false \
       gnome-shell-extension-dash-to-panel \
 	    gnome-extensions-app \
 	    gnome-tweaks \
-			networkmanager
+			NetworkManager
 
 
 # Install VSCode
