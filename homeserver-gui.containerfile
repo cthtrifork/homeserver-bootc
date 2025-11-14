@@ -40,6 +40,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service
 
+RUN systemctl enable NetworkManager
+
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
