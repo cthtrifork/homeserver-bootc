@@ -13,15 +13,10 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf install -y --setopt install_weak_deps=false \
       gdm \
-      gnome-session \
-      plymouth-system-theme \
+      @budgie-desktop-environment
       brave-browser \
       ghostty \
-      gnome-shell-extension-dash-to-panel \
-	    gnome-extensions-app \
-	    gnome-tweaks \
 			NetworkManager
-
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
