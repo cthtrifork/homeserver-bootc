@@ -17,7 +17,11 @@ RUN dnf install -y --setopt install_weak_deps=false \
       plymouth-system-theme \
       brave-browser \
       ghostty \
-      ffmpeg
+      gnome-shell-extension-dash-to-panel \
+	    gnome-extensions-app \
+	    gnome-tweaks \
+			NetworkManager
+
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
@@ -35,6 +39,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service
+
+RUN systemctl enable NetworkManager
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
