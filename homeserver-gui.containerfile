@@ -11,12 +11,14 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y --setopt install_weak_deps=false \
-      gdm \
-      @budgie-desktop-environment
-      brave-browser \
-      ghostty \
-			NetworkManager
+RUN dnf install -y \
+    --setopt=install_weak_deps=false \
+    --setopt=tsflags=nodocs,noninteractive,nocontexts,noscripts \
+    gdm \
+    @budgie-desktop-environment \
+    brave-browser \
+    ghostty \
+    NetworkManager
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
@@ -42,3 +44,4 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
