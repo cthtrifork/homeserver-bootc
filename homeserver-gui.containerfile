@@ -13,13 +13,10 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf install -y --setopt install_weak_deps=false \
       gdm \
-      gnome-session \
+      @kde-desktop-environment \
       plymouth-system-theme \
       brave-browser \
       ghostty \
-      gnome-shell-extension-dash-to-panel \
-	    gnome-extensions-app \
-	    gnome-tweaks \
 			NetworkManager
 
 
@@ -47,3 +44,4 @@ RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
 
 RUN bootc container lint
+
