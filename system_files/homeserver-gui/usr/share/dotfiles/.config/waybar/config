@@ -1,0 +1,150 @@
+{
+    "layer": "top",
+    "position": "top",
+    "modules-left": [
+        "custom/os_button",
+        "sway/window",
+        "sway/mode"
+    ],
+    "modules-center": [
+        "sway/workspaces",
+        "wlr/taskbar"
+    ],
+    "modules-right": [
+        "pulseaudio",
+        "pulseaudio#mic",
+        "network",
+        "battery",
+        "clock",
+        "tray"
+    ],
+    "wlr/taskbar": {
+        "all-outputs": false,
+        "format": "{icon} {title}",
+        "icon-size": 16,
+        "tooltip": true,
+        "tooltip-format": "{name}\n{title}",
+        "active-first": false,
+        "sort-by-app-id": false,
+        "on-click": "activate", 
+        "on-click-middle": "close",
+        "on-click-right": "minimize",
+        "ignore-list": [
+            "waybar"
+        ], 
+        "rewrite": {
+            "(.*) - Visual Studio Code": "VS Code",
+            "(.*) — Mozilla Firefox": "Firefox"
+        }
+    },
+    "sway/window": {
+        "format": "{}",
+        "max-length": 50,
+        "rewrite": {
+            "": "\uf015  ",
+            "(.*) - Visual Studio Code": "\uf121  $1",
+            "(.*) - Brave": "\uf268  $1",
+            "xterm-ghostty - (.*)": "\uf120  $1",
+            "(.*) — Mozilla Firefox": "\ue007  $1",
+            "Volume Control": "\uf027  Volume Control"
+        }
+    },
+    "custom/os_button": {
+        "format": "",
+        "on-click": "wofi --show drun",
+        "tooltip": false
+    },
+    "sway/workspaces": {
+        "disable-scroll": false,
+        "all-outputs": true,
+        "format": "{value}",
+        "format-icons": {
+            "1": "",
+            "2": "",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "10": "",
+            "urgent": ": ",
+            "focused": "",
+            "default": ""
+        }
+    },
+    "cpu": {
+        "interval": 5,
+        "format": "  {usage}%",
+        "max-length": 10
+    },
+    "clock": {
+        "format": "{:%a %d %b  %H:%M}",
+        "tooltip": false
+    },
+    "sway/mode": {
+        "format": "\uf054 {}"
+    },
+    "tray": {
+        "spacing": 10,
+        "show-passive-items": true,
+        "icon-size": 15
+    },
+    "network": {
+        "interval": 5,
+        "format-wifi": "\uf1eb",
+        "format-ethernet": "\uf796",
+        "format-disconnected": "\uf127  Offline",
+        "tooltip-format": "{ifname}: {ipaddr}",
+        "tooltip-format-wifi": "{essid} ({signalStrength}%): {ipaddr}"
+    },
+    "pulseaudio": {
+        "scroll-step": 1,
+        "format": "{volume}% {icon}",
+        "format-bluetooth": "{volume}% {icon}",
+        "format-bluetooth-muted": " {icon}",
+        "format-muted": "",
+        "format-source": "",
+        "format-source-muted": "",
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "\ued9e",
+            "headset": "\uf02ce",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        },
+        "on-click": "pkill pulsemixer; kitty -e pulsemixer"
+    },
+    "pulseaudio#mic": {
+        "format": "{format_source}",
+        "format-source": "",
+        "format-source-muted": "",
+        "on-click": "pactl set-source-mute @DEFAULT_SOURCE@ toggle",
+        "tooltip": false
+    },
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% ",
+        "format-plugged": "{capacity}% ",
+        "format-alt": "{time} {icon}",
+        "format-full": "",
+        "format-icons": [
+            "",
+            "",
+            "",
+            "",
+            ""
+        ]
+    }
+}
