@@ -10,6 +10,7 @@ on:
     paths:
       - "Containerfile"
       - "*.containerfile"
+      - "!hello.containerfile"
       - "config.toml"
       - "system_files/homeserver/**"
       - "build_files/**"
