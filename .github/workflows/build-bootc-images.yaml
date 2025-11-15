@@ -252,7 +252,7 @@ jobs:
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
-          echo "Adding additional tags"
+          echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           for tag in $TAGS; do
             skopeo copy -q --all \
