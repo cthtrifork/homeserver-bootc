@@ -248,7 +248,7 @@ jobs:
             ${{ env.LOCAL_PR_IMAGE }} \
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           echo "Push"
-          podman push -q \
+          podman push \
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
