@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - "hello.containerfile"
+      - ".github/workflows/push-hello-containerfile.yaml"
   workflow_dispatch:
 
 jobs:
