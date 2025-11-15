@@ -80,7 +80,8 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    # homeserver-gui has its own runner due to disksize requirements
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -89,9 +90,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
           #- image: homeserver
           #   runner_name: arc-ubuntu
     outputs:
@@ -320,7 +318,8 @@ jobs:
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    # homeserver-gui has its own runner due to disksize requirements
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
@@ -331,9 +330,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: read
@@ -487,7 +483,8 @@ jobs:
 
   test:
     name: "E2E Test on: ${{ matrix.image }}"
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    # homeserver-gui has its own runner due to disksize requirements
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
@@ -499,9 +496,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: read
@@ -845,9 +839,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: write
