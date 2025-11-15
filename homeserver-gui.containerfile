@@ -17,9 +17,7 @@ RUN dnf install -y --setopt install_weak_deps=false \
       plymouth-system-theme \
       brave-browser \
       ghostty \
-      gnome-shell-extension-dash-to-panel \
-	    gnome-extensions-app \
-	    gnome-tweaks \
+			gnome-shell-extension-dash-to-panel \
 			NetworkManager
 
 
