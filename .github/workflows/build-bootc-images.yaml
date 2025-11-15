@@ -20,8 +20,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "!hello.containerfile"
+    paths-ignore:
+      - "hello.containerfile"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
