@@ -790,6 +790,35 @@ jobs:
               IMAGE_FULL="$IMAGE_FULL" \
               bash -l -s --
 
+      - name: Take QEMU screenshot
+        run: |
+          # Dump framebuffer to PPM via QEMU monitor
+          echo "screendump /tmp/vm.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
+
+          # Convert PPM → PNG
+          convert /tmp/vm.ppm /tmp/vm.png
+
+      - name: Upload screenshot as artifact
+        id: screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-screenshot
+          path: /tmp/vm.png
+
+      - name: create screenshot pr comment
+        shell: bash
+        run: |
+          echo '## 🖼 VM Screenshot' >> screenshot.md
+          echo '' >> screenshot.md
+          echo '${{ steps.screenshot.outputs.artifact-url }}' >> screenshot.md
+
+      - name: Sticky PR comment (update in-place)
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+        with:
+          path: screenshot.md
+          skip_unchanged: true
+
+
       - name: Collect logs and stop QEMU
         if: always()
         env:
