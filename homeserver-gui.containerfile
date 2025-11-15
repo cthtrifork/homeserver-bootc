@@ -13,7 +13,7 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 RUN dnf install -y \
     --setopt=install_weak_deps=false \
-    --setopt=tsflags=nodocs,noninteractive,nocontexts,noscripts \
+    --setopt=tsflags=nodocs,nocontexts,noscripts \
     gdm \
     @budgie-desktop-environment \
     brave-browser \
