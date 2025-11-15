@@ -62,7 +62,7 @@ runs:
         podman pull -q docker.io/library/registry:2
         podman run -d --name local-registry \
           -p 5000:5000 \
-          -v registry-data:/var/lib/registry \
+          -v /var/lib/registry:/var/lib/registry \
           docker.io/library/registry:2
 
         # Tag the image for the local registry 
