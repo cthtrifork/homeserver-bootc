@@ -823,7 +823,7 @@ jobs:
       - name: Take QEMU screenshot
         run: |
           # Dump framebuffer to PPM via QEMU monitor
-          echo "screendump /tmp/vm.ppm" | socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
+          echo "screendump /tmp/vm.ppm" | sudo socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
 
           # Convert PPM → PNG
           convert /tmp/vm.ppm /tmp/vm.png
