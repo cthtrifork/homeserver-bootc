@@ -817,6 +817,7 @@ jobs:
         with:
           path: screenshot.md
           skip_unchanged: true
+          header: screenshot
 
 
       - name: Collect logs and stop QEMU
