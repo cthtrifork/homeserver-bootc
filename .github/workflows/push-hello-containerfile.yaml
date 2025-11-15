@@ -40,9 +40,31 @@ jobs:
 
       - name: Build and push image
         uses: docker/build-push-action@v6
+        id: push-latest
         with:
           context: .
           file: ./hello.containerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+
+      - name: Sign container image
+        run: | #sh
+          export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+        env:
+          DIGEST: ${{ steps.push-latest.outputs.digest }}
+          COSIGN_EXPERIMENTAL: true
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ""
+          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/hello.sigstore
+
+      - name: Attach build provenance attestation
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: "ghcr.io/${{ github.repository }}/hello"
+          subject-digest: ${{ steps.push-latest.outputs.digest }}
+          push-to-registry: true
