@@ -31,10 +31,6 @@ runs:
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
         podman image prune -f # cleanup dangling images
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
-        echo "Podman images:"
-        podman images
-        echo "buildah images:"
-        buildah images
 
     - name: Move cache to local storage
       shell: bash
@@ -45,6 +41,11 @@ runs:
         skopeo copy -q \
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+
+    - name: Show loaded images
+      shell: bash
+      run: |
+        podman images
 
     - name: Copy fallback trivy db
       if: ${{ runner.environment  == 'self-hosted' }}
@@ -66,7 +67,7 @@ runs:
           docker.io/library/registry:2
 
         # Tag the image for the local registry 
-        podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+        podman tag localhost/${{ env.IMAGE_NAME }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
 
         # Push to the local registry without tls
         podman push --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
