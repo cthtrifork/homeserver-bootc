@@ -39,6 +39,9 @@ runs:
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends skopeo
         skopeo copy -q \
+          containers-storage:ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest \
+          containers-storage:localhost/homeserver-centos-bootc:latest
+        skopeo copy -q \
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
 
