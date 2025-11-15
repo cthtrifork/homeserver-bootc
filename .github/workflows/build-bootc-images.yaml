@@ -263,6 +263,17 @@ jobs:
         env:
           TAGS: ${{ steps.metadata.outputs.tags }}
 
+      - name: push to cache registry 
+        if: rummer
+        shell: bash
+        run: |
+          # Tag the image for the local registry 
+          podman tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+
+          # Push to the local registry without tls
+          podman push --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+
+
       - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         if: github.ref == 'refs/heads/main'
