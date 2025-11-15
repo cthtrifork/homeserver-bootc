@@ -248,15 +248,14 @@ jobs:
             ${{ env.LOCAL_PR_IMAGE }} \
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           echo "Push"
-          podman push \
+          podman push -q \
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
           echo "Adding additional tags"
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           for tag in $TAGS; do
-            skopeo copy \
-              --all \
+            skopeo copy -q --all \
               "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
               "docker://${{ env.IMAGE_FULL }}:${tag}"
           done
@@ -272,7 +271,7 @@ jobs:
           podman tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
           # Push to the local registry without tls
-          podman push --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          podman push -q --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
 
       - name: Trivy REPORT sarif (base:latest)
