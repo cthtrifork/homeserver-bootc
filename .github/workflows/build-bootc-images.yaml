@@ -790,7 +790,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             "$SSH_USERNAME"@localhost \
-              IMAGE_FULL="$IMAGE_FULL" \
+              IMAGE_FULL="ghcr.io/cthtrifork/homeserver-bootc/hello" \
               bash -l -s --
 
       - name: Collect logs and stop QEMU
