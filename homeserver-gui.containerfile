@@ -40,6 +40,8 @@ RUN systemctl disable pinggy.service
 
 RUN systemctl enable NetworkManager
 
+RUN gnome-extensions enable dash-to-panel@jderose9.github.com
+
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
     systemctl enable gdm.service
