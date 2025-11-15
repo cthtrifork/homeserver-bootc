@@ -11,7 +11,8 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y --setopt install_weak_deps=false \
+RUN mkdir -p -m 0700 /var/roothome && \ 
+			dnf install -y --setopt install_weak_deps=false \
       gdm \
       @kde-desktop-environment \
       plymouth-system-theme \
