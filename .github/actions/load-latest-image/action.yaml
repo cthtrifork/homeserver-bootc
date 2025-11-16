@@ -52,11 +52,11 @@ runs:
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends skopeo
         skopeo copy -q \
-          docker:ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest \
-          docker:localhost/homeserver-centos-bootc:latest
+          docker://ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest \
+          docker://localhost/homeserver-centos-bootc:latest
         skopeo copy -q \
-          docker:${{ env.IMAGE_FULL }}:latest \
-          docker:localhost/${{ env.IMAGE_NAME }}:latest
+          docker://${{ env.IMAGE_FULL }}:latest \
+          docker://localhost/${{ env.IMAGE_NAME }}:latest
 
     - name: Show loaded images
       shell: bash
