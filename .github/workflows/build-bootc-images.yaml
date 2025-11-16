@@ -89,7 +89,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ${{ fromJSON(needs.changes.outputs.image) }}
+        image:
+          ${{ fromJSON(needs.changes.outputs.image) }}
           #- image: homeserver
           #   runner_name: arc-ubuntu
     outputs:
@@ -263,7 +264,7 @@ jobs:
         env:
           TAGS: ${{ steps.metadata.outputs.tags }}
 
-      - name: push to cache registry 
+      - name: push to cache registry
         if: ${{ runner.environment  == 'self-hosted' }}
         shell: bash
         run: |
@@ -272,7 +273,6 @@ jobs:
 
           # Push to the local registry without tls
           podman push -q --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-
 
       - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -382,7 +382,8 @@ jobs:
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-          
+          podman pull -q ${{ env.IMAGE_FULL }}:latest
+
       - name: Load PR image from cache registry
         if: ${{ runner.environment  == 'self-hosted' }}
         shell: bash
@@ -412,7 +413,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - latest
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: localhost/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ env.IMAGE_FULL }}:latest
           format: json
           output: ${{ github.workspace }}/latest_trivy.json
           cache: "false"
@@ -429,7 +430,7 @@ jobs:
         run: | #sh
           set -euo pipefail
 
-          BASE_RAW=$(podman image inspect localhost/${{ env.IMAGE_NAME }}:latest | jq '.[0]')
+          BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:latest | jq '.[0]')
           PR_RAW=$(podman image inspect "${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
@@ -585,7 +586,6 @@ jobs:
           sudo podman tag \
             127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
@@ -821,9 +821,14 @@ jobs:
               bash -l -s --
 
       - name: Take QEMU screenshot
+        if: ${{ matrix.image == 'homeserver-gui' }}
+        shell: bash
         run: |
           # Dump framebuffer to PPM via QEMU monitor
           echo "screendump /tmp/vm.ppm" | sudo socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
+
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends imagemagick
 
           # Convert PPM → PNG
           sudo convert /tmp/vm.ppm /tmp/vm.png
@@ -848,7 +853,6 @@ jobs:
           path: screenshot.md
           skip_unchanged: true
           header: screenshot
-
 
       - name: Collect logs and stop QEMU
         if: always()
