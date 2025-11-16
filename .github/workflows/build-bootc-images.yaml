@@ -382,6 +382,7 @@ jobs:
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          podman pull -q ${{ env.IMAGE_FULL }}:latest
 
       - name: Load PR image from cache registry
         if: ${{ runner.environment  == 'self-hosted' }}
