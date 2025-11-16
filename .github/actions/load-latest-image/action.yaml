@@ -34,7 +34,7 @@ runs:
 
     - name: Move cache to local storage
       shell: bash
-      #if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends skopeo
@@ -44,6 +44,19 @@ runs:
         skopeo copy -q \
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+
+    - name: Move cache to local storage
+      shell: bash
+      if: ${{ runner.environment  != 'self-hosted' }}
+      run: | #sh
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends skopeo
+        skopeo copy -q \
+          docker:ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest \
+          docker:localhost/homeserver-centos-bootc:latest
+        skopeo copy -q \
+          docker:${{ env.IMAGE_FULL }}:latest \
+          docker:localhost/${{ env.IMAGE_NAME }}:latest
 
     - name: Show loaded images
       shell: bash
