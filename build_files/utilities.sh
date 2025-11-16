@@ -20,7 +20,7 @@ curl -sLo /tmp/age.tar.gz \
 tar -zxvf /tmp/age.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE
 
 log "Installing kubectl"
-KUBECTL_VERSION="v1.34.1" # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION="v1.34.2" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 curl -sLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${ARCH}/kubectl"
 install -o root -g root -m 0755 /tmp/kubectl /usr/bin/kubectl
 /usr/bin/kubectl completion bash >/etc/bash_completion.d/kubectl.sh
@@ -35,7 +35,7 @@ ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc_login
 /usr/bin/kubelogin completion bash >/etc/bash_completion.d/kubelogin.sh
 
 log "Installing kubectl virt"
-KUBEVIRT_VERSION="v1.6.2" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+KUBEVIRT_VERSION="v1.6.3" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 curl -sLo /tmp/kubectl-virt.tar.gz \
     "$(/ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin virtctl-${MACHINE}-${ARCH}.tar.gz $KUBEVIRT_VERSION)"
@@ -99,7 +99,7 @@ curl -sLo /tmp/jq \
 install -o root -g root -m 0755 /tmp/jq /usr/bin/jq
 
 log "Installing yq"
-YQ_VERSION="v4.48.1" # renovate: datasource=github-releases depName=mikefarah/yq
+YQ_VERSION="v4.48.2" # renovate: datasource=github-releases depName=mikefarah/yq
 curl -sLo /tmp/yq \
     "$(/ctx/build_files/github-release-url.sh mikefarah/yq ${MACHINE}.${ARCH} $YQ_VERSION)"
 install -o root -g root -m 0755 /tmp/yq /usr/bin/yq
@@ -126,7 +126,7 @@ install -o root -g root -m 0755 /tmp/talosctl /usr/bin/talosctl
 /usr/bin/talosctl completion bash >/etc/bash_completion.d/talosctl.sh
 
 log "Installing helm"
-HELM_VERSION="v3.19.1" # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION="v3.19.2" # renovate: datasource=github-releases depName=helm/helm
 curl -sLo /tmp/helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
 tar -zxvf /tmp/helm.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
 /usr/bin/helm completion bash >/etc/bash_completion.d/helm.sh
