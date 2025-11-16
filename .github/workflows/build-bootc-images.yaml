@@ -10,6 +10,7 @@ on:
     paths:
       - "Containerfile"
       - "*.containerfile"
+      - "!hello.containerfile"
       - "config.toml"
       - "system_files/homeserver/**"
       - "build_files/**"
@@ -19,6 +20,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "hello.containerfile"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -77,7 +80,8 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    # homeserver-gui has its own runner due to disksize requirements
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -86,9 +90,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
           #- image: homeserver
           #   runner_name: arc-ubuntu
     outputs:
@@ -251,17 +252,27 @@ jobs:
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
             --digestfile digest.txt
           DIGEST=$(cat digest.txt)
-          echo "Adding additional tags"
+          echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
           echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
           for tag in $TAGS; do
-            skopeo copy \
-              --all \
+            skopeo copy -q --all \
               "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
               "docker://${{ env.IMAGE_FULL }}:${tag}"
           done
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
         env:
           TAGS: ${{ steps.metadata.outputs.tags }}
+
+      - name: push to cache registry 
+        if: ${{ runner.environment  == 'self-hosted' }}
+        shell: bash
+        run: |
+          # Tag the image for the local registry 
+          podman tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+
+          # Push to the local registry without tls
+          podman push -q --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+
 
       - name: Trivy REPORT sarif (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -317,7 +328,8 @@ jobs:
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    # homeserver-gui has its own runner due to disksize requirements
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
@@ -328,9 +340,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: read
@@ -369,9 +378,20 @@ jobs:
         uses: ./.github/actions/setup-trivy
 
       - name: Load PR image
+        if: ${{ runner.environment  != 'self-hosted' }}
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          
+      - name: Load PR image from cache registry
+        if: ${{ runner.environment  == 'self-hosted' }}
+        shell: bash
+        run: | #sh
+          podman pull --tls-verify=false -q \
+            127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          podman tag \
+            127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
 
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -392,7 +412,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - latest
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.IMAGE_FULL }}:latest
+          image-ref: localhost/${{ env.IMAGE_NAME }}:latest
           format: json
           output: ${{ github.workspace }}/latest_trivy.json
           cache: "false"
@@ -409,7 +429,7 @@ jobs:
         run: | #sh
           set -euo pipefail
 
-          BASE_RAW=$(podman image inspect ${{ env.IMAGE_FULL }}:latest | jq '.[0]')
+          BASE_RAW=$(podman image inspect localhost/${{ env.IMAGE_NAME }}:latest | jq '.[0]')
           PR_RAW=$(podman image inspect "${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" | jq '.[0]')
 
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
@@ -484,7 +504,8 @@ jobs:
 
   test:
     name: "E2E Test on: ${{ matrix.image }}"
-    runs-on: ${{ matrix.runner_name || 'ubuntu-latest' }}
+    # homeserver-gui has its own runner due to disksize requirements
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
@@ -496,9 +517,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: read
@@ -551,11 +569,23 @@ jobs:
           #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
       - name: Load PR image
+        if: ${{ runner.environment  != 'self-hosted' }}
         shell: bash
         run: | #sh
           sudo podman pull -q \
-          --authfile /home/runner/.docker/config.json \
-          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+            --authfile /home/runner/.docker/config.json \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+
+      - name: Load PR image from cache registry
+        if: ${{ runner.environment  == 'self-hosted' }}
+        shell: bash
+        run: | #sh
+          sudo podman pull --tls-verify=false -q \
+            127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          sudo podman tag \
+            127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
@@ -787,8 +817,38 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             "$SSH_USERNAME"@localhost \
-              IMAGE_FULL="$IMAGE_FULL" \
+              IMAGE_FULL="ghcr.io/cthtrifork/homeserver-bootc/hello" \
               bash -l -s --
+
+      - name: Take QEMU screenshot
+        run: |
+          # Dump framebuffer to PPM via QEMU monitor
+          echo "screendump /tmp/vm.ppm" | sudo socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
+
+          # Convert PPM → PNG
+          sudo convert /tmp/vm.ppm /tmp/vm.png
+
+      - name: Upload screenshot as artifact
+        id: screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-screenshot
+          path: /tmp/vm.png
+
+      - name: create screenshot pr comment
+        shell: bash
+        run: |
+          echo '## 🖼 VM Screenshot' >> screenshot.md
+          echo '' >> screenshot.md
+          echo '${{ steps.screenshot.outputs.artifact-url }}' >> screenshot.md
+
+      - name: Sticky PR comment (update in-place)
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+        with:
+          path: screenshot.md
+          skip_unchanged: true
+          header: screenshot
+
 
       - name: Collect logs and stop QEMU
         if: always()
@@ -842,9 +902,6 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
-        include:
-          - image: homeserver-gui
-            runner_name: arc-ubuntu
     permissions:
       contents: read
       packages: write

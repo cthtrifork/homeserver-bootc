@@ -28,21 +28,27 @@ runs:
     - name: Load latest image to speed up build
       shell: bash
       run: | #sh
-        podman images
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
         podman image prune -f # cleanup dangling images
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
-        podman images
 
     - name: Move cache to local storage
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      #if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
         sudo apt-get update -qq
-        sudo apt-get install -y skopeo
+        sudo apt-get install -y --no-install-recommends skopeo
+        skopeo copy -q \
+          containers-storage:ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest \
+          containers-storage:localhost/homeserver-centos-bootc:latest
         skopeo copy -q \
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+
+    - name: Show loaded images
+      shell: bash
+      run: |
+        podman images
 
     - name: Copy fallback trivy db
       if: ${{ runner.environment  == 'self-hosted' }}
@@ -53,19 +59,21 @@ runs:
 
     - name: Push to local registry
       shell: bash
-      if: "false" # Disable for now
+      #if: "false" # Disable for now
+      if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
         # Start a local registry
+        podman pull -q docker.io/library/registry:2
         podman run -d --name local-registry \
           -p 5000:5000 \
-          -v registry-data:/var/lib/registry \
+          -v /var/lib/registry:/var/lib/registry \
           docker.io/library/registry:2
 
         # Tag the image for the local registry 
-        podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+        podman tag localhost/${{ env.IMAGE_NAME }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
 
         # Push to the local registry without tls
-        podman push --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+        podman push --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
 
     - name: Enable Podman socket
       shell: bash
@@ -76,12 +84,10 @@ runs:
         podman system service --time=0 "unix://$XDG_RUNTIME_DIR/podman/podman.sock" &
         export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
         echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
-        #podman info
-        #podman images ls
 
     - name: Enabled buildah support
       shell: bash
       run: | #sh
         sudo apt-get update -qq
-        sudo apt-get install -y buildah uidmap slirp4netns fuse-overlayfs
+        sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
         mkdir -p /home/runner/.cache/dnf
