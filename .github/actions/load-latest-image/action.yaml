@@ -50,11 +50,14 @@ runs:
       shell: bash
       if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
-        podman /var/lib/shared tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
-        podman /var/lib/shared tag ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest 127.0.0.1:5000/homeserver-centos-bootc:latest
+        podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+        podman tag ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest 127.0.0.1:5000/homeserver-centos-bootc:latest
 
         podman push --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
         podman push --tls-verify=false --quiet 127.0.0.1:5000/homeserver-centos-bootc:latest
+
+        echo "podman images before transfer:"
+        podman images
 
         podman pull --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
         podman pull --tls-verify=false 127.0.0.1:5000/homeserver-centos-bootc:latest
@@ -65,6 +68,7 @@ runs:
     - name: Show loaded images
       shell: bash
       run: |
+        echo "podman images:"
         podman images
 
     - name: Copy fallback trivy db
