@@ -201,6 +201,7 @@ jobs:
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
             -v /home/runner/.cache/dnf:/var/cache/dnf:O
+            --pull ${{ matrix.image == 'homeserver-gui' && 'never' || 'newer' }}
           # https://www.redhat.com/en/blog/speeding-container-buildah
           #--cache-from 127.0.0.1:5000/${{ env.IMAGE_NAME }}
 
@@ -1004,3 +1005,18 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
+
+  cleanup:
+    name: Cleanup local images
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs:
+      - build-bootc-image
+      - run-on-pr
+      - test
+      - push-latest
+    steps:
+      - name: Remove all local images
+        shell: bash
+        run: |
+          rm -rf /var/lib/registry/${{ github.run_id }}
