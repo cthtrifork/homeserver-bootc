@@ -999,17 +999,3 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
-
-  cleanup:
-    name: Cleanup local images
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs:
-      - build-bootc-image
-      - run-on-pr
-      - test
-      - push-latest
-    steps:
-      - name: Remove all local images
-        run: |
-          podman volume rm
