@@ -29,12 +29,13 @@ runs:
       shell: bash
       run: | #sh
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
+        podman --root /var/lib/shared pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
         podman image prune -f # cleanup dangling images
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
 
     - name: Move cache to local storage
       shell: bash
-      #if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends skopeo
@@ -44,6 +45,17 @@ runs:
         skopeo copy -q \
           containers-storage:${{ env.IMAGE_FULL }}:latest \
           containers-storage:localhost/${{ env.IMAGE_NAME }}:latest
+
+    - name: Move cache to local storage
+      shell: bash
+      if: ${{ runner.environment  != 'self-hosted' }}
+      run: | #sh
+        podman tag \
+          ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest \
+          localhost/homeserver-centos-bootc:latest
+        podman tag \
+          ${{ env.IMAGE_FULL }}:latest \
+          localhost/${{ env.IMAGE_NAME }}:latest
 
     - name: Show loaded images
       shell: bash
