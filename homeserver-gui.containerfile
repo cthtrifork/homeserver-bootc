@@ -11,6 +11,7 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+
 RUN mkdir -p -m 0700 /var/roothome && \ 
 			dnf install -y --setopt install_weak_deps=false \
       gdm \
@@ -36,9 +37,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/cleanup.sh
 
 # Do not run pinggy on a GUI client
-RUN systemctl disable pinggy.service
-
-RUN systemctl enable NetworkManager
+RUN systemctl disable pinggy.service && \
+	systemctl enable NetworkManager
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
