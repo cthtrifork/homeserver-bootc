@@ -821,9 +821,14 @@ jobs:
               bash -l -s --
 
       - name: Take QEMU screenshot
+        if: ${{ matrix.image == 'homeserver-gui' }}
+        shell: bash
         run: |
           # Dump framebuffer to PPM via QEMU monitor
           echo "screendump /tmp/vm.ppm" | sudo socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
+
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends imagemagick
 
           # Convert PPM → PNG
           sudo convert /tmp/vm.ppm /tmp/vm.png
