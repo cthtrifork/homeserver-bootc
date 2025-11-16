@@ -826,7 +826,7 @@ jobs:
           echo "screendump /tmp/vm.ppm" | sudo socat - UNIX-CONNECT:/tmp/qemu-monitor-sock
 
           # Convert PPM → PNG
-          convert /tmp/vm.ppm /tmp/vm.png
+          sudo convert /tmp/vm.ppm /tmp/vm.png
 
       - name: Upload screenshot as artifact
         id: screenshot
