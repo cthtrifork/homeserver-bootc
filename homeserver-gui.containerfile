@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.19@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6
+# syntax=docker/dockerfile:1.20@sha256:26147acbda4f14c5add9946e2fd2ed543fc402884fd75146bd342a7f6271dc1d
 FROM scratch AS ctx
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
@@ -74,7 +74,9 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/cleanup.sh
 
 # Do not run pinggy on a GUI client
-RUN systemctl disable pinggy.service
+RUN systemctl disable pinggy.service && \
+	systemctl enable NetworkManager && \
+	gnome-extensions enable dash-to-panel@jderose9.github.com
 
 # Enable GUI by default
 # Add service to launch sway? and what about lock-screen
