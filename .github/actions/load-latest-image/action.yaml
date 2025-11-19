@@ -13,13 +13,15 @@ runs:
 
         cat > ~/.config/containers/storage.conf <<'EOF'
         [storage]
-        driver = "overlay"
+        #driver = "overlay"
+        driver = "vfs"
 
         [storage.options]
         additionalimagestores = [ "/var/lib/shared",]
 
         #[storage.options.overlay]
         #mount_program = "/usr/bin/fuse-overlayfs"
+        mount_program = ""
         EOF
 
         # workaround https://github.com/containers/podman/issues/21683
