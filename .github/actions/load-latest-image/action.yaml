@@ -63,11 +63,11 @@ runs:
         podman image prune -f
         podman images
 
-        podman pull --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
-        podman pull --tls-verify=false --quiet 127.0.0.1:5000/homeserver-centos-bootc:latest
+        buildah --storage-driver=vfs pull --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
+        buildah --storage-driver=vfs pull --tls-verify=false --quiet 127.0.0.1:5000/homeserver-centos-bootc:latest
 
-        podman tag 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_FULL }}:latest
-        podman tag 127.0.0.1:5000/homeserver-centos-bootc:latest ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
+        buildah --storage-driver=vfs tag 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_FULL }}:latest
+        buildah --storage-driver=vfs tag 127.0.0.1:5000/homeserver-centos-bootc:latest ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
 
     - name: Show loaded images
       shell: bash
