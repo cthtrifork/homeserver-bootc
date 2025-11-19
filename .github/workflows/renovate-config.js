@@ -1,6 +1,7 @@
 module.exports = {
   "repositories": [
     "cthtrifork/homeserver-bootc",
+    "cthtrifork/pmx01-talos-gitops"
   ],
   hostRules: [
     {

@@ -11,19 +11,19 @@ log() {
 log "Starting system cleanup"
 
 # Clean package manager cache
-dnf -y autoremove
-dnf clean all
+#dnf -y autoremove
+#dnf -y clean all
 
 # Clean temporary files
 rm -rf /tmp/*
-rm -rf /var/*
+#rm -rf /var/*
 mkdir -p /tmp
 mkdir -p /var/tmp && chmod -R 1777 /var/tmp
 
 # Clean /var but preserve cache
-#find /var/* -maxdepth 0 -type d \! -name cache -exec rm -fr {} \;
+find /var/* -maxdepth 0 -type d \! -name cache -exec rm -fr {} \;
 # Clean /var/cache but preserve dnf + rpm-ostree
-#find /var/cache/* -maxdepth 0 -type d \! -name dnf \! -name rpm-ostree -exec rm -fr {} \;
+find /var/cache/* -maxdepth 0 -type d \! -name dnf \! -name rpm-ostree -exec rm -fr {} \;
 # Clean dnf cache
 #rm /var/{cache,lib}/dnf /var/lib/rhsm /var/cache/ldconfig -rf 
 

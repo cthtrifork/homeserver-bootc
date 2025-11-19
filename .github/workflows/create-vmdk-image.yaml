@@ -55,6 +55,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Delete huge unnecessary tools folder
+        run: |
+          rm -rf /opt/hostedtoolcache
+
       - name: Create image
         id: create-image
         uses: ublue-os/bootc-image-builder-action@main
@@ -63,7 +67,8 @@ jobs:
           type: ${{ inputs.type }}
           rootfs: xfs
           image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
-    
+
+          
       - name: Rename output
         shell: bash
         run: |

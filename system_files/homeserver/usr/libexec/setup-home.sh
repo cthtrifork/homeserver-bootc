@@ -16,6 +16,7 @@ cd "$HOME_DIR"
 dotfiles_sync(){
   rsync -a \
     --numeric-ids \
+    --ignore-times \
     --chmod=F644,D755 \
     --chown="${TARGET_USER}:${TARGET_USER}" \
     /usr/share/dotfiles/ "${HOME_DIR}/"
