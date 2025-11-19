@@ -18,8 +18,8 @@ runs:
         [storage.options]
         additionalimagestores = [ "/var/lib/shared",]
 
-        [storage.options.overlay]
-        mount_program = "/usr/bin/fuse-overlayfs"
+        #[storage.options.overlay]
+        #mount_program = "/usr/bin/fuse-overlayfs"
         EOF
 
         # workaround https://github.com/containers/podman/issues/21683
