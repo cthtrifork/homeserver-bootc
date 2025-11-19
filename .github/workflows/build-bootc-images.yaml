@@ -175,9 +175,12 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
-      - name: debug
+      - name: buildah images debugging
         shell: bash
-        run: buildah images
+        run: |
+          buildah images
+          buildah images --storage-driver=vfs --all
+          buildah images --storage-driver=overlay --all
 
       - name: Use buildah build to create the image
         id: build-image
