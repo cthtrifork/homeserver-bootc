@@ -179,8 +179,10 @@ jobs:
         shell: bash
         run: |
           buildah images
-          buildah images --storage-driver=vfs --all
-          buildah images --storage-driver=overlay --all
+          echo "---"
+          buildah images --storage-driver=vfs --all || true
+          echo "---"
+          buildah images --storage-driver=overlay --all || true
 
       - name: Use buildah build to create the image
         id: build-image
