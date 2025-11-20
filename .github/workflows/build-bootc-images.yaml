@@ -276,7 +276,8 @@ jobs:
           TAGS: ${{ steps.metadata.outputs.tags }}
 
       - name: push to cache registry
-        if: ${{ runner.environment  == 'self-hosted' }}
+        #if: ${{ runner.environment  == 'self-hosted' }}
+        if: "false"
         shell: bash
         run: |
           # Tag the image for the local registry 
@@ -389,14 +390,15 @@ jobs:
         uses: ./.github/actions/setup-trivy
 
       - name: Load PR image
-        if: ${{ runner.environment  != 'self-hosted' }}
+        #if: ${{ runner.environment  != 'self-hosted' }}
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           podman pull -q ${{ env.IMAGE_FULL }}:latest
 
       - name: Load PR image from cache registry
-        if: ${{ runner.environment  == 'self-hosted' }}
+        #if: ${{ runner.environment  == 'self-hosted' }}
+        if: false
         shell: bash
         run: | #sh
           podman pull --tls-verify=false -q \
@@ -581,7 +583,7 @@ jobs:
           #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
       - name: Load PR image
-        if: ${{ runner.environment  != 'self-hosted' }}
+        #if: ${{ runner.environment  != 'self-hosted' }}
         shell: bash
         run: | #sh
           sudo podman pull -q \
@@ -589,7 +591,8 @@ jobs:
             ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
 
       - name: Load PR image from cache registry
-        if: ${{ runner.environment  == 'self-hosted' }}
+        #if: ${{ runner.environment  == 'self-hosted' }}
+        if: "false"
         shell: bash
         run: | #sh
           sudo podman pull --tls-verify=false -q \
