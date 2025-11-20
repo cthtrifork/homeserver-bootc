@@ -29,7 +29,8 @@ runs:
 
     - name: Load latest image to speed up build
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      #if: ${{ runner.environment  == 'self-hosted' }}
+      if: false
       run: | #sh
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
         podman --root /var/lib/shared pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
@@ -39,7 +40,8 @@ runs:
 
     - name: start local registry
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      #if: ${{ runner.environment  == 'self-hosted' }}
+      if: false
       run: | #sh
         # Start a local registry
         podman pull -q docker.io/library/registry:2
@@ -51,7 +53,8 @@ runs:
 
     - name: Move from root storage to rootless storage through local registry
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      #if: ${{ runner.environment  == 'self-hosted' }}
+      if: false
       run: | #sh
         podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
         podman tag ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest 127.0.0.1:5000/homeserver-centos-bootc:latest
@@ -70,6 +73,7 @@ runs:
         buildah --storage-driver=vfs tag 127.0.0.1:5000/homeserver-centos-bootc:latest ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
 
     - name: Show loaded images
+      if: false
       shell: bash
       run: |
         echo "podman images:"
