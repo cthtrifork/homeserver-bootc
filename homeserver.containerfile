@@ -3,7 +3,7 @@ FROM scratch AS ctx
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM quay.io/fedora/fedora-bootc:42
+FROM quay.io/fedora/fedora-bootc:44@sha256:49f71b142efaecdefe84ccf672b7e588dfc50d500198a0904b6c15cd65a70414
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
