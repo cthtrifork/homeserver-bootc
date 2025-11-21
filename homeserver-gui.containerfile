@@ -14,9 +14,7 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
 
 RUN mkdir -p -m 0700 /var/roothome && \ 
 			dnf install -y --setopt install_weak_deps=false \
-      gdm \
       @kde-desktop-environment \
-      plymouth-system-theme \
       brave-browser \
       ghostty \
 			NetworkManager
@@ -41,8 +39,8 @@ RUN systemctl disable pinggy.service && \
 	systemctl enable NetworkManager
 
 # Enable GUI by default
-RUN systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
