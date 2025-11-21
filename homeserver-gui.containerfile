@@ -21,6 +21,8 @@ RUN mkdir -p -m 0700 /var/roothome && \
     ghostty \
     NetworkManager
 
+RUN dnf remove -y gnome-shell gnome-session gnome-classic-session || true
+
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
