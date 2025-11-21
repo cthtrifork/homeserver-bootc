@@ -20,3 +20,6 @@ systemctl enable systemd-userdbd.service
 systemctl enable virtualframe.service
 
 systemctl enable setup-home@caspertdk.service
+
+# Enhance logging, but heavy in resources - journalctl is better alternative
+systemctl disable rsyslog || true
