@@ -10,8 +10,14 @@ log() {
 
 log "Starting system cleanup"
 
+# remove resource heavy packages
+dnf -y remove \
+  rsyslog \
+  dracut-config-rescue \
+  dnf-data
+
 # Clean package manager cache
-#dnf -y autoremove
+dnf -y autoremove
 #dnf -y clean all
 
 # Clean temporary files
