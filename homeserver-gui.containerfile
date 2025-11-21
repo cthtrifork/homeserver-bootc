@@ -44,7 +44,9 @@ RUN systemctl disable pinggy.service && \
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+    systemctl enable gdm.service && \
+    systemctl disable rsyslog
 
 RUN bootc container lint
+
 
