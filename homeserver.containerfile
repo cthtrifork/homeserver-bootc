@@ -3,7 +3,7 @@ FROM scratch AS ctx
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM quay.io/fedora/fedora-bootc:42
+FROM quay.io/fedora/fedora-bootc:43
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
@@ -87,6 +87,7 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
 
 
 
