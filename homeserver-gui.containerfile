@@ -49,9 +49,8 @@ RUN wget -P /usr/share/fonts/ https://github.com/ryanoasis/nerd-fonts/releases/d
 	&& fc-cache -fv
 
 # Clone and install Segoe UI font
-RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux && \
-    cd /tmp/segoe-ui-linux && \
-    DEST_DIR="$HOME/.local/share/fonts/Microsoft/TrueType/SegoeUI/" \
+ENV DEST_DIR="/usr/share/fonts/Microsoft/TrueType/SegoeUI/" 
+RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux \
     && mkdir -p "$DEST_DIR" \
     && cp -r /tmp/segoe-ui-linux/font/*.ttf $DEST_DIR/ \
     && rm -rf /tmp/segoe-ui-linux
@@ -84,3 +83,4 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
