@@ -35,25 +35,25 @@ RUN --mount=type=secret,id=creds,required=true \
     ln -sf /usr/lib/container-auth.json /etc/docker/config.json
 
 # Install common utilities
-#RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
 RUN dnf -y --setopt install_weak_deps=false install \
-      dnf5-plugins \
-      ca-certificates \
-      dnf-plugins-core \
-      procps-ng \
-      curl \
-      file \
-      qemu-guest-agent \
-      firewalld \
-      rsync \
-      unzip \
-      python3 \
-      python3-pip \
-      tree \
-      git \
-      make \
-      xclip \
-      xorg-x11-server-Xvfb
+    --allowerasing \
+    dnf5-plugins \
+    ca-certificates \
+    dnf-plugins-core \
+    procps-ng \
+    curl \
+    file \
+    qemu-guest-agent \
+    firewalld \
+    rsync \
+    unzip \
+    python3 \
+    python3-pip \
+    tree \
+    git \
+    make \
+    xclip \
+    xorg-x11-server-Xvfb
 
 # pip3 dependencies
 RUN pip3 install glances
