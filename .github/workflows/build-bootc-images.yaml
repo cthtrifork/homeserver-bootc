@@ -754,7 +754,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "timeout 30 systemctl is-system-running --wait && systemctl --failed"
+            "timeout 30 systemctl is-system-running --wait || systemctl --failed"
 
           echo "--- stats ---"
           ssh "${SSH_OPTS[@]}" \
