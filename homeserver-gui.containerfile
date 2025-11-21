@@ -51,9 +51,11 @@ RUN wget -P /usr/share/fonts/ https://github.com/ryanoasis/nerd-fonts/releases/d
 # Clone and install Segoe UI font
 RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux && \
     cd /tmp/segoe-ui-linux && \
-    chmod +x install.sh && \
-    ./install.sh && \
-    rm -rf /tmp/segoe-ui-linux
+    DEST_DIR="$HOME/.local/share/fonts/Microsoft/TrueType/SegoeUI/" \
+    && mkdir -p "$DEST_DIR" \
+    && cp -r /tmp/segoe-ui-linux/font/*.ttf $DEST_DIR/ \
+    && rm -rf /tmp/segoe-ui-linux
+    && fc-cache -f "$DEST_DIR"
 
 RUN dnf -y remove gnome-*
 
@@ -75,14 +77,10 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service && \
-	systemctl enable NetworkManager && \
-	gnome-extensions enable dash-to-panel@jderose9.github.com
+	systemctl enable NetworkManager
 
 # Enable GUI by default
 # Add service to launch sway? and what about lock-screen
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
-
-
-
