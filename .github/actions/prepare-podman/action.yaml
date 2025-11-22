@@ -1,26 +1,26 @@
-name: "Load latest image to speed up build"
-description: "Load latest image to speed up build"
+name: "Prepare podman"
+description: "Prepare Podman for building and loading images"
 runs:
   using: "composite"
   steps:
     - name: Configure containers storage.conf
       shell: bash
-      run: |
+      run: | #sh
         mkdir -p ~/.config/containers
         sudo mkdir -p /var/lib/shared
         sudo chmod -R a+rx /var/lib/shared
         sudo chown -R $(whoami):$(whoami) /var/lib/shared
 
-        cat > ~/.config/containers/storage.conf <<'EOF'
-        [storage]
-        driver = "overlay"
-
-        [storage.options]
-        additionalimagestores = [ "/var/lib/shared",]
-
-        [storage.options.overlay]
-        mount_program = "/usr/bin/fuse-overlayfs"
-        EOF
+        printf "%s\n" \
+        "[storage]" \
+        'driver = "overlay"' \
+        "" \
+        "[storage.options]" \
+        'additionalimagestores = [ "/var/lib/shared",]' \
+        "" \
+        "[storage.options.overlay]" \
+        'mount_program = "/usr/bin/fuse-overlayfs"' \
+        > ~/.config/containers/storage.conf
 
         # workaround https://github.com/containers/podman/issues/21683
         echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /home/runner/.local/share/containers/storage && sqlite3 db.sql)'
@@ -28,7 +28,7 @@ runs:
     - name: Load latest image to speed up build
       shell: bash
       #if: ${{ runner.environment  == 'self-hosted' }}
-      if: false
+      if: "false"
       run: | #sh
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
         podman --root /var/lib/shared pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
@@ -36,23 +36,56 @@ runs:
         podman --root /var/lib/shared image prune -f || true # cleanup dangling images
         sudo chmod -R a+rx /var/lib/shared # podman bug workaround
 
-    - name: start local registry
+    - name: Start a local registry with proxy to ghcr.io
       shell: bash
-      #if: ${{ runner.environment  == 'self-hosted' }}
-      if: false
+      if: ${{ runner.environment  == 'self-hosted' }}
       run: | #sh
         # Start a local registry
-        podman pull -q docker.io/library/registry:2
-        mkdir -p /var/lib/registry/${{ github.run_id }}
+        podman pull -q docker.io/library/registry:3
+        mkdir -p /var/lib/registry/
+        touch /etc/distribution/config.yml
+        printf "%s\n" \
+        "proxy:" \
+        "  remoteurl: https://ghcr.io" \
+        "  username: ${GITHUB_ACTOR}" \
+        "  password: ${secrets_GITHUB_TOKEN}" \
+        "  ttl: 168h # 7 days" \
+        > /etc/distribution/config.yml
+
         podman run -d --name local-registry \
           -p 5000:5000 \
-          -v /var/lib/registry/${{ github.run_id }}:/var/lib/registry \
-          docker.io/library/registry:2
+          -v /var/lib/registry/:/var/lib/registry \
+          -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
+          -e REGISTRY_PROXY_USERNAME="${GITHUB_ACTOR}" \
+          -e REGISTRY_PROXY_PASSWORD="${secrets_GITHUB_TOKEN}" \
+          -e REGISTRY_PROXY_TTL=0 \
+          -v /etc/distribution/config.yml:/etc/docker/registry/config.yml:ro \
+          docker.io/library/registry:3
+
+    - name: Configure rootless Podman mirror for GHCR
+      shell: bash
+      if: ${{ runner.environment  == 'self-hosted' }}
+      run: | #sh
+        echo "Applying rootless Podman mirror for GHCR to user"
+        mkdir -p ~/.config/containers/registries.conf.d
+
+        printf "%s\n" \
+          '[[registry]]' \
+          'location = "ghcr.io"' \
+          '' \
+          '  [[registry.mirror]]' \
+          '  location = "localhost:5000"' \
+          '  insecure = true' \
+          > ~/.config/containers/registries.conf.d/ghcr-mirror.conf
+          
+          echo "Applying rootless Podman mirror for GHCR to root Podman"
+          sudo mkdir -p /etc/containers/registries.conf.d
+          cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
 
     - name: Move from root storage to rootless storage through local registry
       shell: bash
       #if: ${{ runner.environment  == 'self-hosted' }}
-      if: false
+      if: "false"
       run: | #sh
         podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
         podman tag ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest 127.0.0.1:5000/homeserver-centos-bootc:latest
@@ -71,7 +104,7 @@ runs:
         podman tag 127.0.0.1:5000/homeserver-centos-bootc:latest ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
 
     - name: Show loaded images
-      if: false
+      if: "false"
       shell: bash
       run: |
         echo "podman images:"
@@ -100,3 +133,26 @@ runs:
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
         mkdir -p /home/runner/.cache/dnf
+
+    - name: Configure Podman
+      shell: bash
+      run: | #sh
+        sudo mkdir -p /etc/containers
+        sudo mkdir -p /var/lib/containers/storage
+        echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+          | sudo tee /etc/containers/storage.conf
+
+        DB=/var/lib/containers/storage/db.sql
+        if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
+          # set GraphDriver if blank
+          sudo sqlite3 "$DB" \
+            "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
+        fi
+
+        # initialize/upgrade storage metadata so the DB exists & matches the schema
+        sudo podman system migrate || true
+
+        # sanity check
+        sudo podman info
+        # workaround https://github.com/containers/podman/issues/21683
+        #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
