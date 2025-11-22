@@ -53,7 +53,7 @@ ENV DEST_DIR="/usr/share/fonts/Microsoft/TrueType/SegoeUI/"
 RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux \
     && mkdir -p "$DEST_DIR" \
     && cp -r /tmp/segoe-ui-linux/font/*.ttf $DEST_DIR/ \
-    && rm -rf /tmp/segoe-ui-linux
+    && rm -rf /tmp/segoe-ui-linux \
     && fc-cache -f "$DEST_DIR"
 
 RUN dnf -y remove gnome-*
@@ -83,4 +83,3 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
-
