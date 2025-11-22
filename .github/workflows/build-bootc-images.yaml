@@ -384,12 +384,6 @@ jobs:
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
 
-      - name: Install qemu deps (socat sqlite3 qemu-system-x86 qemu-utils)
-        run: |
-          set -e
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
-
       - name: Generate ephemeral SSH keypair
         id: ssh-key
         run: | #sh
