@@ -19,6 +19,8 @@ RUN mkdir -p -m 0700 /var/roothome && \
   ghostty \
   NetworkManager
 
+RUN dnf -y remove gnome-*
+
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
@@ -37,3 +39,4 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
