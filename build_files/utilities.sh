@@ -99,7 +99,7 @@ curl -sLo /tmp/jq \
 install -o root -g root -m 0755 /tmp/jq /usr/bin/jq
 
 log "Installing yq"
-YQ_VERSION="v4.48.2" # renovate: datasource=github-releases depName=mikefarah/yq
+YQ_VERSION="v4.49.1" # renovate: datasource=github-releases depName=mikefarah/yq
 curl -sLo /tmp/yq \
     "$(/ctx/build_files/github-release-url.sh mikefarah/yq ${MACHINE}.${ARCH} $YQ_VERSION)"
 install -o root -g root -m 0755 /tmp/yq /usr/bin/yq
