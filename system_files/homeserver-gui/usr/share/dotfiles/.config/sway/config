@@ -1,0 +1,22 @@
+# Inspiration:
+# https://github.com/rbnis/legacy-dotfiles/blob/master/.config/sway/config
+# https://github.com/dpgraham4401/.dotfiles/blob/main/sway/.config/sway/config
+# https://github.com/plexus/dotfiles/blob/master/.config/waybar/config
+# https://github.com/gjpin/arch-linux/blob/main/configs/sway/config
+# # Read `man 5 sway` for a complete reference.
+# Use your laptop keyboard layout (change if needed)
+input * {
+    xkb_layout dk
+}
+
+# Set the modifier key (Super/Win)
+set $mod Mod4
+
+### Bar
+  bar {
+    swaybar_command waybar
+	workspace_buttons yes
+  }
+
+#include ~/.config/sway/$(hostname)/*
+include "/etc/sway/config.d/*"
