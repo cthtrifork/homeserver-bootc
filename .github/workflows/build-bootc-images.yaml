@@ -121,18 +121,18 @@ jobs:
           # https://linux.die.net/man/1/date
           echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
 
-      - name: Prepare Podman
-        uses: ./.github/actions/prepare-podman
-
-      - name: Ensure trivy is installed and DB is cached
-        uses: ./.github/actions/setup-trivy
-
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
+
+      - name: Prepare Podman
+        uses: ./.github/actions/prepare-podman
+
+      - name: Ensure trivy is installed and DB is cached
+        uses: ./.github/actions/setup-trivy
 
       - name: Image Metadata
         uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5
