@@ -20,7 +20,29 @@ runs:
 
     - name: Restore DB from cache
       uses: actions/cache/restore@v4
+      if: ${{ runner.environment != 'self-hosted' }}
       with:
         path: ${{ github.workspace }}/.cache/trivy
         key: cache-trivy-${{ steps.date.outputs.date }}
         restore-keys: cache-trivy-
+
+    # rely on pull-through cache on self-hosted runners
+    - name: Download and extract the vulnerability DB
+      shell: bash
+      if: ${{ runner.environment == 'self-hosted' }}
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
+        podman pull ghcr.io/aquasecurity/trivy-db:2
+        podman save ghcr.io/aquasecurity/trivy-db:2 -o db.tar.gz
+        tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
+        rm db.tar.gz
+
+    - name: Download and extract the Java DB
+      if: ${{ runner.environment == 'self-hosted' }}
+      shell: bash
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
+        podman pull ghcr.io/aquasecurity/trivy-java-db:1
+        podman save ghcr.io/aquasecurity/trivy-java-db:1 -o javadb.tar.gz
+        tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
+        rm javadb.tar.gz
