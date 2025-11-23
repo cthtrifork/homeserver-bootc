@@ -139,3 +139,5 @@ log "Installing dysk"
 curl -Lo /tmp/dysk https://dystroy.org/dysk/download/x86_64-linux/dysk
 chmod +x /tmp/dysk
 mv /tmp/dysk "$BIN_DIR/dysk"
+
+chmod -r 755 $BIN_DIR/
