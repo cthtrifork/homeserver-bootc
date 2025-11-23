@@ -88,7 +88,7 @@ runs:
       run: | #sh
         podman pull -q ${{ env.IMAGE_FULL }}:latest || true
         podman pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
-        docker logs local-registry
+        podman logs local-registry
 
     - name: Move from root storage to rootless storage through local registry
       shell: bash
