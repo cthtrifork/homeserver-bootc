@@ -32,7 +32,7 @@ runs:
         TAGS: ${{ steps.metadata.outputs.tags }}
 
     - name: push to cache registry
-      #if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment  == 'self-hosted' }}
       if: "false"
       shell: bash
       run: |
