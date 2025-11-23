@@ -68,6 +68,10 @@ RUN dnf -y --setopt install_weak_deps=false install \
 # pip3 dependencies
 RUN pip3 install glances
 
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+	cp -v /ctx/usr/local/bin/* /usr/local/bin
+
+
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
     install -D -m 0600 /run/secrets/agekey /usr/lib/sops/age/keys.txt && \
