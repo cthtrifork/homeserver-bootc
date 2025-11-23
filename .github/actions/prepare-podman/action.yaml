@@ -44,14 +44,14 @@ runs:
         podman pull -q docker.io/library/registry:3
         sudo mkdir -p /var/lib/registry/
         sudo mkdir -p /etc/distribution/
-        touch /etc/distribution/config.yml
+        sudo touch /etc/distribution/config.yml
         printf "%s\n" \
         "proxy:" \
         "  remoteurl: https://ghcr.io" \
         "  username: ${GITHUB_ACTOR}" \
         "  password: ${secrets_GITHUB_TOKEN}" \
         "  ttl: 168h # 7 days" \
-        > /etc/distribution/config.yml
+        | sudo tee /etc/distribution/config.yml
 
         podman run -d --name local-registry \
           -p 5000:5000 \
