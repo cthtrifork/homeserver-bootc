@@ -32,8 +32,7 @@ runs:
       if: ${{ runner.environment == 'self-hosted' }}
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
-        podman pull ghcr.io/aquasecurity/trivy-db:2
-        podman save ghcr.io/aquasecurity/trivy-db:2 -o db.tar.gz
+        oras pull localhost:5000/aquasecurity/trivy-db:2
         tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
         rm db.tar.gz
 
@@ -42,7 +41,6 @@ runs:
       shell: bash
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
-        podman pull ghcr.io/aquasecurity/trivy-java-db:1
-        podman save ghcr.io/aquasecurity/trivy-java-db:1 -o javadb.tar.gz
+        oras pull localhost:5000/aquasecurity/trivy-java-db:1
         tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
         rm javadb.tar.gz
