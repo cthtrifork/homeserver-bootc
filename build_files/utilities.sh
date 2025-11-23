@@ -141,3 +141,4 @@ chmod +x /tmp/dysk
 mv /tmp/dysk "$BIN_DIR/dysk"
 
 chmod -r 755 $BIN_DIR/
+chmod -r 755 $COMPLETION_DIR/
