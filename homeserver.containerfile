@@ -68,10 +68,12 @@ RUN dnf -y --setopt install_weak_deps=false install \
     xorg-x11-server-Xvfb
 
 # pip3 dependencies
-RUN pip3 install glances
+RUN pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir glances
 
 RUN --mount=type=bind,from=utils,src=/,dst=/utils \
 	rsync -a /utils/usr/local/bin/* /usr/local/bin \
+	&& mkdir -p /usr/local/share/bash-completion/completions/ \
 	&& rsync -a /utils/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/
 
 # AGE and SOPS
@@ -97,14 +99,8 @@ ADD cosign.pub /etc/pki/cosign/cosign.pub
 ADD policy.json /etc/containers/policy.json
 RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 
-
 # Networking
 #EXPOSE 8006
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
-
-
-
-
-
