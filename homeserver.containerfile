@@ -69,7 +69,8 @@ RUN dnf -y --setopt install_weak_deps=false install \
 RUN pip3 install glances
 
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-	cp -v /ctx/usr/local/bin/* /usr/local/bin
+	cp -v /ctx/usr/bin/* /usr/local/bin \
+	&& cp -v /ctx/etc/bash_completion.d/* /etc/bash_completion.d/
 
 
 # AGE and SOPS
