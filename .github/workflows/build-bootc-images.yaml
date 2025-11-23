@@ -246,8 +246,8 @@ jobs:
       - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         id: push-to-ghcr
         uses: ./.github/actions/push-image
-        secrets:
-          pat: ${{ secrets.github_token }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy scan results to github
         if: github.ref == 'refs/heads/main'
