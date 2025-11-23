@@ -1,12 +1,10 @@
 # syntax=docker/dockerfile:1.20@sha256:26147acbda4f14c5add9946e2fd2ed543fc402884fd75146bd342a7f6271dc1d
+FROM quay.io/fedora/fedora-bootc:43 as base
 FROM scratch AS ctx
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM quay.io/fedora/fedora-bootc:43 as base
-
 FROM base AS utils
-
 RUN dnf -y --setopt install_weak_deps=false install \
     --allowerasing \
     unzip \
@@ -62,7 +60,7 @@ RUN dnf -y --setopt install_weak_deps=false install \
     python3 \
     python3-pip \
     tree \
-    git-core \
+    git \
     make \
     xclip \
     xorg-x11-server-Xvfb
