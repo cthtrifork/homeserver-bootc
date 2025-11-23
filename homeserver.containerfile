@@ -9,8 +9,6 @@ FROM base AS utils
 
 RUN dnf -y --setopt install_weak_deps=false install \
     --allowerasing \
-    wget \
-    rsync \
     unzip \
     git
 
@@ -73,8 +71,8 @@ RUN dnf -y --setopt install_weak_deps=false install \
 RUN pip3 install glances
 
 RUN --mount=type=bind,from=utils,src=/,dst=/utils \
-	cp -v /utils/usr/local/bin/* /usr/local/bin \
-	&& cp -v /utils/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/
+	rsync -a /utils/usr/local/bin/* /usr/local/bin \
+	&& rsync -a /utils/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/
 
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
