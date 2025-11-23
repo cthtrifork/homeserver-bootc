@@ -7,10 +7,14 @@ FROM quay.io/fedora/fedora-bootc:43 as base
 
 FROM base AS utils
 
+RUN dnf -y --setopt install_weak_deps=false install \
+    --allowerasing \
+    wget \
+    rsync \
+    unzip \
+    git
+
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    #--mount=type=cache,dst=/var/cache \
-    #--mount=type=cache,dst=/var/log \
-    --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/utilities.sh
 
 FROM base AS final
