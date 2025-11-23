@@ -1,7 +1,8 @@
 name: "Push image"
 description: "Push container images to the registry"
-secrets:
-  pat:
+inputs:
+  github_token:
+    description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
     required: true
 outputs:
   digest: # id of the output
@@ -24,7 +25,7 @@ runs:
           --digestfile digest.txt
         DIGEST=$(cat digest.txt)
         echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
-        echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+        echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
         for tag in $TAGS; do
           skopeo copy -q --all \
             "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
