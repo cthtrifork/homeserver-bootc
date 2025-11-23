@@ -81,7 +81,7 @@ runs:
           
           echo "Applying rootless Podman mirror for GHCR to root Podman"
           sudo mkdir -p /etc/containers/registries.conf.d
-          cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
+          sudo cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
 
     - name: Move from root storage to rootless storage through local registry
       shell: bash
