@@ -70,7 +70,7 @@ RUN pip3 install glances
 
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 	cp -v /ctx/usr/local/bin/* /usr/local/bin \
-	&& cp -v /ctx/etc/bash_completion.d/* /etc/bash_completion.d/
+	&& cp -v /ctx/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/
 
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
