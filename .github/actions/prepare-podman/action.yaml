@@ -43,6 +43,7 @@ runs:
         # Start a local registry
         podman pull -q docker.io/library/registry:3
         mkdir -p /var/lib/registry/
+        mkdir -p /etc/distribution/
         touch /etc/distribution/config.yml
         printf "%s\n" \
         "proxy:" \
