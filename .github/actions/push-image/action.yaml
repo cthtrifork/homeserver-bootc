@@ -1,5 +1,8 @@
 name: "Push image"
 description: "Push container images to the registry"
+secrets:
+  pat:
+    required: true
 outputs:
   digest: # id of the output
     description: 'The digest of the pushed image'
