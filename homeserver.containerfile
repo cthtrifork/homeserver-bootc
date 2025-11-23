@@ -10,7 +10,7 @@ FROM base AS utils
 RUN dnf -y --setopt install_weak_deps=false install \
     --allowerasing \
     unzip \
-    git
+    git-core
 
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/utilities.sh
@@ -62,7 +62,7 @@ RUN dnf -y --setopt install_weak_deps=false install \
     python3 \
     python3-pip \
     tree \
-    git \
+    git-core \
     make \
     xclip \
     xorg-x11-server-Xvfb
