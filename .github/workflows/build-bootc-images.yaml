@@ -80,9 +80,7 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    # homeserver-gui has its own runner due to disksize requirements
-    #runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
-    runs-on: arc-ubuntu
+    runs-on: ${{ (matrix.image == 'homeserver-gui' || github.event_name != 'pull_request') && 'arc-ubuntu' || 'ubuntu-latest' }}
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -181,13 +179,14 @@ jobs:
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         env:
           DOCKER_BUILDKIT: "1"
+          BUILDAH_LAYERS: "true"
         with:
           context: ${{ env.CONTEXT }}
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           #layers: ${{ runner.environment == 'self-hosted' && 'false' || 'true' }}
-          layers: true
+          #layers: true
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
