@@ -1,0 +1,112 @@
+name: "Run QEMU tests"
+description: "Run QEMU tests on the built image"
+runs:
+  using: "composite"
+  steps:
+    - name: Wait for SSH and run startup checks
+      shell: bash
+      env:
+        SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SLEEP_SECONDS: 10
+        RETRIES: 10
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        wait_for_ssh_up() {
+          SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+          if [[ $SSH_STATUS == "READY" ]]; then
+            echo 1
+          else
+            echo 0
+          fi
+        }
+
+        for _ in $(seq 0 ${RETRIES}); do
+          RESULT=$(wait_for_ssh_up "localhost")
+          if [[ $RESULT == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+          fi
+          sleep ${SLEEP_SECONDS}
+        done
+
+        # Make sure VM is ready for testing
+        echo "--- system is-running ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "sudo bootc status"
+
+        echo "--- rpm-ostree status ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "rpm-ostree status"
+
+        echo "--- systemctl is-system-running ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "timeout 30 systemctl is-system-running --wait || systemctl --failed"
+
+        echo "--- stats ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "df -h"
+
+    - name: Run system tests
+      shell: bash
+      env:
+        SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost
+
+    - name: Run user tests
+      shell: bash
+      if: "${{ matrix.image }} == 'homeserver'"
+      env:
+        SSH_USERNAME: caspertdk
+        SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          bash -l -s --
+
+    - name: Verify ghcr.io auth
+      shell: bash
+      env:
+        SSH_USERNAME: caspertdk
+        SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        IMAGE_FULL: ${{ env.IMAGE_FULL }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        cat ./tests/verify-cosign.sh | ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          "$SSH_USERNAME"@localhost \
+            IMAGE_FULL="ghcr.io/cthtrifork/homeserver-bootc/hello" \
+            bash -l -s --
