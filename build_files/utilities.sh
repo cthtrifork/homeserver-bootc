@@ -24,6 +24,13 @@ curl -sLo /tmp/age.tar.gz \
   "$(/ctx/build_files/github-release-url.sh FiloSottile/age ${MACHINE}-${ARCH}.tar.gz $AGE_VERSION)"
 tar -zxvf /tmp/age.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
 
+log "Installing gh-cli"
+GH_CLI_VERSION="v2.83.1" # renovate: datasource=github-releases depName=cli/cli
+curl -sLo /tmp/gh-cli.tar.gz \
+  "$(/ctx/build_files/github-release-url.sh cli/cli ${MACHINE}_${ARCH}.tar.gz $GH_CLI_VERSION)"
+tar -zxvf /tmp/gh-cli.tar.gz -C "$BIN_DIR"/ --wildcards "*/bin/*" --strip-components=2 --exclude=LICENSE --exclude=README.md --exclude=licenses
+"$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
+
 log "Installing kubectl"
 KUBECTL_VERSION="v1.34.2" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 curl -sLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${ARCH}/kubectl"
