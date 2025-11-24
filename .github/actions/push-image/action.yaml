@@ -11,6 +11,11 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: List images
+      shell: bash
+      run: | #sh
+        podman images
+
     - name: Push to Container registry
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
       id: push-to-ghcr
