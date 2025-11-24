@@ -180,13 +180,12 @@ jobs:
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         env:
           DOCKER_BUILDKIT: "1"
-          BUILDAH_LAYERS: "true"
         with:
           context: ${{ env.CONTEXT }}
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          layers: ${{ runner.environment == 'self-hosted' && 'true' || 'false' }}
+          layers: false
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
@@ -200,7 +199,6 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
-            --layers
             -v /home/runner/.cache/dnf:/var/cache/dnf:O
           #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
           # https://www.redhat.com/en/blog/speeding-container-buildah
