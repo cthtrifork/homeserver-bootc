@@ -15,7 +15,6 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
 RUN mkdir -p -m 0700 /var/roothome && \
 	dnf install -y \
     --setopt=install_weak_deps=false \
-    gdm \
     @xfce-desktop-environment \
     brave-browser \
     ghostty \
@@ -45,8 +44,7 @@ RUN systemctl disable pinggy.service && \
 
 # Enable GUI by default
 RUN rm -f /etc/systemd/system/display-manager.service && \
-    systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+    systemctl set-default graphical.target
 
 RUN bootc container lint
 

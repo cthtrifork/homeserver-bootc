@@ -11,16 +11,29 @@ runs:
     - name: Manual Trivy Setup
       uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
 
-    - name: Copy fallback trivy db
-      if: ${{ runner.environment  == 'self-hosted' }}
-      shell: bash
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/.cache/trivy
-        cp -rv /home/runner/.cache/trivy/* $GITHUB_WORKSPACE/.cache/trivy/
-
     - name: Restore DB from cache
       uses: actions/cache/restore@v4
+      if: ${{ runner.environment != 'self-hosted' }}
       with:
         path: ${{ github.workspace }}/.cache/trivy
         key: cache-trivy-${{ steps.date.outputs.date }}
         restore-keys: cache-trivy-
+
+    # rely on pull-through cache on self-hosted runners
+    - name: Download and extract the vulnerability DB
+      shell: bash
+      if: ${{ runner.environment == 'self-hosted' }}
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
+        oras pull localhost:5005/aquasecurity/trivy-db:2
+        tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
+        rm db.tar.gz
+
+    - name: Download and extract the Java DB
+      if: ${{ runner.environment == 'self-hosted' }}
+      shell: bash
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
+        oras pull localhost:5005/aquasecurity/trivy-java-db:1
+        tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
+        rm javadb.tar.gz

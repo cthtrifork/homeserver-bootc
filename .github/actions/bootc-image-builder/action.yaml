@@ -1,0 +1,104 @@
+name: "Create bootable image"
+description: "Create a bootable image from the specified configuration"
+outputs:
+  output_directory:
+    description: "The output directory of the built image"
+    value: ${{ steps.create-vmdk.outputs.output_directory }}
+  checksum:
+    description: "The checksum of the built image"
+    value: ${{ steps.create-vmdk.outputs.checksum }}
+  checksum_path:
+    description: "The path to the checksum file of the built image"
+    value: ${{ steps.create-vmdk.outputs.checksum_path }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install qemu deps (socat sqlite3 qemu-system-x86 qemu-utils)
+      shell: bash
+      run: | #sh
+        set -e
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
+
+    - name: Configure Podman for buildah
+      shell: bash
+      run: | #sh
+        sudo mkdir -p /etc/containers
+        sudo mkdir -p /var/lib/containers/storage
+        echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+          | sudo tee /etc/containers/storage.conf
+
+        DB=/var/lib/containers/storage/db.sql
+        if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
+          # set GraphDriver if blank
+          sudo sqlite3 "$DB" \
+            "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
+        fi
+
+        # initialize/upgrade storage metadata so the DB exists & matches the schema
+        sudo podman system migrate || true
+
+        # sanity check
+        sudo podman info
+        # workaround https://github.com/containers/podman/issues/21683
+        #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
+
+    # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
+    - name: Build Bootable Image
+      id: create-vmdk
+      shell: bash
+      env:
+        CONFIG_FILE: ./out/config.toml
+        IMAGE: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+        BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
+        USE_LIBREPO: false
+        IMAGE_TYPE: qcow2
+        ROOTFS: xfs
+      run: | #sh
+        DESIRED_UID=$(id -u)
+        DESIRED_GID=$(id -g)
+
+        mkdir -p ./output
+
+        INPUT_ARGS=""
+        if [ "${USE_LIBREPO}" == "true" ]; then
+            INPUT_ARGS+="--use-librepo=True "
+        else
+            INPUT_ARGS+="--use-librepo=False "
+        fi
+
+        [ -n "${ROOTFS}" ] && INPUT_ARGS+="--rootfs=${ROOTFS} "
+
+        sudo podman run \
+          --rm \
+          --privileged \
+          --pull=newer \
+          --security-opt label=type:unconfined_t \
+          -v ${CONFIG_FILE}:/config.toml:ro \
+          -v ./output:/output \
+          -v /var/lib/containers/storage:/var/lib/containers/storage \
+          ${BOOTC_IMAGE_BUILDER_IMAGE} \
+          --type ${IMAGE_TYPE} \
+          --local \
+          --chown $DESIRED_UID:$DESIRED_GID \
+          ${INPUT_ARGS} \
+          $IMAGE
+
+        case "${IMAGE_TYPE}" in
+        "raw"|"ami") OUTPUT_DIRECTORY="./output/image" ;;
+        "iso") OUTPUT_DIRECTORY="./output/bootiso" ;;
+        "vhd") OUTPUT_DIRECTORY="./output/vpc" ;;
+        *) OUTPUT_DIRECTORY="./output/${IMAGE_TYPE}" ;;
+        esac
+
+        ISO_PATH=(${OUTPUT_DIRECTORY}/*)
+
+        # Create a checksum of the output file, stored in the same directory
+        CHECKSUM=$(sha256sum $ISO_PATH | awk '{print $1}')
+        CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
+        echo $CHECKSUM > ${CHECKSUM_PATH}
+
+        echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
+        echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
+        echo "checksum_path=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
+        echo "path=$ISO_PATH" >> $GITHUB_OUTPUT

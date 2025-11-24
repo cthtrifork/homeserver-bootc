@@ -1,0 +1,52 @@
+name: "Upload trivy scan results to github"
+description: "Upload trivy scan results to GitHub Security tab"
+runs:
+  using: "composite"
+  steps:
+    - name: Trivy REPORT sarif (base:latest)
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+      with:
+        image-ref: ${{ env.LOCAL_PR_IMAGE }}
+        ignore-unfixed: true
+        #severity: HIGH,CRITICAL
+        format: "sarif"
+        output: "trivy-results.sarif"
+        skip-setup-trivy: true
+        scanners: "vuln"
+        vuln-type: "library"
+        severity: "CRITICAL,HIGH,MEDIUM"
+        cache: "false"
+      env:
+        TRIVY_SKIP_DB_UPDATE: true
+        TRIVY_SKIP_JAVA_DB_UPDATE: true
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        sarif_file: "${{ github.workspace }}/trivy-results.sarif"
+        category: trivy
+
+    - name: Trivy SBOM - current
+      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+      with:
+        image-ref: ${{ env.LOCAL_PR_IMAGE }}
+        scan-type: image
+        format: "github"
+        output: "${{ github.workspace }}/dependency-results.sbom.json"
+        github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
+        scanners: "vuln"
+        skip-setup-trivy: true
+        vuln-type: "library"
+        severity: "CRITICAL,HIGH,MEDIUM"
+        cache: "false"
+      env:
+        TRIVY_SKIP_DB_UPDATE: true
+        TRIVY_SKIP_JAVA_DB_UPDATE: true
+
+    - name: Upload trivy report as a Github artifact
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+      with:
+        name: trivy-${{ matrix.image }}-sbom-report
+        path: "${{ github.workspace }}/dependency-results.sbom.json"
+        retention-days: 20 # 90 is the default
