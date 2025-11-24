@@ -26,6 +26,10 @@ runs:
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
           ${{ env.LOCAL_PR_IMAGE }}
 
+        podman tag \
+          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+
     - name: List images
       shell: bash
       run: | #sh
