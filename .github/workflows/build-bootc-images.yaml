@@ -80,7 +80,6 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    # homeserver-gui has its own runner due to disksize requirements
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
@@ -185,7 +184,6 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          #layers: ${{ runner.environment == 'self-hosted' && 'false' || 'true' }}
           layers: false
           oci: false
           build-args: |
