@@ -245,8 +245,7 @@ jobs:
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
-    #runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     needs:
       - changes
       - build-bootc-image
