@@ -537,7 +537,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.LOCAL_PR_IMAGE }}
+          image-ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true
