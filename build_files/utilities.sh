@@ -15,7 +15,8 @@ COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 mkdir -p "$BIN_DIR" "$COMPLETION_DIR"
 
 log "Installing oh-my-bash"
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local --unattended
+mkdir -p /usr/local/homeserver
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local/homeserver --unattended
 
 log "Installing age"
 AGE_VERSION="v1.2.1" # renovate: datasource=github-releases depName=FiloSottile/age
