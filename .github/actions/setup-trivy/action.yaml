@@ -11,13 +11,6 @@ runs:
     - name: Manual Trivy Setup
       uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
 
-    - name: Copy fallback trivy db
-      if: ${{ runner.environment == 'self-hosted' }}
-      shell: bash
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/.cache/trivy
-        cp -rv /home/runner/.cache/trivy/* $GITHUB_WORKSPACE/.cache/trivy/
-
     - name: Restore DB from cache
       uses: actions/cache/restore@v4
       if: ${{ runner.environment != 'self-hosted' }}

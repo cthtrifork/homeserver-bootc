@@ -25,17 +25,6 @@ runs:
         # workaround https://github.com/containers/podman/issues/21683
         echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /home/runner/.local/share/containers/storage && sqlite3 db.sql)'
 
-    - name: Load latest image to speed up build
-      shell: bash
-      #if: ${{ runner.environment == 'self-hosted' }}
-      if: "false"
-      run: | #sh
-        podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
-        podman --root /var/lib/shared pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
-        podman image prune -f # cleanup dangling images
-        podman --root /var/lib/shared image prune -f || true # cleanup dangling images
-        sudo chmod -R a+rx /var/lib/shared # podman bug workaround
-
     - name: Start a local registry with proxy to ghcr.io
       shell: bash
       if: ${{ runner.environment == 'self-hosted' }}
@@ -92,46 +81,13 @@ runs:
       shell: bash
       if: ${{ runner.environment == 'self-hosted' }}
       run: | #sh
+        #
         podman pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
-
-    - name: Move from root storage to rootless storage through local registry
-      shell: bash
-      #if: ${{ runner.environment == 'self-hosted' }}
-      if: "false"
-      run: | #sh
-        podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
-        podman tag ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest 127.0.0.1:5000/homeserver-centos-bootc:latest
-
-        podman push --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
-        podman push --tls-verify=false --quiet 127.0.0.1:5000/homeserver-centos-bootc:latest
-
-        echo "podman images before transfer:"
-        podman image prune -f
-        podman images
-
-        podman pull --tls-verify=false --quiet 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
-        podman pull --tls-verify=false --quiet 127.0.0.1:5000/homeserver-centos-bootc:latest
-
-        podman tag 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_FULL }}:latest
-        podman tag 127.0.0.1:5000/homeserver-centos-bootc:latest ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
-
-    - name: Show loaded images
-      if: "false"
-      shell: bash
-      run: |
-        echo "podman images:"
-        podman images
-
-    - name: Copy fallback trivy db
-      if: ${{ runner.environment == 'self-hosted' }}
-      shell: bash
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/.cache/trivy
-        cp -rv /home/runner/.cache/trivy/* $GITHUB_WORKSPACE/.cache/trivy/
 
     - name: Enable Podman socket
       shell: bash
       run: | #sh
+        #
         install -d -m 700 "$XDG_RUNTIME_DIR/podman"
         loginctl enable-linger $(whoami) || true
         sleep 1
@@ -142,6 +98,7 @@ runs:
     - name: Enabled buildah support
       shell: bash
       run: | #sh
+        #
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
         mkdir -p /home/runner/.cache/dnf

@@ -13,7 +13,7 @@ runs:
 
   steps:
     - name: Push to Container registry
-      if: ${{ runner.environment  != 'self-hosted' && github.ref == 'refs/heads/main' }}
+      if: ${{ runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
       id: push-to-ghcr
       shell: bash
       run: | #sh
@@ -37,11 +37,14 @@ runs:
         TAGS: ${{ steps.metadata.outputs.tags }}
 
     - name: Push to cache registry
-      if: ${{ runner.environment == 'self-hosted' }}
+      if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
         # Tag the image for the local registry 
-        podman tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        podman tag \
+          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
+          127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
         # Push to the local registry without tls
-        podman push -q --tls-verify=false 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        podman push -q --tls-verify=false \
+          127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}

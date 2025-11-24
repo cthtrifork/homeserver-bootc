@@ -4,9 +4,10 @@ runs:
   using: "composite"
   steps:
     - name: Load PR image
-      if: ${{ runner.environment  != 'self-hosted' }}
+      if: ${{ runner.environment != 'self-hosted' }}
       shell: bash
       run: | #sh
+        #
         podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
         podman pull -q ${{ env.IMAGE_FULL }}:latest
 
