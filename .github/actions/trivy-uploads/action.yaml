@@ -1,5 +1,9 @@
 name: "Upload trivy scan results to github"
 description: "Upload trivy scan results to GitHub Security tab"
+inputs:
+  github_token:
+    description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -23,7 +27,7 @@ runs:
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github_token }}
         sarif_file: "${{ github.workspace }}/trivy-results.sarif"
         category: trivy
 
@@ -34,7 +38,7 @@ runs:
         scan-type: image
         format: "github"
         output: "${{ github.workspace }}/dependency-results.sbom.json"
-        github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
+        github-pat: ${{ inputs.github_token }}
         scanners: "vuln"
         skip-setup-trivy: true
         vuln-type: "library"
