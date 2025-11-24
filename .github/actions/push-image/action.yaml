@@ -47,7 +47,8 @@ runs:
         # Tag the image for the local registry 
         podman tag \
           ${{ env.LOCAL_PR_IMAGE }} \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
 
         # Push to the local registry without tls
         podman push -q --tls-verify=false \
