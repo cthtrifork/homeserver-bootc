@@ -13,7 +13,7 @@ runs:
 
   steps:
     - name: Push to Container registry
-      if: ${{ runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
+      if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
       id: push-to-ghcr
       shell: bash
       run: | #sh
