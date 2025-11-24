@@ -1,9 +1,19 @@
 # syntax=docker/dockerfile:1.20@sha256:26147acbda4f14c5add9946e2fd2ed543fc402884fd75146bd342a7f6271dc1d
+FROM quay.io/fedora/fedora-bootc:43 as base
 FROM scratch AS ctx
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM quay.io/fedora/fedora-bootc:43
+FROM base AS utils
+RUN dnf -y --setopt install_weak_deps=false install \
+    --allowerasing \
+    unzip \
+    git-core
+
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    /ctx/build_files/utilities.sh
+
+FROM base AS final
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
@@ -56,7 +66,13 @@ RUN dnf -y --setopt install_weak_deps=false install \
     xorg-x11-server-Xvfb
 
 # pip3 dependencies
-RUN pip3 install glances
+RUN pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir glances
+
+RUN --mount=type=bind,from=utils,src=/,dst=/utils \
+	rsync -a /utils/usr/local/bin/* /usr/local/bin \
+	&& mkdir -p /usr/local/share/bash-completion/completions/ \
+	&& rsync -a /utils/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/
 
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
@@ -81,14 +97,8 @@ ADD cosign.pub /etc/pki/cosign/cosign.pub
 ADD policy.json /etc/containers/policy.json
 RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 
-
 # Networking
 #EXPOSE 8006
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
-
-
-
-
-
