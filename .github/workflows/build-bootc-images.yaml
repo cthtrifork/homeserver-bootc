@@ -80,7 +80,8 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    #runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    runs-on: arc-ubuntu
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -184,7 +185,6 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          layers: false
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
@@ -199,9 +199,11 @@ jobs:
             --secret id=creds,src=/tmp/creds
             --secret id=agekey,src=/tmp/AGE_KEY
             -v /home/runner/.cache/dnf:/var/cache/dnf:O
+            --layers
+            --storage-driver overlay2
+            --cache-from localhost:5005/${{ env.IMAGE_NAME }}
           #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
           # https://www.redhat.com/en/blog/speeding-container-buildah
-          # --cache-from 127.0.0.1:5005/${{ env.IMAGE_NAME }}
 
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
