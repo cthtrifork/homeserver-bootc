@@ -31,7 +31,7 @@ runs:
       run: | #sh
         # Start a local registry
         podman pull -q docker.io/library/registry:3
-        sudo mkdir -p /var/lib/registry/
+        sudo mkdir -p /var/lib/registry/local
         sudo mkdir -p /etc/distribution/
         sudo touch /etc/distribution/config.yml
         printf "%s\n" \
@@ -44,7 +44,7 @@ runs:
 
         podman run -d --name local-registry \
           -p 5000:5000 \
-          -v /var/lib/registry/:/var/lib/registry \
+          -v /var/lib/registry/local/:/var/lib/registry \
           -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
           -e REGISTRY_PROXY_USERNAME="${GITHUB_ACTOR}" \
           -e REGISTRY_PROXY_PASSWORD="${secrets_GITHUB_TOKEN}" \
