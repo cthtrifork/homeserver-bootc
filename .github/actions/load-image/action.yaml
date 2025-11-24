@@ -4,15 +4,14 @@ runs:
   using: "composite"
   steps:
     - name: Load PR image
-      #if: ${{ runner.environment  != 'self-hosted' }}
+      if: ${{ runner.environment  != 'self-hosted' }}
       shell: bash
       run: | #sh
         podman pull -q ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
         podman pull -q ${{ env.IMAGE_FULL }}:latest
 
     - name: Load PR image from cache registry
-      #if: ${{ runner.environment  == 'self-hosted' }}
-      if: "false"
+      if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
       run: | #sh
         podman pull --tls-verify=false -q \
@@ -20,3 +19,8 @@ runs:
         podman tag \
           127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
           ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+
+    - name: List images
+      shell: bash
+      run: | #sh
+        podman images

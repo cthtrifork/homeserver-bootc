@@ -12,7 +12,7 @@ runs:
       uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
 
     - name: Copy fallback trivy db
-      if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy

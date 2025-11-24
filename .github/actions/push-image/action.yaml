@@ -6,16 +6,17 @@ inputs:
     required: true
 outputs:
   digest: # id of the output
-    description: 'The digest of the pushed image'
+    description: "The digest of the pushed image"
     value: ${{ steps.push-to-ghcr.outputs.digest }}
 runs:
   using: "composite"
 
   steps:
     - name: Push to Container registry
+      if: ${{ runner.environment  != 'self-hosted' && github.ref == 'refs/heads/main' }}
       id: push-to-ghcr
       shell: bash
-      run: |
+      run: | #sh
         podman tag \
           ${{ env.LOCAL_PR_IMAGE }} \
           ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
@@ -35,11 +36,10 @@ runs:
       env:
         TAGS: ${{ steps.metadata.outputs.tags }}
 
-    - name: push to cache registry
-      #if: ${{ runner.environment  == 'self-hosted' }}
-      if: "false"
+    - name: Push to cache registry
+      if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
-      run: |
+      run: | #sh
         # Tag the image for the local registry 
         podman tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} 127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 

@@ -27,7 +27,7 @@ runs:
 
     - name: Load latest image to speed up build
       shell: bash
-      #if: ${{ runner.environment  == 'self-hosted' }}
+      #if: ${{ runner.environment == 'self-hosted' }}
       if: "false"
       run: | #sh
         podman --root /var/lib/shared pull -q ${{ env.IMAGE_FULL }}:latest || true
@@ -38,7 +38,7 @@ runs:
 
     - name: Start a local registry with proxy to ghcr.io
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment == 'self-hosted' }}
       run: | #sh
         # Start a local registry
         podman pull -q docker.io/library/registry:3
@@ -65,7 +65,7 @@ runs:
 
     - name: Configure rootless Podman mirror for GHCR
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment == 'self-hosted' }}
       run: | #sh
         echo "Applying rootless Podman mirror for GHCR to user"
         mkdir -p ~/.config/containers/registries.conf.d
@@ -90,13 +90,13 @@ runs:
 
     - name: Load homeserver-centos-bootc:latest image to speed up build
       shell: bash
-      if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment == 'self-hosted' }}
       run: | #sh
         podman pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
 
     - name: Move from root storage to rootless storage through local registry
       shell: bash
-      #if: ${{ runner.environment  == 'self-hosted' }}
+      #if: ${{ runner.environment == 'self-hosted' }}
       if: "false"
       run: | #sh
         podman tag ${{ env.IMAGE_FULL }}:latest 127.0.0.1:5000/${{ env.IMAGE_NAME }}:latest
@@ -123,7 +123,7 @@ runs:
         podman images
 
     - name: Copy fallback trivy db
-      if: ${{ runner.environment  == 'self-hosted' }}
+      if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy
