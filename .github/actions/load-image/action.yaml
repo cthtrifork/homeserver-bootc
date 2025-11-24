@@ -22,13 +22,6 @@ runs:
         podman pull --tls-verify=false -q \
           127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
-        # remove old tag if exists
-        podman rm ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} || true
-
-        podman tag \
-          127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
-          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-
         podman tag \
           127.0.0.1:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
           ${{ env.LOCAL_PR_IMAGE }}
