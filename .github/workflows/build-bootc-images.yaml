@@ -80,7 +80,8 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    runs-on: ${{ (matrix.image == 'homeserver-gui' || github.event_name != 'pull_request') && 'arc-ubuntu' || 'ubuntu-latest' }}
+    #runs-on: ${{ (matrix.image == 'homeserver-gui' || github.event_name != 'pull_request') && 'arc-ubuntu' || 'ubuntu-latest' }}
+    runs-on: arc-ubuntu
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -185,8 +186,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          #layers: ${{ runner.environment == 'self-hosted' && 'false' || 'true' }}
-          layers: true
+          layers: ${{ runner.environment == 'self-hosted' && 'true' || 'false' }}
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
