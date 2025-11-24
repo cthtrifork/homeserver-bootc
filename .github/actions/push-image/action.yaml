@@ -47,9 +47,3 @@ runs:
         # Push to the local registry without tls
         podman push -q --tls-verify=false \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-
-    - name: Debug local registry logs
-      if: ${{ failure() }}
-      shell: bash
-      run: | #sh
-        podman logs local-registry

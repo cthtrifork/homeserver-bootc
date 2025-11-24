@@ -25,7 +25,7 @@ runs:
       if: ${{ runner.environment == 'self-hosted' }}
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
-        oras pull localhost:5000/aquasecurity/trivy-db:2
+        oras pull localhost:5005/aquasecurity/trivy-db:2
         tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
         rm db.tar.gz
 
@@ -34,6 +34,6 @@ runs:
       shell: bash
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
-        oras pull localhost:5000/aquasecurity/trivy-java-db:1
+        oras pull localhost:5005/aquasecurity/trivy-java-db:1
         tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
         rm javadb.tar.gz

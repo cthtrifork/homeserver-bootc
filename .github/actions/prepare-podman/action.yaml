@@ -31,26 +31,23 @@ runs:
       run: | #sh
         # Start a local registry
         podman pull -q docker.io/library/registry:3
-        sudo mkdir -p /var/lib/registry/local
-        sudo chown -R $(whoami):$(whoami) /var/lib/registry/local
+        sudo mkdir -p /var/lib/registry/local /var/lib/registry/cache
+        sudo chown -R $(whoami):$(whoami) /var/lib/registry/
         sudo mkdir -p /etc/distribution/
-        sudo touch /etc/distribution/config.yml
-        printf "%s\n" \
-        "proxy:" \
-        "  remoteurl: https://ghcr.io" \
-        "  username: ${GITHUB_ACTOR}" \
-        "  password: ${secrets_GITHUB_TOKEN}" \
-        "  ttl: 168h # 7 days" \
         | sudo tee /etc/distribution/config.yml
+
+        podman run -d --name cache-registry \
+          -p 5005:5000 \
+          -v /var/lib/registry/cache/:/var/lib/registry \
+          -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
+          -e REGISTRY_PROXY_USERNAME="${GITHUB_ACTOR}" \
+          -e REGISTRY_PROXY_PASSWORD="${secrets_GITHUB_TOKEN}" \
+          -e REGISTRY_PROXY_TTL=168h \
+          docker.io/library/registry:3
 
         podman run -d --name local-registry \
           -p 5000:5000 \
           -v /var/lib/registry/local/:/var/lib/registry \
-          -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
-          -e REGISTRY_PROXY_USERNAME="${GITHUB_ACTOR}" \
-          -e REGISTRY_PROXY_PASSWORD="${secrets_GITHUB_TOKEN}" \
-          -e REGISTRY_PROXY_TTL=0 \
-          -v /etc/distribution/config.yml:/etc/docker/registry/config.yml:ro \
           docker.io/library/registry:3
 
     - name: Configure rootless Podman mirror for GHCR
@@ -65,7 +62,7 @@ runs:
           'location = "ghcr.io"' \
           '' \
           '  [[registry.mirror]]' \
-          '  location = "localhost:5000"' \
+          '  location = "localhost:5005"' \
           '  insecure = true' \
           > ~/.config/containers/registries.conf.d/ghcr-mirror.conf
           
