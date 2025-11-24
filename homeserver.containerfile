@@ -60,7 +60,7 @@ RUN dnf -y --setopt install_weak_deps=false install \
     python3 \
     python3-pip \
     tree \
-    git \
+    git-core \
     make \
     xclip \
     xorg-x11-server-Xvfb
