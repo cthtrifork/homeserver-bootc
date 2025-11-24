@@ -38,7 +38,6 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service && \
 	systemctl enable NetworkManager && \
-	gnome-extensions enable dash-to-panel@jderose9.github.com && \
 	echo "gnome-extensions enable dash-to-panel@jderose9.github.com" >> /etc/profile.d/93-gnome-extensions.sh
 
 # Enable GUI by default
