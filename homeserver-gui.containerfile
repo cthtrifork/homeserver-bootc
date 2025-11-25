@@ -20,9 +20,7 @@ RUN mkdir -p -m 0700 /var/roothome && \
     ghostty \
     NetworkManager
 
-#RUN update-alternatives --set x-session-manager /usr/bin/xfce4-session
-
-#RUN dnf -y remove gnome-*
+RUN dnf -y remove gnome-*
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
