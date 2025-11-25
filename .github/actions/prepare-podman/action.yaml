@@ -10,6 +10,7 @@ runs:
         sudo mkdir -p /var/lib/shared
         sudo chmod -R a+rx /var/lib/shared
         sudo chown -R $(whoami):$(whoami) /var/lib/shared
+        mkdir -p /home/runner/.local/share/containers/storage/overlay2
 
         printf "%s\n" \
         "[storage]" \
