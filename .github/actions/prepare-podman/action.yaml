@@ -26,7 +26,7 @@ runs:
         # workaround https://github.com/containers/podman/issues/21683
         echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /home/runner/.local/share/containers/storage && sqlite3 db.sql)'
 
-        podman system reset -f || true
+        #podman system reset -f || true
 
     - name: Start a local registry with proxy to ghcr.io
       shell: bash
