@@ -72,8 +72,7 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 RUN --mount=type=bind,from=utils,src=/,dst=/utils \
 	rsync -a /utils/usr/local/bin/* /usr/local/bin \
 	&& mkdir -p /usr/local/share/bash-completion/completions/ \
-	&& rsync -a /utils/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/ \
-    && rsync -a /utils/usr/local/homeserver/ /usr/local/
+    && rsync -a /utils/usr/local/share/ /usr/local/share/
 
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \

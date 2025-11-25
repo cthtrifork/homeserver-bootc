@@ -15,8 +15,8 @@ COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 mkdir -p "$BIN_DIR" "$COMPLETION_DIR"
 
 log "Installing oh-my-bash"
-mkdir -p /usr/local/homeserver
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local/homeserver --unattended
+mkdir -p /usr/local
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local --unattended
 
 log "Installing age"
 AGE_VERSION="v1.2.1" # renovate: datasource=github-releases depName=FiloSottile/age
@@ -72,7 +72,7 @@ install -o root -g root -m 0755 /tmp/kind "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
 log "Installing flux"
-FLUX_VERSION="v2.7.3" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.7.4" # renovate: datasource=github-releases depName=fluxcd/flux2
 curl -sLo /tmp/flux.tar.gz \
   "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${ARCH}.tar.gz $FLUX_VERSION)"
 tar -zxvf /tmp/flux.tar.gz -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
@@ -111,7 +111,7 @@ curl -sLo /tmp/jq \
 install -o root -g root -m 0755 /tmp/jq "$BIN_DIR/jq"
 
 log "Installing yq"
-YQ_VERSION="v4.49.1" # renovate: datasource=github-releases depName=mikefarah/yq
+YQ_VERSION="v4.49.2" # renovate: datasource=github-releases depName=mikefarah/yq
 curl -sLo /tmp/yq \
   "$(/ctx/build_files/github-release-url.sh mikefarah/yq ${MACHINE}.${ARCH} $YQ_VERSION)"
 install -o root -g root -m 0755 /tmp/yq "$BIN_DIR/yq"
