@@ -80,8 +80,7 @@ jobs:
   build-bootc-image:
     name: Build image ${{ matrix.image }}
     needs: changes
-    #runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
-    runs-on: arc-ubuntu
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -200,7 +199,6 @@ jobs:
             --secret id=agekey,src=/tmp/AGE_KEY
             -v /home/runner/.cache/dnf:/var/cache/dnf:O
             --layers
-            --storage-driver overlay
             --cache-from ${{ env.IMAGE_FULL }}
           #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
           # https://www.redhat.com/en/blog/speeding-container-buildah

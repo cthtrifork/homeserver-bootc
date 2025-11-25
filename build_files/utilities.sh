@@ -144,9 +144,8 @@ tar -zxvf /tmp/helm.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
 log "Installing dysk"
-curl -Lo /tmp/dysk https://dystroy.org/dysk/download/x86_64-linux/dysk
-chmod +x /tmp/dysk
-mv /tmp/dysk "$BIN_DIR/dysk"
+curl -sLo /tmp/dysk https://dystroy.org/dysk/download/x86_64-linux/dysk
+install -o root -g root -m 0755 /tmp/dysk "$BIN_DIR/dysk"
 
 chmod -R 755 $BIN_DIR/
 chmod -R 755 $COMPLETION_DIR/
