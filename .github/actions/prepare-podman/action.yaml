@@ -10,6 +10,7 @@ runs:
         sudo mkdir -p /var/lib/shared
         sudo chmod -R a+rx /var/lib/shared
         sudo chown -R $(whoami):$(whoami) /var/lib/shared
+        mkdir -p /home/runner/.local/share/containers/storage/overlay
 
         printf "%s\n" \
         "[storage]" \
@@ -24,6 +25,8 @@ runs:
 
         # workaround https://github.com/containers/podman/issues/21683
         echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /home/runner/.local/share/containers/storage && sqlite3 db.sql)'
+
+        podman system reset -f || true
 
     - name: Start a local registry with proxy to ghcr.io
       shell: bash

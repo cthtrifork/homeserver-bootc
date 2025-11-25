@@ -201,7 +201,7 @@ jobs:
             -v /home/runner/.cache/dnf:/var/cache/dnf:O
             --layers
             --storage-driver overlay
-            --cache-from localhost:5005/${{ env.IMAGE_NAME }}
+            --cache-from ${{ env.IMAGE_FULL }}:latest
           #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
           # https://www.redhat.com/en/blog/speeding-container-buildah
 
