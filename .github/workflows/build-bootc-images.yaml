@@ -200,7 +200,7 @@ jobs:
             --secret id=agekey,src=/tmp/AGE_KEY
             -v /home/runner/.cache/dnf:/var/cache/dnf:O
             --layers
-            --storage-driver overlay2
+            --storage-driver overlay
             --cache-from localhost:5005/${{ env.IMAGE_NAME }}
           #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
           # https://www.redhat.com/en/blog/speeding-container-buildah
