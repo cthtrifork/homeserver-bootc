@@ -442,6 +442,14 @@ jobs:
 
           echo "private_key_path=/tmp/ssh_privatekey" >> $GITHUB_OUTPUT
 
+      - name: Test (QEMU)
+        uses: ./.github/actions/qemu-test
+        with:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          SSH_PRIVATE_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+
       - name: Take QEMU screenshot
         if: ${{ matrix.image == 'homeserver-gui' }}
         uses: ./.github/actions/screenshot
