@@ -43,8 +43,8 @@ RUN systemctl disable pinggy.service && \
 	systemctl enable NetworkManager
 
 # Enable GUI by default
-RUN rm -f /etc/systemd/system/display-manager.service && \
-    systemctl set-default graphical.target
+RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
