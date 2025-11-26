@@ -10,6 +10,9 @@ outputs:
   checksum_path:
     description: "The path to the checksum file of the built image"
     value: ${{ steps.create-vmdk.outputs.checksum_path }}
+  path:
+    description: "The path to the checksum file of the built image"
+    value: ${{ steps.create-vmdk.outputs.path }}
 runs:
   using: "composite"
   steps:
