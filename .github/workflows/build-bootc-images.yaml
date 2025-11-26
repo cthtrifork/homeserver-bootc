@@ -374,6 +374,8 @@ jobs:
 
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
+        with:
+          run_as_sudo: true
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
