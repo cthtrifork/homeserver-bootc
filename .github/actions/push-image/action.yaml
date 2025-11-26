@@ -1,0 +1,54 @@
+name: "Push image"
+description: "Push container images to the registry"
+inputs:
+  github_token:
+    description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
+    required: true
+outputs:
+  digest: # id of the output
+    description: "The digest of the pushed image"
+    value: ${{ steps.push-to-ghcr.outputs.digest }}
+runs:
+  using: "composite"
+  steps:
+    - name: Push to Container registry
+      if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
+      id: push-to-ghcr
+      shell: bash
+      run: | #sh
+        podman tag \
+          ${{ env.LOCAL_PR_IMAGE }} \
+          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+        echo "Push"
+        podman push \
+          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
+          --digestfile digest.txt
+        DIGEST=$(cat digest.txt)
+        echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
+        echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+        for tag in $TAGS; do
+          skopeo copy -q --all \
+            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+            "docker://${{ env.IMAGE_FULL }}:${tag}"
+        done
+        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+      env:
+        TAGS: ${{ steps.metadata.outputs.tags }}
+
+    - name: Push to cache registry
+      if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
+      shell: bash
+      run: | #sh
+        # Tag the image for the local registry 
+        podman tag \
+          ${{ env.LOCAL_PR_IMAGE }} \
+          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+
+        # Push to the local registry without tls
+        podman push -q --tls-verify=false \
+          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+
+    - name: List images
+      shell: bash
+      run: | #sh
+        podman images
