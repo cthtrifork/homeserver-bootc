@@ -24,6 +24,7 @@ runs:
         sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
 
     - name: Configure Podman for buildah
+      if: false
       shell: bash
       run: | #sh
         sudo mkdir -p /etc/containers
