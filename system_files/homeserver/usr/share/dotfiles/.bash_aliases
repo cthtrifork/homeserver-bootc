@@ -63,12 +63,3 @@ colordiff() {
 
 	return "${PIPESTATUS[0]}"
 }
-
-# Print all 256 colors
-colors() {
-	local i
-	for i in {0..255}; do
-		printf "\x1b[38;5;${i}mcolor %d\n" "$i"
-	done
-	tput sgr0
-}
