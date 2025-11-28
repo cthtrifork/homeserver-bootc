@@ -47,7 +47,7 @@ ln -sf "$BIN_DIR/kubelogin" "$BIN_DIR/kubectl-oidc_login"
 "$BIN_DIR/kubelogin" completion bash >"$COMPLETION_DIR/kubelogin"
 
 log "Installing kubectl virt"
-KUBEVIRT_VERSION="v1.6.3" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+KUBEVIRT_VERSION="v1.7.0" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 curl -sLo /tmp/kubectl-virt.tar.gz \
     "$(/ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin virtctl-${MACHINE}-${ARCH}.tar.gz $KUBEVIRT_VERSION)"
@@ -72,7 +72,7 @@ install -o root -g root -m 0755 /tmp/kind "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
 log "Installing flux"
-FLUX_VERSION="v2.7.4" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.7.5" # renovate: datasource=github-releases depName=fluxcd/flux2
 curl -sLo /tmp/flux.tar.gz \
     "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${ARCH}.tar.gz $FLUX_VERSION)"
 tar -zxvf /tmp/flux.tar.gz -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
