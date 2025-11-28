@@ -66,6 +66,9 @@ RUN dnf -y --setopt install_weak_deps=false install \
     xorg-x11-server-Xvfb \
     fastfetch
 
+# dnf repoquery -C --installed --qf "%{installsize} %{name}\n" | sort -n | numfmt --to=iec --format="%.2f"
+RUN dnf remove python3-botocore nvidia-gpu-firmware
+
 # pip3 dependencies
 RUN pip3 install --no-cache-dir --upgrade pip \
     && pip3 install --no-cache-dir glances
@@ -103,4 +106,5 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
 
