@@ -75,6 +75,13 @@ runs:
           ${SSH_USERNAME}@localhost \
           "df -h"
 
+        echo "--- fastfetch ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "fastfetch"
+
     - name: Run system tests
       shell: bash
       env:
