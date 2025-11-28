@@ -63,7 +63,8 @@ RUN dnf -y --setopt install_weak_deps=false install \
     git-core \
     make \
     xclip \
-    xorg-x11-server-Xvfb
+    xorg-x11-server-Xvfb \
+    fastfetch
 
 # pip3 dependencies
 RUN pip3 install --no-cache-dir --upgrade pip \
@@ -72,8 +73,7 @@ RUN pip3 install --no-cache-dir --upgrade pip \
 RUN --mount=type=bind,from=utils,src=/,dst=/utils \
 	rsync -a /utils/usr/local/bin/* /usr/local/bin \
 	&& mkdir -p /usr/local/share/bash-completion/completions/ \
-	&& rsync -a /utils/usr/local/share/bash-completion/completions/* /usr/local/share/bash-completion/completions/ \
-    && rsync -a /utils/usr/local/homeserver/ /usr/local/
+    && rsync -a /utils/usr/local/share/ /usr/local/share/
 
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets/agekey)"; \
@@ -103,3 +103,4 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
