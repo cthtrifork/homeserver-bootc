@@ -12,7 +12,7 @@ runs:
       run: | #sh
         #
         mkdir -p ~/.config/containers
-        sudo install -d -m 755 -u $(whoami) -g $(whoami) /var/lib/shared
+        sudo install -d -m 755 -o $(whoami) -g $(whoami) /var/lib/shared
 
         printf "%s\n" \
         "[storage]" \
