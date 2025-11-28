@@ -62,8 +62,9 @@ RUN dnf -y --setopt install_weak_deps=false install \
     tree \
     git-core \
     make \
-    xclip \
-    xorg-x11-server-Xvfb
+    socat \
+    qemu-system-x86 \
+    qemu-img
 
 # pip3 dependencies
 RUN pip3 install --no-cache-dir --upgrade pip \
