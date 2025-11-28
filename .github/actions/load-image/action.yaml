@@ -3,9 +3,8 @@ description: "Load container images for the build"
 inputs:
   run_as_sudo:
     description: "Run podman with sudo (rootfull)"
-    default: false
+    default: "false"
     required: false
-    type: boolean
 
 runs:
   using: "composite"
