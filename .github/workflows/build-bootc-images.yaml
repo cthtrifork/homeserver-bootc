@@ -369,31 +369,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure Podman for buildah
-        shell: bash
-        run: | #sh
-          sudo mkdir -p /etc/containers
-          sudo mkdir -p /var/lib/containers/storage
-          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
-            | sudo tee /etc/containers/storage.conf
-
-          DB=/var/lib/containers/storage/db.sql
-          if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
-            # set GraphDriver if blank
-            sudo sqlite3 "$DB" \
-              "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
-          fi
-
-          # initialize/upgrade storage metadata so the DB exists & matches the schema
-          sudo podman system migrate || true
-
-          # sanity check
-          sudo podman info
-          # workaround https://github.com/containers/podman/issues/21683
-          #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
-
       - name: Prepare Podman
         uses: ./.github/actions/prepare-podman
+        with:
+          run_as_sudo: true
 
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
