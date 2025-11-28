@@ -371,6 +371,8 @@ jobs:
 
       - name: Prepare Podman
         uses: ./.github/actions/prepare-podman
+        with:
+          run_as_sudo: true
 
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
