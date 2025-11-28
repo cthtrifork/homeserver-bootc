@@ -75,6 +75,13 @@ runs:
           ${SSH_USERNAME}@localhost \
           "df -h"
 
+        echo "--- fastfetch ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "fastfetch"
+
     - name: Run system tests
       shell: bash
       env:
@@ -92,7 +99,7 @@ runs:
 
     - name: Run user tests
       shell: bash
-      if: "${{ matrix.image }} == 'homeserver'"
+      if: ${{ matrix.image == 'homeserver' }}"
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
