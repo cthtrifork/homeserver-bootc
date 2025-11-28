@@ -37,7 +37,15 @@
     "cpu",
     "memory",
     "swap",
-    "disk",
+    {
+      "type": "disk",
+      "showReadOnly": false,
+      "showSubvolumes": true
+    },
+    {
+      "type": "physicaldisk",
+      "temp": true
+    },
     "localip",
     "battery",
     "poweradapter",

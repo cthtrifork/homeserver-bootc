@@ -25,6 +25,16 @@ dotfiles_sync(){
     chmod -R +x "${HOME_DIR}/.local/bin"
 }
 
+dotfiles_report(){
+  rsync -av --delete --dry-run --stats --itemize-changes \
+  	--exclude=.vscode-server/ \
+	--exclude=projects/ \
+	--exclude=cache/ \
+	--exclude=.cache/ \
+	--exclude=.local/share/containers \
+  	/usr/share/dotfiles/ "${HOME_DIR}/"
+}
+
 # Setup OH-MY-BASH for user
 install_ohmybash() {
   if [[ -f "/usr/local/share/oh-my-bash/bashrc" ]]; then
