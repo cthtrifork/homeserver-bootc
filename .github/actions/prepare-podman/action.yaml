@@ -31,29 +31,29 @@ runs:
         # workaround https://github.com/containers/podman/issues/21683
         echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /home/runner/.local/share/containers/storage && sqlite3 db.sql)'
 
-  - name: Configure Podman for buildah
-    shell: bash
-    if: ${{ inputs.run_as_sudo }}
-    run: | #sh
-      sudo mkdir -p /etc/containers
-      sudo mkdir -p /var/lib/containers/storage
-      echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
-        | sudo tee /etc/containers/storage.conf
+    - name: Configure Podman for buildah
+      shell: bash
+      if: ${{ inputs.run_as_sudo }}
+      run: | #sh
+        sudo mkdir -p /etc/containers
+        sudo mkdir -p /var/lib/containers/storage
+        echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+          | sudo tee /etc/containers/storage.conf
 
-      DB=/var/lib/containers/storage/db.sql
-      if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
-        # set GraphDriver if blank
-        sudo sqlite3 "$DB" \
-          "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
-      fi
+        DB=/var/lib/containers/storage/db.sql
+        if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
+          # set GraphDriver if blank
+          sudo sqlite3 "$DB" \
+            "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
+        fi
 
-      # initialize/upgrade storage metadata so the DB exists & matches the schema
-      sudo podman system migrate || true
+        # initialize/upgrade storage metadata so the DB exists & matches the schema
+        sudo podman system migrate || true
 
-      # sanity check
-      sudo podman info
-      # workaround https://github.com/containers/podman/issues/21683
-      #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
+        # sanity check
+        sudo podman info
+        # workaround https://github.com/containers/podman/issues/21683
+        #echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
     - name: Start a local registry with proxy to ghcr.io
       shell: bash
