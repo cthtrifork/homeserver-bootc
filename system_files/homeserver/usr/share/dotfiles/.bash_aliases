@@ -9,6 +9,9 @@ alias gb='git branch'
 alias gba='git branch -a'
 alias gco='git checkout'
 
+# other
+alias neofetch='fastfetch'
+
 # Aliases (if applicable)
 grep --color=auto < /dev/null &>/dev/null &&
     alias grep='grep --color=auto'
