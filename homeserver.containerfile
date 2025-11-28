@@ -63,8 +63,8 @@ RUN dnf -y --setopt install_weak_deps=false install \
     git-core \
     make \
     socat \
-    qemu-system-x86 \
-    qemu-img
+    qemu \
+    qemu-kvm
 
 # pip3 dependencies
 RUN pip3 install --no-cache-dir --upgrade pip \
@@ -103,3 +103,4 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
