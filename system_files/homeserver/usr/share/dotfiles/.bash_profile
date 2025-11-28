@@ -3,7 +3,7 @@ source ~/.bashrc
 
 # Set environment
 export EDITOR='nano'
-export GREP_COLOR='1;36'
+export GREP_COLOR='mt=1;36'
 export HISTCONTROL='ignoredups'
 export HISTSIZE=5000
 export HISTFILESIZE=5000
