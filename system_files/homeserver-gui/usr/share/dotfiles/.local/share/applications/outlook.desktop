@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Outlook Webmail
+Exec=brave-browser --ozone-platform=wayland --app=https://outlook.office.com/mail
+Icon=outlook
+Type=Application
+Categories=Network;Email;
+StartupWMClass=outlook.office.com

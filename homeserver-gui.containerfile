@@ -11,24 +11,63 @@ RUN dnf copr enable -y scottames/ghostty
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-RUN dnf install -y --setopt install_weak_deps=false \
-	gdm \
-	gnome-session \
-	plymouth-system-theme \
-	brave-browser \
-	ghostty \
-	gnome-shell-extension-dash-to-panel \
-	NetworkManager
 
+
+# wofi	App launcher (like rofi, but Wayland-native)
+# mako	Notification daemon
+# brightnessctl	Adjust screen brightness
+# pavucontrol	Manage audio (PulseAudio or PipeWire GUI)
+# waybar status bar
+# grim+slurp screenshot manager
+
+# https://gist.github.com/quangdinh/41cb26e0abb34c5242e55004bd411065
+# https://www.reddit.com/r/swaywm/comments/11rc1a9/just_a_rice_post_with_wofi_and_waybar_configs_i/
+
+RUN dnf install -y --setopt install_weak_deps=false \
+    wget \
+    brave-browser \
+    ghostty \
+    ffmpeg \
+    wofi \
+    mako \
+    brightnessctl \
+    pavucontrol \
+    sway \
+    swayidle \
+    swaylock \
+    waybar \
+    wlogout \
+    grim \
+    slurp \
+    wl-clipboard
+
+# Jetbrains nerd font
+RUN wget -P /usr/share/fonts/ https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \
+	&& cd /usr/share/fonts/ \
+	&& unzip JetBrainsMono.zip \
+	&& rm JetBrainsMono.zip \
+	&& fc-cache -fv
+
+# Clone and install Segoe UI font
+ENV DEST_DIR="/usr/share/fonts/Microsoft/TrueType/SegoeUI/" 
+RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux \
+    && mkdir -p "$DEST_DIR" \
+    && cp -r /tmp/segoe-ui-linux/font/*.ttf $DEST_DIR/ \
+    && rm -rf /tmp/segoe-ui-linux \
+    && fc-cache -f "$DEST_DIR"
+
+RUN dnf -y remove gnome-*
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
-# Copy custom configuration files
-RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
-COPY system_files/homeserver-gui/custom.conf /etc/gdm/    
+# RUN rm -rf /var/lib/gdm/.config/pulse/default.pa && rm -rf /var/lib/xkb/README.compiled
+
+# Install service
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    rsync -rvpK /ctx/system_files/homeserver-gui/ /
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -37,11 +76,10 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service && \
-	systemctl enable NetworkManager && \
-	echo "gnome-extensions enable dash-to-panel@jderose9.github.com" >> /etc/profile.d/93-gnome-extensions.sh
+	systemctl enable NetworkManager
 
 # Enable GUI by default
-RUN systemctl set-default graphical.target && \
-    systemctl enable gdm.service
+# Add service to launch sway? and what about lock-screen
+RUN systemctl set-default graphical.target
 
 RUN bootc container lint
