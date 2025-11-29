@@ -17,6 +17,8 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
 RUN mkdir -p -m 0700 /var/roothome && \
 	dnf install -y \
     --setopt=install_weak_deps=false \
+    lightdm \
+    lightdm-gtk \
     @xfce-desktop-environment \
     brave-browser \
     ghostty \
@@ -42,9 +44,12 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl disable pinggy.service && \
 	systemctl enable NetworkManager
 
-# Enable GUI by default
-RUN systemctl set-default graphical.target
+# Enable LightDM as the display manager
+RUN systemctl disable gdm.service || true && \
+    systemctl enable lightdm.service && \
+    systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
 
