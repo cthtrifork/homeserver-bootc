@@ -1,12 +1,25 @@
 name: "Run QEMU tests"
 description: "Run QEMU tests on the built image"
+inputs:
+  SSH_KEY:
+    description: "SSH_KEY"
+    required: true
+  SSH_PRIVATE_KEY:
+    description: "SSH_PRIVATE_KEY"
+    required: true
+  SSH_USERNAME:
+    description: "SSH_USERNAME"
+    required: true
+  SSH_OPTIONS:
+    description: "SSH_OPTIONS"
+    required: true
 runs:
   using: "composite"
   steps:
     - name: Wait for SSH and run startup checks
       shell: bash
       env:
-        SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+        SSH_KEY: ${{ inputs.SSH_KEY}}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         SLEEP_SECONDS: 10
@@ -62,10 +75,17 @@ runs:
           ${SSH_USERNAME}@localhost \
           "df -h"
 
+        echo "--- fastfetch ---"
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "fastfetch"
+
     - name: Run system tests
       shell: bash
       env:
-        SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+        SSH_KEY: ${{ inputs.SSH_KEY}}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
@@ -79,10 +99,10 @@ runs:
 
     - name: Run user tests
       shell: bash
-      if: "${{ matrix.image }} == 'homeserver'"
+      if: ${{ matrix.image == 'homeserver' }}
       env:
         SSH_USERNAME: caspertdk
-        SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+        SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
@@ -98,7 +118,7 @@ runs:
       shell: bash
       env:
         SSH_USERNAME: caspertdk
-        SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+        SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         IMAGE_FULL: ${{ env.IMAGE_FULL }}
       run: | #sh

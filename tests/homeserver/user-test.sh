@@ -13,8 +13,8 @@ gh auth status && echo "✅ Github CLI is ready"
 echo "== utilities =="
 printf "Display: %s\n" "$DISPLAY"
 echo "Copy and paste date:"
-date | xclip -loops 1 # copy
-xclip -o # paste
+date | copy
+paste
 
 echo "== Github SSH Auth =="
 echo "Public key and SHA: "

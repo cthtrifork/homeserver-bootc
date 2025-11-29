@@ -62,8 +62,10 @@ RUN dnf -y --setopt install_weak_deps=false install \
     tree \
     git-core \
     make \
-    xclip \
-    xorg-x11-server-Xvfb
+    fastfetch
+
+# dnf repoquery -C --installed --qf "%{installsize} %{name}\n" | sort -n | numfmt --to=iec --format="%.2f"
+RUN dnf -y remove python3-boto nvidia-gpu-firmware
 
 # pip3 dependencies
 RUN pip3 install --no-cache-dir --upgrade pip \

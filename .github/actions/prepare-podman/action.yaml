@@ -1,15 +1,18 @@
 name: "Prepare podman"
 description: "Prepare Podman for building and loading images"
+inputs:
+  github_token:
+    description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
+    required: true
 runs:
   using: "composite"
   steps:
-    - name: Configure containers storage.conf
+    - name: Configure rootless Podman storage
       shell: bash
       run: | #sh
+        #
         mkdir -p ~/.config/containers
-        sudo mkdir -p /var/lib/shared
-        sudo chmod -R a+rx /var/lib/shared
-        sudo chown -R $(whoami):$(whoami) /var/lib/shared
+        sudo install -d -m 755 -o $(whoami) -g $(whoami) /var/lib/shared
 
         printf "%s\n" \
         "[storage]" \
@@ -25,6 +28,23 @@ runs:
         # workaround https://github.com/containers/podman/issues/21683
         echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /home/runner/.local/share/containers/storage && sqlite3 db.sql)'
 
+    - name: Configure rootful Podman storage
+      shell: bash
+      run: | #sh
+        #
+        sudo mkdir -p /etc/containers
+        sudo mkdir -p /var/lib/containers/storage
+        echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+          | sudo tee /etc/containers/storage.conf
+
+        # workaround https://github.com/containers/podman/issues/21683
+        DB=/var/lib/containers/storage/db.sql
+        if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
+          # set GraphDriver if blank
+          sudo sqlite3 "$DB" \
+            "update DBConfig set GraphDriver='overlay' where GraphDriver='';"
+        fi
+
     - name: Start a local registry with proxy to ghcr.io
       shell: bash
       if: ${{ runner.environment == 'self-hosted' }}
@@ -39,7 +59,7 @@ runs:
           -v /var/lib/registry/cache/:/var/lib/registry \
           -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
           -e REGISTRY_PROXY_USERNAME="${GITHUB_ACTOR}" \
-          -e REGISTRY_PROXY_PASSWORD="${secrets_GITHUB_TOKEN}" \
+          -e REGISTRY_PROXY_PASSWORD="${{ inputs.github_token }}" \
           -e REGISTRY_PROXY_TTL=168h \
           docker.io/library/registry:3
 
@@ -64,9 +84,9 @@ runs:
           '  insecure = true' \
           > ~/.config/containers/registries.conf.d/ghcr-mirror.conf
           
-          echo "Applying rootless Podman mirror for GHCR to root Podman"
-          sudo mkdir -p /etc/containers/registries.conf.d
-          sudo cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
+        echo "Applying rootless Podman mirror for GHCR to root Podman"
+        sudo mkdir -p /etc/containers/registries.conf.d
+        sudo cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
 
     - name: Load latest image to speed up build
       shell: bash
