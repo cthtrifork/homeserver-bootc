@@ -28,7 +28,7 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
-RUN mkdir -p /usr/local/share/bootc/packages-fedora-bootc && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
+RUN mkdir -p /usr/local/share/bootc/ && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
 
 # todo: move to system_files/homeserver/usr/lib/tmpfiles.d/link-podman-credentials.conf ?
 RUN --mount=type=secret,id=creds,required=true \
