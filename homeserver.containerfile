@@ -28,7 +28,7 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
-RUN mkdir -p /usr/local/share/kde-bootc && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/kde-bootc/packages-fedora-bootc
+RUN mkdir -p /usr/local/share/bootc/packages-fedora-bootc && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
 
 # todo: move to system_files/homeserver/usr/lib/tmpfiles.d/link-podman-credentials.conf ?
 RUN --mount=type=secret,id=creds,required=true \
@@ -106,4 +106,5 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
 
