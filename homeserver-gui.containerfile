@@ -17,8 +17,7 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 
-RUN mkdir -p -m 0700 /var/roothome && \ 
-  dnf install -y --setopt install_weak_deps=false \
+RUN dnf install -y --setopt install_weak_deps=false \
   @kde-desktop-environment \
   brave-browser \
   ghostty \
