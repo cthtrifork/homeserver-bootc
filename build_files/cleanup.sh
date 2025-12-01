@@ -14,6 +14,7 @@ log "Starting system cleanup"
 dnf -y remove \
     rsyslog \
     dracut-config-rescue \
+    dnf-data \
     at
 
 # Clean package manager cache
