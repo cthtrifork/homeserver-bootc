@@ -18,8 +18,6 @@ sddm-breeze
 sddm-kcm
 # KDE default icon pack
 breeze-icon-theme
-# crash handling
-plasma-drkonqi
 # window decorations
 aurorae
 # the Breeze system theme
