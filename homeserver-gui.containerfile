@@ -24,7 +24,10 @@ RUN mkdir -p -m 0700 /var/roothome && \
   ghostty \
   NetworkManager
 
-RUN dnf -y remove gnome-*
+RUN dnf -y remove gnome-* \
+	plasma-discover-offline-updates \
+	plasma-discover-packagekit \
+	PackageKit-command-not-found
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
