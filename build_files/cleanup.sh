@@ -12,9 +12,12 @@ log "Starting system cleanup"
 
 # remove resource heavy packages
 dnf -y remove \
-  rsyslog \
-  dracut-config-rescue \
-  dnf-data
+    rsyslog \
+    dracut-config-rescue \
+    plasma-discover-offline-updates \
+    plasma-discover-packagekit \
+    PackageKit-command-not-found \
+    at
 
 # Clean package manager cache
 dnf -y autoremove
