@@ -17,12 +17,12 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 
 # PREPARE PACKAGES
-COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/kde-bootc/packages-removed
-COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/kde-bootc/packages-added
-RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/kde-packages-fedora-bootc
+COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/gui/packages-added
+COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/bootc/gui/packages-removed
+RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
 
-RUN grep -vE '^#' /usr/local/share/kde-bootc/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
-RUN grep -vE '^#' /usr/local/share/kde-bootc/packages-removed | xargs dnf -y remove
+RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
+RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
 # Install VSCode
 RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
