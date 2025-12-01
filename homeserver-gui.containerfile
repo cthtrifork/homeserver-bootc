@@ -5,6 +5,9 @@ COPY system_files/ /system_files/
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
+# SETUP FILESYSTEM
+RUN rmdir /opt && ln -s -T /var/opt /opt
+RUN mkdir /var/roothome
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json
 
 # Install GUI components (basic desktop + browser + multimedia support)
