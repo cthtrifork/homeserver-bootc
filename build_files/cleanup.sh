@@ -14,8 +14,6 @@ log "Starting system cleanup"
 dnf -y remove \
     rsyslog \
     dracut-config-rescue \
-    plasma-discover-offline-updates \
-    plasma-discover-packagekit \
     PackageKit-command-not-found \
     at
 
