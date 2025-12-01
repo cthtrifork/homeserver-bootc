@@ -6,8 +6,8 @@ COPY system_files/ /system_files/
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # SETUP FILESYSTEM
-RUN rmdir /opt && ln -s -T /var/opt /opt
-RUN mkdir /var/roothome
+#RUN rmdir /opt && ln -s -T /var/opt /opt
+RUN mkdir -p /var/roothome
 RUN mkdir -p /usr/local/share/kde-bootc && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/kde-bootc/packages-fedora-bootc
 
 # Install GUI components (basic desktop + browser + multimedia support)
@@ -46,5 +46,6 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
 
