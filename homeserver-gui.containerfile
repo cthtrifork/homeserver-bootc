@@ -8,7 +8,7 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 # SETUP FILESYSTEM
 RUN rmdir /opt && ln -s -T /var/opt /opt
 RUN mkdir /var/roothome
-RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json
+RUN mkdir -p /usr/local/share/kde-bootc && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/kde-bootc/packages-fedora-bootc
 
 # Install GUI components (basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
@@ -47,4 +47,5 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
