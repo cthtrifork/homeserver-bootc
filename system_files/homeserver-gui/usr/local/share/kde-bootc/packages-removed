@@ -1,0 +1,25 @@
+####################################################
+# List of packages to remove from image
+####################################################
+
+# Discover plugins related to standard repositories (rpm) - Not compatible with bootc
+plasma-discover*
+
+# Helper to install package on the command line - Not compatible with bootc
+PackageKit-command-not-found
+
+# Utility for time-oriented job control - systemd-timer is better alternative
+at
+
+# IPTables are deprecated
+iptables-services
+iptables-utils
+
+# Enhance logging, but heavy in resources - journalctl is better alternative
+rsyslog
+
+# Generates rescue initramfs image - Bootc already provides rollback image
+dracut-config-rescue
+
+# Remove DNF4
+dnf-data
