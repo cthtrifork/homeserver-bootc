@@ -17,15 +17,35 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 
+# dnf -q group info kde-desktop
 RUN dnf install -y --setopt install_weak_deps=false \
-  @kde-desktop-environment \
+  plasma-desktop \
+  plasma-workspace \
+  plasma-workspace-wallpapers \
+  sddm \
+  sddm-breeze \
+  sddm-kcm \
+  breeze-icon-theme \
+  plasma-drkonqi \
+  plasma-breeze \
+  krdp \
+  spectacle \
+  kde-partitionmanager \
+  udisks2 \
+  bluedevil \
+  thermald \
+  xwaylandvideobridge \
+  kmenuedit \
+  kdialog \
+  polkit-kde \
+  kwin \
+  sddm-wayland-plasma \
   brave-browser \
   ghostty \
   NetworkManager
 
 RUN dnf -y remove gnome-* \
-	plasma-discover-offline-updates \
-	plasma-discover-packagekit \
+  plasma-discover* \
 	PackageKit-command-not-found
 
 # Install VSCode
@@ -46,6 +66,7 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
 
 
