@@ -14,7 +14,6 @@ log "Starting system cleanup"
 dnf -y remove \
     rsyslog \
     dracut-config-rescue \
-    PackageKit-command-not-found \
     at
 
 # Clean package manager cache

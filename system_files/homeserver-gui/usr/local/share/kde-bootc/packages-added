@@ -1,0 +1,97 @@
+####################################################
+# List of packages to install on top of base image
+####################################################
+
+#######
+# GUI #
+#######
+
+# dnf -q group info kde-desktop
+plasma-desktop
+# session startup
+plasma-workspace
+plasma-workspace-wallpapers
+# Display/login manager
+sddm-wayland-plasma
+sddm
+sddm-breeze
+sddm-kcm
+# KDE default icon pack
+breeze-icon-theme
+# crash handling
+plasma-drkonqi
+# window decorations
+aurorae
+# the Breeze system theme
+plasma-breeze
+# screenlocker
+kscreenlocker
+
+# Wallet + crypto prompt
+kwalletmanager5
+pam-kwallet
+pinentry-qt
+# screen configuration
+kscreen
+# style GTK apps to match KDE
+kde-gtk-config
+
+# Seems like a default
+systemd-oomd-defaults
+
+################
+# Applications #
+################
+
+# Browser
+brave-browser
+# Terminal
+ghostty
+## Screenshot manager
+spectacle
+# Remote desktop
+krdp
+
+# Storage and partitioning
+kde-partitionmanager
+udisks2
+# edit application launcher
+kmenuedit
+# authorization dialog backend
+polkit-kde
+# KDE's compositor and window manager
+kwin
+kdialog
+
+###########
+# Network #
+###########
+
+# captive portal support
+NetworkManager-config-connectivity-fedora
+NetworkManager
+# VPN plugins (L2TP, VPNC, OpenConnect, OpenVPN, PPTP)
+plasma-nm-*
+
+##################
+# Virtualisation #
+##################
+
+#qemu-kvm
+#libvirt
+#virt-install
+#virt-viewer
+
+############
+# Hardware #
+############
+kamera
+lm_sensors
+## Bluetooth stack
+bluedevil
+## thermal management
+thermald
+# Wayland/OBS/webcam compatibility
+xwaylandvideobridge
+# audio controls
+plasma-pa
