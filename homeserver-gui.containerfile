@@ -5,6 +5,8 @@ COPY system_files/ /system_files/
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
+RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json
+
 # Install GUI components (basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 RUN dnf copr enable -y scottames/ghostty
