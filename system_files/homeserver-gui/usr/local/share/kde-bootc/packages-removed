@@ -2,6 +2,10 @@
 # List of packages to remove from image
 ####################################################
 
+# xfce apps
+xfce4-terminal
+xfce4-taskmanager
+
 # Helper to install package on the command line - Not compatible with bootc
 PackageKit-command-not-found
 
