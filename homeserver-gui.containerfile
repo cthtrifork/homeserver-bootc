@@ -17,6 +17,7 @@ RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-r
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 
 # PREPARE PACKAGES
+RUN dnf -y install @xfce-desktop-environment 
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/gui/packages-added
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/bootc/gui/packages-removed
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
@@ -39,6 +40,8 @@ RUN systemctl disable pinggy.service && \
 	systemctl enable NetworkManager
 
 # Enable GUI by default
-RUN systemctl set-default graphical.target
+RUN systemctl set-default graphical.target && \
+    systemctl enable sddm.service && \
+    systemctl disable lightdm.service || true
 
 RUN bootc container lint

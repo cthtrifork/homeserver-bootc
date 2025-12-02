@@ -2,9 +2,6 @@
 # List of packages to remove from image
 ####################################################
 
-# Discover plugins related to standard repositories (rpm) - Not compatible with bootc
-plasma-discover*
-
 # Helper to install package on the command line - Not compatible with bootc
 PackageKit-command-not-found
 
