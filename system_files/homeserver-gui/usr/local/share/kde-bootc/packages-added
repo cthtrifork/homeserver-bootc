@@ -7,8 +7,6 @@
 #######
 
 # dnf -q group info xfce-desktop
-# Display/login manager
-sddm
 
 # Seems like a default
 systemd-oomd-defaults
@@ -51,3 +49,4 @@ bluedevil
 thermald
 # Wayland/OBS/webcam compatibility
 xwaylandvideobridge
+
