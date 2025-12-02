@@ -41,7 +41,7 @@ RUN systemctl disable pinggy.service && \
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target && \
-    systemctl enable sddm.service && \
-    systemctl disable lightdm.service || true
+    systemctl enable lightdm.service || true
 
 RUN bootc container lint
+
