@@ -37,6 +37,9 @@ kde-gtk-config
 # Seems like a default
 systemd-oomd-defaults
 
+# Fonts
+google-noto-emoji-color-fonts
+
 ################
 # Applications #
 ################
@@ -101,3 +104,4 @@ xwaylandvideobridge
 # audio controls
 kde-settings-pulseaudio
 plasma-pa
+
