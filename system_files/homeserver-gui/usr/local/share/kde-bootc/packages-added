@@ -71,6 +71,11 @@ NetworkManager
 # VPN plugins (L2TP, VPNC, OpenConnect, OpenVPN, PPTP)
 plasma-nm-*
 
+# Wifi
+NetworkManager-wifi
+## Used by Dell laptop 2022
+iwlwifi-mvm-firmware
+
 ##################
 # Virtualisation #
 ##################
@@ -92,4 +97,5 @@ thermald
 # Wayland/OBS/webcam compatibility
 xwaylandvideobridge
 # audio controls
+
 plasma-pa
