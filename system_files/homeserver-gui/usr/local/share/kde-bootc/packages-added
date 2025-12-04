@@ -52,7 +52,8 @@ ghostty
 spectacle
 # Remote desktop
 krdp
-
+# KDE’s archive manager.
+ark
 # Storage and partitioning
 kde-partitionmanager
 udisks2
@@ -107,6 +108,7 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
 
 
