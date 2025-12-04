@@ -73,8 +73,10 @@ plasma-nm-*
 
 # Wifi
 NetworkManager-wifi
+# Move to dedicated tagged image when switching to multiple hardware
 ## Used by Dell laptop 2022
 iwlwifi-mvm-firmware
+linux-firmware-whence
 
 ##################
 # Virtualisation #
@@ -99,3 +101,4 @@ xwaylandvideobridge
 # audio controls
 
 plasma-pa
+
