@@ -99,6 +99,5 @@ thermald
 # Wayland/OBS/webcam compatibility
 xwaylandvideobridge
 # audio controls
-
+kde-settings-pulseaudio
 plasma-pa
-
