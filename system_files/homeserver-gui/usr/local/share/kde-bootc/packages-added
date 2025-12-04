@@ -104,4 +104,9 @@ xwaylandvideobridge
 # audio controls
 kde-settings-pulseaudio
 plasma-pa
+pipewire
+pipewire-pulseaudio
+wireplumber
+
+
 
