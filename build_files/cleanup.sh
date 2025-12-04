@@ -18,7 +18,7 @@ dnf -y remove \
 
 # Clean package manager cache
 dnf -y autoremove
-#dnf -y clean all
+dnf -y clean all
 
 # Clean temporary files
 rm -rf /tmp/*
