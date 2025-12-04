@@ -31,11 +31,11 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
 
 # Install fonts
 # Jetbrains nerd font
-RUN wget -P /usr/share/fonts/ https://github.com/ryanoasis/nerd-fonts/releases/download/v3.0.2/JetBrainsMono.zip \
-	&& cd /usr/share/fonts/ \
+RUN mkdir -p /usr/share/fonts/JetBrainsMono && wget -O /usr/share/fonts/JetBrainsMono/JetBrainsMono.zip https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip \
+	&& cd /usr/share/fonts/JetBrainsMono \
 	&& unzip JetBrainsMono.zip \
 	&& rm JetBrainsMono.zip \
-	&& fc-cache -fv
+	&& fc-cache -f -vv
 
 # Clone and install Segoe UI font
 ENV DEST_DIR="/usr/share/fonts/Microsoft/TrueType/SegoeUI/" 
@@ -58,4 +58,5 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
 
