@@ -64,6 +64,8 @@ polkit-kde
 # KDE's compositor and window manager
 kwin
 kdialog
+# Utils
+btop
 
 ###########
 # Network #
@@ -108,6 +110,7 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
 
 
