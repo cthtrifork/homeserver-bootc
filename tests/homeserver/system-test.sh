@@ -4,20 +4,6 @@ set -euo pipefail
 echo "Running as"
 id
 
-echo "Verifying status for custom installed services..."
-CORE_SERVICES="pinggy.service bootc-system-setup.service setup-tmpfiles.service" # todo: detect
-echo "--- core services ---"
-for s in $CORE_SERVICES; do
-    systemctl is-active --quiet "$s" || {
-    echo "Service not active: $s"
-    systemctl status "$s" --no-pager || true
-    exit 1
-    }
-done
-echo "✅ core services are OK"
-
-#/usr/bin/systemd-tmpfiles --cat-config
-
 echo "== home directory tree =="
 sudo tree -uag /home/ -L 4 --si --du
 
