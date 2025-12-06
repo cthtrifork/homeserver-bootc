@@ -13,7 +13,6 @@ systemctl enable docker.socket
 systemctl enable qemu-guest-agent
 systemctl enable podman.socket
 systemctl enable sshd.service
-systemctl enable setup-groups.service
 systemctl enable bootc-user-setup.service
 systemctl enable bootc-system-setup.service
 systemctl enable pinggy.service
