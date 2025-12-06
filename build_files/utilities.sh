@@ -7,15 +7,15 @@ log() {
     echo "=== $* ==="
 }
 
-setfattr -n user.component -v "utilities" /usr/local/bin
-setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
-
 ARCH="amd64"
 MACHINE="linux"
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
 mkdir -p "$BIN_DIR" "$COMPLETION_DIR"
+
+setfattr -n user.component -v "utilities" /usr/local/bin
+setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
 
 log "Installing oh-my-bash"
 mkdir -p /usr/local
