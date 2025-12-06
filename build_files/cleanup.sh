@@ -20,6 +20,16 @@ dnf -y remove \
 dnf -y autoremove
 #dnf -y clean all
 
+# Documentation is available online
+rm -rf /usr/share/doc
+
+# Disable all COPR repos
+for i in /etc/yum.repos.d/_copr:*.repo; do
+    if [[ -f "$i" ]]; then
+        sed -i 's@enabled=1@enabled=0@g' "$i"
+    fi
+done
+
 # Clean temporary files
 rm -rf /tmp/*
 #rm -rf /var/*

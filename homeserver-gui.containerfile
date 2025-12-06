@@ -29,21 +29,8 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
-# Install fonts
-# Jetbrains nerd font
-RUN mkdir -p /usr/share/fonts/JetBrainsMono && wget -O /usr/share/fonts/JetBrainsMono/JetBrainsMono.zip https://download.jetbrains.com/fonts/JetBrainsMono-2.304.zip \
-	&& cd /usr/share/fonts/JetBrainsMono \
-	&& unzip JetBrainsMono.zip \
-	&& rm JetBrainsMono.zip \
-	&& fc-cache -f -vv
-
-# Clone and install Segoe UI font
-ENV DEST_DIR="/usr/share/fonts/Microsoft/TrueType/SegoeUI/" 
-RUN git clone https://github.com/mrbvrz/segoe-ui-linux /tmp/segoe-ui-linux \
-    && mkdir -p "$DEST_DIR" \
-    && cp -r /tmp/segoe-ui-linux/font/*.ttf $DEST_DIR/ \
-    && rm -rf /tmp/segoe-ui-linux \
-    && fc-cache -f "$DEST_DIR"
+# These notifications are useless and confusing
+RUN rm /etc/xdg/autostart/org.kde.discover.notifier.desktop
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \

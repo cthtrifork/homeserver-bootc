@@ -28,7 +28,6 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
-RUN mkdir -p /usr/local/share/bootc/ && jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
 
 # todo: move to system_files/homeserver/usr/lib/tmpfiles.d/link-podman-credentials.conf ?
 RUN --mount=type=secret,id=creds,required=true \
@@ -46,28 +45,13 @@ RUN --mount=type=secret,id=creds,required=true \
     mkdir -p /etc/docker && \
     ln -sf /usr/lib/container-auth.json /etc/docker/config.json
 
-# Install common utilities
-RUN dnf -y --setopt install_weak_deps=false install \
-    --allowerasing \
-    dnf5-plugins \
-    ca-certificates \
-    dnf-plugins-core \
-    procps-ng \
-    curl \
-    file \
-    qemu-guest-agent \
-    firewalld \
-    rsync \
-    unzip \
-    python3 \
-    python3-pip \
-    tree \
-    git-core \
-    make \
-    fastfetch
+# PREPARE PACKAGES
+COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/packages-added
+COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/bootc/packages-removed
+RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
 
-# dnf repoquery -C --installed --qf "%{installsize} %{name}\n" | sort -n | numfmt --to=iec --format="%.2f"
-RUN dnf -y remove python3-boto nvidia-gpu-firmware
+RUN grep -vE '^#' /usr/local/share/bootc/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
+RUN grep -vE '^#' /usr/local/share/bootc/packages-removed | xargs dnf -y remove
 
 # pip3 dependencies
 RUN pip3 install --no-cache-dir --upgrade pip \
