@@ -46,8 +46,8 @@ RUN --mount=type=secret,id=creds,required=true \
     ln -sf /usr/lib/container-auth.json /etc/docker/config.json
 
 # PREPARE PACKAGES
-COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/packages-added
-COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/bootc/packages-removed
+COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/packages-added /usr/local/share/bootc/packages-added
+COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/packages-removed /usr/local/share/bootc/packages-removed
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
 
 RUN grep -vE '^#' /usr/local/share/bootc/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
@@ -90,5 +90,3 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
-
-
