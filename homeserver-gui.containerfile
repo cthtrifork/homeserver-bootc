@@ -29,9 +29,6 @@ RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=
     dnf --nogpgcheck -y install /tmp/vscode.rpm && \
     rm -f /tmp/vscode.rpm
 
-# These notifications are useless and confusing
-RUN rm /etc/xdg/autostart/org.kde.discover.notifier.desktop
-
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
