@@ -1,7 +1,9 @@
 [Unit]
 Description=Configure system
-After=rpm-ostreed.service
-Before=systemd-user-sessions.service
+#After=rpm-ostreed.service
+#Before=systemd-user-sessions.service
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
