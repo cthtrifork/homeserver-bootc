@@ -2,8 +2,8 @@
 
 PRIVILEGED_HOOKS_DIRECTORY="/usr/share/bootc/privileged-setup.hooks.d"
 
-if [ -d "${PRIVILEGED_HOOKS_DIRECTORY}" ] ; then
-	for script in $PRIVILEGED_HOOKS_DIRECTORY/* ; do
-		bash $script
-	done
+if [ -d "${PRIVILEGED_HOOKS_DIRECTORY}" ]; then
+  for script in $PRIVILEGED_HOOKS_DIRECTORY/*; do
+    bash $script
+  done
 fi

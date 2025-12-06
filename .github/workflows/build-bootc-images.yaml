@@ -533,8 +533,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-
-          
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
         id: push-latest
         shell: bash

@@ -2,8 +2,8 @@
 
 SYSTEM_HOOKS_DIRECTORY="/usr/share/bootc/system-setup.hooks.d"
 
-if [ -d "${SYSTEM_HOOKS_DIRECTORY}" ] ; then
-	for script in $SYSTEM_HOOKS_DIRECTORY/* ; do
-		bash $script
-	done
+if [ -d "${SYSTEM_HOOKS_DIRECTORY}" ]; then
+  for script in $SYSTEM_HOOKS_DIRECTORY/*; do
+    bash $script
+  done
 fi
