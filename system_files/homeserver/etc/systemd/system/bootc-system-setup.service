@@ -6,9 +6,10 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=simple
+Type=oneshot
 ExecStart=/usr/libexec/system-setup
 User=root
+RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target

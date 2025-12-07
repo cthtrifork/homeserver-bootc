@@ -1,4 +1,5 @@
-TARGET_USER="$(getent passwd "$PKEXEC_UID" | cut -d: -f1)"
+#!/usr/bin/env bash
+set -euo pipefail
 
 echo "Configuring subuid/subgid for $TARGET_USER"
 
