@@ -28,9 +28,9 @@ RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y rem
 RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 # Install VSCode
-RUN curl -sLo /tmp/vscode.rpm "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" && \
-    dnf --nogpgcheck -y install /tmp/vscode.rpm && \
-    rm -f /tmp/vscode.rpm
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/build_files/gui-vscode.sh
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -45,3 +45,4 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint
+
