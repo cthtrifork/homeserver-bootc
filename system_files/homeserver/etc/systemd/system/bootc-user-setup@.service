@@ -2,7 +2,7 @@
 Description=Configure system for current user
 Wants=network-online.target
 After=network-online.target
-ConditionUser=!@system
+#ConditionUser=!@system
 
 [Service]
 Type=oneshot
