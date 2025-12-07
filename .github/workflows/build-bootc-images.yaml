@@ -3,6 +3,12 @@ on:
   schedule:
     - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force build all images'
+        required: false
+        default: false
+        type: boolean
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
@@ -73,6 +79,10 @@ jobs:
         id: ensure-matrix
         run: |
           IMAGES='${{ steps.filter.outputs.changes }}'
+          if [ "${{ github.event.inputs.force }}" == "true" ]; then
+            IMAGES='["homeserver","homeserver-gui"]'
+          fi
+          # If no images were changed, default to building the homeserver image
           if [ "$IMAGES" == "[]" ]; then
             IMAGES='["homeserver"]'
           fi
