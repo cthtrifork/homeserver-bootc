@@ -5,14 +5,14 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: 'Force build all images'
+        description: "Force build all images"
         required: false
         default: false
         type: boolean
       override_image:
-        description: 'Image to build (overrides change detection)'
+        description: "Image to build (overrides change detection)"
         required: false
-        default: ''
+        default: ""
         type: string
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
