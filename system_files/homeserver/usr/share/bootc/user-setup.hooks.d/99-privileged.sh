@@ -4,4 +4,4 @@ set -euo pipefail
 
 echo "Running all privileged units"
 
-pkexec /usr/libexec/privileged-setup
+#pkexec /usr/libexec/privileged-setup
