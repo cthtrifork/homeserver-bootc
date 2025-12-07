@@ -14,7 +14,7 @@ echo "== utilities =="
 printf "Display: %s\n" "$DISPLAY"
 echo "Copy and paste date:"
 date | copy
-paste
+pasta
 
 echo "== Github SSH Auth =="
 echo "Public key and SHA: "
