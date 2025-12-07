@@ -19,7 +19,5 @@ systemctl enable pinggy.service
 systemctl enable setup-tmpfiles.service
 systemctl enable systemd-userdbd.service
 
-systemctl enable setup-home@caspertdk.service
-
 # Enhance logging, but heavy in resources - journalctl is better alternative
 systemctl disable rsyslog || true
