@@ -66,6 +66,13 @@ kwin
 kdialog
 # Utils
 btop
+wl-clipboard
+# fonts
+cascadia-code-fonts
+cascadia-code-nf-fonts
+jetbrains-mono-fonts
+google-droid-sans-fonts
+google-droid-sans-mono-fonts
 
 ###########
 # Network #

@@ -4,3 +4,13 @@
 * text=auto
 *.sh	text eol=lf
 *.conf	text eol=lf
+
+*.yml linguist-detectable=true
+*.yml linguist-language=YAML
+
+*.yaml linguist-detectable=true
+*.yaml linguist-language=YAML
+
+*.json linguist-detectable=true
+*.json linguist-documentation=false
+*.json linguist-language=JSON

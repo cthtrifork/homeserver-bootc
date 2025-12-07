@@ -537,11 +537,16 @@ jobs:
         id: push-latest
         shell: bash
         run: | #sh
-          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          skopeo copy --all \
-            --digestfile digest.txt \
-            "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
-            "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+          #echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          #skopeo copy --all \
+          #  --digestfile digest.txt \
+          #  "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+          #  "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+
+          rpm-ostree compose build-chunked-oci --bootc --format-version=1 \
+            --from=${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+            --output containers-storage:${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          podman push --digestfile digest.txt "${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
           DIGEST=$(cat digest.txt)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
@@ -571,10 +576,7 @@ jobs:
       - name: Sign container image
         run: | #sh
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
-        #for tag in ${{ steps.build-image.outputs.tags }}; do
-        #  cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
-        #done
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
@@ -609,18 +611,3 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
-
-  cleanup:
-    name: Cleanup local images
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs:
-      - build-bootc-image
-      - run-on-pr
-      - test
-      - push-latest
-    steps:
-      - name: Remove all local images
-        shell: bash
-        run: |
-          rm -rf /var/lib/registry/${{ github.run_id }}

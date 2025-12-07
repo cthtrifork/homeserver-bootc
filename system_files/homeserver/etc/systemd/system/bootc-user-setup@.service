@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure system for current user
+Wants=network-online.target
+After=network-online.target
+#ConditionUser=!@system
+
+[Service]
+Type=simple
+User=%i
+ExecStart=/usr/libexec/user-setup %i
+
+[Install]
+#WantedBy=graphical-session.target
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure system
+#After=rpm-ostreed.service
+#Before=systemd-user-sessions.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/system-setup
+User=root
+
+[Install]
+WantedBy=multi-user.target
