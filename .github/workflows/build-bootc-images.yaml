@@ -533,23 +533,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install rpm-ostree
-        run: sudo apt-get update -qq && sudo apt-get install -y rpm-ostree
-
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
         id: push-latest
         shell: bash
         run: | #sh
-          #echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
-          #skopeo copy --all \
-          #  --digestfile digest.txt \
-          #  "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
-          #  "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          skopeo copy --all \
+            --digestfile digest.txt \
+            "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+            "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
-          rpm-ostree compose build-chunked-oci --bootc --format-version=1 \
-            --from="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
-            --output containers-storage:${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
-          podman push --digestfile digest.txt "${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
+          #rpm-ostree compose build-chunked-oci --bootc --format-version=1 \
+          #  --from="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+          #  --output containers-storage:${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          #podman push --digestfile digest.txt "${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
           DIGEST=$(cat digest.txt)
           echo "digest=$DIGEST" >> $GITHUB_OUTPUT
