@@ -3,6 +3,7 @@ set -euo pipefail
 
 if [ ! -e /etc/passwd.done ]; then
     echo "Password" | passwd $TARGET_USER -s
+	chage -d 0 $TARGET_USER # force password change on next login
 fi
 
 touch /etc/passwd.done

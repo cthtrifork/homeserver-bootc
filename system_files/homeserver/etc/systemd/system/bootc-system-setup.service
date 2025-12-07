@@ -10,6 +10,7 @@ Type=oneshot
 ExecStart=/usr/libexec/system-setup
 User=root
 RemainAfterExit=yes
+Environment=TARGET_USER=caspertdk
 
 [Install]
 WantedBy=multi-user.target
