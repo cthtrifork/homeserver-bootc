@@ -544,7 +544,7 @@ jobs:
           #  "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
           rpm-ostree compose build-chunked-oci --bootc --format-version=1 \
-            --from=${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+            --from="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
             --output containers-storage:${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           podman push --digestfile digest.txt "${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
