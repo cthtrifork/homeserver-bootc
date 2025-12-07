@@ -9,6 +9,11 @@ on:
         required: false
         default: false
         type: boolean
+      override_image:
+        description: 'Image to build (overrides change detection)'
+        required: false
+        default: ''
+        type: string
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
@@ -81,6 +86,9 @@ jobs:
           IMAGES='${{ steps.filter.outputs.changes }}'
           if [ "${{ github.event.inputs.force }}" == "true" ]; then
             IMAGES='["homeserver","homeserver-gui"]'
+          fi
+          if [ -n "${{ github.event.inputs.override_image }}" ]; then
+            IMAGES='["${{ github.event.inputs.override_image }}"]'
           fi
           # If no images were changed, default to building the homeserver image
           if [ "$IMAGES" == "[]" ]; then
