@@ -533,6 +533,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install rpm-ostree
+        run: sudo apt-get update -qq && sudo apt-get install -y rpm-ostree
+
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
         id: push-latest
         shell: bash
