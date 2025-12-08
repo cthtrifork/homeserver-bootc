@@ -54,7 +54,7 @@ jobs:
     outputs:
       image: ${{ steps.ensure-matrix.outputs.image }}
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Filter paths
         id: filter
@@ -124,7 +124,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -285,7 +285,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -378,7 +378,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -537,7 +537,7 @@ jobs:
       attestations: write
     steps:
       - name: Clone the repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
