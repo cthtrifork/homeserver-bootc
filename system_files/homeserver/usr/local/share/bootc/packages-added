@@ -1,10 +1,18 @@
+##################
+# Core			 #
+##################
+
 dnf5-plugins
 ca-certificates
 dnf-plugins-core
 procps-ng
+
+##################
+# System Utils	 #
+##################
+
 curl
 file
-qemu-guest-agent
 firewalld
 rsync
 unzip
@@ -17,3 +25,10 @@ fastfetch
 iotop
 tmux
 podman-compose
+
+##################
+# Virtualisation #
+##################
+
+qemu-guest-agent
+qemu-kvm
