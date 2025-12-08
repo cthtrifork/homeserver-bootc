@@ -326,14 +326,12 @@ jobs:
           prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           skip_compression: true
 
-      - name: Load Image
+      - name: Load rechunked image
         id: load
-        env:
-          RECHUNK_REF: ${{ steps.rechunk.outputs.ref }}
-          RECHUNK_LOCATION: ${{ steps.rechunk.outputs.location }}
         run: |
-          IMAGE="$(podman pull "${RECHUNK_REF}")"
-          sudo rm -rf "${RECHUNK_LOCATION}"
+          unset CONTAINER_HOST
+          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+          sudo rm -rf ${{ steps.rechunk.outputs.output }}
          
           podman image tag "${IMAGE}" ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           podman image tag "${IMAGE}" ${{ env.IMAGE_NAME }}:${{ env.LOCAL_PR_IMAGE }}
