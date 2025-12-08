@@ -321,7 +321,7 @@ jobs:
         uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
         with:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
-          ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           skip_compression: true
 
@@ -335,6 +335,7 @@ jobs:
           sudo rm -rf "${RECHUNK_LOCATION}"
          
           podman image tag "${IMAGE}" ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          podman image tag "${IMAGE}" ${{ env.IMAGE_NAME }}:${{ env.LOCAL_PR_IMAGE }}
 
           IMAGE="${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
           IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
