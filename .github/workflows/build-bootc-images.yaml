@@ -333,10 +333,10 @@ jobs:
           IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
           sudo rm -rf ${{ steps.rechunk.outputs.output }}
          
-          podman image tag "${IMAGE}" ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-          podman image tag "${IMAGE}" ${{ env.IMAGE_NAME }}:${{ env.LOCAL_PR_IMAGE }}
+          podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          podman image tag "${IMAGE}" ${{ env.LOCAL_PR_IMAGE }}
 
-          IMAGE="${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          IMAGE="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}"
           IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
           echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
           echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
