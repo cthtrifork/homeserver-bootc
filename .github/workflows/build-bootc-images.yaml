@@ -257,6 +257,9 @@ jobs:
           IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
           echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
           echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
+
+          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
           
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1

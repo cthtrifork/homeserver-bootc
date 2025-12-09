@@ -117,7 +117,6 @@ runs:
 
     - name: Enable Podman socket
       shell: bash
-      if: "false"
       run: | #sh
         #
         install -d -m 700 "$XDG_RUNTIME_DIR/podman"
