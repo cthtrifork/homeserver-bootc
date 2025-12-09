@@ -4,6 +4,10 @@ inputs:
   github_token:
     description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
     required: true
+  run_as_sudo:
+    description: "Run podman with sudo (rootfull)"
+    default: "false"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -88,20 +92,32 @@ runs:
         sudo mkdir -p /etc/containers/registries.conf.d
         sudo cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
 
+    - name: Set PODMAN command
+      id: config
+      shell: bash
+      run: |
+        if [[ "${{ inputs.run_as_sudo }}" == "true" ]]; then
+          echo "PODMAN=sudo podman" >> "$GITHUB_ENV"
+        else
+          echo "PODMAN=podman" >> "$GITHUB_ENV"
+        fi
+
+
     - name: Load latest image to speed up build
       shell: bash
       run: | #sh
-        podman pull -q ${{ env.IMAGE_FULL }}:latest || true
+        $PODMAN pull -q ${{ env.IMAGE_FULL }}:latest || true
 
     - name: Load homeserver-centos-bootc:latest image to speed up build
       shell: bash
       if: ${{ runner.environment == 'self-hosted' }}
       run: | #sh
         #
-        podman pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
+        $PODMAN pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
 
     - name: Enable Podman socket
       shell: bash
+      if: "false"
       run: | #sh
         #
         install -d -m 700 "$XDG_RUNTIME_DIR/podman"
