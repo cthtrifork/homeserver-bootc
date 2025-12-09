@@ -100,6 +100,7 @@ jobs:
     name: Build image ${{ matrix.image }}
     needs: changes
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    #runs-on: arc-ubuntu
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -146,10 +147,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
 
+      - name: Mount BTRFS for podman storage
+        if: ${{ runner.environment != 'self-hosted' }}
+        uses: ublue-os/container-storage-action@main
+        with:
+          target-dir: /var/lib/containers
+
       - name: Prepare Podman
         uses: ./.github/actions/prepare-podman
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_as_sudo: "true"
 
       - name: Ensure trivy is installed and DB is cached
         uses: ./.github/actions/setup-trivy
@@ -195,35 +203,87 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
-      - name: Use buildah build to create the image
+      - name: Buildah build
         id: build-image
-        uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
+        shell: bash
         env:
+          LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
+        run: |
+          # Build a labels array from the multi-line env var
+          labels=()
+          while IFS= read -r line; do
+            labels+=( --label "$line" )
+          done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+    
+          sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
+            "${labels[@]}" \
+            --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
+            --build-arg REGISTRY_URL=ghcr.io \
+            --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
+            --build-arg REPOSITORY="${{ github.repository_owner }}/${{ github.event.repository.name }}" \
+            --format docker \
+            --tls-verify=true \
+            --layers=false \
+            --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
+            --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
+            --secret id=creds,src=/tmp/creds \
+            --secret id=agekey,src=/tmp/AGE_KEY \
+            -v /home/runner/.cache/dnf:/var/cache/dnf:O \
+            -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+            ${{ env.CONTEXT }}
+            
+      - name: Run Rechunker
+        id: rechunk
+        uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
         with:
-          context: ${{ env.CONTEXT }}
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          layers: false
-          oci: false
-          build-args: |
-            REGISTRY_USERNAME="${{ github.repository_owner }}"
-            REGISTRY_URL=ghcr.io
-            PINGGY_HOST=${{ vars.PINGGY_HOST }}
-            REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
-          containerfiles: |
-            ${{ env.CONTAINERFILE }}
-          extra-args: |
-            --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
-            --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
-            --secret id=creds,src=/tmp/creds
-            --secret id=agekey,src=/tmp/AGE_KEY
-            -v /home/runner/.cache/dnf:/var/cache/dnf:O
-          #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
-          # https://www.redhat.com/en/blog/speeding-container-buildah
-          # --cache-from 127.0.0.1:5005/${{ env.IMAGE_NAME }}
+          rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
+          ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          skip_compression: true
+          labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
+          pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
+          git: "${{ github.workspace }}"
+          changelog: |
+            # Homeserver <pretty>
+            ## Version: <version>
 
+            Major Components:
+              - Kernel: <relver:kernel>
+              - KDE: <version:kwayland>
+
+            ## Changes since last version (<previous>):
+            ### Commits
+            <commits>
+            ### Package Changes:
+            <pkgupd>
+
+          formatters: |
+            commits.none=No changes\n
+            commits.commit=- **[<short>](https://github.com/cthtrifork/homeserver-bootc/commit/<hash>)** <subject>\n
+            pkgupd.none=No package updates\n
+            pkgupd.add=- **<package>** Added at <new>\n
+            pkgupd.update=- **<package>** <old> → <new>\n
+            pkgupd.remove=- **<package>** <old> → Removed\n
+
+      - name: Load rechunked image
+        id: load
+        run: |
+          unset CONTAINER_HOST
+          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+          sudo rm -rf ${{ steps.rechunk.outputs.output }}
+         
+          podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          podman image tag "${IMAGE}" ${{ env.LOCAL_PR_IMAGE }}
+
+          IMAGE="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}"
+          IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
+          echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
+          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
+
+          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
+          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
+          
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -252,6 +312,21 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
+      - name: Publish Changelog to Summary
+        shell: bash
+        env:
+          CHANGELOG_PATH: ${{ steps.rechunk.outputs.changelog }}
+        run: | #sh
+          {
+            echo "### Changelog"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            cat ${{ env.CHANGELOG_PATH }}
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+
       - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         id: push-to-ghcr
         uses: ./.github/actions/push-image
@@ -267,6 +342,7 @@ jobs:
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    #runs-on: 'arc-ubuntu'
     needs:
       - changes
       - build-bootc-image
