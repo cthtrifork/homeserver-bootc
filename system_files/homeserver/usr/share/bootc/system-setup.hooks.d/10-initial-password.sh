@@ -9,6 +9,6 @@ fi
 touch /etc/passwd.done
 
 # lock out root user
-if ! usermod -L root; then
-    sed -i 's|^root.*|root:!:1::::::|g' /etc/shadow
-fi
+#if ! usermod -L root; then
+#    sed -i 's|^root.*|root:!:1::::::|g' /etc/shadow
+#fi
