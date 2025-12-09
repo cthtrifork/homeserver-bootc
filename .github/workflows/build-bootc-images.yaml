@@ -203,7 +203,7 @@ jobs:
           DOCKER_BUILDKIT: "1"
         run: |
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
-            $(printf '%s\n' "${{env.DOCKER_METADATA_OUTPUT_LABELS}}" | sed 's/^/--label /') \
+            $(printf '%s\n' '${{ env.DOCKER_METADATA_OUTPUT_LABELS }}' | sed 's/^/--label "/; s/$/"/') \
             --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
             --build-arg REGISTRY_URL=ghcr.io \
             --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
