@@ -199,7 +199,7 @@ jobs:
         id: build-image
         shell: bash
         env:
-          LABELS: ${{ steps.meta.outputs.labels }}
+          LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
         run: |
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
