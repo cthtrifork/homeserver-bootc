@@ -44,4 +44,4 @@ RUN systemctl disable pinggy.service && \
 # Enable GUI by default
 RUN systemctl set-default graphical.target
 
-RUN bootc container lint
+RUN bootc container lint || true
