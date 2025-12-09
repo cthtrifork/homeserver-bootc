@@ -195,34 +195,53 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
-      - name: Use buildah build to create the image
+      - name: Buildah build
         id: build-image
-        uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
+        shell: bash
         env:
+          LABELS: ${{ steps.meta.outputs.labels }}
           DOCKER_BUILDKIT: "1"
+        run: |
+          sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
+            $(printf '%s\n' "${LABELS}" | sed 's/^/--label /') \
+            --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
+            --build-arg REGISTRY_URL=ghcr.io \
+            --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
+            --build-arg REPOSITORY="${{ github.repository_owner }}/${{ github.event.repository.name }}" \
+            --format docker \
+            --tls-verify=true \
+            --layers=false \
+            --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
+            --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
+            --secret id=creds,src=/tmp/creds \
+            --secret id=agekey,src=/tmp/AGE_KEY \
+            -v /home/runner/.cache/dnf:/var/cache/dnf:O \
+            -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+            ${{ env.CONTEXT }}
+            
+      - name: Run Rechunker
+        id: rechunk
+        uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
         with:
-          context: ${{ env.CONTEXT }}
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          layers: false
-          oci: false
-          build-args: |
-            REGISTRY_USERNAME="${{ github.repository_owner }}"
-            REGISTRY_URL=ghcr.io
-            PINGGY_HOST=${{ vars.PINGGY_HOST }}
-            REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
-          containerfiles: |
-            ${{ env.CONTAINERFILE }}
-          extra-args: |
-            --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
-            --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
-            --secret id=creds,src=/tmp/creds
-            --secret id=agekey,src=/tmp/AGE_KEY
-            -v /home/runner/.cache/dnf:/var/cache/dnf:O
-          #  ${{ matrix.image == 'homeserver-gui' && '--pull-never' || '--pull' }}
-          # https://www.redhat.com/en/blog/speeding-container-buildah
-          # --cache-from 127.0.0.1:5005/${{ env.IMAGE_NAME }}
+          rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
+          ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          skip_compression: true
+
+      - name: Load rechunked image
+        id: load
+        run: |
+          unset CONTAINER_HOST
+          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+          sudo rm -rf ${{ steps.rechunk.outputs.output }}
+         
+          podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          podman image tag "${IMAGE}" ${{ env.LOCAL_PR_IMAGE }}
+
+          IMAGE="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}"
+          IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
+          echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
+          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
           
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -248,6 +267,21 @@ jobs:
             echo ""
             echo '```'
             cat trivy-current-results.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish Changelog to Summary
+        shell: bash
+        env:
+          CHANGELOG_PATH: ${{ steps.rechunk.outputs.changelog }}
+        run: | #sh
+          {
+            echo "### Changelog"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            cat ${{ env.CHANGELOG_PATH }}
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
@@ -317,32 +351,8 @@ jobs:
       - name: Ensure trivy is installed and DB is cached
         uses: ./.github/actions/setup-trivy
 
-      - name: Run Rechunker
-        id: rechunk
-        uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
-        with:
-          rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
-          ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-          prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
-          skip_compression: true
-
-      - name: Load rechunked image
-        id: load
-        run: |
-          unset CONTAINER_HOST
-          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
-          sudo rm -rf ${{ steps.rechunk.outputs.output }}
-         
-          podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-          podman image tag "${IMAGE}" ${{ env.LOCAL_PR_IMAGE }}
-
-          IMAGE="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}"
-          IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
-          echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
-          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
-
-      #- name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-      #  uses: ./.github/actions/load-image
+      - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        uses: ./.github/actions/load-image
 
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
