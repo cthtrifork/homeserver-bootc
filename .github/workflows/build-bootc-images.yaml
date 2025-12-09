@@ -202,8 +202,14 @@ jobs:
           LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
         run: |
+          # Build a labels array from the multi-line env var
+          labels=()
+          while IFS= read -r line; do
+            labels+=( --label "$line" )
+          done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+    
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
-            $(printf '%s\n' '${{ env.DOCKER_METADATA_OUTPUT_LABELS }}' | sed 's/^/--label "/; s/$/"/') \
+            "${labels[@]}" \
             --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
             --build-arg REGISTRY_URL=ghcr.io \
             --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
