@@ -242,6 +242,29 @@ jobs:
           prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           skip_compression: true
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
+          pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
+          git: "${{ github.workspace }}"
+          changelog: |
+            # Homeserver <pretty>
+            ## Version: <version>
+
+            Major Components:
+              - Kernel: <relver:kernel>
+              - KDE: <version:kwayland>
+
+            ## Changes since last version (<previous>):
+            ### Commits
+            <commits>
+            ### Package Changes:
+            <pkgupd>
+
+          formatters: |
+            commits.none=No changes\n
+            commits.commit=- **[<short>](https://github.com/cthtrifork/homeserver-bootc/commit/<hash>)** <subject>\n
+            pkgupd.none=No package updates\n
+            pkgupd.add=- **<package>** Added at <new>\n
+            pkgupd.update=- **<package>** <old> → <new>\n
+            pkgupd.remove=- **<package>** <old> → Removed\n
 
       - name: Load rechunked image
         id: load
