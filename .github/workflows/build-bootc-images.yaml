@@ -147,10 +147,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
 
+      - name: Mount BTRFS for podman storage
+        uses: ublue-os/container-storage-action@main
+        with:
+          target-dir: /var/lib/containers
+
       - name: Prepare Podman
         uses: ./.github/actions/prepare-podman
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          run_as_sudo: "true"
 
       - name: Ensure trivy is installed and DB is cached
         uses: ./.github/actions/setup-trivy
@@ -234,6 +240,7 @@ jobs:
           ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           skip_compression: true
+          labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
 
       - name: Load rechunked image
         id: load
