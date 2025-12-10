@@ -102,7 +102,7 @@ runs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "touch /etc/passwd.done"
+            "sudo touch /etc/passwd.done"
 
     - name: Run user tests
       shell: bash
