@@ -6,7 +6,8 @@ if [ ! -e /etc/passwd.done ]; then
     echo "$TARGET_USER:Password" | chpasswd
     # ensure the account is unlocked
     usermod -U $TARGET_USER || true
-	#chage -E $(date -d "+1 days" +%Y-%m-%d) $TARGET_USER # force password change on next login
+    # force password change on next login
+    chage -d 0 $TARGET_USER
 fi
 
 touch /etc/passwd.done
