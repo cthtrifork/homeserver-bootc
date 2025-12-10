@@ -10,7 +10,7 @@ if [ ! -e /etc/passwd.done ]; then
     # ensure the account is unlocked
     usermod -U $TARGET_USER || true
     # force password change on next login
-    chage -d 0 $TARGET_USER
+    #chage -d 0 $TARGET_USER
 fi
 
 touch /etc/passwd.done
