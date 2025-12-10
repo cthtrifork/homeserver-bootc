@@ -2,6 +2,8 @@
 #set -euo pipefail
 trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 
+echo "== User testing =="
+
 WHOAMI=$(whoami)
 
 echo "Running as"
@@ -27,7 +29,7 @@ ssh-keygen -lf ~/.ssh/id_ed25519.pub
 echo "Verify PAM authentication with default password"
 python3 - <<EOF
 import pexpect
-child = pexpect.spawn("su $WHOAMI -c 'echo OK'")
+child = pexpect.spawn("su caspertdk -c 'echo OK'")
 child.expect("Password:")
 child.sendline("Password")
 child.expect(pexpect.EOF)
