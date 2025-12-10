@@ -68,6 +68,8 @@ jobs:
           sudo mkdir -p /var/lib/containers/storage
           echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
             | sudo tee /etc/containers/storage.conf
+
+          sudo podman system migrate
   
           # workaround https://github.com/containers/podman/issues/21683
           DB=/var/lib/containers/storage/db.sql
