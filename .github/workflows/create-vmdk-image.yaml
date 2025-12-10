@@ -118,5 +118,6 @@ jobs:
             -s "$SOURCE_DIR/*" \
             --recursive \
             --only-show-errors \
+            --overwrite true \
             --connection-string $AZURE_STORAGE_CONNECTION_STRING
 
