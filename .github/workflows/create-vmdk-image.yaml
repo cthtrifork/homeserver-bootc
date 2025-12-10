@@ -111,13 +111,14 @@ jobs:
           AZCOPY_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
           AZCOPY_ACCOUNT_NAME: krusobackup
           SOURCE_DIR: ${{ steps.create-image.outputs.output-directory }}
+          FILENAME: ${{ inputs.image_name }}-${{ inputs.tag }}.${{ inputs.type }}
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTIONSTRING }}
         run: |
-          az storage azcopy blob upload \
-            -c homeserver --account-name $AZCOPY_ACCOUNT_NAME \
-            -s "$SOURCE_DIR/*" \
-            --recursive \
-            --only-show-errors \
-            --overwrite true \
-            --connection-string $AZURE_STORAGE_CONNECTION_STRING
+          az storage blob upload \
+            --account-name $AZCOPY_ACCOUNT_NAME --account-key $AZCOPY_ACCOUNT_KEY \
+            --connection-string $AZURE_STORAGE_CONNECTION_STRING \
+            --container-name homeserver \
+            --file $SOURCE_DIR/$FILENAME --name $FILENAME \
+            --overwrite true
+
 
