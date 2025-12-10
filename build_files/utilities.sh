@@ -28,7 +28,7 @@ curl -sLo /tmp/age.tar.gz \
 tar -zxvf /tmp/age.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
 
 log "Installing gh-cli"
-GH_CLI_VERSION="v2.83.1" # renovate: datasource=github-releases depName=cli/cli
+GH_CLI_VERSION="v2.83.2" # renovate: datasource=github-releases depName=cli/cli
 curl -sLo /tmp/gh-cli.tar.gz \
     "$(/ctx/build_files/github-release-url.sh cli/cli ${MACHINE}_${ARCH}.tar.gz $GH_CLI_VERSION)"
 tar -zxvf /tmp/gh-cli.tar.gz -C "$BIN_DIR"/ --wildcards "*/bin/*" --strip-components=2 --exclude=LICENSE --exclude=README.md --exclude=licenses
