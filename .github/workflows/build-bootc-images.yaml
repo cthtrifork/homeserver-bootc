@@ -150,6 +150,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
 
+      - name: Make registry credentials available for sudo
+        shell: bash
+        run: |
+          sudo mkdir -p /root/.config/containers
+          sudo cp /run/user/1001/containers/auth.json /root/.config/containers/auth.json
+
       - name: Mount BTRFS for podman storage
         if: ${{ runner.environment != 'self-hosted' }}
         uses: ublue-os/container-storage-action@main
