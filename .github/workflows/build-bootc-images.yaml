@@ -244,7 +244,8 @@ jobs:
             
       - name: Run Rechunker
         id: rechunk
-        uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
+        #uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
+        uses: cthtrifork/rechunk@feature/skopeo-auth
         with:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
           ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
@@ -252,6 +253,7 @@ jobs:
           skip_compression: true
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
           pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
+          registry_auth_file: /home/runner/.docker/config.json
           git: "${{ github.workspace }}"
           changelog: |
             # Homeserver <pretty>
