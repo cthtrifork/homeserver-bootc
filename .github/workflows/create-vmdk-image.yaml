@@ -59,6 +59,7 @@ jobs:
       - name: Delete huge unnecessary tools folder
         run: |
           rm -rf /opt/hostedtoolcache
+          mkdir -p /var/lib/containers/storage
 
       - name: Create image
         id: create-image
