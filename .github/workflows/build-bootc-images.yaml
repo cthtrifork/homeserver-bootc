@@ -253,6 +253,7 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
           pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
           git: "${{ github.workspace }}"
+          registry_auth_file: /home/runner/.docker/config.json
           changelog: |
             # Homeserver <pretty>
             ## Version: <version>
