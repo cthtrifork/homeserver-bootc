@@ -97,6 +97,13 @@ runs:
           -p 2222 \
           ${SSH_USERNAME}@localhost
 
+        # disable password prompt during testing
+        ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "touch /etc/passwd.done"
+
     - name: Run user tests
       shell: bash
       if: ${{ matrix.image == 'homeserver' }}
