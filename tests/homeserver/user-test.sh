@@ -2,11 +2,11 @@
 #set -euo pipefail
 trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 
+WHOAMI=$(whoami)
+
 echo "Running as"
 id
-whoami
-
-WHOAMI=$(whoami)
+echo "$WHOAMI"
 
 echo "== Github CLI =="
 echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
