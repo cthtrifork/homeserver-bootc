@@ -18,8 +18,8 @@ gh auth status && echo "✅ Github CLI is ready"
 echo "== utilities =="
 printf "Display: %s\n" "$DISPLAY"
 echo "Copy and paste date:"
-date | copy
-pasta
+date | $HOME/.local/bin/copy
+$HOME/.local/bin/pasta
 
 echo "== Github SSH Auth =="
 echo "Public key and SHA: "
@@ -29,11 +29,17 @@ ssh-keygen -lf ~/.ssh/id_ed25519.pub
 echo "Verify PAM authentication with default password"
 python3 - <<EOF
 import pexpect
-child = pexpect.spawn("su caspertdk -c 'echo OK'")
+child = pexpect.spawn("su $WHOAMI -c 'echo OK'")
 child.expect("Password:")
 child.sendline("Password")
 child.expect(pexpect.EOF)
 print(child.before.decode())
+EOF
+
+python3 - <<'EOF'
+import pam
+p = pam.pam()
+print("OK" if p.authenticate("caspertdk", "Password") else "FAIL")
 EOF
 
 echo "finished testing"
