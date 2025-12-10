@@ -11,9 +11,12 @@ on:
         type: boolean
       override_image:
         description: "Image to build (overrides change detection)"
-        required: false
         default: ""
-        type: string
+        type: choice
+        required: false
+        options:
+          - homeserver-centos-bootc
+          - homeserver-gui-bootc
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
