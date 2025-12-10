@@ -15,3 +15,8 @@ for s in $CORE_SERVICES; do
     }
 done
 echo "✅ core services are OK"
+
+echo "== all users (/etc/passwd): =="
+sudo cat /etc/passwd
+echo "== all shadow (getent shadow): =="
+sudo getent shadow
