@@ -25,6 +25,8 @@ echo "== debug =="
 sudo getent passwd
 echo "== all users (/etc/passwd): =="
 sudo cat /etc/passwd
+echo "== all shadow (getent shadow): =="
+sudo getent shadow
 echo "== getent group wheel =="
 sudo getent group wheel
 echo "== /etc/subuid and /etc/subgid: =="
