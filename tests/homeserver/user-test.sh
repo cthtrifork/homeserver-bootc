@@ -21,6 +21,16 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
+echo "Verify PAM authentication with default password"
+python3 - <<EOF
+import pexpect
+child = pexpect.spawn("su $(whoami) -c 'echo OK'")
+child.expect("Password:")
+child.sendline("Password")
+child.expect(pexpect.EOF)
+print(child.before.decode())
+EOF
+
 echo "finished testing"
 
 #ssh_github_auth() {
