@@ -15,8 +15,8 @@ on:
         type: choice
         required: false
         options:
-          - homeserver-centos-bootc
-          - homeserver-gui-bootc
+          - homeserver
+          - homeserver-gui
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
