@@ -61,7 +61,7 @@ ln -sf "$BIN_DIR/virtctl" "$BIN_DIR/kubectl-virt"
 "$BIN_DIR/virtctl" completion bash >"$COMPLETION_DIR/virtctl"
 
 log "Installing kubectl-cnpg"
-KUBECTLCNPG_VERSION="v1.27.2" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
+KUBECTLCNPG_VERSION="v1.28.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 curl -sLo /tmp/kubectl-cnpg.tar.gz \
     "$(/ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_x86_64.tar.gz" $KUBECTLCNPG_VERSION)"
 tar -zxvf /tmp/kubectl-cnpg.tar.gz -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
