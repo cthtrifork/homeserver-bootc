@@ -4,6 +4,7 @@ trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 
 echo "Running as"
 id
+whoami
 
 echo "== Github CLI =="
 echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
@@ -21,10 +22,11 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
+WHOAMI=$(whoami)
 echo "Verify PAM authentication with default password"
 python3 - <<EOF
 import pexpect
-child = pexpect.spawn("su $(whoami) -c 'echo OK'")
+child = pexpect.spawn("su $WHOAMI -c 'echo OK'")
 child.expect("Password:")
 child.sendline("Password")
 child.expect(pexpect.EOF)

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 
-if [ ! -e /etc/passwd.done ]; then
+if [[ ! -e /etc/passwd.done ]]; then
     # Set default password
     echo "$TARGET_USER:Password" | chpasswd
     STATUS=$?
