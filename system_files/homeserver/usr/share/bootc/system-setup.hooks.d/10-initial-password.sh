@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_USER=caspertdk
 
 if [ ! -e /etc/passwd.done ]; then
-    # hack
-    echo "Password" | passwd $TARGET_USER -s
     # Set default password
     echo "$TARGET_USER:Password" | chpasswd
+    STATUS=$?
+    echo "chpasswd for $TARGET_USER received exit code: $STATUS"
     # ensure the account is unlocked
     usermod -U $TARGET_USER || true
     # force password change on next login
