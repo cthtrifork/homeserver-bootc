@@ -6,6 +6,8 @@ echo "Running as"
 id
 whoami
 
+WHOAMI=$(whoami)
+
 echo "== Github CLI =="
 echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
 gh auth status && echo "✅ Github CLI is ready"
@@ -22,7 +24,6 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
-WHOAMI=$(whoami)
 echo "Verify PAM authentication with default password"
 python3 - <<EOF
 import pexpect
