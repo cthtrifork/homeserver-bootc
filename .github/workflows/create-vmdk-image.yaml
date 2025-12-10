@@ -79,6 +79,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Make registry credentials available for sudo
+        shell: bash
+        run: |
+          sudo mkdir -p /root/.config/containers
+          sudo cp /run/user/1001/containers/auth.json /root/.config/containers/auth.json
+
       - name: Create image
         id: create-image
         uses: ublue-os/bootc-image-builder-action@main
@@ -88,7 +94,6 @@ jobs:
           rootfs: xfs
           image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
 
-          
       - name: Rename output
         shell: bash
         run: |
