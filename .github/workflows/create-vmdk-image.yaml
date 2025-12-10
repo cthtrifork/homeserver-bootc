@@ -96,8 +96,11 @@ jobs:
 
       - name: Rename output
         shell: bash
+        env:
+          SOURCE_DIR: ${{ steps.create-image.outputs.output-directory }}
+          FILENAME: ${{ inputs.image_name }}-${{ inputs.tag }}.${{ inputs.type }}
         run: |
-          mv ${{ steps.create-image.outputs.output-path }} ${{ steps.create-image.outputs.output-directory }}/${{ inputs.image_name }}-${{ inputs.tag }}.${{ inputs.type }}
+          mv ${{ steps.create-image.outputs.output-path }} $SOURCE_DIR/$FILENAME
 
       - name: Install azcopy
         run: |
@@ -106,6 +109,7 @@ jobs:
           echo "$HOME/tools/azcopy" >> $GITHUB_PATH
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
+      # https://learn.microsoft.com/en-us/cli/azure/storage/blob?view=azure-cli-latest#az-storage-blob-upload
       - name: Upload with access key
         env:
           AZCOPY_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
@@ -120,5 +124,3 @@ jobs:
             --container-name homeserver \
             --file $SOURCE_DIR/$FILENAME --name $FILENAME \
             --overwrite true
-
-
