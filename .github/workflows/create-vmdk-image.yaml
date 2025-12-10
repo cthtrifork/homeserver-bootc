@@ -39,7 +39,7 @@ jobs:
   create-image:
     name: Build ${{ inputs.type }} image
     #runs-on: ubuntu-latest
-    runs-on: ${{ inputs.image_name == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.image_name == 'homeserver-gui-bootc' && 'arc-ubuntu' || 'ubuntu-latest' }}
     environment: dev
     permissions:
       contents: read
