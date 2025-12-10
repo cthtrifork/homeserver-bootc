@@ -121,7 +121,7 @@ install -o root -g root -m 0755 /tmp/yq "$BIN_DIR/yq"
 "$BIN_DIR/yq" completion bash >"$COMPLETION_DIR/yq"
 
 log "Installing cosign"
-COSIGN_VERSION="v3.0.2" # renovate: datasource=github-releases depName=sigstore/cosign
+COSIGN_VERSION="v3.0.3" # renovate: datasource=github-releases depName=sigstore/cosign
 curl -sLo /tmp/cosign \
     "$(/ctx/build_files/github-release-url.sh sigstore/cosign ${MACHINE}.${ARCH} $COSIGN_VERSION)"
 install -o root -g root -m 0755 /tmp/cosign "$BIN_DIR/cosign"
