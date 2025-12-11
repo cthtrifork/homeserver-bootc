@@ -85,7 +85,7 @@ jobs:
 
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
-        run: |
+        run: | #sh
           IMAGES='${{ steps.filter.outputs.changes }}'
           if [ "${{ github.event.inputs.force }}" == "true" ]; then
             IMAGES='["homeserver","homeserver-gui"]'
@@ -129,7 +129,8 @@ jobs:
     steps:
       - name: Clone the repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-
+        with:
+          fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
         with:
@@ -191,6 +192,8 @@ jobs:
             org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.revision=${{ github.sha }}
             containers.bootc=1
           sep-tags: " "
           sep-annotations: " "
@@ -253,6 +256,7 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
           pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
           git: "${{ github.workspace }}"
+          revision: ${{ github.sha }}
           changelog: |
             # Homeserver <pretty>
             ## Version: <version>
