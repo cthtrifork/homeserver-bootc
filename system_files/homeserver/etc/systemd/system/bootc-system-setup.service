@@ -1,9 +1,9 @@
 [Unit]
 Description=Configure system
-#After=rpm-ostreed.service
-#Before=systemd-user-sessions.service
+Before=systemd-user-sessions.service
 Wants=network-online.target
-After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service setup-tmpfiles.service
+After=rpm-ostreed.service network-online.target setup-tmpfiles.service
+Requires=systemd-sysusers.service
 
 [Service]
 Type=oneshot
