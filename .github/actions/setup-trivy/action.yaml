@@ -12,6 +12,7 @@ runs:
       uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
       with:
         version: v0.65.0
+        cache: "false"
 
     - name: Restore DB from cache
       uses: actions/cache/restore@v4
