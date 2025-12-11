@@ -16,7 +16,11 @@ for s in $CORE_SERVICES; do
 done
 echo "✅ core services are OK"
 
+echo "== systemd-sysusers config: =="
+systemd-sysusers --cat-config
 echo "== all users (/etc/passwd): =="
 sudo cat /etc/passwd
 echo "== all shadow (getent shadow): =="
 sudo getent shadow
+echo "== integrity (pwck): =="
+sudo pwck

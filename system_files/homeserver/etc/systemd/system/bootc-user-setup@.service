@@ -1,7 +1,7 @@
 [Unit]
 Description=Configure system for current user
 Wants=network-online.target
-After=network-online.target
+After=network-online.target bootc-system-setup.service
 #ConditionUser=!@system
 
 [Service]

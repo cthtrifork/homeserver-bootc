@@ -36,6 +36,9 @@ sudo cat /etc/subgid
 echo "== /etc/group: =="
 sudo cat /etc/group
 
+echo "== systemd-sysusers config: =="
+systemd-sysusers --cat-config
+
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"
