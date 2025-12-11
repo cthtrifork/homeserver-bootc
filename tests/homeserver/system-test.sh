@@ -34,6 +34,8 @@ echo "== /etc/group: =="
 sudo cat /etc/group
 echo "== systemd-sysusers config: =="
 systemd-sysusers --cat-config
+echo "== systemd-analyze critical-chain: =="
+systemd-analyze critical-chain
 echo "== integrity (pwck): =="
 sudo pwck || true
 # check if env var ENV_LOAD is loaded

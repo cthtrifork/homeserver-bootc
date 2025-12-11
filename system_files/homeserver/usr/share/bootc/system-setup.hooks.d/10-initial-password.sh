@@ -11,9 +11,9 @@ if [[ ! -e /etc/passwd.done ]]; then
     usermod -U $TARGET_USER || true
     # force password change on next login
     #chage -d 0 $TARGET_USER
-fi
 
-touch /etc/passwd.done
+    touch /etc/passwd.done
+fi
 
 # lock out root user
 #if ! usermod -L root; then

@@ -22,5 +22,7 @@ echo "== all users (getent passwd): =="
 sudo getent passwd
 echo "== all shadow (getent shadow): =="
 sudo getent shadow
+echo "== systemd-analyze critical-chain: =="
+systemd-analyze critical-chain
 echo "== integrity (pwck): =="
 sudo pwck || true
