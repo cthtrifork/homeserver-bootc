@@ -1,21 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+FLAG=/etc/passwd.done
 
-if [[ ! -e /etc/passwd.done ]]; then
-    # Set default password
-    echo "$TARGET_USER:Password" | chpasswd
-    STATUS=$?
-    echo "chpasswd for $TARGET_USER received exit code: $STATUS"
-    # ensure the account is unlocked
-    usermod -U $TARGET_USER || true
-    # force password change on next login
-    #chage -d 0 $TARGET_USER
+# Run only once
+if [[ -e "$FLAG" ]]; then
+  exit 0
 fi
 
-touch /etc/passwd.done
+: "${TARGET_USER:?TARGET_USER not set}"
 
-# lock out root user
-#if ! usermod -L root; then
-#    sed -i 's|^root.*|root:!:1::::::|g' /etc/shadow
-#fi
+# Make sure the user exists (created by systemd-sysusers)
+if ! getent passwd "$TARGET_USER" >/dev/null 2>&1; then
+  echo "Initial password: user '$TARGET_USER' does not exist yet; aborting" >&2
+  exit 1
+fi
+
+# Set default password
+echo "$TARGET_USER:Password" | chpasswd
+STATUS=$?
+echo "chpasswd for $TARGET_USER received exit code: $STATUS"
+
+if [[ $STATUS -ne 0 ]]; then
+  echo "Initial password: chpasswd failed; not marking as done" >&2
+  exit $STATUS
+fi
+
+# Ensure the account is unlocked (in case sysusers locked it)
+usermod -U "$TARGET_USER" || true
+
+# Only mark as done if everything above succeeded
+touch "$FLAG"

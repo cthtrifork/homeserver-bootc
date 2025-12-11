@@ -32,6 +32,12 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/gui-vscode.sh
 
+# Sync /usr and /etc
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+    rsync -rvpK /ctx/system_files/homeserver/ / \
+    && rsync -rvpK /ctx/system_files/homeserver-gui/ /
+
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \

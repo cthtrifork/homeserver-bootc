@@ -513,9 +513,6 @@ jobs:
             echo 'password = ""'
             echo "key = \"${PUBKEY}\""
             echo 'groups = ["wheel"]'
-            #echo '[[customizations.files]]'
-            #echo 'path = "/etc/passwd.done"'
-            #echo 'data= ""'
           } > out/config.toml
 
           cat ./out/config.toml

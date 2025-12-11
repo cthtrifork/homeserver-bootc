@@ -69,6 +69,11 @@ RUN --mount=type=secret,id=agekey,required=true SOPS_AGE_KEY="$(cat /run/secrets
     chmod 0640 /usr/lib/sops/age/keys.txt && \
     printf "export SOPS_AGE_KEY=%s\n" "$SOPS_AGE_KEY" | tee /etc/profile.d/61-age-sops-private.sh 1> /dev/null
 
+# Sync /usr and /etc
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+    rsync -rvpK /ctx/system_files/homeserver/ /
+
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
     printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/62-registry-auth-private.sh 1> /dev/null
 ARG PINGGY_HOST
