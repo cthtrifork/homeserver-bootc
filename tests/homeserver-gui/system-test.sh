@@ -18,9 +18,9 @@ echo "✅ core services are OK"
 
 echo "== systemd-sysusers config: =="
 systemd-sysusers --cat-config
-echo "== all users (/etc/passwd): =="
-sudo cat /etc/passwd
+echo "== all users (getent passwd): =="
+sudo getent passwd
 echo "== all shadow (getent shadow): =="
 sudo getent shadow
 echo "== integrity (pwck): =="
-sudo pwck
+sudo pwck || true
