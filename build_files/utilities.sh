@@ -35,7 +35,7 @@ tar -zxvf /tmp/gh-cli.tar.gz -C "$BIN_DIR"/ --wildcards "*/bin/*" --strip-compon
 "$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
 
 log "Installing kubectl"
-KUBECTL_VERSION="v1.34.2" # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION="v1.34.3" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 curl -sLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${ARCH}/kubectl"
 install -o root -g root -m 0755 /tmp/kubectl "$BIN_DIR/kubectl"
 "$BIN_DIR/kubectl" completion bash >"$COMPLETION_DIR/kubectl"
