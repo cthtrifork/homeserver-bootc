@@ -9,8 +9,6 @@ log() {
   echo "=== $* ==="
 }
 
-rsync -rvpK /ctx/system_files/homeserver/ /
-
 mkdir -p /etc/homeserver/metadata/
 cat > /etc/homeserver/metadata/pinggy <<EOF
 PINGGY_TOKEN=$PINGGY_TOKEN
