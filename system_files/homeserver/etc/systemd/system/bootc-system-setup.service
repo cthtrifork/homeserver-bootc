@@ -2,7 +2,7 @@
 Description=Configure system
 Before=systemd-user-sessions.service
 Wants=network-online.target
-After=rpm-ostreed.service network-online.target setup-tmpfiles.service
+After=rpm-ostreed.service network-online.target setup-tmpfiles.service systemd-sysusers.service
 Requires=systemd-sysusers.service
 
 [Service]
