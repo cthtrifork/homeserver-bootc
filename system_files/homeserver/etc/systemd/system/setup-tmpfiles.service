@@ -1,6 +1,6 @@
 [Unit]
 Description=Ensure tmpfiles
-After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service
+After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service setup-tmpfiles.service
 Wants=network-online.target
 Requires=systemd-sysusers.service
 
