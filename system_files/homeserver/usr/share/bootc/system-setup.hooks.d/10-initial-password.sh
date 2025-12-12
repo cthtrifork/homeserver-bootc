@@ -2,46 +2,28 @@
 set -euo pipefail
 
 FLAG=/etc/passwd.done
+TARGET_USER="${TARGET_USER:?TARGET_USER not set}"
+UID_GID=1010 # todo: less magic strings somehow
 
-# Run only once
-if [[ -e "$FLAG" ]]; then
-  exit 0
-fi
+[[ -e "$FLAG" ]] && exit 0
 
-: "${TARGET_USER:?TARGET_USER not set}"
-
-# Wait up to 30s for NSS to resolve the user
+# Wait up to 30s for sysusers to possibly populate /etc/passwd
 for i in {1..60}; do
-  if getent passwd "$TARGET_USER" >/dev/null; then
-    break
-  fi
+  grep -q "^${TARGET_USER}:" /etc/passwd && break
   sleep 0.5
 done
 
-# If sysusers did not create it locally, create it explicitly
+# If not local, create a local user+group (so /etc/shadow can work)
 if ! grep -q "^${TARGET_USER}:" /etc/passwd; then
-  useradd -u 1010 -g 1010 -m -d /home/caspertdk -s /bin/bash -c "Casper Thygesen" caspertdk
-  usermod -aG wheel caspertdk
+  getent group "$TARGET_USER" >/dev/null 2>&1 || groupadd -g "$UID_GID" "$TARGET_USER" || true
+  id "$TARGET_USER" >/dev/null 2>&1 || useradd -u "$UID_GID" -g "$UID_GID" -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
+  usermod -aG wheel "$TARGET_USER" || true
 fi
 
-# Make sure the user exists (created by systemd-sysusers)
-if ! getent passwd "$TARGET_USER" >/dev/null 2>&1; then
-  echo "Initial password: user '$TARGET_USER' does not exist yet; aborting" >&2
-  exit 1
-fi
-
-# Set default password
+# Set default password (creates/updates /etc/shadow entry)
 echo "$TARGET_USER:Password" | chpasswd
-STATUS=$?
-echo "chpasswd for $TARGET_USER received exit code: $STATUS"
 
-if [[ $STATUS -ne 0 ]]; then
-  echo "Initial password: chpasswd failed; not marking as done" >&2
-  exit $STATUS
-fi
-
-# Ensure the account is unlocked (in case sysusers locked it)
+# Unlock if needed
 usermod -U "$TARGET_USER" || true
 
-# Only mark as done if everything above succeeded
 touch "$FLAG"
