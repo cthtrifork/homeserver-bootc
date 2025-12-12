@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-exit 0 # solved by homectl firstboot instead
+#exit 0 # solved by homectl firstboot instead
 
 FLAG=/etc/passwd.done
 TARGET_USER="${TARGET_USER:?TARGET_USER not set}"
@@ -26,7 +26,7 @@ fi
 if ! grep -q "^${TARGET_USER}:" /etc/passwd; then
   echo "creating local user '$TARGET_USER' ($TARGET_ID)"
   useradd -u "$TARGET_ID" -g "$TARGET_ID" \
-    -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
+    -m -d "/var/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
 else
   echo "local user already present in /etc/passwd"
 fi
