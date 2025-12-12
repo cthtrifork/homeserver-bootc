@@ -18,6 +18,12 @@ for i in {1..60}; do
   sleep 0.5
 done
 
+# If sysusers did not create it locally, create it explicitly
+if ! grep -q "^${TARGET_USER}:" /etc/passwd; then
+  useradd -u 1010 -g 1010 -m -d /home/caspertdk -s /bin/bash -c "Casper Thygesen" caspertdk
+  usermod -aG wheel caspertdk
+fi
+
 # Make sure the user exists (created by systemd-sysusers)
 if ! getent passwd "$TARGET_USER" >/dev/null 2>&1; then
   echo "Initial password: user '$TARGET_USER' does not exist yet; aborting" >&2
