@@ -38,7 +38,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/homeserver/ / \
     && rsync -rvpK /ctx/system_files/homeserver-gui/ /
 
-RUN authselect enable-feature with-systemd-homed
+#RUN authselect enable-feature with-systemd-homed
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
