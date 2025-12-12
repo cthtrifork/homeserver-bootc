@@ -53,4 +53,8 @@ p = pam.pam()
 print("OK" if p.authenticate("caspertdk", "Password") else "FAIL")
 EOF
 
+grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
+
+authselect current
+
 echo "Finished testing"
