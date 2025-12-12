@@ -59,4 +59,8 @@ authselect current
 getent passwd caspertdk
 getent -s files passwd caspertdk
 
+getent -s files passwd root || echo "FILES backend broken"
+ls -l /etc/passwd
+wc -l /etc/passwd
+
 echo "Finished testing"
