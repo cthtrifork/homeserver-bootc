@@ -36,6 +36,11 @@ echo "== systemd-sysusers config: =="
 systemd-sysusers --cat-config
 echo "== systemd-analyze critical-chain: =="
 systemd-analyze critical-chain
+
+echo "== authselect current =="
+grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
+authselect current
+
 echo "== integrity (pwck): =="
 sudo pwck || true
 # check if env var ENV_LOAD is loaded
@@ -53,6 +58,3 @@ echo "GitHub token fingerprint: $(printf "%s" "$GITHUB_TOKEN" | cut -c1-7)"
 
 gh auth status && echo "✅ Github is ready"
 
-echo "authselect current"
-grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
-authselect current
