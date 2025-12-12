@@ -141,7 +141,7 @@ install -o root -g root -m 0755 /tmp/talosctl "$BIN_DIR/talosctl"
 "$BIN_DIR/talosctl" completion bash >"$COMPLETION_DIR/talosctl"
 
 log "Installing helm"
-HELM_VERSION="v3.19.3" # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION="v3.19.4" # renovate: datasource=github-releases depName=helm/helm
 curl -sLo /tmp/helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
 tar -zxvf /tmp/helm.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
