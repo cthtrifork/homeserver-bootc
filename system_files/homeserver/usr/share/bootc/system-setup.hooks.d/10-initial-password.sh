@@ -34,7 +34,8 @@ else
 fi
 
 echo "setting password"
-echo "$TARGET_USER:Password" | chpasswd
+echo "$TARGET_USER:Password" | chpasswd || echo "fail chossswd"
+echo "Password" | passwd $TARGET_USER --stdin || echo "fail passwd"
 
 echo "unlocking account if needed"
 usermod -U "$TARGET_USER" || true
