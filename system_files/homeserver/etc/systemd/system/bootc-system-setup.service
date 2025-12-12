@@ -1,10 +1,10 @@
 [Unit]
 Description=Configure system
 Before=systemd-user-sessions.service
-Wants=network-online.target
+Wants=network-online.target sssd.service
 After=local-fs.target systemd-remount-fs.service network-online.target \
       rpm-ostreed.service systemd-sysusers.service systemd-tmpfiles-setup.service \
-      systemd-userdbd.service
+      systemd-userdbd.service sssd.service
 Requires=systemd-sysusers.service systemd-userdbd.service
 RequiresMountsFor=/etc /usr
 
