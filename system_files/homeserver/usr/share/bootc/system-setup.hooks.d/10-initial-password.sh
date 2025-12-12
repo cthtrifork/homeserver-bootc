@@ -14,6 +14,8 @@ TARGET_ID="${TARGET_ID:?TARGET_ID not set}"
 
 echo "configuring user '$TARGET_USER' (id $TARGET_ID)"
 
+authselect select local with-silent-lastlog --force
+
 # Ensure the local group exists
 if ! grep -q "^${TARGET_USER}:" /etc/group; then
   echo "creating local group '$TARGET_USER' ($TARGET_ID)"
