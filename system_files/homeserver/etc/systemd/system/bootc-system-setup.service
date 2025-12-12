@@ -2,19 +2,16 @@
 Description=Configure system
 Before=systemd-user-sessions.service
 Wants=network-online.target sssd.service
-After=local-fs.target systemd-remount-fs.service network-online.target \
+After=network-online.target \
       rpm-ostreed.service systemd-sysusers.service systemd-tmpfiles-setup.service \
       systemd-userdbd.service sssd.service
 Requires=systemd-sysusers.service systemd-userdbd.service
-RequiresMountsFor=/etc /usr
 
 [Service]
 Type=oneshot
-ExecStartPre=/usr/bin/systemd-sysusers
 ExecStart=/usr/libexec/system-setup
 User=root
 RemainAfterExit=yes
-ImportCredential=home.create.*
 Environment=TARGET_USER=caspertdk
 Environment=TARGET_ID=1010
 
