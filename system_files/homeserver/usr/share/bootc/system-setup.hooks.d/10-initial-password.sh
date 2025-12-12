@@ -3,27 +3,37 @@ set -euo pipefail
 
 FLAG=/etc/passwd.done
 TARGET_USER="${TARGET_USER:?TARGET_USER not set}"
-UID_GID=1010 # todo: less magic strings somehow
+TARGET_ID="${TARGET_ID:?TARGET_ID not set}"
 
-[[ -e "$FLAG" ]] && exit 0
+[[ -e "$FLAG" ]] && {
+  echo "$TARGET_USER should already be configured with a password, skipping"
+  exit 0
+}
 
-# Wait up to 30s for sysusers to possibly populate /etc/passwd
-for i in {1..60}; do
-  grep -q "^${TARGET_USER}:" /etc/passwd && break
-  sleep 0.5
-done
+echo "configuring user '$TARGET_USER' (id $TARGET_ID)"
 
-# If not local, create a local user+group (so /etc/shadow can work)
+# If not local, fallback to creating a local user+group (so /etc/shadow can work)
 if ! grep -q "^${TARGET_USER}:" /etc/passwd; then
-  getent group "$TARGET_USER" >/dev/null 2>&1 || groupadd -g "$UID_GID" "$TARGET_USER" || true
-  id "$TARGET_USER" >/dev/null 2>&1 || useradd -u "$UID_GID" -g "$UID_GID" -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
-  usermod -aG wheel "$TARGET_USER" || true
+  echo "user not in /etc/passwd, creating locally"
+
+  if ! getent group "$TARGET_USER" >/dev/null 2>&1; then
+    echo "creating group '$TARGET_USER' ($TARGET_ID)"
+    groupadd -g "$TARGET_ID" "$TARGET_USER" || true
+  fi
+
+  if ! id "$TARGET_USER" >/dev/null 2>&1; then
+    echo "creating user '$TARGET_USER' ($TARGET_ID)"
+    useradd -u "$TARGET_ID" -g "$TARGET_ID" \
+      -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
+  fi
+else
+  echo "user already present in /etc/passwd"
 fi
 
-# Set default password (creates/updates /etc/shadow entry)
+echo "setting password"
 echo "$TARGET_USER:Password" | chpasswd
 
-# Unlock if needed
+# unlocking account if needed
 usermod -U "$TARGET_USER" || true
 
 touch "$FLAG"
