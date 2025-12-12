@@ -25,7 +25,7 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 #RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
 # Set default applications
-RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
+#RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 # Install VSCode
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
