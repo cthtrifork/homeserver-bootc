@@ -5,10 +5,6 @@ COPY system_files/ /system_files/
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
-# SETUP FILESYSTEM
-#RUN rmdir /opt && ln -s -T /var/opt /opt
-#RUN mkdir -p /var/roothome
-
 # Install GUI components (basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 RUN dnf copr enable -y scottames/ghostty
@@ -21,7 +17,7 @@ COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packag
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/bootc/gui/packages-removed
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
 
-RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
+#RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
 #RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
 # Set default applications
