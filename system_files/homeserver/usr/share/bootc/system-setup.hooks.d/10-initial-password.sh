@@ -10,6 +10,14 @@ fi
 
 : "${TARGET_USER:?TARGET_USER not set}"
 
+# Wait up to 30s for NSS to resolve the user
+for i in {1..60}; do
+  if getent passwd "$TARGET_USER" >/dev/null; then
+    break
+  fi
+  sleep 0.5
+done
+
 # Make sure the user exists (created by systemd-sysusers)
 if ! getent passwd "$TARGET_USER" >/dev/null 2>&1; then
   echo "Initial password: user '$TARGET_USER' does not exist yet; aborting" >&2
