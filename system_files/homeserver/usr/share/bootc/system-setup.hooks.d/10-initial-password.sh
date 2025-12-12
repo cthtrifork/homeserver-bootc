@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+exit 0 # solved by homectl firstboot instead
+
 FLAG=/etc/passwd.done
 TARGET_USER="${TARGET_USER:?TARGET_USER not set}"
 TARGET_ID="${TARGET_ID:?TARGET_ID not set}"

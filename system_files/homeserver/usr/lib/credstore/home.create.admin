@@ -1,0 +1,27 @@
+{
+    "userName" : "caspertdk",
+    "realName" : "Casper Thygesen",
+    "storage" : "luks",
+    "fileSystemType" : "btrfs",
+    "diskSize" : 10737418240,
+    "luksDiscard" : false,
+    "luksOfflineDiscard" : true,
+    "luksResizeMode" : "shrink-and-grow",
+    "rebalanceWeight" : false,
+    "uid" : 1010,
+    "gid" : 1010,
+    "disposition" : "regular",
+    "memberOf" : [
+        "wheel"
+    ],
+    "privileged" : {
+        "hashedPassword" : [
+            "$y$j9T$nAb6D4oBaBCMYxajr2vd7.$J.WXN443B3O3uNaldL5nWCQddiJm.5ipjKdOvEelZs6"
+        ]
+    },
+    "secret" : {
+        "password" : [
+            "Password"
+        ]
+    }
+}

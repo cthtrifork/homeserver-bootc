@@ -14,6 +14,7 @@ ExecStartPre=/usr/bin/systemd-sysusers
 ExecStart=/usr/libexec/system-setup
 User=root
 RemainAfterExit=yes
+ImportCredential=home.create.*
 Environment=TARGET_USER=caspertdk
 Environment=TARGET_ID=1010
 
