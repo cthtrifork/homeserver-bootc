@@ -2,7 +2,8 @@
 Description=Configure system
 Before=systemd-user-sessions.service
 Wants=network-online.target
-After=rpm-ostreed.service network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service
+After=rpm-ostreed.service network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service local-fs.target systemd-remount-fs.service
+RequiresMountsFor=/etc
 Requires=systemd-sysusers.service
 
 [Service]
