@@ -41,4 +41,4 @@ p = pam.pam()
 print("OK" if p.authenticate("caspertdk", "Password") else "FAIL")
 EOF
 
-echo "finished testing"
+echo "Finished testing"
