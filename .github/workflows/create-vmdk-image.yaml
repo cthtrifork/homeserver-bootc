@@ -20,9 +20,10 @@ on:
         required: true
         options:
           - homeserver-centos-bootc
-          - github-runner-centos-bootc
+          - github-runner-bootc
           - homeserver-gui-bootc
-          - jumphost-centos-bootc
+          - jumphost-bootc
+          - httpsproxy-bootc
         default: homeserver-centos-bootc
       context:
         description: "Build context (path)"

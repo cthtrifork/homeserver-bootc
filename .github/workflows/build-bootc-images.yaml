@@ -78,6 +78,10 @@ jobs:
               - 'system_files/jumphost/**'
               - 'jumphost.containerfile'
               - '**/jumphost/**'
+            httpsproxy:
+              - 'system_files/httpsproxy/**'
+              - 'httpsproxy.containerfile'
+              - '**/httpsproxy/**'
             githubrunner:
               - 'system_files/githubrunner/**'
               - 'github-runner.containerfile'

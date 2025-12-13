@@ -28,7 +28,6 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
-
 # todo: move to system_files/homeserver/usr/lib/tmpfiles.d/link-podman-credentials.conf ?
 RUN --mount=type=secret,id=creds,required=true \
     cp /run/secrets/creds /usr/lib/container-auth.json && \
