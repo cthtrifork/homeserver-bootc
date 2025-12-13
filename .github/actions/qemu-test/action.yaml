@@ -107,12 +107,10 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
-          cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "${SSH_KEY}" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost
-        fi
+        cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost
 
     - name: Run user tests
       shell: bash
