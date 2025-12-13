@@ -26,16 +26,16 @@ plasma-breeze
 kscreenlocker
 
 # Wallet + crypto prompt
-kwalletmanager5
-pam-kwallet
-pinentry-qt
+#kwalletmanager5
+#pam-kwallet
+#pinentry-qt
 # screen configuration
 kscreen
 # style GTK apps to match KDE
 kde-gtk-config
 
 # Seems like a default
-systemd-oomd-defaults
+#systemd-oomd-defaults
 
 # Fonts
 google-noto-emoji-color-fonts
