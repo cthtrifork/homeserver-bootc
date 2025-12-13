@@ -4,6 +4,9 @@ set -euo pipefail
 echo "Running as"
 id
 
+systemctl status squid.service
+journalctl -u squid.service -b --no-pager
+
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="squid.service"
 echo "--- core services ---"
