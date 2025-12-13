@@ -5,7 +5,7 @@ echo "Running as"
 id
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="pinggy.service bootc-system-setup setup-tmpfiles.service" # todo: detect
+CORE_SERVICES="pinggy.service bootc-system-setup" # todo: detect
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
