@@ -40,6 +40,7 @@ systemd-analyze critical-chain
 echo "== authselect current =="
 grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
 authselect current
+tree /etc/pam.d/
 
 echo "== integrity (pwck): =="
 sudo pwck || true
