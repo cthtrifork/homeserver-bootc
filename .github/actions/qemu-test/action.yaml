@@ -107,14 +107,6 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        if [ ${{ matrix.image }} == "homeserver-gui" ]; then
-          cat ./tests/homeserver/system-test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "${SSH_KEY}" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            bash -l -s --
-        fi
-
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
@@ -131,14 +123,6 @@ runs:
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-
-        if [ ${{ matrix.image }} == "homeserver-gui" ]; then
-          cat ./tests/homeserver/user-test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "${SSH_KEY}" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            bash -l -s --
-        fi
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
