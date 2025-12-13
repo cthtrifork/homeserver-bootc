@@ -35,7 +35,7 @@ RUN mkdir -p /var/log/squid/ /var/spool/squid && \
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    rsync -rvpK /ctx/system_files/jumphost/ /
+    rsync -rvpK /ctx/system_files/httpsproxy/ /
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
