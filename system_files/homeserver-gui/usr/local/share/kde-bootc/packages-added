@@ -12,10 +12,10 @@ plasma-desktop
 plasma-workspace
 plasma-workspace-wallpapers
 # Display/login manager
-sddm-wayland-plasma
-sddm
-sddm-breeze
-sddm-kcm
+#sddm-wayland-plasma
+#sddm
+#sddm-breeze
+#sddm-kcm
 # KDE default icon pack
 breeze-icon-theme
 # window decorations
