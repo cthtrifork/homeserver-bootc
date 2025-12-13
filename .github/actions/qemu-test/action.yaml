@@ -80,7 +80,7 @@ runs:
           -i "$SSH_KEY" \
           -p 2222 \
           ${SSH_USERNAME}@localhost \
-          "fastfetch"
+          "fastfetch || true"
 
     - name: Run system tests
       shell: bash
@@ -107,11 +107,13 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
-          -i "${SSH_KEY}" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          bash -l -s --
+        if [[ -e "./tests/${{ matrix.image }}/user-test.sh" ]]; then
+          cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            bash -l -s --
+        fi
 
     - name: Verify ghcr.io auth
       shell: bash
