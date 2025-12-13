@@ -82,6 +82,21 @@ runs:
           ${SSH_USERNAME}@localhost \
           "fastfetch"
 
+    - name: Run diagnostics
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.SSH_KEY}}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        cat ./tests/diagnostics.sh | ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost
+
     - name: Run system tests
       shell: bash
       env:
@@ -92,10 +107,20 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
+        if [ ${{ matrix.image }} == "homeserver-gui" ]; then
+          cat ./tests/homeserver/system-test.sh | ssh "${SSH_OPTS[@]}" \
           -i "${SSH_KEY}" \
           -p 2222 \
-          ${SSH_USERNAME}@localhost
+          ${SSH_USERNAME}@localhost \
+          bash -l -s --
+        fi
+
+        if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
+          cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost
+        fi
 
     - name: Run user tests
       shell: bash
@@ -107,11 +132,21 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
+        if [ ${{ matrix.image }} == "homeserver-gui" ]; then
+          cat ./tests/homeserver/user-test.sh | ssh "${SSH_OPTS[@]}" \
           -i "${SSH_KEY}" \
           -p 2222 \
           ${SSH_USERNAME}@localhost \
           bash -l -s --
+        fi
+
+        if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
+          cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            bash -l -s --
+        fi
 
     - name: Verify ghcr.io auth
       shell: bash

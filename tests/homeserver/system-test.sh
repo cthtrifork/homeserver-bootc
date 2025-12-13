@@ -7,7 +7,7 @@ id
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="pinggy.service bootc-system-setup setup-tmpfiles.service" # todo: detect
 echo "--- core services ---"
-for s in $CORE_SERVICES; do
+for s in $CORE_SERVICES; doQ
     systemctl is-active --quiet "$s" || {
         echo "Service not active: $s"
         systemctl status "$s" --no-pager || true
@@ -16,34 +16,6 @@ for s in $CORE_SERVICES; do
 done
 echo "✅ core services are OK"
 
-#/usr/bin/systemd-tmpfiles --cat-config
-
-echo "== home directory tree =="
-sudo tree -uag /home/ -L 4 --si --du
-
-echo "== all users (getent passwd): =="
-sudo getent passwd
-echo "== all shadow (getent shadow): =="
-sudo getent shadow
-echo "== getent group wheel =="
-sudo getent group wheel
-echo "== /etc/subuid and /etc/subgid: =="
-sudo cat /etc/subuid
-sudo cat /etc/subgid
-echo "== /etc/group: =="
-sudo cat /etc/group
-echo "== systemd-sysusers config: =="
-systemd-sysusers --cat-config
-echo "== systemd-analyze critical-chain: =="
-systemd-analyze critical-chain
-
-echo "== authselect current =="
-grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
-authselect current
-tree /etc/pam.d/
-
-echo "== integrity (pwck): =="
-sudo pwck || true
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"
