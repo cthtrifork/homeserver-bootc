@@ -56,6 +56,7 @@ EOF
 echo "== authselect current =="
 grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
 authselect current
+tree /etc/pam.d
 getent passwd caspertdk
 getent -s files passwd caspertdk
 
