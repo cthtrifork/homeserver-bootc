@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-#set -euo pipefail
+set -eo pipefail
+
 trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 
 echo "== User testing =="
@@ -36,13 +37,13 @@ child.expect(pexpect.EOF)
 print(child.before.decode())
 EOF
 
-python3 - <<'EOF'
+python3 - <<EOF
 import pam
 p = pam.pam()
-print("OK" if p.authenticate("caspertdk", "Password") else "FAIL")
+print("OK" if p.authenticate("$WHOAMI", "Password") else "FAIL")
 EOF
 
-echo "finished testing"
+echo "Finished testing"
 
 #ssh_github_auth() {
 #  ssh -o IdentitiesOnly=yes \

@@ -5,10 +5,6 @@ COPY system_files/ /system_files/
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
-# SETUP FILESYSTEM
-#RUN rmdir /opt && ln -s -T /var/opt /opt
-RUN mkdir -p /var/roothome
-
 # Install GUI components (basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
 RUN dnf copr enable -y scottames/ghostty
@@ -22,10 +18,10 @@ COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packag
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
 
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
-RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
+#RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
 # Set default applications
-RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
+#RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 # Install VSCode
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -37,6 +33,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     rsync -rvpK /ctx/system_files/homeserver/ / \
     && rsync -rvpK /ctx/system_files/homeserver-gui/ /
+
+#RUN authselect enable-feature with-systemd-homed
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
