@@ -18,10 +18,10 @@ COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packag
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
 
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
-#RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
+RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
 # Set default applications
-#RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
+RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 # Install VSCode
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -33,8 +33,6 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     rsync -rvpK /ctx/system_files/homeserver/ / \
     && rsync -rvpK /ctx/system_files/homeserver-gui/ /
-
-#RUN authselect enable-feature with-systemd-homed
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \

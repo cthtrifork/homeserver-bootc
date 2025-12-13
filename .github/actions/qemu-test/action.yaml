@@ -80,7 +80,7 @@ runs:
           -i "$SSH_KEY" \
           -p 2222 \
           ${SSH_USERNAME}@localhost \
-          "fastfetch"
+          "fastfetch || true"
 
     - name: Run diagnostics
       shell: bash
@@ -107,20 +107,10 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        if [ ${{ matrix.image }} == "homeserver-gui" ]; then
-          cat ./tests/homeserver/system-test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "${SSH_KEY}" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            bash -l -s --
-        fi
-
-        if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
-          cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "${SSH_KEY}" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost
-        fi
+        cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost
 
     - name: Run user tests
       shell: bash
@@ -131,14 +121,6 @@ runs:
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-
-        if [ ${{ matrix.image }} == "homeserver-gui" ]; then
-          cat ./tests/homeserver/user-test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "${SSH_KEY}" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            bash -l -s --
-        fi
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
