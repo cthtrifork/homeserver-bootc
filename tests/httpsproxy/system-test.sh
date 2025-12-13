@@ -16,4 +16,5 @@ for s in $CORE_SERVICES; do
 done
 echo "✅ core services are OK"
 
+echo "Testing HTTPS proxy through squid..."
 curl --proxy http://localhost:3128 https://google.com -v
