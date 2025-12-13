@@ -63,7 +63,7 @@ spectacle
 #polkit-kde
 # KDE's compositor and window manager
 #kwin
-kdialog
+#kdialog
 # Utils
 btop
 #wl-clipboard
@@ -79,17 +79,17 @@ google-droid-sans-mono-fonts
 ###########
 
 # captive portal support
-NetworkManager-config-connectivity-fedora
-NetworkManager
+#NetworkManager-config-connectivity-fedora
+#NetworkManager
 # VPN plugins (L2TP, VPNC, OpenConnect, OpenVPN, PPTP)
-plasma-nm-*
+#plasma-nm-*
 
 # Wifi
-NetworkManager-wifi
+#NetworkManager-wifi
 # Move to dedicated tagged image when switching to multiple hardware
 ## Used by Dell laptop 2022
-iwlwifi-mvm-firmware
-linux-firmware-whence
+#iwlwifi-mvm-firmware
+#linux-firmware-whence
 
 ##################
 # Virtualisation #
@@ -112,11 +112,11 @@ thermald
 # Wayland/OBS/webcam compatibility
 xwaylandvideobridge
 # audio controls
-kde-settings-pulseaudio
-plasma-pa
-pipewire
-pipewire-pulseaudio
-wireplumber
+#kde-settings-pulseaudio
+#plasma-pa
+#pipewire
+#pipewire-pulseaudio
+#wireplumber
 
 
 
