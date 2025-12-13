@@ -19,7 +19,7 @@ systemd-sysusers --cat-config
 #echo "== systemd-tmpfiles config: =="
 #systemd-tmpfiles --cat-config
 echo "== systemd-analyze critical-chain: =="
-systemd-analyze critical-chain
+systemd-analyze critical-chain || true
 echo "== authselect current =="
 grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
 authselect current
