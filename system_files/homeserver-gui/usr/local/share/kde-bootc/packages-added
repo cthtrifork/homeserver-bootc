@@ -38,16 +38,16 @@
 #systemd-oomd-defaults
 
 # Fonts
-google-noto-emoji-color-fonts
+#google-noto-emoji-color-fonts
 
 ################
 # Applications #
 ################
 
 # Browser
-brave-browser
+#brave-browser
 # Terminal
-ghostty
+#ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop
@@ -65,14 +65,14 @@ spectacle
 #kwin
 #kdialog
 # Utils
-btop
+#btop
 #wl-clipboard
 # fonts
-cascadia-code-fonts
-cascadia-code-nf-fonts
-jetbrains-mono-fonts
-google-droid-sans-fonts
-google-droid-sans-mono-fonts
+#cascadia-code-fonts
+#cascadia-code-nf-fonts
+#jetbrains-mono-fonts
+#google-droid-sans-fonts
+#google-droid-sans-mono-fonts
 
 ###########
 # Network #
@@ -103,14 +103,14 @@ google-droid-sans-mono-fonts
 ############
 # Hardware #
 ############
-kamera
-lm_sensors
+#kamera
+#lm_sensors
 ## Bluetooth stack
-bluedevil
+#bluedevil
 ## thermal management
-thermald
+#thermald
 # Wayland/OBS/webcam compatibility
-xwaylandvideobridge
+#xwaylandvideobridge
 # audio controls
 #kde-settings-pulseaudio
 #plasma-pa
