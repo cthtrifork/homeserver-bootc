@@ -14,8 +14,8 @@ sudo cat /etc/subuid
 sudo cat /etc/subgid
 echo "== /etc/group: =="
 sudo cat /etc/group
-echo "== systemd-sysusers config: =="
-systemd-sysusers --cat-config
+#echo "== systemd-sysusers config: =="
+#systemd-sysusers --cat-config
 #echo "== systemd-tmpfiles config: =="
 #systemd-tmpfiles --cat-config
 echo "== systemd-analyze critical-chain: =="
@@ -25,5 +25,5 @@ grep -E '^(passwd|shadow|group):' /etc/nsswitch.conf
 authselect current
 tree /etc/pam.d
 
-echo "== integrity (pwck): =="
-sudo pwck || true
+#echo "== integrity (pwck): =="
+#sudo pwck || true
