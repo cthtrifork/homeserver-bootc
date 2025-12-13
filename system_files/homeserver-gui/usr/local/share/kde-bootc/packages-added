@@ -51,22 +51,22 @@ ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop
-krdp
+#krdp
 # KDE’s archive manager.
-ark
+#ark
 # Storage and partitioning
-kde-partitionmanager
-udisks2
+#kde-partitionmanager
+#udisks2
 # edit application launcher
 #kmenuedit
 # authorization dialog backend
 #polkit-kde
 # KDE's compositor and window manager
-kwin
+#kwin
 kdialog
 # Utils
 btop
-wl-clipboard
+#wl-clipboard
 # fonts
 cascadia-code-fonts
 cascadia-code-nf-fonts
