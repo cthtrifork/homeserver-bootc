@@ -63,10 +63,11 @@ jobs:
           echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
             | sudo tee /etc/containers/storage.conf
 
+          DB=/var/lib/containers/storage/db.sql
+          sudo rm -f $DB
           sudo podman system migrate
   
           # workaround https://github.com/containers/podman/issues/21683
-          DB=/var/lib/containers/storage/db.sql
           if sudo test -f "$DB" && sudo sqlite3 "$DB" '.schema DBConfig' >/dev/null 2>&1; then
             # set GraphDriver if blank
             sudo sqlite3 "$DB" \
