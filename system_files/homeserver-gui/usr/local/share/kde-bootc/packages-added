@@ -7,10 +7,10 @@
 #######
 
 # dnf -q group info kde-desktop
-plasma-desktop
+#plasma-desktop
 # session startup
-plasma-workspace
-plasma-workspace-wallpapers
+#plasma-workspace
+#plasma-workspace-wallpapers
 # Display/login manager
 #sddm-wayland-plasma
 #sddm
