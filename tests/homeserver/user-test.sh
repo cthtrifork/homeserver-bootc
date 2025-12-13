@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 
@@ -43,7 +43,7 @@ p = pam.pam()
 print("OK" if p.authenticate("$WHOAMI", "Password") else "FAIL")
 EOF
 
-echo "finished testing"
+echo "Finished testing"
 
 #ssh_github_auth() {
 #  ssh -o IdentitiesOnly=yes \
