@@ -48,5 +48,4 @@ RUN firewall-offline-cmd --add-port 3128/tcp && \
     firewall-offline-cmd --add-service squid
 
 # Clean up caches in the image and lint the container
-RUN rm /var/{cache,lib}/dnf /var/lib/rhsm /var/cache/ldconfig -rf
 RUN bootc container lint

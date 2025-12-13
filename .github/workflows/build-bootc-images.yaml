@@ -91,11 +91,11 @@ jobs:
         id: ensure-matrix
         run: | #sh
           IMAGES='${{ steps.filter.outputs.changes }}'
-          if [ "${{ github.event.inputs.force }}" == "true" ]; then
-            IMAGES='["homeserver","homeserver-gui"]'
-          fi
           if [ -n "${{ github.event.inputs.override_image }}" ]; then
             IMAGES='["${{ github.event.inputs.override_image }}"]'
+          fi
+          if [ "${{ github.event.inputs.force }}" == "true" ]; then
+            IMAGES='["homeserver","homeserver-gui"]'
           fi
           # If no images were changed, default to building the homeserver image
           if [ "$IMAGES" == "[]" ]; then
