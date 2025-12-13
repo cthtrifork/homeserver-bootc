@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#exit 0 # solved by homectl firstboot instead
-
 FLAG=/etc/passwd.done
 TARGET_USER="${TARGET_USER:?TARGET_USER not set}"
 TARGET_ID="${TARGET_ID:?TARGET_ID not set}"
@@ -40,11 +38,11 @@ grep -q "^${TARGET_USER}:" /etc/passwd || {
     useradd -u "$TARGET_ID" -g "$TARGET_ID" -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
 }
 
-log "Synchronizing shadow databases (pwconv/grpconv)"
+echo "Synchronizing shadow databases (pwconv/grpconv)"
 sudo pwconv
 sudo grpconv
 
-echo "setting password"
+echo "Setting initial password"
 echo "$TARGET_USER:Password" | chpasswd || echo "fail chpasswd"
 #echo "Password" | passwd $TARGET_USER --stdin || echo "fail passwd"
 
