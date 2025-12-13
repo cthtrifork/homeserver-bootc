@@ -15,4 +15,3 @@ for s in $CORE_SERVICES; do
     }
 done
 echo "✅ core services are OK"
-

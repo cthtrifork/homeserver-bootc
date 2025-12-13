@@ -109,10 +109,10 @@ runs:
 
         if [ ${{ matrix.image }} == "homeserver-gui" ]; then
           cat ./tests/homeserver/system-test.sh | ssh "${SSH_OPTS[@]}" \
-          -i "${SSH_KEY}" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          bash -l -s --
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            bash -l -s --
         fi
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
@@ -134,10 +134,10 @@ runs:
 
         if [ ${{ matrix.image }} == "homeserver-gui" ]; then
           cat ./tests/homeserver/user-test.sh | ssh "${SSH_OPTS[@]}" \
-          -i "${SSH_KEY}" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          bash -l -s --
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            bash -l -s --
         fi
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then

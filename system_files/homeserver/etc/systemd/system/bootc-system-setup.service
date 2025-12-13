@@ -1,11 +1,8 @@
 [Unit]
 Description=Configure system
-Before=systemd-user-sessions.service
-Wants=network-online.target sssd.service
-After=network-online.target \
-      rpm-ostreed.service systemd-sysusers.service systemd-tmpfiles-setup.service \
-      systemd-userdbd.service sssd.service
-Requires=systemd-sysusers.service systemd-userdbd.service
+Wants=network-online.target
+After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service 
+Requires=systemd-sysusers.service systemd-tmpfiles-setup.service 
 
 [Service]
 Type=oneshot

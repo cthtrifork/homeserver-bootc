@@ -7,7 +7,7 @@ id
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="pinggy.service bootc-system-setup setup-tmpfiles.service" # todo: detect
 echo "--- core services ---"
-for s in $CORE_SERVICES; doQ
+for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
         echo "Service not active: $s"
         systemctl status "$s" --no-pager || true

@@ -12,113 +12,99 @@ plasma-desktop
 plasma-workspace
 plasma-workspace-wallpapers
 # Display/login manager
-#sddm-wayland-plasma
+sddm-wayland-plasma
 sddm
-#sddm-breeze
-#sddm-kcm
+sddm-breeze
+sddm-kcm
 # KDE default icon pack
-#breeze-icon-theme
+breeze-icon-theme
 # window decorations
-#aurorae
+aurorae
 # the Breeze system theme
-#plasma-breeze
+plasma-breeze
 # screenlocker
-#kscreenlocker
+kscreenlocker
 
 # Wallet + crypto prompt
-#kwalletmanager5
-#pam-kwallet
-#pinentry-qt
+kwalletmanager5
+pam-kwallet
+pinentry-qt
 # screen configuration
-#kscreen
+kscreen
 # style GTK apps to match KDE
-#kde-gtk-config
+kde-gtk-config
 
 # Seems like a default
-#systemd-oomd-defaults
+systemd-oomd-defaults
 
 # Fonts
-#google-noto-emoji-color-fonts
+google-noto-emoji-color-fonts
 
 ################
 # Applications #
 ################
 
 # Browser
-#brave-browser
+brave-browser
 # Terminal
-#ghostty
+ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop
-#krdp
+krdp
 # KDE’s archive manager.
 #ark
 # Storage and partitioning
-#kde-partitionmanager
-#udisks2
+kde-partitionmanager
+udisks2
 # edit application launcher
-#kmenuedit
+kmenuedit
 # authorization dialog backend
-#polkit-kde
+polkit-kde
 # KDE's compositor and window manager
-#kwin
-#kdialog
+kwin
+kdialog
 # Utils
-#btop
-#wl-clipboard
+btop
+wl-clipboard
 # fonts
-#cascadia-code-fonts
-#cascadia-code-nf-fonts
-#jetbrains-mono-fonts
-#google-droid-sans-fonts
-#google-droid-sans-mono-fonts
+cascadia-code-fonts
+cascadia-code-nf-fonts
+jetbrains-mono-fonts
+google-droid-sans-fonts
+google-droid-sans-mono-fonts
 
 ###########
 # Network #
 ###########
 
 # captive portal support
-#NetworkManager-config-connectivity-fedora
-#NetworkManager
+NetworkManager-config-connectivity-fedora
+NetworkManager
 # VPN plugins (L2TP, VPNC, OpenConnect, OpenVPN, PPTP)
-#plasma-nm-*
+plasma-nm-*
 
 # Wifi
-#NetworkManager-wifi
+NetworkManager-wifi
 # Move to dedicated tagged image when switching to multiple hardware
 ## Used by Dell laptop 2022
-#iwlwifi-mvm-firmware
-#linux-firmware-whence
-
-##################
-# Virtualisation #
-##################
-
-#qemu-kvm
-#libvirt
-#virt-install
-#virt-viewer
+iwlwifi-mvm-firmware
+linux-firmware-whence
 
 ############
 # Hardware #
 ############
-#kamera
-#lm_sensors
+kamera
+lm_sensors
 ## Bluetooth stack
-#bluedevil
+bluedevil
 ## thermal management
-#thermald
+thermald
 # Wayland/OBS/webcam compatibility
-#xwaylandvideobridge
+xwaylandvideobridge
 # audio controls
-#kde-settings-pulseaudio
-#plasma-pa
-#pipewire
-#pipewire-pulseaudio
-#wireplumber
-
-
-
-
-
+kde-settings-pulseaudio
+plasma-pa
+pipewire
+pipewire-pulseaudio
+wireplumber
