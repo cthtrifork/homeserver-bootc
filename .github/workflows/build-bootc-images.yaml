@@ -600,12 +600,6 @@ jobs:
             echo "### QEMU Testing Output"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo "#### QEMU log"
-            echo ""
-            echo '```'
-            cat out/qemu-console.log
-            echo '```'
-            echo ""
             echo "#### Journal"
             echo '```'
             cat out/journal/boot.log

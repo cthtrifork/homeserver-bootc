@@ -16,7 +16,6 @@ systemctl enable sshd.service
 systemctl enable bootc-user-setup@caspertdk.service
 systemctl enable bootc-system-setup.service
 systemctl enable pinggy.service
-systemctl enable setup-tmpfiles.service
 systemctl enable systemd-userdbd.service
 
 # Enhance logging, but heavy in resources - journalctl is better alternative

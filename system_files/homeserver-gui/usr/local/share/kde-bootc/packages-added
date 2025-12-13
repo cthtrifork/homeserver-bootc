@@ -53,7 +53,7 @@ spectacle
 # Remote desktop
 krdp
 # KDE’s archive manager.
-ark
+#ark
 # Storage and partitioning
 kde-partitionmanager
 udisks2
@@ -91,15 +91,6 @@ NetworkManager-wifi
 iwlwifi-mvm-firmware
 linux-firmware-whence
 
-##################
-# Virtualisation #
-##################
-
-#qemu-kvm
-#libvirt
-#virt-install
-#virt-viewer
-
 ############
 # Hardware #
 ############
@@ -117,8 +108,3 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
-
-
-
-
-

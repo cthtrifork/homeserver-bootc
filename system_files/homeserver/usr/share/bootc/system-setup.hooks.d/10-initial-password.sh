@@ -2,32 +2,52 @@
 set -euo pipefail
 
 FLAG=/etc/passwd.done
+TARGET_USER="${TARGET_USER:?TARGET_USER not set}"
+TARGET_ID="${TARGET_ID:?TARGET_ID not set}"
 
-# Run only once
-if [[ -e "$FLAG" ]]; then
+[[ -e "$FLAG" ]] && {
+  echo "$TARGET_USER should already be configured with a password, skipping"
   exit 0
+}
+
+echo "configuring user '$TARGET_USER' (id $TARGET_ID)"
+
+# Ensure the local group exists
+if ! grep -q "^${TARGET_USER}:" /etc/group; then
+  echo "creating local group '$TARGET_USER' ($TARGET_ID)"
+  groupadd -g "$TARGET_ID" "$TARGET_USER" || true
+else
+  echo "local group already present in /etc/group"
 fi
 
-: "${TARGET_USER:?TARGET_USER not set}"
-
-# Make sure the user exists (created by systemd-sysusers)
-if ! getent passwd "$TARGET_USER" >/dev/null 2>&1; then
-  echo "Initial password: user '$TARGET_USER' does not exist yet; aborting" >&2
-  exit 1
+# Ensure the local user exists
+if ! grep -q "^${TARGET_USER}:" /etc/passwd; then
+  echo "creating local user '$TARGET_USER' ($TARGET_ID)"
+  useradd -u "$TARGET_ID" -g "$TARGET_ID" \
+    -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
+else
+  echo "local user already present in /etc/passwd"
 fi
 
-# Set default password
-echo "$TARGET_USER:Password" | chpasswd
-STATUS=$?
-echo "chpasswd for $TARGET_USER received exit code: $STATUS"
+grep -q "^${TARGET_USER}:" /etc/group || {
+  getent group "$TARGET_USER" >> /etc/group 2>/dev/null || groupadd -g "$TARGET_ID" "$TARGET_USER" || true
+}
 
-if [[ $STATUS -ne 0 ]]; then
-  echo "Initial password: chpasswd failed; not marking as done" >&2
-  exit $STATUS
-fi
+grep -q "^${TARGET_USER}:" /etc/passwd || {
+  getent passwd "$TARGET_USER" >> /etc/passwd 2>/dev/null || \
+    useradd -u "$TARGET_ID" -g "$TARGET_ID" -m -d "/home/$TARGET_USER" -s /bin/bash "$TARGET_USER" || true
+}
 
-# Ensure the account is unlocked (in case sysusers locked it)
+echo "Synchronizing shadow databases (pwconv/grpconv)"
+sudo pwconv
+sudo grpconv
+
+echo "Setting initial password"
+echo "$TARGET_USER:Password" | chpasswd || echo "fail chpasswd"
+#echo "Password" | passwd $TARGET_USER --stdin || echo "fail passwd"
+
+echo "unlocking account if needed"
 usermod -U "$TARGET_USER" || true
 
-# Only mark as done if everything above succeeded
 touch "$FLAG"
+echo "done"

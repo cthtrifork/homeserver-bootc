@@ -1,9 +1,8 @@
 [Unit]
 Description=Configure system
-Before=systemd-user-sessions.service
 Wants=network-online.target
-After=rpm-ostreed.service network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service
-Requires=systemd-sysusers.service
+After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service 
+Requires=systemd-sysusers.service systemd-tmpfiles-setup.service 
 
 [Service]
 Type=oneshot
@@ -11,6 +10,7 @@ ExecStart=/usr/libexec/system-setup
 User=root
 RemainAfterExit=yes
 Environment=TARGET_USER=caspertdk
+Environment=TARGET_ID=1010
 
 [Install]
 WantedBy=multi-user.target

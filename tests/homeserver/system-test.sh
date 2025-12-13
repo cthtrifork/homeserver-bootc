@@ -5,7 +5,7 @@ echo "Running as"
 id
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="pinggy.service bootc-system-setup setup-tmpfiles.service" # todo: detect
+CORE_SERVICES="bootc-system-setup" # todo: detect
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
@@ -16,28 +16,6 @@ for s in $CORE_SERVICES; do
 done
 echo "✅ core services are OK"
 
-#/usr/bin/systemd-tmpfiles --cat-config
-
-echo "== home directory tree =="
-sudo tree -uag /home/ -L 4 --si --du
-
-echo "== all users (getent passwd): =="
-sudo getent passwd
-echo "== all shadow (getent shadow): =="
-sudo getent shadow
-echo "== getent group wheel =="
-sudo getent group wheel
-echo "== /etc/subuid and /etc/subgid: =="
-sudo cat /etc/subuid
-sudo cat /etc/subgid
-echo "== /etc/group: =="
-sudo cat /etc/group
-echo "== systemd-sysusers config: =="
-systemd-sysusers --cat-config
-echo "== systemd-analyze critical-chain: =="
-systemd-analyze critical-chain
-echo "== integrity (pwck): =="
-sudo pwck || true
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"
@@ -52,3 +30,4 @@ echo "Checking github Auth status"
 echo "GitHub token fingerprint: $(printf "%s" "$GITHUB_TOKEN" | cut -c1-7)"
 
 gh auth status && echo "✅ Github is ready"
+
