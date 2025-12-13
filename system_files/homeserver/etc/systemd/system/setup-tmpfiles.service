@@ -6,7 +6,7 @@ Requires=systemd-sysusers.service
 
 [Service]
 Type=oneshot
-#ExecStart=/usr/bin/systemd-sysusers
+ExecStart=/usr/bin/systemd-sysusers
 #ExecStart=/usr/bin/systemd-tmpfiles --create --exclude-prefix=/usr
 RemainAfterExit=yes
 
