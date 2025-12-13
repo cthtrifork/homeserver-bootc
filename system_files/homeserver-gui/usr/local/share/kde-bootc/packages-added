@@ -17,22 +17,22 @@
 #sddm-breeze
 #sddm-kcm
 # KDE default icon pack
-breeze-icon-theme
+#breeze-icon-theme
 # window decorations
-aurorae
+#aurorae
 # the Breeze system theme
-plasma-breeze
+#plasma-breeze
 # screenlocker
-kscreenlocker
+#kscreenlocker
 
 # Wallet + crypto prompt
 #kwalletmanager5
 #pam-kwallet
 #pinentry-qt
 # screen configuration
-kscreen
+#kscreen
 # style GTK apps to match KDE
-kde-gtk-config
+#kde-gtk-config
 
 # Seems like a default
 #systemd-oomd-defaults
@@ -58,9 +58,9 @@ ark
 kde-partitionmanager
 udisks2
 # edit application launcher
-kmenuedit
+#kmenuedit
 # authorization dialog backend
-polkit-kde
+#polkit-kde
 # KDE's compositor and window manager
 kwin
 kdialog
