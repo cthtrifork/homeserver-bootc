@@ -1,0 +1,11 @@
+[Unit]
+Description=Prepare squid
+After=network-online.target
+Before=squid.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
+#Re-init cache dirs (only affects spool, but good to do while we're here)
+ExecStartPre=/usr/bin/bash -c "sudo -u squid /usr/sbin/squid -z -f /etc/squid/squid.conf"
+
