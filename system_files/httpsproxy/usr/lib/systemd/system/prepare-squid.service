@@ -20,7 +20,7 @@ ExecStartPre=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid
 ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
 
 # Initialize cache (must run as squid)
-ExecStart=/usr/bin/runuser -u squid -- /usr/sbin/squid -z -f /etc/squid/squid.conf
+#ExecStart=/usr/bin/runuser -u squid -- /usr/sbin/squid -z -f /etc/squid/squid.conf
 
 [Install]
 WantedBy=squid.service
