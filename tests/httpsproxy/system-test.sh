@@ -4,6 +4,8 @@ set -euo pipefail
 echo "Running as"
 id
 
+sleep 15
+
 echo "== squid.service status =="
 journalctl -u squid.service -b --no-pager
 systemctl cat squid
