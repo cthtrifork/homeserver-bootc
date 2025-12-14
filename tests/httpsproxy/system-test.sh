@@ -7,8 +7,8 @@ id
 echo "== squid.service status =="
 journalctl -u squid.service -b --no-pager
 systemctl cat squid
-coredumpctl list squid
-coredumpctl info squid
+coredumpctl list squid || true
+coredumpctl info squid || true
 cat /var/log/squid/* | tail -n 100
 
 echo "Verifying status for custom installed services..."
