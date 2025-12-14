@@ -11,6 +11,13 @@ journalctl -u squid.service -b --no-pager
 systemctl cat squid
 coredumpctl list squid || true
 coredumpctl info squid || true
+
+echo "== start squid =="
+systemctl daemon-reload || true
+systemctl reset-failed squid.service || true
+systemctl start squid.service || true
+
+
 cat /var/log/squid/* | tail -n 100
 
 echo "Verifying status for custom installed services..."
