@@ -1,12 +1,25 @@
+# Not sure why it didn't work with tmpfiles.d...
 [Unit]
-Description=Prepare squid
-After=network-online.target
+Description=Prepare squid (dirs, labels, cache)
+DefaultDependencies=no
+After=systemd-tmpfiles-setup.service local-fs.target
 Before=squid.service
 
 [Service]
 Type=oneshot
-User=squid
+User=root
+Group=root
+
+# Create runtime paths with correct ownership
+ExecStartPre=/usr/bin/install -d -m 0755 /var/log /var/spool
 ExecStartPre=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
 ExecStartPre=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
-ExecStart=/usr/sbin/squid -z -f /etc/squid/squid.conf
 
+# Ensure SELinux labels are correct (idempotent)
+ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
+
+# Initialize cache (must run as squid)
+ExecStart=/usr/bin/runuser -u squid -- /usr/sbin/squid -z -f /etc/squid/squid.conf
+
+[Install]
+WantedBy=squid.service
