@@ -34,7 +34,7 @@ sudo systemctl reset-failed squid.service || true
 sudo systemctl start squid.service || true
 journalctl -xeu squid.service
 
-sudo cat /var/log/squid/* | tail -n 100
+#sudo cat /var/log/squid/* | tail -n 100
 
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="prepare-squid.service squid.service"
