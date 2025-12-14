@@ -4,7 +4,6 @@ set -euo pipefail
 echo "Running as"
 id
 
-sleep 15
 
 echo "== squid.service status =="
 journalctl -u squid.service -b --no-pager
@@ -15,6 +14,19 @@ coredumpctl info squid || true
 ls -ldZ /var/log/squid
 
 sudo restorecon -Rv /var/log/squid /var/spool/squid
+
+sudo ls -lZ /var/log/squid /var/log/squid/squid.out 2>/dev/null || true
+
+# Recreate squid.out with known-good ownership/permissions
+sudo rm -f /var/log/squid/squid.out
+sudo install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
+
+# Ensure SELinux contexts are correct on squid log+cache paths
+sudo restorecon -Rv /var/log/squid /var/spool/squid
+
+# Re-init cache dirs (only affects spool, but good to do while we're here)
+sudo -u squid /usr/sbin/squid -z -f /etc/squid/squid.conf
+
 
 echo "== start squid =="
 sudo systemctl daemon-reload || true
