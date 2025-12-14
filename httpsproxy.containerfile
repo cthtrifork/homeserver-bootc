@@ -35,7 +35,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/cleanup.sh
 
 RUN squid -k parse -f /etc/squid/squid.conf && \
-	systemctl enable squid.service
+	systemctl enable squid.service && \
+	systemctl enable prepare-squid.service
 
 # Networking
 EXPOSE 3128
