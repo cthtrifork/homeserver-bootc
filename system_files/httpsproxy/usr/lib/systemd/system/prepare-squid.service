@@ -5,7 +5,8 @@ Before=squid.service
 
 [Service]
 Type=oneshot
+User=squid
 ExecStart=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
-#Re-init cache dirs (only affects spool, but good to do while we're here)
-ExecStart=/usr/bin/bash -c "sudo -u squid /usr/sbin/squid -z -f /etc/squid/squid.conf"
+ExecStart=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
+ExecStart=/usr/sbin/squid -z -f /etc/squid/squid.conf
 
