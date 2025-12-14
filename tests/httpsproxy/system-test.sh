@@ -6,6 +6,7 @@ id
 
 echo "== squid.service status =="
 journalctl -u squid.service -b --no-pager
+systemctl cat squid
 
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="squid.service"
