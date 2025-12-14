@@ -14,7 +14,7 @@ coredumpctl info squid || true
 
 ls -ldZ /var/log/squid
 
-restorecon -Rv /var/log/squid /var/spool/squid
+sudo restorecon -Rv /var/log/squid /var/spool/squid
 
 echo "== start squid =="
 sudo systemctl daemon-reload || true
