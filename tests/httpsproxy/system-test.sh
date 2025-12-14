@@ -13,9 +13,9 @@ coredumpctl list squid || true
 coredumpctl info squid || true
 
 echo "== start squid =="
-systemctl daemon-reload || true
-systemctl reset-failed squid.service || true
-systemctl start squid.service || true
+sudo systemctl daemon-reload || true
+sudo systemctl reset-failed squid.service || true
+sudo systemctl start squid.service || true
 
 
 cat /var/log/squid/* | tail -n 100
