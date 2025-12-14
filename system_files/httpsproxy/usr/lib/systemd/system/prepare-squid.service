@@ -6,7 +6,7 @@ Before=squid.service
 [Service]
 Type=oneshot
 User=squid
-ExecStart=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
-ExecStart=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
+ExecStartPre=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
+ExecStartPre=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
 ExecStart=/usr/sbin/squid -z -f /etc/squid/squid.conf
 
