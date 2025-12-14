@@ -11,7 +11,7 @@ systemctl cat squid
 coredumpctl list squid || true
 coredumpctl info squid || true
 
-ls -ldZ /var/log/squid
+#ls -ldZ /var/log/squid
 
 #sudo restorecon -Rv /var/log/squid /var/spool/squid
 
@@ -37,7 +37,7 @@ journalctl -xeu squid.service
 sudo cat /var/log/squid/* | tail -n 100
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="squid.service"
+CORE_SERVICES="prepare-squid.service squid.service"
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
