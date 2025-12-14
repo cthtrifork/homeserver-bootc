@@ -5,7 +5,6 @@ echo "Running as"
 id
 
 echo "== squid.service status =="
-systemctl status squid.service || true
 journalctl -u squid.service -b --no-pager
 
 echo "Verifying status for custom installed services..."
