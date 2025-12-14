@@ -8,8 +8,6 @@ id
 echo "== squid.service status =="
 journalctl -u squid.service -b --no-pager
 systemctl cat squid
-coredumpctl list squid || true
-coredumpctl info squid || true
 
 #ls -ldZ /var/log/squid
 
