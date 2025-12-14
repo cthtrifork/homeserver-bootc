@@ -303,6 +303,75 @@ jobs:
           export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
           echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
           
+      - name: Publish Changelog to Summary
+        shell: bash
+        env:
+          CHANGELOG_PATH: ${{ steps.rechunk.outputs.changelog }}
+        run: | #sh
+          {
+            echo "### Changelog"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            cat ${{ env.CHANGELOG_PATH }}
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        id: push-to-ghcr
+        uses: ./.github/actions/push-image
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  trivy:
+    name: "Trivy scan: ${{ matrix.image }}"
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    #runs-on: 'arc-ubuntu'
+    needs:
+      - changes
+      - build-bootc-image
+    if: ${{ github.event_name == 'pull_request' }}
+    continue-on-error: false
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
+        with:
+          image: ${{ matrix.image }}
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          #auth_file_path: ${{ runner.temp }}/auth.json
+
+      - name: Prepare Podman
+        uses: ./.github/actions/prepare-podman
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure trivy is installed and DB is cached
+        uses: ./.github/actions/setup-trivy
+
+      - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        uses: ./.github/actions/load-image
+
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
@@ -331,26 +400,22 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-      - name: Publish Changelog to Summary
-        shell: bash
-        env:
-          CHANGELOG_PATH: ${{ steps.rechunk.outputs.changelog }}
-        run: | #sh
-          {
-            echo "### Changelog"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```'
-            cat ${{ env.CHANGELOG_PATH }}
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
 
-      - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-        id: push-to-ghcr
-        uses: ./.github/actions/push-image
+      - name: Trivy vuln scan (JSON) - current
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          image-ref: ${{ env.LOCAL_PR_IMAGE }}
+          format: json
+          output: ${{ github.workspace }}/current_trivy.json
+          ignore-unfixed: true
+          skip-setup-trivy: true
+          scanners: "vuln"
+          cache: "false"
+          vuln-type: "library"
+          #severity: "CRITICAL,HIGH,MEDIUM"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Upload trivy scan results to github
         if: github.ref == 'refs/heads/main'
