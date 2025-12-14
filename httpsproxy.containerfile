@@ -12,7 +12,6 @@ RUN echo VARIANT="HTTPS Proxy (Squid) bootc OS" && echo VARIANT_ID=com.github.ct
 # Install vmtoolsd and utilities
 RUN dnf -y install qemu-guest-agent firewalld squid \
     tree rsync dnf-plugins-core procps-ng file && \
-    systemctl enable squid.service && \
     dnf clean all
 
 # Set timezone
@@ -40,7 +39,9 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/cleanup.sh 
+    /ctx/build_files/cleanup.sh
+
+RUN systemctl enable squid.service
 
 # Networking
 EXPOSE 3128
