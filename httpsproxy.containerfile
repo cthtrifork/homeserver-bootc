@@ -25,13 +25,6 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
     chmod 0600 /usr/lib/container-auth.json && \
     ln -sr /usr/lib/container-auth.json /etc/ostree/auth.json
 
-# Squid dirs setup
-RUN mkdir -p /var/log/squid/ /var/spool/squid && \
-    chown -R squid:squid /var/spool/squid && \
-    chmod -R 775 /var/spool/squid && \
-    chown -R squid:squid /var/log/squid && \
-    chmod -R 775 /var/log/squid
-
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/httpsproxy/ /
