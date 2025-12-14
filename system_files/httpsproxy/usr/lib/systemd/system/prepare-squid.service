@@ -9,6 +9,7 @@ Before=squid.service
 Type=oneshot
 User=root
 Group=root
+RemainAfterExit=yes
 
 # Create runtime paths with correct ownership
 ExecStartPre=/usr/bin/install -d -m 0755 /var/log /var/spool
