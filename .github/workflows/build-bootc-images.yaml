@@ -398,23 +398,6 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-
-      - name: Trivy vuln scan (JSON) - current
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.LOCAL_PR_IMAGE }}
-          format: json
-          output: ${{ github.workspace }}/current_trivy.json
-          ignore-unfixed: true
-          skip-setup-trivy: true
-          scanners: "vuln"
-          cache: "false"
-          vuln-type: "library"
-          #severity: "CRITICAL,HIGH,MEDIUM"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
       - name: Upload trivy scan results to github
         if: github.ref == 'refs/heads/main'
         uses: ./.github/actions/trivy-uploads
