@@ -135,6 +135,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
           fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
+
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
         with:
@@ -172,9 +173,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_as_sudo: "true"
-
-      - name: Ensure trivy is installed and DB is cached
-        uses: ./.github/actions/setup-trivy
 
       - name: Image Metadata
         uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 # v5
