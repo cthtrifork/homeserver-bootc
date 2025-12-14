@@ -12,6 +12,10 @@ systemctl cat squid
 coredumpctl list squid || true
 coredumpctl info squid || true
 
+ls -ld /var/log/squid
+ls -l  /var/log/squid
+ls -ldZ /var/log/squid
+
 echo "== start squid =="
 sudo systemctl daemon-reload || true
 sudo systemctl reset-failed squid.service || true
