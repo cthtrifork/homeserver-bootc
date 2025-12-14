@@ -16,7 +16,7 @@ echo "== start squid =="
 sudo systemctl daemon-reload || true
 sudo systemctl reset-failed squid.service || true
 sudo systemctl start squid.service || true
-
+journalctl -xeu squid.service
 
 cat /var/log/squid/* | tail -n 100
 
