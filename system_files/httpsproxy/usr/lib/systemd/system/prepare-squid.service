@@ -16,8 +16,8 @@ ExecStartPre=/usr/bin/install -d -m 0755 /var/log/squid /var/spool/squid
 ExecStartPre=/usr/bin/chown squid:squid /var/log/squid /var/spool/squid
 
 # Ensure persistent SELinux file contexts (idempotent)
-ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_log_t "/var/log/squid(/.*)?" || true
-ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_cache_t "/var/spool/squid(/.*)?" || true
+#ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_log_t "/var/log/squid(/.*)?" || true
+#ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_cache_t "/var/spool/squid(/.*)?" || true
 
 # Apply labels
 ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
