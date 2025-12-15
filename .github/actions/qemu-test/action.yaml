@@ -132,6 +132,7 @@ runs:
 
     - name: Verify ghcr.io auth
       shell: bash
+      if: ${{ startsWith(matrix.image, 'homeserver') }}
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}

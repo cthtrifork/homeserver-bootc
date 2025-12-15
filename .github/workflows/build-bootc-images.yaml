@@ -623,7 +623,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
 
       - name: Take QEMU screenshot
-        if: ${{ matrix.image == 'homeserver-gui' }}
+        if: ${{ endsWith(matrix.image, 'gui') }}
         uses: ./.github/actions/screenshot
 
       - name: Collect logs and stop QEMU
