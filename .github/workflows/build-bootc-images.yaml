@@ -237,6 +237,9 @@ jobs:
             --build-arg REGISTRY_URL=ghcr.io \
             --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
             --build-arg REPOSITORY="${{ github.repository_owner }}/${{ github.event.repository.name }}" \
+            --build-arg "HTTP_PROXY=${HTTP_PROXY}" \
+            --build-arg "HTTPS_PROXY=${HTTPS_PROXY}" \
+            --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
             --tls-verify=true \
             --layers=false \
