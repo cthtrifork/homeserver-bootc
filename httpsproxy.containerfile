@@ -9,8 +9,9 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 # Write some metadata
 RUN echo VARIANT="HTTPS Proxy (Squid) bootc OS" && echo VARIANT_ID=com.github.cthtrifork.httpsproxy >> /usr/lib/os-release
 
-# Install vmtoolsd and utilities
-RUN dnf -y install qemu-guest-agent firewalld squid \
+# Install squid and utilities
+# https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/deploying_web_servers_and_reverse_proxies/configuring-the-squid-caching-proxy-server_deploying-web-servers-and-reverse-proxies
+RUN dnf -y install qemu-guest-agent firewalld squid policycoreutils-python-utils \
     tree rsync dnf-plugins-core procps-ng file && \
     dnf clean all
 
