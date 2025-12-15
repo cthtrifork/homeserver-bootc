@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euox pipefail
 
 echo "Running as"
 id
 
-#ls -ldZ /var/log/squid /var/log/squid/*
+ls -ldZ /var/log/squid /var/log/squid/* || true
 sudo restorecon -R -v /var/log/squid
 
 echo "Verifying status for custom installed services..."
@@ -16,7 +16,6 @@ for s in $CORE_SERVICES; do
         systemctl status "$s" --no-pager || true
         systemctl cat "$s"
         journalctl -xeu "$s"
-        sudo systemctl start "$s"
         exit 1
     }
 done
