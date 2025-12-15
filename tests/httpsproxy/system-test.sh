@@ -11,6 +11,7 @@ for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
         echo "Service not active: $s"
         systemctl status "$s" --no-pager || true
+        systemctl cat "$s"
         journalctl -xeu "$s"
         exit 1
     }
