@@ -6,6 +6,12 @@ on:
     paths:
       - "hello.containerfile"
       - ".github/workflows/push-hello-containerfile.yaml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "hello.containerfile"
+      - ".github/workflows/push-hello-containerfile.yaml"
   workflow_dispatch:
 
 jobs:
@@ -48,14 +54,16 @@ jobs:
         with:
           context: .
           file: ./hello.containerfile
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Install Cosign
+        if: ${{ github.ref == 'refs/heads/main' }}
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
       - name: Sign container image
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: | #sh
           export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
           cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
@@ -67,6 +75,7 @@ jobs:
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/hello.sigstore
 
       - name: Attach build provenance attestation
+        if: ${{ github.ref == 'refs/heads/main' }}
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-name: "ghcr.io/${{ github.repository }}/hello"
