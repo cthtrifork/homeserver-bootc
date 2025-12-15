@@ -41,7 +41,6 @@ runs:
             ;;
         esac
         VERSION="v0.1"
-        UNIQUE_VERSION="${{github.ref_name}}-${VERSION}.${{ github.run_number }}" 
         SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
         DOCKER_TAG=""
         PR_NUMBER='${{ github.event.pull_request.number }}'
@@ -50,6 +49,7 @@ runs:
         else
           DOCKER_TAG="pr-${PR_NUMBER}-${VERSION}"
         fi
+        UNIQUE_VERSION="${DOCKER_TAG}.${{ github.run_number }}" 
         echo "DOCKER_TAG=${DOCKER_TAG}" >> "$GITHUB_ENV"
         echo "UNIQUE_VERSION=${UNIQUE_VERSION}" >> "$GITHUB_ENV"
         
