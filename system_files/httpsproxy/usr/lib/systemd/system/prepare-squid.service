@@ -14,7 +14,7 @@ RemainAfterExit=yes
 # Create runtime paths with correct ownership
 ExecStartPre=/usr/bin/install -d -m 0755 /var/log /var/spool
 ExecStartPre=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
-ExecStartPre=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
+#ExecStartPre=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
 
 # Ensure SELinux labels are correct (idempotent)
 ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
