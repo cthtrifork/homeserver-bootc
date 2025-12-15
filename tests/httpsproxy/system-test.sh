@@ -13,6 +13,7 @@ for s in $CORE_SERVICES; do
         systemctl status "$s" --no-pager || true
         systemctl cat "$s"
         journalctl -xeu "$s"
+        systemctl start "$s"
         exit 1
     }
 done
