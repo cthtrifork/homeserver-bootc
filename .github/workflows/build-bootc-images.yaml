@@ -129,6 +129,7 @@ jobs:
       id-token: write
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       attestations: write
+      pull-requests: write # for PR comments
 
     steps:
       - name: Clone the repository
