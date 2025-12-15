@@ -4,7 +4,7 @@ set -euo pipefail
 echo "Running as"
 id
 
-ls -ldZ /var/log/squid /var/log/squid/*
+#ls -ldZ /var/log/squid /var/log/squid/*
 sudo restorecon -R -v /var/log/squid
 
 echo "Verifying status for custom installed services..."
