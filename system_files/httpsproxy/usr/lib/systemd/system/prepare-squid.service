@@ -16,8 +16,8 @@ ExecStartPre=/usr/bin/install -d -m 0755 /var/log/squid /var/spool/squid
 ExecStartPre=/usr/bin/chown squid:squid /var/log/squid /var/spool/squid
 
 # Ensure persistent SELinux file contexts (idempotent)
-#ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_log_t "/var/log/squid(/.*)?" || true
-#ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_cache_t "/var/spool/squid(/.*)?" || true
+ExecStartPre=/usr/bin/semanage fcontext -a -t squid_log_t "/var/log/squid(/.*)?" || true
+ExecStartPre=/usr/bin/semanage fcontext -a -t squid_cache_t "/var/spool/squid(/.*)?" || true
 
 # Pre-create squid.out so cache_swap.sh can write without needing CAP_DAC_OVERRIDE
 ExecStartPre=/usr/bin/install -m 0644 -o squid -g squid /dev/null /var/log/squid/squid.out
