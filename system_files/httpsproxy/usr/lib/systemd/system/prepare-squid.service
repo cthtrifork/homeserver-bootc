@@ -24,7 +24,8 @@ ExecStartPre=/usr/bin/install -m 0644 -o squid -g squid /dev/null /var/log/squid
 
 # Apply labels
 ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
-ExecStart=/usr/bin/true
+#ExecStart=/usr/bin/true
+ExecStart=/usr/bin/squid -N -f /etc/squid/squid.conf -z
 
 [Install]
 WantedBy=squid.service
