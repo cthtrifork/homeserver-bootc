@@ -4,6 +4,8 @@ set -euo pipefail
 echo "Running as"
 id
 
+systemctl wait network-online.target --timeout=30
+
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="prepare-squid.service squid.service"
 echo "--- core services ---"
