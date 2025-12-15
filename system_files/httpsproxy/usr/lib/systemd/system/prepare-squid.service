@@ -1,6 +1,6 @@
 # Not sure why it didn't work with tmpfiles.d...
 [Unit]
-Description=Prepare squid (dirs, labels, cache)
+Description=Prepare squid (dirs, ownership, SELinux)
 DefaultDependencies=no
 After=systemd-tmpfiles-setup.service local-fs.target
 Before=squid.service
@@ -11,17 +11,17 @@ User=root
 Group=root
 RemainAfterExit=yes
 
-# Create runtime paths with correct ownership
-ExecStartPre=/usr/bin/install -d -m 0755 /var/log /var/spool
-ExecStartPre=/usr/bin/install -d -o squid -g squid -m 0755 /var/log/squid /var/spool/squid
-#ExecStartPre=/usr/bin/install -o squid -g squid -m 0640 /dev/null /var/log/squid/squid.out
+# Create directories
+ExecStartPre=/usr/bin/install -d -m 0755 /var/log/squid /var/spool/squid
+ExecStartPre=/usr/bin/chown squid:squid /var/log/squid /var/spool/squid
 
-# Ensure SELinux labels are correct (idempotent)
+# Ensure persistent SELinux file contexts (idempotent)
+ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_log_t "/var/log/squid(/.*)?" || true
+ExecStartPre=/usr/sbin/semanage fcontext -a -t squid_cache_t "/var/spool/squid(/.*)?" || true
+
+# Apply labels
 ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
-
-# Initialize cache (must run as squid)
-#ExecStart=/usr/bin/runuser -u squid -- /usr/sbin/squid -z -f /etc/squid/squid.conf
-ExecStart=/usr/bin/bash -c "true"
+ExecStart=/usr/bin/true
 
 [Install]
 WantedBy=squid.service
