@@ -301,20 +301,13 @@ jobs:
           export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
           echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
           
-      - name: Publish Changelog to Summary
-        shell: bash
-        env:
-          CHANGELOG_PATH: ${{ steps.rechunk.outputs.changelog }}
-        run: | #sh
-          {
-            echo "### Changelog"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```'
-            cat ${{ env.CHANGELOG_PATH }}
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
+      - name: Changelog PR comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
+        with:
+          path: ${{ env.CHANGELOG_PATH }}
+          skip_unchanged: true
+          header: "🧾 Changelog for ${{ env.IMAGE_FULL }}"
 
       - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         id: push-to-ghcr
