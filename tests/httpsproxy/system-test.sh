@@ -16,6 +16,9 @@ for s in $CORE_SERVICES; do
         systemctl status "$s" --no-pager || true
         systemctl cat "$s"
         journalctl -xeu "$s"
+        sudo systemctl daemon-reload
+        sudo systemctl reset-failed squid.service
+        sudo systemctl restart squid.service
         exit 1
     }
 done
