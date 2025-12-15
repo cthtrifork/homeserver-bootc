@@ -4,7 +4,7 @@ RUN printf '%s\n' \
   'int main() { printf("Hello%c",0x0A); }' > /hello.c \
  && cc -static /hello.c -o /hello
 
-#FROM gcr.io/distroless/cc:nonroot
-FROM scratch
+#FROM scratch
+FROM cgr.dev/chainguard/static:latest
 COPY --from=build /hello /hello
 CMD ["/hello"]
