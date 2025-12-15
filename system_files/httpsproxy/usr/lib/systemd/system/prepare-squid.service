@@ -1,0 +1,33 @@
+# Not sure why it didn't work with tmpfiles.d...
+[Unit]
+Description=Prepare squid (dirs, ownership, SELinux)
+DefaultDependencies=no
+After=systemd-tmpfiles-setup.service local-fs.target
+Before=squid.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+RemainAfterExit=yes
+
+# Create directories
+ExecStartPre=/usr/bin/install -d -m 0755 /var/log/squid /var/spool/squid
+ExecStartPre=/usr/bin/chown squid:squid /var/log/squid /var/spool/squid
+
+# Ensure persistent SELinux file contexts (idempotent)
+ExecStartPre=/usr/bin/semanage fcontext -a -t squid_log_t "/var/log/squid(/.*)?"
+ExecStartPre=/usr/bin/semanage fcontext -a -t squid_cache_t "/var/spool/squid(/.*)?"
+
+# Pre-create squid.out so cache_swap.sh can write without needing CAP_DAC_OVERRIDE
+#ExecStartPre=/usr/bin/install -m 0644 -o squid -g squid /dev/null /var/log/squid/squid.out
+ExecStartPre=/usr/bin/install -m 0664 -o root -g squid /dev/null /var/log/squid/squid.out
+
+
+# Apply labels
+ExecStartPre=/sbin/restorecon -Rv /var/log/squid /var/spool/squid
+#ExecStart=/usr/bin/true
+ExecStart=/usr/bin/squid -N -f /etc/squid/squid.conf -z
+
+[Install]
+WantedBy=squid.service

@@ -9,10 +9,10 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 # Write some metadata
 RUN echo VARIANT="HTTPS Proxy (Squid) bootc OS" && echo VARIANT_ID=com.github.cthtrifork.httpsproxy >> /usr/lib/os-release
 
-# Install vmtoolsd and utilities
-RUN dnf -y install qemu-guest-agent firewalld squid \
+# Install squid and utilities
+# https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/deploying_web_servers_and_reverse_proxies/configuring-the-squid-caching-proxy-server_deploying-web-servers-and-reverse-proxies
+RUN dnf -y install qemu-guest-agent firewalld squid policycoreutils-python-utils \
     tree rsync dnf-plugins-core procps-ng file && \
-    systemctl enable squid.service && \
     dnf clean all
 
 # Set timezone
@@ -26,13 +26,6 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
     chmod 0600 /usr/lib/container-auth.json && \
     ln -sr /usr/lib/container-auth.json /etc/ostree/auth.json
 
-# Squid dirs setup
-RUN mkdir -p /var/log/squid/ /var/spool/squid && \
-    chown -R squid:squid /var/spool/squid && \
-    chmod -R 775 /var/spool/squid && \
-    chown -R squid:squid /var/log/squid && \
-    chmod -R 775 /var/log/squid
-
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/httpsproxy/ /
@@ -40,7 +33,11 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/cleanup.sh 
+    /ctx/build_files/cleanup.sh
+
+RUN squid -k parse -f /etc/squid/squid.conf && \
+	systemctl enable squid.service && \
+	systemctl enable prepare-squid.service
 
 # Networking
 EXPOSE 3128
