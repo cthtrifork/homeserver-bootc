@@ -30,6 +30,11 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/httpsproxy/ /
 
+# Install SSL certificates and keys
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    cp /etc/squid/server.crt /etc/pki/ca-trust/source/anchors/ && \
+    update-ca-trust
+
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
