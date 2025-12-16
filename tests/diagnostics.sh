@@ -16,8 +16,8 @@ echo "== /etc/group: =="
 sudo cat /etc/group
 #echo "== systemd-sysusers config: =="
 #systemd-sysusers --cat-config
-echo "== systemd-tmpfiles config: =="
-systemd-tmpfiles --cat-config
+#echo "== systemd-tmpfiles config: =="
+#systemd-tmpfiles --cat-config
 echo "== systemctl list-jobs: =="
 systemctl list-jobs
 echo "== authselect current =="
