@@ -24,7 +24,7 @@ echo "First request done, should be a MISS"
 curl --proxy http://localhost:3128 https://google.com -v
 echo "Second request done, should be a HIT"
 
-curl --proxy https://localhost:3138 https://github.com/getsops/sops/releases/download/v3.11.0/sops-3.11.0-1.x86_64.rpm -v
+curl --proxy https://localhost:3138 --insecure https://github.com/getsops/sops/releases/download/v3.11.0/sops-3.11.0-1.x86_64.rpm -v
 
 grep "TCP_HIT/200" /var/log/squid/access.log || {
     echo "HTTPS proxy test failed, no TCP_HIT/200 found in access.log"
