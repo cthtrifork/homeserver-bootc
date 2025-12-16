@@ -44,10 +44,10 @@ ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
 openssl genrsa -out system_files/httpsproxy/etc/squid/server.key 2048
 openssl req -x509 -new \
     -subj "/C=US/CN=squid-proxy" \
-    -addext "subjectAltName = DNS:squid-proxy,DNS:host.docker.internal" \
+    -addext "subjectAltName = DNS:squid-proxy,DNS:host.docker.internal,DNS:localhost" \
     -key system_files/httpsproxy/etc/squid/server.key -out system_files/httpsproxy/etc/squid/server.crt
 
-sops --encrypt --age "$AGE_PUB" system_files/httpsproxy/etc/squid/server.key > system_files/httpsproxy/etc/squid/server.key.enc
+sops --encrypt --age "$AGE_PUB" system_files/httpsproxy/etc/squid/server.key | tee system_files/httpsproxy/etc/squid/server.key.enc >/dev/null
 rm system_files/httpsproxy/etc/squid/server.key
 ```
 
