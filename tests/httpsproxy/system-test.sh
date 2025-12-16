@@ -28,6 +28,7 @@ curl --proxy https://localhost:3138 https://github.com/getsops/sops/releases/dow
 
 sudo grep "TCP_HIT/200" /var/log/squid/access.log || {
     echo "HTTPS proxy test failed, no TCP_HIT/200 found in access.log"
+    sudo tail -n 100 /var/log/squid/access.log
     exit 1
 }
 echo "✅ HTTPS proxy through squid is OK"
