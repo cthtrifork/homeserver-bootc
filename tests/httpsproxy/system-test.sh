@@ -11,7 +11,7 @@ for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
         echo "Service not active: $s"
         systemctl status "$s" --no-pager || true
-        systemd-analyze critical-chain "$s"
+        systemd-analyze critical-chain "$s" || true
         systemctl cat "$s"
         journalctl -xeu "$s"
         exit 1
