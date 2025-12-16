@@ -22,4 +22,25 @@ rsyslog
 dracut-config-rescue
 
 # Remove DNF4
+
 dnf-data
+
+# Other
+akregator
+elisa-player
+kaddressbook
+kamoso
+kgpg
+kmahjongg
+kmail
+kmines
+kmouth
+kontact
+korganizer
+kpat
+ktnef
+mariadb
+mariadb-backup
+mariadb-common
+pim*
+plasma-welcome
