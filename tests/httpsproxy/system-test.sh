@@ -4,6 +4,8 @@ set -euox pipefail
 echo "Running as"
 id
 
+sleep 30s
+
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="squid.service"
 echo "--- core services ---"
