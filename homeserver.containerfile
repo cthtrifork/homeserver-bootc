@@ -12,8 +12,9 @@ FROM base AS utils
 RUN --mount=type=cache,target=/var/cache/dnf \
     dnf -y --setopt=install_weak_deps=false install --allowerasing unzip git-core
 
-COPY build_files/ build_files/
-RUN /build_files/utilities.sh
+RUN --mount=type=bind,from=ctx_build,src=/build_files,dst=/ctx/build_files,ro \
+    /utilities.sh
+
 
 FROM base AS final
 
@@ -104,4 +105,5 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 #RUN firewall-offline-cmd --add-port 8006/tcp
 
 RUN bootc container lint
+
 
