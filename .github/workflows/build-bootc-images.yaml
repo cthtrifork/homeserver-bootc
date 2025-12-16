@@ -242,7 +242,7 @@ jobs:
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
             --tls-verify=true \
-            --layers=false \
+            --layers=true \
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
