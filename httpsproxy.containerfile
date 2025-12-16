@@ -36,8 +36,11 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/cleanup.sh
 
 RUN squid -k parse -f /etc/squid/squid.conf && \
-	systemctl enable squid.service && \
-	systemctl enable prepare-squid.service
+	systemctl enable squid.service
+
+# NetworkManager-wait-online is buggy so we disable it
+RUN systemctl disable NetworkManager-wait-online.service \
+  && systemctl mask NetworkManager-wait-online.service
 
 # Networking
 EXPOSE 3128

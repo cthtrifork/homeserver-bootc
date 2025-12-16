@@ -5,12 +5,13 @@ echo "Running as"
 id
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="prepare-squid.service squid.service"
+CORE_SERVICES="squid.service"
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
         echo "Service not active: $s"
         systemctl status "$s" --no-pager || true
+        systemd-analyze critical-chain "$s" || true
         systemctl cat "$s"
         journalctl -xeu "$s"
         exit 1
