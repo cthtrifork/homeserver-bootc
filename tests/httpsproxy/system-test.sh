@@ -20,3 +20,5 @@ echo "✅ core services are OK"
 
 echo "Testing HTTPS proxy through squid..."
 curl --proxy http://localhost:3128 https://google.com -v
+
+curl --proxy https://localhost:3138 https://github.com/getsops/sops/releases/download/v3.11.0/sops-3.11.0-1.x86_64.rpm -v | grep "TCP_HIT/200"

@@ -157,9 +157,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
 
+      - name: Decrypt system files with sops
+        shell: bash
+        env:
+          SOPS_AGE_KEY: ${{ secrets.AGE_KEY }}
+        run: | #sh
+          find . -type f -name "*.enc" -print0 | xargs -0 -n1 echo
+          find . -type f -name "*.enc" -print0 | xargs -0 -n1 sh -c 'out="${1%.enc}" && sops -d "$1" > "$out" && rm "$1"' _
+
       - name: Make registry credentials available for sudo
         shell: bash
-        run: |
+        run: | #sh
           sudo mkdir -p /root/.config/containers
           sudo cp /run/user/1001/containers/auth.json /root/.config/containers/auth.json
 
