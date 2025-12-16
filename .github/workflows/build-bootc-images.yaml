@@ -259,7 +259,7 @@ jobs:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
           ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
-          skip_compression: true
+          skip_compression: false
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
           pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
           registry_auth_file: /home/runner/.docker/config.json
