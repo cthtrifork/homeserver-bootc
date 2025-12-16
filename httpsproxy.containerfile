@@ -42,6 +42,7 @@ RUN squid -k parse -f /etc/squid/squid.conf && \
 # Networking
 EXPOSE 3128
 RUN firewall-offline-cmd --add-port 3128/tcp && \
+    firewall-offline-cmd --add-port 3138/tcp && \
     firewall-offline-cmd --add-service squid
 
 # Clean up caches in the image and lint the container
