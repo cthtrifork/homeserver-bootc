@@ -21,7 +21,7 @@ for s in $CORE_SERVICES; do
         systemctl cat "$s"
         journalctl -xeu "$s"
         sudo systemctl stop "$s"
-        sudo -u squid /usr/sbin/squid -N -d1 -f /etc/squid/squid.conf
+        /usr/sbin/squid -N -d1 -f /etc/squid/squid.conf
         exit 1
     }
 done
