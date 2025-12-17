@@ -30,13 +30,18 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/httpsproxy/ /
 
+# Install SSL certificates and keys
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    cp /etc/squid/server.crt /etc/pki/ca-trust/source/anchors/ && \
+    update-ca-trust
+
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/cleanup.sh
 
-RUN squid -k parse -f /etc/squid/squid.conf && \
-	systemctl enable squid.service
+RUN squid -k parse -f /etc/squid/squid.conf #&& \
+#	systemctl enable squid.service
 
 # NetworkManager-wait-online is buggy so we disable it
 RUN systemctl disable NetworkManager-wait-online.service \
@@ -45,6 +50,7 @@ RUN systemctl disable NetworkManager-wait-online.service \
 # Networking
 EXPOSE 3128
 RUN firewall-offline-cmd --add-port 3128/tcp && \
+    firewall-offline-cmd --add-port 3138/tcp && \
     firewall-offline-cmd --add-service squid
 
 # Clean up caches in the image and lint the container

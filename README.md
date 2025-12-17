@@ -34,6 +34,23 @@ Connect to a different host through pinggy:
 ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
 ```
 
+
+## HTTPS Proxy (Squid)
+
+### Man in the middle setup
+
+```sh
+# Create server cert.
+openssl genrsa -out system_files/httpsproxy/etc/squid/server.key 2048
+openssl req -x509 -new \
+    -subj "/C=US/CN=squid-proxy" \
+    -addext "subjectAltName = DNS:squid-proxy,DNS:host.docker.internal,DNS:localhost" \
+    -key system_files/httpsproxy/etc/squid/server.key -out system_files/httpsproxy/etc/squid/server.crt
+
+sops --encrypt --age "$AGE_PUB" system_files/httpsproxy/etc/squid/server.key | tee system_files/httpsproxy/etc/squid/server.key.enc >/dev/null
+rm system_files/httpsproxy/etc/squid/server.key
+```
+
 ### Handy commands (cheatsheet)
 
 #### Encryption

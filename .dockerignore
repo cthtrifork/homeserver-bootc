@@ -1,0 +1,6 @@
+.devcontainer
+.git*
+*.md
+action.yml
+LICENSE
+*.key
