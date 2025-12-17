@@ -7,6 +7,9 @@ id
 echo "squid -v"
 squid -v || true
 
+sudo -u squid /usr/sbin/squid -N -d1 -f /etc/squid/squid.conf
+exit 1
+ 
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="squid.service"
 echo "--- core services ---"
