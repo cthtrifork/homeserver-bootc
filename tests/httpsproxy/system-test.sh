@@ -4,6 +4,9 @@ set -euox pipefail
 echo "Running as"
 id
 
+echo "squid -v"
+squid -v || true
+
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="squid.service"
 echo "--- core services ---"
@@ -18,8 +21,6 @@ for s in $CORE_SERVICES; do
     }
 done
 echo "✅ core services are OK"
-
-squid -v
 
 echo "Testing HTTPS proxy through squid..."
 curl --proxy http://localhost:3128 https://google.com -v
