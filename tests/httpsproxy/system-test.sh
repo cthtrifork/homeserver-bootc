@@ -17,6 +17,7 @@ for s in $CORE_SERVICES; do
         systemd-analyze critical-chain "$s" || true
         systemctl cat "$s"
         journalctl -xeu "$s"
+        sudo -u squid /usr/sbin/squid -N -d1 -f /etc/squid/squid.conf
         exit 1
     }
 done
