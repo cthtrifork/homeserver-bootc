@@ -68,7 +68,7 @@ tar -zxvf /tmp/kubectl-cnpg.tar.gz -C "$BIN_DIR"/ --exclude=LICENSE --exclude=RE
 "$BIN_DIR/kubectl-cnpg" completion bash >"$COMPLETION_DIR/kubectl-cnpg"
 
 log "Installing kind"
-KIND_VERSION="v0.30.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+KIND_VERSION="v0.31.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 curl -sLo /tmp/kind \
     "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kind ${MACHINE}.${ARCH} $KIND_VERSION)"
 install -o root -g root -m 0755 /tmp/kind "$BIN_DIR/kind"
