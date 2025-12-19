@@ -6,33 +6,25 @@
 # GUI #
 #######
 
-# dnf -q group info kde-desktop
-plasma-desktop
-# session startup
-plasma-workspace
-plasma-workspace-wallpapers
-# Display/login manager
-sddm-wayland-plasma
-sddm
-sddm-breeze
-sddm-kcm
-# KDE default icon pack
-breeze-icon-theme
-# window decorations
-aurorae
-# the Breeze system theme
-plasma-breeze
-# screenlocker
-kscreenlocker
+hyprland
+# Power management
+tuned
+tuned-ppd
+waybar
+# A PolicyKit authentication agent for Hyprland. Required to handle privilege escalation prompts (e.g., mounting disks, network changes).
+hyprpolkitagent
+# Audio
+pavucontrol
+alsa-sof-firmware
+alsa-utils 
 
-# Wallet + crypto prompt
-kwalletmanager5
-pam-kwallet
-pinentry-qt
-# screen configuration
-kscreen
-# style GTK apps to match KDE
-kde-gtk-config
+# Networking and Bluetooth
+blueman
+NetworkManager-wifi 
+iwl*
+nm-connection-editor-desktop
+
+sddm
 
 # Seems like a default
 systemd-oomd-defaults
@@ -81,8 +73,6 @@ google-droid-sans-mono-fonts
 # captive portal support
 NetworkManager-config-connectivity-fedora
 NetworkManager
-# VPN plugins (L2TP, VPNC, OpenConnect, OpenVPN, PPTP)
-plasma-nm-*
 
 # Wifi
 NetworkManager-wifi
@@ -105,8 +95,8 @@ thermald
 xwaylandvideobridge
 # audio controls
 kde-settings-pulseaudio
-plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
