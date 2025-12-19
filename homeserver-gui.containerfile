@@ -7,7 +7,8 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 # Install GUI components (basic desktop + browser + multimedia support)
 # Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
-RUN dnf copr enable -y scottames/ghostty
+RUN dnf copr enable -y scottames/ghostty && \
+    dnf copr enable solopasha/hyprland
 RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
     dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
