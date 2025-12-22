@@ -35,6 +35,14 @@ on:
         type: string
         required: true
         default: "latest"
+      configfile:
+        description: "Which config file to use"
+        type: choice
+        required: true
+        options:
+          - config.toml
+          - config-interactive.toml
+        default: config.toml
 
 jobs:
   create-image:
@@ -91,7 +99,7 @@ jobs:
         id: create-image
         uses: ublue-os/bootc-image-builder-action@main
         with:
-          config-file: ${{ inputs.context }}/config.toml
+          config-file: ${{ inputs.context }}/${{ inputs.configfile }}
           type: ${{ inputs.type }}
           rootfs: xfs
           image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}

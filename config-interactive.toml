@@ -1,0 +1,4 @@
+# see https://github.com/osbuild/bootc-image-builder?tab=readme-ov-file#anaconda-iso-installer-options-installer-mapping
+# Note that you will need to create partitions and label /boot as boot so the installed system can find its boot partition.
+[customizations.installer.kickstart]
+contents = ""
