@@ -34,7 +34,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/homeserver/ / \
     && rsync -rvpK /ctx/system_files/homeserver-gui/ /
 
-RUN "KEYMAP=dk" | tee -a /etc/vconsole.conf
+RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -47,5 +47,6 @@ RUN systemctl disable pinggy.service && \
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target
+
 
 RUN bootc container lint || true
