@@ -149,7 +149,7 @@ tar -zxvf /tmp/helm.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
 log "Installing vectro"
 VECTRO_VERSION="0.1.0" # renovate: datasource=github-releases depName=gurgeous/vectro
 curl -sLo /tmp/vectro.tar.gz \
-    "$(/ctx/build_files/github-release-url.sh gurgeous/vectro ${MACHINE}.${ARCH}.tar.gz $K9S_VERSION)"
+    "$(/ctx/build_files/github-release-url.sh gurgeous/vectro ${MACHINE}.${ARCH}.tar.gz $VECTRO_VERSION)"
 tar -zxvf /tmp/vectro.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=demo.gif --exclude=vectro.png
 
 log "Installing dysk"
