@@ -152,6 +152,24 @@ curl -sLo /tmp/vectro.tar.gz \
     "$(/ctx/build_files/github-release-url.sh gurgeous/vectro ${MACHINE}.${ARCH}.tar.gz $VECTRO_VERSION)"
 tar -zxvf /tmp/vectro.tar.gz -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=demo.gif --exclude=vectro.png
 
+log "Installing lazyjournal"
+LAZYJOURNAL_VERSION="0.8.3" # renovate: datasource=github-releases depName=Lifailon/lazyjournal
+curl -sLo /tmp/lazyjournal \
+    "$(/ctx/build_files/github-release-url.sh Lifailon/lazyjournal lazyjournal-${LAZYJOURNAL_VERSION}-${MACHINE}-${ARCH} $LAZYJOURNAL_VERSION)"
+install -o root -g root -m 0755 /tmp/lazyjournal "$BIN_DIR/lazyjournal"
+
+log "Installing lazydocker"
+LAZYDOCKER_VERSION="v0.24.3" # renovate: datasource=github-releases depName=jesseduffield/lazydocker
+curl -sLo /tmp/lazydocker.tar.gz \
+    "$(/ctx/build_files/github-release-url.sh jesseduffield/lazydocker ${MACHINE}_x86_64.tar.gz $LAZYDOCKER_VERSION)"
+tar -zxvf /tmp/lazydocker.tar.gz -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
+
+log "Installing lazygit"
+LAZYGIT_VERSION="v0.57.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
+curl -sLo /tmp/lazygit.tar.gz \
+    "$(/ctx/build_files/github-release-url.sh jesseduffield/lazygit ${MACHINE}_x86_64.tar.gz $LAZYGIT_VERSION)"
+tar -zxvf /tmp/lazygit.tar.gz -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
+
 log "Installing dysk"
 curl -sLo /tmp/dysk https://dystroy.org/dysk/download/x86_64-linux/dysk
 install -o root -g root -m 0755 /tmp/dysk "$BIN_DIR/dysk"
