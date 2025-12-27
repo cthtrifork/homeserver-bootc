@@ -8,6 +8,8 @@ log() {
 }
 
 ARCH="amd64"
+PLATFORM_ARCH="amd64"
+HOST_ARCH="x86_64"
 MACHINE="linux"
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
@@ -88,7 +90,7 @@ ln -sf "$BIN_DIR/virtctl" "$BIN_DIR/kubectl-virt"
 log "Installing kubectl-cnpg"
 KUBECTLCNPG_VERSION="v1.28.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 KUBECTLCNPG_TGZ="$(tmp_name kubectl-cnpg "$KUBECTLCNPG_VERSION" tar.gz)"
-download_if_missing "$KUBECTLCNPG_TGZ" "$(/ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_x86_64.tar.gz" $KUBECTLCNPG_VERSION)"
+download_if_missing "$KUBECTLCNPG_TGZ" "$(/ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_${HOST_ARCH}.tar.gz" $KUBECTLCNPG_VERSION)"
 tar -zxvf "$KUBECTLCNPG_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/kubectl-cnpg" completion bash >"$COMPLETION_DIR/kubectl-cnpg"
 
@@ -187,13 +189,13 @@ install -o root -g root -m 0755 "$LAZYJOURNAL_BIN" "$BIN_DIR/lazyjournal"
 log "Installing lazydocker"
 LAZYDOCKER_VERSION="v0.24.3" # renovate: datasource=github-releases depName=jesseduffield/lazydocker
 LAZYDOCKER_TGZ="$(tmp_name lazydocker "$LAZYDOCKER_VERSION" tar.gz)"
-download_if_missing "$LAZYDOCKER_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazydocker ${MACHINE}_x86_64.tar.gz $LAZYDOCKER_VERSION)"
+download_if_missing "$LAZYDOCKER_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazydocker ${MACHINE}_${HOST_ARCH}.tar.gz $LAZYDOCKER_VERSION)"
 tar -zxvf "$LAZYDOCKER_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
 
 log "Installing lazygit"
 LAZYGIT_VERSION="v0.57.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
-download_if_missing "$LAZYGIT_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazygit ${MACHINE}_x86_64.tar.gz $LAZYGIT_VERSION)"
+download_if_missing "$LAZYGIT_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazygit ${MACHINE}_${HOST_ARCH}.tar.gz $LAZYGIT_VERSION)"
 tar -zxvf "$LAZYGIT_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
 
 log "Installing witr"
@@ -203,18 +205,15 @@ download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pransh
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
 log "Installing fresh-editor"
-WITR_VERSION="v0.1.0" # renovate: datasource=github-releases depName=sinelaw/fresh
-WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
-download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pranshuparmar/witr witr-${MACHINE}.${ARCH} $WITR_VERSION)"
-install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
-
-curl -sL $(curl -s https://api.github.com/repos/sinelaw/fresh/releases/latest | 
-grep "browser_download_url.*\.$(uname -m)\.rpm" | cut -d '"' -f 4) -o fresh-editor.rpm && sudo rpm -U fresh-editor.rpm
+FRESH_VERSION="v0.1.64" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_BIN="$(tmp_name fresh-editor "$FRESH_VERSION" rpm)"
+download_if_missing "$FRESH_BIN" "$(/ctx/build_files/github-release-url.sh sinelaw/fresh ${HOST_ARCH}.rpm $FRESH_BIN)"
+rpm -U $FRESH_BIN
 
 log "Installing dysk"
 DYSK_VERSION="latest"
 DYSK_BIN="$(tmp_name dysk "$DYSK_VERSION" bin)"
-download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/x86_64-linux/dysk"
+download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-${MACHINE}/dysk"
 install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
 
 chmod -R 755 "$BIN_DIR"/
