@@ -7,7 +7,6 @@ log() {
     echo "=== $* ==="
 }
 
-ARCH="amd64"
 PLATFORM_ARCH="amd64"
 HOST_ARCH="x86_64"
 MACHINE="linux"
@@ -50,27 +49,27 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/mast
 log "Installing age"
 AGE_VERSION="v1.2.1" # renovate: datasource=github-releases depName=FiloSottile/age
 AGE_TGZ="$(tmp_name age "$AGE_VERSION" tar.gz)"
-download_if_missing "$AGE_TGZ" "$(/ctx/build_files/github-release-url.sh FiloSottile/age ${MACHINE}-${ARCH}.tar.gz $AGE_VERSION)"
+download_if_missing "$AGE_TGZ" "$(/ctx/build_files/github-release-url.sh FiloSottile/age ${MACHINE}-${PLATFORM_ARCH}.tar.gz $AGE_VERSION)"
 tar -zxvf "$AGE_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
 
 log "Installing gh-cli"
 GH_CLI_VERSION="v2.83.2" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
-download_if_missing "$GH_CLI_TGZ" "$(/ctx/build_files/github-release-url.sh cli/cli ${MACHINE}_${ARCH}.tar.gz $GH_CLI_VERSION)"
+download_if_missing "$GH_CLI_TGZ" "$(/ctx/build_files/github-release-url.sh cli/cli ${MACHINE}_${PLATFORM_ARCH}.tar.gz $GH_CLI_VERSION)"
 tar -zxvf "$GH_CLI_TGZ" -C "$BIN_DIR"/ --wildcards "*/bin/*" --strip-components=2 --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
 
 log "Installing kubectl"
 KUBECTL_VERSION="v1.34.3" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_BIN="$(tmp_name kubectl "$KUBECTL_VERSION" bin)"
-download_if_missing "$KUBECTL_BIN" "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${ARCH}/kubectl"
+download_if_missing "$KUBECTL_BIN" "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${PLATFORM_ARCH}/kubectl"
 install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
 "$BIN_DIR/kubectl" completion bash >"$COMPLETION_DIR/kubectl"
 
 log "Installing kubectl-oidc-login (kubelogin)"
 KUBELOGIN_VERSION="v1.35.0" # renovate: datasource=github-releases depName=int128/kubelogin
 KUBELOGIN_ZIP="$(tmp_name kubelogin "$KUBELOGIN_VERSION" zip)"
-download_if_missing "$KUBELOGIN_ZIP" "$(/ctx/build_files/github-release-url.sh int128/kubelogin ${MACHINE}.${ARCH}.zip $KUBELOGIN_VERSION)"
+download_if_missing "$KUBELOGIN_ZIP" "$(/ctx/build_files/github-release-url.sh int128/kubelogin ${MACHINE}.${PLATFORM_ARCH}.zip $KUBELOGIN_VERSION)"
 unzip "$KUBELOGIN_ZIP" -d "$BIN_DIR"/ -x "LICENSE" "README.md"
 # Create symlinks so kubectl recognizes the plugin
 ln -sf "$BIN_DIR/kubelogin" "$BIN_DIR/kubectl-oidc_login"
@@ -80,9 +79,9 @@ log "Installing kubectl virt"
 KUBEVIRT_VERSION="v1.7.0" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 KUBEVIRT_TGZ="$(tmp_name kubectl-virt "$KUBEVIRT_VERSION" tar.gz)"
-download_if_missing "$KUBEVIRT_TGZ" "$(/ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin virtctl-${MACHINE}-${ARCH}.tar.gz $KUBEVIRT_VERSION)"
+download_if_missing "$KUBEVIRT_TGZ" "$(/ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin virtctl-${MACHINE}-${PLATFORM_ARCH}.tar.gz $KUBEVIRT_VERSION)"
 tar -zxvf "$KUBEVIRT_TGZ" -C /tmp/kubectl-virt/ --strip-components=1 --exclude=LICENSE
-install -o root -g root -m 0755 "/tmp/kubectl-virt/virtctl-${MACHINE}-${ARCH}" "$BIN_DIR/virtctl"
+install -o root -g root -m 0755 "/tmp/kubectl-virt/virtctl-${MACHINE}-${PLATFORM_ARCH}" "$BIN_DIR/virtctl"
 # Create symlinks so kubectl recognizes the plugin
 ln -sf "$BIN_DIR/virtctl" "$BIN_DIR/kubectl-virt"
 "$BIN_DIR/virtctl" completion bash >"$COMPLETION_DIR/virtctl"
@@ -97,111 +96,111 @@ tar -zxvf "$KUBECTLCNPG_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.m
 log "Installing kind"
 KIND_VERSION="v0.31.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 KIND_BIN="$(tmp_name kind "$KIND_VERSION" bin)"
-download_if_missing "$KIND_BIN" "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kind ${MACHINE}.${ARCH} $KIND_VERSION)"
+download_if_missing "$KIND_BIN" "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kind ${MACHINE}.${PLATFORM_ARCH} $KIND_VERSION)"
 install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
 log "Installing flux"
 FLUX_VERSION="v2.7.5" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
-download_if_missing "$FLUX_TGZ" "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${ARCH}.tar.gz $FLUX_VERSION)"
+download_if_missing "$FLUX_TGZ" "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${PLATFORM_ARCH}.tar.gz $FLUX_VERSION)"
 tar -zxvf "$FLUX_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/flux" completion bash >"$COMPLETION_DIR/flux"
 
 log "Installing kustomize"
 KUSTOMIZE_VERSION="kustomize/v5.7.1" # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
 KUSTOMIZE_TGZ="$(tmp_name kustomize "$KUSTOMIZE_VERSION" tar.gz)"
-download_if_missing "$KUSTOMIZE_TGZ" "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kustomize ${MACHINE}.${ARCH}.tar.gz $KUSTOMIZE_VERSION)"
+download_if_missing "$KUSTOMIZE_TGZ" "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kustomize ${MACHINE}.${PLATFORM_ARCH}.tar.gz $KUSTOMIZE_VERSION)"
 tar -zxvf "$KUSTOMIZE_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/kustomize" completion bash >"$COMPLETION_DIR/kustomize"
 
 log "Installing k9s"
 K9S_VERSION=v0.50.16 # renovate: datasource=github-releases depName=derailed/k9s
 K9S_TGZ="$(tmp_name k9s "$K9S_VERSION" tar.gz)"
-download_if_missing "$K9S_TGZ" "$(/ctx/build_files/github-release-url.sh derailed/k9s ${MACHINE}.${ARCH}.tar.gz $K9S_VERSION)"
+download_if_missing "$K9S_TGZ" "$(/ctx/build_files/github-release-url.sh derailed/k9s ${MACHINE}.${PLATFORM_ARCH}.tar.gz $K9S_VERSION)"
 tar -zxvf "$K9S_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/k9s" completion bash >"$COMPLETION_DIR/k9s"
 
 log "Installing sops"
 SOPS_VERSION=v3.11.0 # renovate: datasource=github-releases depName=getsops/sops
 SOPS_BIN="$(tmp_name sops "$SOPS_VERSION" bin)"
-download_if_missing "$SOPS_BIN" "$(/ctx/build_files/github-release-url.sh getsops/sops ${MACHINE}.${ARCH} $SOPS_VERSION)"
+download_if_missing "$SOPS_BIN" "$(/ctx/build_files/github-release-url.sh getsops/sops ${MACHINE}.${PLATFORM_ARCH} $SOPS_VERSION)"
 install -o root -g root -m 0755 "$SOPS_BIN" "$BIN_DIR/sops"
 
 log "Installing mkcert"
 MKCERT_VERSION=v1.4.4 # renovate: datasource=github-releases depName=FiloSottile/mkcert
 MKCERT_BIN="$(tmp_name mkcert "$MKCERT_VERSION" bin)"
-download_if_missing "$MKCERT_BIN" "$(/ctx/build_files/github-release-url.sh FiloSottile/mkcert ${MACHINE}.${ARCH} $MKCERT_VERSION)"
+download_if_missing "$MKCERT_BIN" "$(/ctx/build_files/github-release-url.sh FiloSottile/mkcert ${MACHINE}.${PLATFORM_ARCH} $MKCERT_VERSION)"
 install -o root -g root -m 0755 "$MKCERT_BIN" "$BIN_DIR/mkcert"
 
 log "Installing jq"
 JQ_VERSION="jq-1.8.1" # renovate: datasource=github-releases depName=jqlang/jq
 JQ_BIN="$(tmp_name jq "$JQ_VERSION" bin)"
-download_if_missing "$JQ_BIN" "$(/ctx/build_files/github-release-url.sh jqlang/jq ${MACHINE}.${ARCH} $JQ_VERSION)"
+download_if_missing "$JQ_BIN" "$(/ctx/build_files/github-release-url.sh jqlang/jq ${MACHINE}.${PLATFORM_ARCH} $JQ_VERSION)"
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
 log "Installing yq"
 YQ_VERSION="v4.50.1" # renovate: datasource=github-releases depName=mikefarah/yq
 YQ_BIN="$(tmp_name yq "$YQ_VERSION" bin)"
-download_if_missing "$YQ_BIN" "$(/ctx/build_files/github-release-url.sh mikefarah/yq ${MACHINE}.${ARCH} $YQ_VERSION)"
+download_if_missing "$YQ_BIN" "$(/ctx/build_files/github-release-url.sh mikefarah/yq ${MACHINE}.${PLATFORM_ARCH} $YQ_VERSION)"
 install -o root -g root -m 0755 "$YQ_BIN" "$BIN_DIR/yq"
 "$BIN_DIR/yq" completion bash >"$COMPLETION_DIR/yq"
 
 log "Installing cosign"
 COSIGN_VERSION="v3.0.3" # renovate: datasource=github-releases depName=sigstore/cosign
 COSIGN_BIN="$(tmp_name cosign "$COSIGN_VERSION" bin)"
-download_if_missing "$COSIGN_BIN" "$(/ctx/build_files/github-release-url.sh sigstore/cosign ${MACHINE}.${ARCH} $COSIGN_VERSION)"
+download_if_missing "$COSIGN_BIN" "$(/ctx/build_files/github-release-url.sh sigstore/cosign ${MACHINE}.${PLATFORM_ARCH} $COSIGN_VERSION)"
 install -o root -g root -m 0755 "$COSIGN_BIN" "$BIN_DIR/cosign"
 "$BIN_DIR/cosign" completion bash >"$COMPLETION_DIR/cosign"
 
 log "Installing shfmt"
 SHFMT_VERSION="v3.12.0" # renovate: datasource=github-releases depName=mvdan/sh
 SHFMT_BIN="$(tmp_name shfmt "$SHFMT_VERSION" bin)"
-download_if_missing "$SHFMT_BIN" "$(/ctx/build_files/github-release-url.sh mvdan/sh ${MACHINE}.${ARCH} $SHFMT_VERSION)"
+download_if_missing "$SHFMT_BIN" "$(/ctx/build_files/github-release-url.sh mvdan/sh ${MACHINE}.${PLATFORM_ARCH} $SHFMT_VERSION)"
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
 TALOSCTL_VERSION="v1.11.6" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
-download_if_missing "$TALOSCTL_BIN" "$(/ctx/build_files/github-release-url.sh siderolabs/talos talosctl-${MACHINE}.${ARCH} $TALOSCTL_VERSION)"
+download_if_missing "$TALOSCTL_BIN" "$(/ctx/build_files/github-release-url.sh siderolabs/talos talosctl-${MACHINE}.${PLATFORM_ARCH} $TALOSCTL_VERSION)"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
 "$BIN_DIR/talosctl" completion bash >"$COMPLETION_DIR/talosctl"
 
 log "Installing helm"
 HELM_VERSION="v3.19.4" # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
-download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
+download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${PLATFORM_ARCH}.tar.gz"
 tar -zxvf "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
 log "Installing vectro"
 VECTRO_VERSION="0.1.0" # renovate: datasource=github-releases depName=gurgeous/vectro
 VECTRO_TGZ="$(tmp_name vectro "$VECTRO_VERSION" tar.gz)"
-download_if_missing "$VECTRO_TGZ" "$(/ctx/build_files/github-release-url.sh gurgeous/vectro ${MACHINE}.${ARCH}.tar.gz $VECTRO_VERSION)"
+download_if_missing "$VECTRO_TGZ" "$(/ctx/build_files/github-release-url.sh gurgeous/vectro ${MACHINE}.${PLATFORM_ARCH}.tar.gz $VECTRO_VERSION)"
 tar -zxvf "$VECTRO_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=demo.gif --exclude=vectro.png
 
 log "Installing lazyjournal"
 LAZYJOURNAL_VERSION="0.8.3" # renovate: datasource=github-releases depName=Lifailon/lazyjournal
 LAZYJOURNAL_BIN="$(tmp_name lazyjournal "$LAZYJOURNAL_VERSION" bin)"
-download_if_missing "$LAZYJOURNAL_BIN" "$(/ctx/build_files/github-release-url.sh Lifailon/lazyjournal lazyjournal-${LAZYJOURNAL_VERSION}-${MACHINE}-${ARCH} $LAZYJOURNAL_VERSION)"
+download_if_missing "$LAZYJOURNAL_BIN" "$(/ctx/build_files/github-release-url.sh Lifailon/lazyjournal lazyjournal-${LAZYJOURNAL_VERSION}.${MACHINE}.${PLATFORM_ARCH} $LAZYJOURNAL_VERSION)"
 install -o root -g root -m 0755 "$LAZYJOURNAL_BIN" "$BIN_DIR/lazyjournal"
 
 log "Installing lazydocker"
 LAZYDOCKER_VERSION="v0.24.3" # renovate: datasource=github-releases depName=jesseduffield/lazydocker
 LAZYDOCKER_TGZ="$(tmp_name lazydocker "$LAZYDOCKER_VERSION" tar.gz)"
-download_if_missing "$LAZYDOCKER_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazydocker ${MACHINE}_${HOST_ARCH}.tar.gz $LAZYDOCKER_VERSION)"
+download_if_missing "$LAZYDOCKER_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazydocker ${MACHINE}.${HOST_ARCH}.tar.gz $LAZYDOCKER_VERSION)"
 tar -zxvf "$LAZYDOCKER_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
 
 log "Installing lazygit"
 LAZYGIT_VERSION="v0.57.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
-download_if_missing "$LAZYGIT_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazygit ${MACHINE}_${HOST_ARCH}.tar.gz $LAZYGIT_VERSION)"
+download_if_missing "$LAZYGIT_TGZ" "$(/ctx/build_files/github-release-url.sh jesseduffield/lazygit ${MACHINE}.${HOST_ARCH}.tar.gz $LAZYGIT_VERSION)"
 tar -zxvf "$LAZYGIT_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
 
 log "Installing witr"
 WITR_VERSION="v0.1.0" # renovate: datasource=github-releases depName=pranshuparmar/witr
 WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
-download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pranshuparmar/witr witr-${MACHINE}.${ARCH} $WITR_VERSION)"
+download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pranshuparmar/witr witr-${MACHINE}.${PLATFORM_ARCH} $WITR_VERSION)"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
 log "Installing fresh-editor"
