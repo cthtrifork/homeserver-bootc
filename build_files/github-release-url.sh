@@ -8,9 +8,7 @@ ARCH_FILTER=${2}
 GH_VERSION=${3}
 
 debug() {
-    if [[ -n "${DEBUG:-}" ]]; then
-        echo "[DEBUG] $*" >&2
-    fi
+    echo "[DEBUG] $*" >&2
 }
 
 usage() {
