@@ -25,3 +25,4 @@ dracut-config-rescue
 dnf-data
 
 python3-boto3
+python3-botocore
