@@ -202,6 +202,15 @@ WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pranshuparmar/witr witr-${MACHINE}.${ARCH} $WITR_VERSION)"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
+log "Installing fresh-editor"
+WITR_VERSION="v0.1.0" # renovate: datasource=github-releases depName=sinelaw/fresh
+WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
+download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pranshuparmar/witr witr-${MACHINE}.${ARCH} $WITR_VERSION)"
+install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
+
+curl -sL $(curl -s https://api.github.com/repos/sinelaw/fresh/releases/latest | 
+grep "browser_download_url.*\.$(uname -m)\.rpm" | cut -d '"' -f 4) -o fresh-editor.rpm && sudo rpm -U fresh-editor.rpm
+
 log "Installing dysk"
 DYSK_VERSION="latest"
 DYSK_BIN="$(tmp_name dysk "$DYSK_VERSION" bin)"
