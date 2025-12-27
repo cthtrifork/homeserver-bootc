@@ -23,3 +23,5 @@ dracut-config-rescue
 
 # Remove DNF4
 dnf-data
+
+python3-boto3
