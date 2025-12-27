@@ -7,6 +7,10 @@ log() {
     echo "=== $* ==="
 }
 
+debug() {
+    echo "[DEBUG] $*" >&2
+}
+
 PLATFORM_ARCH="amd64"
 HOST_ARCH="x86_64"
 MACHINE="linux"
@@ -35,7 +39,7 @@ download_if_missing() {
     local url="$2"
 
     if [[ -f "$dest" ]]; then
-        log "Using cached $dest"
+        debug "Using cached $dest"
         return 0
     fi
 
