@@ -206,7 +206,7 @@ install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 log "Installing fresh-editor"
 FRESH_VERSION="v0.1.64" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_BIN="$(tmp_name fresh-editor "$FRESH_VERSION" rpm)"
-download_if_missing "$FRESH_BIN" "$(/ctx/build_files/github-release-url.sh sinelaw/fresh ${HOST_ARCH}.rpm $FRESH_BIN)"
+download_if_missing "$FRESH_BIN" "$(/ctx/build_files/github-release-url.sh sinelaw/fresh ${HOST_ARCH}.rpm $FRESH_VERSION)"
 rpm -U $FRESH_BIN
 
 log "Installing dysk"
