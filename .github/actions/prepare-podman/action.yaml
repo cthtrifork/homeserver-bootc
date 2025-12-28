@@ -12,6 +12,7 @@ runs:
   using: "composite"
   steps:
     - name: Delete huge unnecessary tools folder
+      shell: bash
       run: |
         rm -rf /opt/hostedtoolcache
 
