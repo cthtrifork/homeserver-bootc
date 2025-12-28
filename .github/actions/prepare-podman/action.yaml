@@ -11,6 +11,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Delete huge unnecessary tools folder
+      shell: bash
+      run: |
+        rm -rf /opt/hostedtoolcache
+
     - name: Configure rootless Podman storage
       shell: bash
       run: | #sh
