@@ -166,7 +166,7 @@ download_if_missing "$SHFMT_BIN" "$(/ctx/build_files/github-release-url.sh mvdan
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.11.6" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.12.0" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing "$TALOSCTL_BIN" "$(/ctx/build_files/github-release-url.sh siderolabs/talos talosctl-${MACHINE}.${PLATFORM_ARCH} $TALOSCTL_VERSION)"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
