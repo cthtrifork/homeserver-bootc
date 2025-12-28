@@ -229,7 +229,7 @@ jobs:
           cache-
 
       - name: Remove old runner cache
-        if: steps.runner-cache.outputs.hit-cache
+        if: steps.runner-cache.outputs.cache-hit == 'true'
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
@@ -265,8 +265,8 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
-            -v /home/runner/.cache/dnf:/var/cache/dnf:O \
-            -v /home/runner/.cache/tmp:/runner/cache:O \
+            -v /home/runner/.cache/dnf:/var/cache/dnf \
+            -v /home/runner/.cache/tmp:/runner/cache \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
             
