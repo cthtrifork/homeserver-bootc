@@ -29,7 +29,7 @@ on:
       - "system_files/**"
       - "build_files/**"
       - "tests/**"
-      - ".github/workflows/**"
+      - ".github/workflows/build-bootc-images.yaml"
       - ".github/actions/**"
   push:
     branches:
