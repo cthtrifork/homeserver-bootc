@@ -261,7 +261,7 @@ jobs:
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
             -v /home/runner/.cache/dnf:/var/cache/dnf:O \
-            -v /home/runner/.cache/tmp:/tmp/cache:O \
+            -v /home/runner/.cache/tmp:/runner/cache:O \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
             
