@@ -218,6 +218,19 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
+      - uses: actions/cache@v4
+        with:
+          path: |
+            /home/runner/.cache/tmp
+          key: ${{ runner.os }}-${{ hashFiles('build_files/utilities.sh') }}
+
+      - name: Remove old cache
+        shell: bash
+        run: |
+          mkdir -p /home/runner/.cache/tmp
+          find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
+          find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
+
       - name: Buildah build
         id: build-image
         shell: bash
@@ -248,6 +261,7 @@ jobs:
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
             -v /home/runner/.cache/dnf:/var/cache/dnf:O \
+            -v /home/runner/.cache/tmp:/runner/cache:O \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
             

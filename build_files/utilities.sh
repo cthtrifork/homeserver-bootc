@@ -17,7 +17,7 @@ MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"  # linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
-mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "/tmp/cache"
+mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "/runner/cache"
 
 setfattr -n user.component -v "utilities" /usr/local/bin
 setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
@@ -30,7 +30,7 @@ tmp_name() {
     local ext="$3"
     local safe_version="${version//\//-}"
     safe_version="${safe_version// /_}"
-    echo "/tmp/cache/${name}-${safe_version}.${ext}"
+    echo "/runner/cache/${name}-${safe_version}.${ext}"
 }
 
 download_if_missing() {
