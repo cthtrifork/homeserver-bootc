@@ -10,10 +10,11 @@ COPY system_files/ /system_files/
 
 FROM base AS utils
 RUN --mount=type=cache,target=/var/cache/dnf \
-    dnf -y --setopt=install_weak_deps=false install --allowerasing unzip git-core
+  dnf -y --setopt=install_weak_deps=false install --allowerasing unzip git-core
 
 RUN --mount=type=bind,from=ctx_build,src=/build_files,dst=/ctx/build_files,ro \
-    /ctx/build_files/utilities.sh
+  --mount=type=cache,target=/runner/cache \
+  /ctx/build_files/utilities.sh
 
 FROM base AS final
 
