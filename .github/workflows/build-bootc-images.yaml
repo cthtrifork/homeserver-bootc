@@ -227,7 +227,8 @@ jobs:
       - name: Remove old cache
         shell: bash
         run: |
-          find /home/runner/.cache/tmp -type f -mtime +14 -print -delete
+          mkdir -p /home/runner/.cache/tmp
+          find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
           find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
 
       - name: Buildah build
