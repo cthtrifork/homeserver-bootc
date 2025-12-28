@@ -204,7 +204,7 @@ download_if_missing "$LAZYGIT_TGZ" "$(/ctx/build_files/github-release-url.sh jes
 tar -zxvf "$LAZYGIT_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
 
 log "Installing witr"
-WITR_VERSION="v0.1.0" # renovate: datasource=github-releases depName=pranshuparmar/witr
+WITR_VERSION="v0.1.1" # renovate: datasource=github-releases depName=pranshuparmar/witr
 WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing "$WITR_BIN" "$(/ctx/build_files/github-release-url.sh pranshuparmar/witr witr-${MACHINE}.${PLATFORM_ARCH} $WITR_VERSION)"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
