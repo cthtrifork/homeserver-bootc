@@ -11,9 +11,9 @@ debug() {
     echo "[DEBUG] $*" >&2
 }
 
-PLATFORM_ARCH="amd64"
-HOST_ARCH="x86_64"
-MACHINE="linux"
+PLATFORM_ARCH="$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')" # amd64
+HOST_ARCH="$(uname -m)" # x86_64
+MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"  # linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
@@ -49,6 +49,8 @@ download_if_missing() {
 log "Installing oh-my-bash"
 mkdir -p /usr/local
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local --unattended
+
+log "Installing static binaries"
 
 log "Installing age"
 AGE_VERSION="v1.2.1" # renovate: datasource=github-releases depName=FiloSottile/age
@@ -210,8 +212,8 @@ install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 log "Installing fresh-editor"
 FRESH_VERSION="v0.1.65" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TGZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.gz)"
-download_if_missing "$FRESH_TGZ" "$(/ctx/build_files/github-release-url.sh sinelaw/fresh fresh-editor-no-plugins-${HOST_ARCH}-unknown-${MACHINE}-musl.tar.gz $FRESH_VERSION)"
-tar -zxvf "$FRESH_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=themes
+download_if_missing "$FRESH_TGZ" "$(/ctx/build_files/github-release-url.sh sinelaw/fresh fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz $FRESH_VERSION)"
+tar -xvJf "$FRESH_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=themes --exclude plugins
 
 log "Installing dysk"
 DYSK_VERSION="latest"
