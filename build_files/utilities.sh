@@ -13,7 +13,7 @@ debug() {
 
 PLATFORM_ARCH="$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')" # amd64
 HOST_ARCH="$(uname -m)" # x86_64
-MACHINE="${uname}" # Linux
+MACHINE="$(uname -s)" # Linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
