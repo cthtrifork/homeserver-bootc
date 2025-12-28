@@ -218,13 +218,18 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
-      - uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5
+      - name: Restore runner cache
+        id: runner-cache
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5
         with:
           path: |
             /home/runner/.cache/tmp
-          key: ${{ runner.os }}-${{ hashFiles('build_files/utilities.sh') }}
+          key: cache-${{ hashFiles('build_files/utilities.sh') }}
+        restore-keys: |
+          cache-
 
-      - name: Remove old cache
+      - name: Remove old runner cache
+        if: steps.runner-cache.outputs.cache-hit == 'true'
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
@@ -260,8 +265,8 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
-            -v /home/runner/.cache/dnf:/var/cache/dnf:O \
-            -v /home/runner/.cache/tmp:/runner/cache:O \
+            -v /home/runner/.cache/dnf:/var/cache/dnf \
+            -v /home/runner/.cache/tmp:/runner/cache \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
             
