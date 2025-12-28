@@ -229,7 +229,7 @@ jobs:
             cache-
 
       - name: Remove old runner cache
-        if: steps.runner-cache.outputs.cache-hit == 'true'
+        #if: steps.runner-cache.outputs.cache-hit == 'true'
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
