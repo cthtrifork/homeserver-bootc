@@ -53,7 +53,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/mast
 log "Installing static binaries"
 
 log "Installing age"
-AGE_VERSION="v1.2.1" # renovate: datasource=github-releases depName=FiloSottile/age
+AGE_VERSION="v1.3.1" # renovate: datasource=github-releases depName=FiloSottile/age
 AGE_TGZ="$(tmp_name age "$AGE_VERSION" tar.gz)"
 download_if_missing "$AGE_TGZ" "$(/ctx/build_files/github-release-url.sh FiloSottile/age ${MACHINE}-${PLATFORM_ARCH}.tar.gz $AGE_VERSION)"
 tar -zxvf "$AGE_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
