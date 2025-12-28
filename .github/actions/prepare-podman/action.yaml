@@ -102,15 +102,16 @@ runs:
           echo "PODMAN=podman" >> "$GITHUB_ENV"
         fi
 
-
     - name: Load latest image to speed up build
+      if: "false"
       shell: bash
       run: | #sh
         $PODMAN pull -q ${{ env.IMAGE_FULL }}:latest || true
 
     - name: Load homeserver-centos-bootc:latest image to speed up build
       shell: bash
-      if: ${{ runner.environment == 'self-hosted' }}
+      #if: ${{ runner.environment == 'self-hosted' }}
+      if: "false"
       run: | #sh
         #
         $PODMAN pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
