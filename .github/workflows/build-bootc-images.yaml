@@ -224,7 +224,7 @@ jobs:
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-${{ hashFiles('build_files/utilities.sh') }}
+          key: cache-${{ hashFiles('/build_files/utilities.sh') }}
           restore-keys: |
             cache-
 
