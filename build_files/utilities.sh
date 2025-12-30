@@ -179,11 +179,11 @@ download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACH
 tar -zxvf "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
-log "Installing vectro"
-VECTRO_VERSION="0.1.0" # renovate: datasource=github-releases depName=gurgeous/vectro
-VECTRO_TGZ="$(tmp_name vectro "$VECTRO_VERSION" tar.gz)"
-download_if_missing "$VECTRO_TGZ" "$(/ctx/build_files/github-release-url.sh gurgeous/vectro ${MACHINE}.${PLATFORM_ARCH}.tar.gz $VECTRO_VERSION)"
-tar -zxvf "$VECTRO_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=demo.gif --exclude=vectro.png
+log "Installing numr"
+NUMR_VERSION="v0.4.0" # renovate: datasource=github-releases depName=nasedkinpv/numr
+NUMR_TGZ="$(tmp_name numr "$NUMR_VERSION" tar.gz)"
+download_if_missing "$NUMR_TGZ" "$(/ctx/build_files/github-release-url.sh nasedkinpv/numr ${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.gz $NUMR_VERSION)"
+tar -zxvf "$NUMR_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
 
 log "Installing lazyjournal"
 LAZYJOURNAL_VERSION="0.8.3" # renovate: datasource=github-releases depName=Lifailon/lazyjournal
