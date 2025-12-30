@@ -226,7 +226,7 @@ download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh prans
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.1.65" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.1.67" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TGZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.gz)"
 download_if_missing_cmd "$FRESH_TGZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 tar -xvJf "$FRESH_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=themes --exclude plugins
