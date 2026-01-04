@@ -26,6 +26,7 @@ fastfetch
 iotop
 tmux
 podman-compose
+fzf
 
 ##################
 # Virtualisation #
