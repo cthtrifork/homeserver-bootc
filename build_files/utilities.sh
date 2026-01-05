@@ -85,13 +85,13 @@ log "Installing age"
 AGE_VERSION="v1.3.1" # renovate: datasource=github-releases depName=FiloSottile/age
 AGE_TGZ="$(tmp_name age "$AGE_VERSION" tar.gz)"
 download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSottile/age "${MACHINE}-${PLATFORM_ARCH}.tar.gz" "$AGE_VERSION"
-extract_tar "$AGE_TGZ" "--strip-components=1"
+extract_tar "$AGE_TGZ" --strip-components=1
 
 log "Installing gh-cli"
 GH_CLI_VERSION="v2.83.2" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
 download_if_missing_cmd "$GH_CLI_TGZ" /ctx/build_files/github-release-url.sh cli/cli "${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$GH_CLI_VERSION"
-extract_tar "$GH_CLI_TGZ" "--wildcards '*/bin/*' --strip-components=2"
+extract_tar "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
 "$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
 
 log "Installing kubectl"
