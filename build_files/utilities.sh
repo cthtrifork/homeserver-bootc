@@ -70,6 +70,7 @@ extract_tar() {
     tar -zxvf "$source" -C "$BIN_DIR"/ "$@" \
         --exclude=LICENSE \
         --exclude=license \
+        --exclude=licenses \
         --exclude='*.md' \
         --owner=root --group=root \
         --no-same-owner
@@ -125,7 +126,7 @@ log "Installing kubectl-cnpg"
 KUBECTLCNPG_VERSION="v1.28.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 KUBECTLCNPG_TGZ="$(tmp_name kubectl-cnpg "$KUBECTLCNPG_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBECTLCNPG_TGZ" /ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_${HOST_ARCH}.tar.gz" "$KUBECTLCNPG_VERSION"
-tar -zxvf "$KUBECTLCNPG_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
+extract_tar "$KUBECTLCNPG_TGZ"
 "$BIN_DIR/kubectl-cnpg" completion bash >"$COMPLETION_DIR/kubectl-cnpg"
 
 log "Installing kind"
@@ -139,21 +140,21 @@ log "Installing flux"
 FLUX_VERSION="v2.7.5" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux2 "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_VERSION"
-tar -zxvf "$FLUX_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
+extract_tar "$FLUX_TGZ"
 "$BIN_DIR/flux" completion bash >"$COMPLETION_DIR/flux"
 
 log "Installing kustomize"
 KUSTOMIZE_VERSION="kustomize/v5.7.1" # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
 KUSTOMIZE_TGZ="$(tmp_name kustomize "$KUSTOMIZE_VERSION" tar.gz)"
 download_if_missing_cmd "$KUSTOMIZE_TGZ" /ctx/build_files/github-release-url.sh kubernetes-sigs/kustomize "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$KUSTOMIZE_VERSION"
-tar -zxvf "$KUSTOMIZE_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
+extract_tar "$KUSTOMIZE_TGZ"
 "$BIN_DIR/kustomize" completion bash >"$COMPLETION_DIR/kustomize"
 
 log "Installing k9s"
 K9S_VERSION=v0.50.16 # renovate: datasource=github-releases depName=derailed/k9s
 K9S_TGZ="$(tmp_name k9s "$K9S_VERSION" tar.gz)"
 download_if_missing_cmd "$K9S_TGZ" /ctx/build_files/github-release-url.sh derailed/k9s "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$K9S_VERSION"
-tar -zxvf "$K9S_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
+extract_tar "$K9S_TGZ"
 "$BIN_DIR/k9s" completion bash >"$COMPLETION_DIR/k9s"
 
 log "Installing sops"
@@ -205,14 +206,14 @@ log "Installing helm"
 HELM_VERSION="v3.19.4" # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
 download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${PLATFORM_ARCH}.tar.gz"
-tar -zxvf "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
+extract_tar "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
 log "Installing numr"
 NUMR_VERSION="v0.4.0" # renovate: datasource=github-releases depName=nasedkinpv/numr
 NUMR_TGZ="$(tmp_name numr "$NUMR_VERSION" tar.gz)"
 download_if_missing_cmd "$NUMR_TGZ" /ctx/build_files/github-release-url.sh nasedkinpv/numr "${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.gz" "$NUMR_VERSION"
-tar -zxvf "$NUMR_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md --exclude=licenses
+extract_tar "$NUMR_TGZ"
 
 log "Installing lazyjournal"
 LAZYJOURNAL_VERSION="0.8.3" # renovate: datasource=github-releases depName=Lifailon/lazyjournal
@@ -224,13 +225,13 @@ log "Installing lazydocker"
 LAZYDOCKER_VERSION="v0.24.3" # renovate: datasource=github-releases depName=jesseduffield/lazydocker
 LAZYDOCKER_TGZ="$(tmp_name lazydocker "$LAZYDOCKER_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazydocker "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYDOCKER_VERSION"
-tar -zxvf "$LAZYDOCKER_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
+extract_tar "$LAZYDOCKER_TGZ"
 
 log "Installing lazygit"
 LAZYGIT_VERSION="v0.58.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
-tar -zxvf "$LAZYGIT_TGZ" -C "$BIN_DIR"/ --exclude=LICENSE --exclude=README.md
+extract_tar "$LAZYGIT_TGZ"
 
 log "Installing witr"
 WITR_VERSION="v0.1.7" # renovate: datasource=github-releases depName=pranshuparmar/witr
@@ -242,7 +243,7 @@ log "Installing fresh-editor"
 FRESH_VERSION="v0.1.70" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TGZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.gz)"
 download_if_missing_cmd "$FRESH_TGZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
-tar -xvJf "$FRESH_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses --exclude=themes --exclude plugins --exclude CHANGELOG.md
+extract_tar "$FRESH_TGZ" --strip-components=1 --exclude=themes --exclude=plugins --exclude CHANGELOG.md
 
 log "Installing dysk"
 DYSK_VERSION="latest"
