@@ -5,12 +5,11 @@ COPY system_files/ /system_files/
 
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
-# Install GUI components (basic desktop + browser + multimedia support)
-# Inspiration: https://gitlab.com/fedora/bootc/examples/-/tree/main/kiosk
-RUN dnf copr enable -y scottames/ghostty
-RUN dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
-    dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" && \
-    dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+RUN dnf copr enable -y scottames/ghostty && \
+	dnf copr enable -y sneexy/zen-browser && \
+  dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
+	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
+  dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
 # PREPARE PACKAGES
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/gui/packages-added
@@ -50,3 +49,4 @@ RUN systemctl set-default graphical.target
 
 
 RUN bootc container lint || true
+
