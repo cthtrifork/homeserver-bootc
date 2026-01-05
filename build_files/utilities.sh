@@ -62,6 +62,21 @@ download_if_missing_cmd() {
     curl -sLo "$dest" "$url"
 }
 
+extract_tar() {
+    # extracts the specified tar to BIN_DIR and ensures correct ownership
+    local source="$1"
+    shift
+
+    local additonalArgs="$@"
+
+    tar -zxvf "$source" -C "$BIN_DIR"/ $additonalArgs \
+        --exclude=LICENSE \
+        --exclude=license \
+        --exclude='*.md' \
+        --owner=root --group=root \
+        --no-same-owner
+}
+
 log "Installing oh-my-bash"
 mkdir -p /usr/local
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local --unattended
@@ -72,7 +87,7 @@ log "Installing age"
 AGE_VERSION="v1.3.1" # renovate: datasource=github-releases depName=FiloSottile/age
 AGE_TGZ="$(tmp_name age "$AGE_VERSION" tar.gz)"
 download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSottile/age "${MACHINE}-${PLATFORM_ARCH}.tar.gz" "$AGE_VERSION"
-tar -zxvf "$AGE_TGZ" -C "$BIN_DIR"/ --strip-components=1 --exclude=LICENSE
+extract_tar "$AGE_TGZ" "--strip-components=1"
 
 log "Installing gh-cli"
 GH_CLI_VERSION="v2.83.2" # renovate: datasource=github-releases depName=cli/cli
