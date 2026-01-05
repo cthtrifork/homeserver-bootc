@@ -697,6 +697,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      artifact-metadata: write
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       attestations: write
     steps:
