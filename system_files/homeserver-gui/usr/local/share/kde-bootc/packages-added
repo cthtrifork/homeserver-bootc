@@ -45,6 +45,7 @@ google-noto-emoji-color-fonts
 ################
 
 # Browser
+#brave-browser
 zen-browser
 # Terminal
 ghostty
@@ -109,4 +110,5 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
