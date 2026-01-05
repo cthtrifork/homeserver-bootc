@@ -67,9 +67,7 @@ extract_tar() {
     local source="$1"
     shift
 
-    local additonalArgs="$@"
-
-    tar -zxvf "$source" -C "$BIN_DIR"/ $additonalArgs \
+    tar -zxvf "$source" -C "$BIN_DIR"/ "$@" \
         --exclude=LICENSE \
         --exclude=license \
         --exclude='*.md' \
