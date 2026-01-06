@@ -39,6 +39,12 @@ systemd-oomd-defaults
 
 # Fonts
 google-noto-emoji-color-fonts
+google-noto-sans-fonts
+#google-droid-sans-fonts
+#google-droid-sans-mono-fonts
+cascadia-code-fonts
+cascadia-code-nf-fonts
+jetbrains-mono-fonts
 
 ################
 # Applications #
@@ -68,12 +74,6 @@ kdialog
 # Utils
 btop
 wl-clipboard
-# fonts
-cascadia-code-fonts
-cascadia-code-nf-fonts
-jetbrains-mono-fonts
-google-droid-sans-fonts
-google-droid-sans-mono-fonts
 
 ###########
 # Network #
