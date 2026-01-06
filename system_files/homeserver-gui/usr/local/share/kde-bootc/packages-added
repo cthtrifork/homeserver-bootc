@@ -40,11 +40,13 @@ systemd-oomd-defaults
 # Fonts
 google-noto-emoji-color-fonts
 google-noto-sans-fonts
+google-roboto-fonts
 #google-droid-sans-fonts
 #google-droid-sans-mono-fonts
 cascadia-code-fonts
 cascadia-code-nf-fonts
 jetbrains-mono-fonts
+
 
 ################
 # Applications #
