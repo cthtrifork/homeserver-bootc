@@ -28,6 +28,7 @@ tmux
 podman-compose
 fzf
 tldr
+bat
 
 ##################
 # Virtualisation #
