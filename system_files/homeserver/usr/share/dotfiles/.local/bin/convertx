@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# https://github.com/C4illin/ConvertX
+set -e
+set -u
+
+mkdir -p /tmp/convertx
+docker run --rm -p 3000:3000 -v /tmp/convertx:/app/data ghcr.io/c4illin/convertx
