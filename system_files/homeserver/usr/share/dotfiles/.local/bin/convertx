@@ -5,3 +5,4 @@ set -u
 
 mkdir -p /tmp/convertx
 docker run --rm -p 3000:3000 -v /tmp/convertx:/app/data ghcr.io/c4illin/convertx
+open http://localhost:3000/
