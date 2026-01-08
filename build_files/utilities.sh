@@ -274,7 +274,7 @@ download_if_missing_cmd "$DOXX_TGZ" /ctx/build_files/github-release-url.sh bgree
 extract "$DOXX_TGZ"
 
 log "Installing witr"
-WITR_VERSION="v0.2.0" # renovate: datasource=github-releases depName=pranshuparmar/witr
+WITR_VERSION="v0.2.1" # renovate: datasource=github-releases depName=pranshuparmar/witr
 WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh pranshuparmar/witr "witr-${MACHINE}.${PLATFORM_ARCH}" "$WITR_VERSION"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
