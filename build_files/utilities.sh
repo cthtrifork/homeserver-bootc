@@ -130,7 +130,7 @@ extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
 "$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
 
 log "Installing kubectl"
-KUBECTL_VERSION="v1.34.3" # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION="v1.35.0" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_BIN="$(tmp_name kubectl "$KUBECTL_VERSION" bin)"
 download_if_missing "$KUBECTL_BIN" "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${PLATFORM_ARCH}/kubectl"
 install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
