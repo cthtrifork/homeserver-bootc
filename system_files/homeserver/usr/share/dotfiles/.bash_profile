@@ -10,6 +10,7 @@ export HISTFILESIZE=5000
 export LSCOLORS='ExGxbEaECxxEhEhBaDaCaD'
 export PAGER='less'
 export TZ='Europe/Copenhagen'
+export BAT_PAGER=''
 
 export PATH="$PATH:$HOME/.local/bin"
 
