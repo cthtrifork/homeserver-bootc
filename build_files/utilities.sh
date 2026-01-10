@@ -279,6 +279,20 @@ WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh pranshuparmar/witr "witr-${MACHINE}.${PLATFORM_ARCH}" "$WITR_VERSION"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
+log "Installing tre"
+TRE_VERSION="v0.4.0" # renovate: datasource=github-releases depName=dduan/tre
+TRE_TGZ="$(tmp_name tre "$TRE_VERSION" tar.gz)"
+download_if_missing_cmd "$TRE_TGZ" /ctx/build_files/github-release-url.sh dduan/tre "${HOST_ARCH}.unknown.${MACHINE}.musl.tar.gz" "$TRE_VERSION"
+extract "$TRE_TGZ"
+
+log "Installing tealdeer"
+TEALDEER_VERSION="v1.8.1" # renovate: datasource=github-releases depName=tealdeer-rs/tealdeer
+TEALDEER_BIN="$(tmp_name witr "$TEALDEER_VERSION" bin)"
+download_if_missing_cmd "$TEALDEER_BIN" /ctx/build_files/github-release-url.sh tealdeer-rs/tealdeer "tealdeer-${MACHINE}.${HOST_ARCH}" "$TEALDEER_VERSION"
+download_if_missing_cmd "${TEALDEER_BIN}_bash_tealdeer" /ctx/build_files/github-release-url.sh tealdeer-rs/tealdeer "completions_bash" "$TEALDEER_VERSION"
+install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
+cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
+
 log "Installing fresh-editor"
 FRESH_VERSION="v0.1.75" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
