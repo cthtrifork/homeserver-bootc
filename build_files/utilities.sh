@@ -185,7 +185,7 @@ extract "$KUSTOMIZE_TGZ"
 "$BIN_DIR/kustomize" completion bash >"$COMPLETION_DIR/kustomize"
 
 log "Installing k9s"
-K9S_VERSION=v0.50.17 # renovate: datasource=github-releases depName=derailed/k9s
+K9S_VERSION=v0.50.18 # renovate: datasource=github-releases depName=derailed/k9s
 K9S_TGZ="$(tmp_name k9s "$K9S_VERSION" tar.gz)"
 download_if_missing_cmd "$K9S_TGZ" /ctx/build_files/github-release-url.sh derailed/k9s "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$K9S_VERSION"
 extract "$K9S_TGZ"
