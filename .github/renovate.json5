@@ -1,78 +1,76 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices",
-    ":disableDigestUpdates"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:best-practices',
+    ':disableDigestUpdates',
   ],
-  "digest": {
-    "enabled": false
+  digest: {
+    enabled: false,
   },
-  "labels": [
-    "dependencies",
-    "automated-pr"
+  labels: [
+    'dependencies',
+    'automated-pr',
   ],
-  "dependencyDashboard": true,
-  "timezone": "Europe/Copenhagen",
-  "schedule": [
-    "after 12am and before 7am every weekday",
-    "every sunday"
+  dependencyDashboard: true,
+  timezone: 'Europe/Copenhagen',
+  schedule: [
+    'after 12am and before 7am every weekday',
+    'on sunday',
   ],
-  "automergeSchedule": [
-    "after 12pm and before 4pm every weekday"
+  automergeSchedule: [
+    'after 12pm and before 4pm every weekday',
   ],
-  "vulnerabilityAlerts": {
-    "addLabels": [
-      "vulnerability"
+  vulnerabilityAlerts: {
+    addLabels: [
+      'vulnerability',
     ],
-    "additionalBranchPrefix": [
-      ""
-    ]
+    additionalBranchPrefix: '',
   },
-  "major": {
-    "automerge": false
+  major: {
+    automerge: false,
   },
-  "minor": {
-    "automerge": false
+  minor: {
+    automerge: false,
   },
-  "patch": {
-    "automerge": true
+  patch: {
+    automerge: true,
   },
-  "rebaseWhen": "auto",
-  "packageRules": [
+  rebaseWhen: 'auto',
+  packageRules: [
     {
-      "automerge": true,
-      "pinDigests": false,
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ]
+      automerge: true,
+      pinDigests: false,
+      matchUpdateTypes: [
+        'major',
+        'minor',
+        'patch',
+      ],
     },
     {
-      "automerge": true,
-      "pinDigests": false,
-      "matchManagers": [
-        "github-actions"
+      automerge: true,
+      pinDigests: false,
+      matchManagers: [
+        'github-actions',
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ]
-    }
+      matchUpdateTypes: [
+        'major',
+        'minor',
+        'patch',
+      ],
+    },
   ],
-  "customManagers": [
+  customManagers: [
     {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^build_files/.*\\.sh$/"
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^build_files/.*\\.sh$/',
       ],
-      "matchStrings": [
-        '(?<depName>[^\\s"\']+)="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)'
+      matchStrings: [
+        '(?<depName>[^\\s"\']+)="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
       ],
-      "datasourceTemplate": "{{{datasource}}}",
-      "packageNameTemplate": "{{{packageName}}}",
-      "versioningTemplate": "semver"
-    }
-  ]
+      datasourceTemplate: '{{{datasource}}}',
+      packageNameTemplate: '{{{packageName}}}',
+      versioningTemplate: 'semver',
+    },
+  ],
 }
