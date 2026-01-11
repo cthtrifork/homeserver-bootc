@@ -1,48 +1,78 @@
 {
-  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: [
-    'config:best-practices',
-    ':disableDigestUpdates',
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":disableDigestUpdates"
   ],
-  digest: {
-    enabled: false,
+  "digest": {
+    "enabled": false
   },
-  rebaseWhen: 'auto',
-  packageRules: [
-    {
-      automerge: true,
-      pinDigests: false,
-      matchUpdateTypes: [
-        'major',
-        'minor',
-        'patch',
-      ],
-    },
-    {
-      automerge: true,
-      pinDigests: false,
-      matchManagers: [
-        'github-actions',
-      ],
-      matchUpdateTypes: [
-        'major',
-        'minor',
-        'patch',
-      ],
-    },
+  "labels": [
+    "dependencies",
+    "automated-pr"
   ],
-  customManagers: [
+  "dependencyDashboard": true,
+  "timezone": "Europe/Copenhagen",
+  "schedule": [
+    "after 12am and before 7am every weekday",
+    "every sunday"
+  ],
+  "automergeSchedule": [
+    "after 12pm and before 4pm every weekday"
+  ],
+  "vulnerabilityAlerts": {
+    "addLabels": [
+      "vulnerability"
+    ],
+    "additionalBranchPrefix": [
+      ""
+    ]
+  },
+  "major": {
+    "automerge": false
+  },
+  "minor": {
+    "automerge": false
+  },
+  "patch": {
+    "automerge": true
+  },
+  "rebaseWhen": "auto",
+  "packageRules": [
     {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^build_files/.*\\.sh$/',
+      "automerge": true,
+      "pinDigests": false,
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "automerge": true,
+      "pinDigests": false,
+      "matchManagers": [
+        "github-actions"
       ],
-      matchStrings: [
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^build_files/.*\\.sh$/"
+      ],
+      "matchStrings": [
         '(?<depName>[^\\s"\']+)="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)'
       ],
-      datasourceTemplate: '{{{datasource}}}',
-      packageNameTemplate: '{{{packageName}}}',
-      versioningTemplate: 'semver',
-    },
-  ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "packageNameTemplate": "{{{packageName}}}",
+      "versioningTemplate": "semver"
+    }
+  ]
 }
