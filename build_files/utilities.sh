@@ -137,7 +137,7 @@ install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
 "$BIN_DIR/kubectl" completion bash >"$COMPLETION_DIR/kubectl"
 
 log "Installing kubectl-oidc-login (kubelogin)"
-KUBELOGIN_VERSION="v1.35.0" # renovate: datasource=github-releases depName=int128/kubelogin
+KUBELOGIN_VERSION="v1.35.2" # renovate: datasource=github-releases depName=int128/kubelogin
 KUBELOGIN_ZIP="$(tmp_name kubelogin "$KUBELOGIN_VERSION" zip)"
 download_if_missing_cmd "$KUBELOGIN_ZIP" /ctx/build_files/github-release-url.sh int128/kubelogin "${MACHINE}.${PLATFORM_ARCH}.zip" "$KUBELOGIN_VERSION"
 extract "$KUBELOGIN_ZIP"
