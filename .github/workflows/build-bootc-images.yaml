@@ -38,7 +38,7 @@ on:
       - "hello.containerfile"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ matrix.image }}
   cancel-in-progress: true
 
 env:
