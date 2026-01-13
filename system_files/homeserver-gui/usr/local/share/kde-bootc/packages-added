@@ -97,6 +97,7 @@ linux-firmware-whence
 # Hardware #
 ############
 upower
+powerdevil
 kamera
 lm_sensors
 ## Bluetooth stack
@@ -111,3 +112,4 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
