@@ -244,7 +244,7 @@ extract "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
 log "Installing numr"
-NUMR_VERSION="v0.4.0" # renovate: datasource=github-releases depName=nasedkinpv/numr
+NUMR_VERSION="v0.4.1" # renovate: datasource=github-releases depName=nasedkinpv/numr
 NUMR_TGZ="$(tmp_name numr "$NUMR_VERSION" tar.gz)"
 download_if_missing_cmd "$NUMR_TGZ" /ctx/build_files/github-release-url.sh nasedkinpv/numr "${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.gz" "$NUMR_VERSION"
 extract "$NUMR_TGZ"
