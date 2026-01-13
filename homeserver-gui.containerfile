@@ -42,11 +42,10 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service && \
-	systemctl enable NetworkManager
+	systemctl enable NetworkManager && \
+  systemctl mask systemd-networkd-wait-online.service
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target
 
-
 RUN bootc container lint || true
-
