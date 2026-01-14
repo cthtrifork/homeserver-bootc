@@ -98,9 +98,9 @@ linux-firmware-whence
 ############
 ## Power
 upower
-powerdevil
 tlp
 tlp-pd
+tlp-rdw
 ## drivers
 kamera
 lm_sensors
