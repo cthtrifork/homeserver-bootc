@@ -26,3 +26,8 @@ dnf-data
 
 python3-boto3
 python3-botocore
+
+# power replaced by TLP
+tuned
+tuned-ppd
+power-profiles-daemon
