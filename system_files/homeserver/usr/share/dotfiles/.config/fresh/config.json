@@ -1,9 +1,13 @@
 {
   "version": 1,
   "theme": "dark",
+  "locale": "en"
   "editor": {
     "tab_size": 4,
     "line_numbers": true
   },
-  "check_for_updates": false
+  "check_for_updates": false,
+  "file_explorer": {
+    "show_hidden": true
+  }
 }
