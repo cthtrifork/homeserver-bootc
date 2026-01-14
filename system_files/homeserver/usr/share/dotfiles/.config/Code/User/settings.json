@@ -1,4 +1,5 @@
 {
     "window.titleBarStyle": "custom",
-    "update.mode": "none"
+    "update.mode": "none",
+    "git.confirmSync": false
 }
