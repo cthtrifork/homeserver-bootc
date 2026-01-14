@@ -7,9 +7,9 @@ FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 RUN dnf copr enable -y scottames/ghostty && \
 	dnf copr enable -y sneexy/zen-browser && \
-  dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
+	dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
 	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
-  dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+	dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
 # PREPARE PACKAGES
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/gui/packages-added
@@ -43,6 +43,9 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service && \
 	systemctl enable NetworkManager && \
+	systemctl enable tlp.service && \
+	systemctl enable tlp-pd.service && \
+	systemctl mask systemd-rfkill.service systemd-rfkill.socket && \
   systemctl mask systemd-networkd-wait-online.service
 
 # Enable GUI by default
