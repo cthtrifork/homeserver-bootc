@@ -305,7 +305,7 @@ plugins:
         | jq -r '.items[] | select(.spec.suspend==true) | [.metadata.namespace,.metadata.name,.spec.suspend] | @tsv'
         | less -K
   get-suspended-kustomizations:
-    shortCut: Shift-S
+    shortCut: Shift-M
     confirm: false
     description: Suspended Kustomizations
     scopes:
