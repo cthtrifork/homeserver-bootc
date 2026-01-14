@@ -294,7 +294,7 @@ install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
 cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.1.75" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.1.77" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
