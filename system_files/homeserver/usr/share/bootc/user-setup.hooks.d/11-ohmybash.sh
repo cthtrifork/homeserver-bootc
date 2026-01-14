@@ -16,8 +16,7 @@ install_ohmybash() {
         # modify .bashrc
         # https://github.com/ohmybash/oh-my-bash?tab=readme-ov-file
         sed -i 's/^plugins=(git)$/plugins=(git kubectl)/g' "${HOME_DIR}/.bashrc"
-        echo 'export OMB_USE_SUDO=false' >>"${HOME_DIR}/.bashrc"
-        echo 'export DISABLE_AUTO_UPDATE=true' >>"${HOME_DIR}/.bashrc"
+        cat "${HOME_DIR}/.bashrc.local" >>"${HOME_DIR}/.bashrc"
 
         chown "$TARGET_USER":"$TARGET_USER" "${HOME_DIR}/.bashrc"
     fi
