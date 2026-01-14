@@ -27,5 +27,4 @@ shopt -s extglob
 
 # Load external files
 . ~/.bash_aliases    2>/dev/null || true
-
-true
+. ~/.bashrc.local    2>/dev/null || true
