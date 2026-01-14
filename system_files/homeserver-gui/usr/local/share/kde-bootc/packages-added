@@ -96,10 +96,13 @@ linux-firmware-whence
 ############
 # Hardware #
 ############
+## Power
 upower
 powerdevil
+## drivers
 kamera
 lm_sensors
+kcm_touchpad
 ## Bluetooth stack
 bluedevil
 ## thermal management
@@ -112,4 +115,5 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
