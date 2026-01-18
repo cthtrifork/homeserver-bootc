@@ -256,7 +256,7 @@ download_if_missing_cmd "$LAZYJOURNAL_BIN" /ctx/build_files/github-release-url.s
 install -o root -g root -m 0755 "$LAZYJOURNAL_BIN" "$BIN_DIR/lazyjournal"
 
 log "Installing lazydocker"
-LAZYDOCKER_VERSION="v0.24.3" # renovate: datasource=github-releases depName=jesseduffield/lazydocker
+LAZYDOCKER_VERSION="v0.24.4" # renovate: datasource=github-releases depName=jesseduffield/lazydocker
 LAZYDOCKER_TGZ="$(tmp_name lazydocker "$LAZYDOCKER_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazydocker "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYDOCKER_VERSION"
 extract "$LAZYDOCKER_TGZ"
