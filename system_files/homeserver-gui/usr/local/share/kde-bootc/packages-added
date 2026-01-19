@@ -81,16 +81,28 @@ wl-clipboard
 # Virtualization #
 ##################
 
-qemu-kvm # A user-level KVM emulator that facilitates communication between hosts and VMs.
-libvirt # A daemon that manages virtual machines and the hypervisor as well as handles library calls.
-virt-install #  A command-line tool for creating guest virtual machines.
-virt-manager # A graphical tool for creating and managing guest virtual machines.
-virt-viewer # A graphical console for connecting to a running virtual machine.
-edk2-ovmf # Enables UEFI support for Virtual Machines.
-swtpm # A TPM emulator for Virtual Machines.
-qemu-img # Provides tools to create, convert, modify, and snapshot offline disk images.
-guestfs-tools # Provides a set of extended command-line tools for managing virtual machines.
-libosinfo # A library for managing OS information for virtualization.
+# A user-level KVM emulator that facilitates communication between hosts and VMs.
+qemu-kvm
+# A daemon that manages virtual machines and the hypervisor as well as handles library calls.
+libvirt
+# A command-line tool for creating guest virtual machines.
+virt-install
+# A graphical tool for creating and managing guest virtual machines.
+virt-manager
+# A graphical console for connecting to a running virtual machine.
+virt-viewer
+# Enables UEFI support for Virtual Machines.
+edk2-ovmf
+# ATPM emulator for Virtual Machines.
+swtpm
+# Provides tools to create, convert, modify, and snapshot offline disk images.
+qemu-img
+# Provides a set of extended command-line tools for managing virtual machines.
+guestfs-tools
+# A library for managing OS information for virtualization.
+libosinfo 
+# A system tuning service for Linux
+tuned
 
 ###########
 # Network #
@@ -133,4 +145,5 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
