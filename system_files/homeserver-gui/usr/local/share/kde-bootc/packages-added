@@ -91,7 +91,6 @@ swtpm # A TPM emulator for Virtual Machines.
 qemu-img # Provides tools to create, convert, modify, and snapshot offline disk images.
 guestfs-tools # Provides a set of extended command-line tools for managing virtual machines.
 libosinfo # A library for managing OS information for virtualization.
-tuned # A system tuning service for Linux
 
 ###########
 # Network #
@@ -134,3 +133,4 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
