@@ -33,6 +33,8 @@ runs:
       if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
       run: |
+        $PODMAN pull -q ${{ env.IMAGE_FULL }}:latest
+        
         $PODMAN pull --tls-verify=false -q \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
