@@ -518,6 +518,7 @@ jobs:
           output: ${{ github.workspace }}/latest_trivy.json
           cache: "false"
           ignore-unfixed: true
+          skip-setup-trivy: true
           #severity: HIGH,CRITICAL
           scanners: "vuln"
         env:
