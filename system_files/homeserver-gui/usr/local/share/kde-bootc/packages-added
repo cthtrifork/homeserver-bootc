@@ -25,6 +25,9 @@ plasma-breeze
 # screenlocker
 kscreenlocker
 
+# startup
+plymouth-theme-spinner
+
 # Wallet + crypto prompt
 kwalletmanager5
 pam-kwallet
