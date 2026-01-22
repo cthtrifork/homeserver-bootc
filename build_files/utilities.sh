@@ -123,7 +123,7 @@ download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSo
 extract "$AGE_TGZ" --strip-components=1
 
 log "Installing gh-cli"
-GH_CLI_VERSION="v2.85.0" # renovate: datasource=github-releases depName=cli/cli
+GH_CLI_VERSION="v2.86.0" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
 download_if_missing_cmd "$GH_CLI_TGZ" /ctx/build_files/github-release-url.sh cli/cli "${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$GH_CLI_VERSION"
 extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
@@ -237,7 +237,7 @@ install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
 "$BIN_DIR/talosctl" completion bash >"$COMPLETION_DIR/talosctl"
 
 log "Installing helm"
-HELM_VERSION="v3.19.5" # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION="v3.20.0" # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
 download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${PLATFORM_ARCH}.tar.gz"
 extract "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
@@ -274,7 +274,7 @@ download_if_missing_cmd "$DOXX_TGZ" /ctx/build_files/github-release-url.sh bgree
 extract "$DOXX_TGZ"
 
 log "Installing witr"
-WITR_VERSION="v0.2.5" # renovate: datasource=github-releases depName=pranshuparmar/witr
+WITR_VERSION="v0.2.6" # renovate: datasource=github-releases depName=pranshuparmar/witr
 WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh pranshuparmar/witr "witr-${MACHINE}.${PLATFORM_ARCH}" "$WITR_VERSION"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
@@ -294,7 +294,7 @@ install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
 cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.1.86" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.1.87" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
