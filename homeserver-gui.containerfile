@@ -40,9 +40,9 @@ RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 #	dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
 
 RUN depmod -a "$(ls -1 /lib/modules/ | tail -1)"
-RUN KERNEL_SUFFIX="" \
-  QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//' | tail -n 1)" \
-  /usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --zstd -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
+#RUN KERNEL_SUFFIX="" \
+#  QUALIFIED_KERNEL="$(rpm -qa | grep -P 'kernel-(|'"$KERNEL_SUFFIX"'-)(\d+\.\d+\.\d+)' | sed -E 's/kernel-(|'"$KERNEL_SUFFIX"'-)//' | tail -n 1)" \
+#  /usr/bin/dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --zstd -v --add ostree -f "/lib/modules/$QUALIFIED_KERNEL/initramfs.img"
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -61,6 +61,3 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint || true
-
-
-
