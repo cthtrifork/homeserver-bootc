@@ -36,8 +36,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 
 RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 
-RUN kver=$(cd /usr/lib/modules && echo * | awk '{print $1}') \
-	dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+#RUN kver=$(cd /usr/lib/modules && echo * | awk '{print $1}') \
+#	dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -56,3 +56,4 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint || true
+
