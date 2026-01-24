@@ -39,8 +39,7 @@ RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 #RUN kver=$(cd /usr/lib/modules && echo * | awk '{print $1}') \
 #	dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
 
-RUN plymouth-set-default-theme spinner && \
-  plymouth-set-default-theme spinner -R details && \
+RUN plymouth-set-default-theme spinner -R && \
   systemctl enable plymouth-start.service
 
 RUN depmod -a "$(ls -1 /lib/modules/ | tail -1)"
@@ -65,6 +64,3 @@ RUN systemctl disable pinggy.service && \
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint || true
-
-
-
