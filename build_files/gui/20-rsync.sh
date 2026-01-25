@@ -11,4 +11,5 @@ debug() {
     echo "[DEBUG] $*" >&2
 }
 
-log "Post build process started"
+log "Syncing system files from build context"
+rsync -rvpK /ctx/system_files/homeserver-gui/ /

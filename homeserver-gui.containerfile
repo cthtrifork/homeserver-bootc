@@ -25,35 +25,10 @@ RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-		chmod +x /ctx/build_files/pre.d/*.sh /ctx/build_files/post.d/*.sh && \
-    for dir in /ctx/build_files/pre.d /ctx/build_files/post.d; do \
+    chmod +x -R /ctx/build_files/**/*.sh && \
+    for dir in /ctx/build_files/base /ctx/build_files/gui /ctx/build_files/post; do \
       for s in "$dir"/*.sh; do [ -f "$s" ] && "$s"; done; \
     done
-
-# Install VSCode
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/gui-vscode.sh
-
-# Sync /usr and /etc
-# todo: move to build files with ordering
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    --mount=type=tmpfs,dst=/tmp \
-    rsync -rvpK /ctx/system_files/homeserver/ / \
-    && rsync -rvpK /ctx/system_files/homeserver-gui/ /
-
-# todo: move to build files with ordering
-RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
-
-# initramfs
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/initramfs.sh
-
-# Cleanup
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/cleanup.sh
 
 # Do not run pinggy on a GUI client
 RUN systemctl disable pinggy.service && \
