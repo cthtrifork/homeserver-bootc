@@ -25,7 +25,11 @@ plasma-breeze
 # screenlocker
 kscreenlocker
 
-# startup
+# startup / initramfs
+clevis
+clevis-dracut
+clevis-luks
+clevis-systemd
 plymouth-theme-spinner
 
 # Wallet + crypto prompt
