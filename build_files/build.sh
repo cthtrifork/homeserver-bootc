@@ -11,7 +11,7 @@ log() {
 
 #todo look at variant to get the right dirs
 
-for dir in /opt/pre.d /opt/post.d; do
+for dir in /ctx/build_files/base /ctx/build_files/$variant /ctx/build_files/post; do
     for s in "$dir"/*.sh; do 
         [ -f "$s" ] && "$s";
     done;
