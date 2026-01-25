@@ -25,7 +25,7 @@ RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    for dir in /ctx/build_files/base /ctx/build_files/gui /ctx/build_files/post; do for s in "$dir"/*.sh; do [ -f "$s" ] && "$s"; done; done
+    /ctx/build_files/build.sh "gui"
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target
