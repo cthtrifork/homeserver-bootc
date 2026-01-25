@@ -9,6 +9,7 @@ set -eou pipefail
 
 # Setup Plymouth with theme
 plymouth-set-default-theme spinner
+plymouth-set-default-theme bgrt-better-luks
 
 # Update initramfs
 # https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/managing-rhel-bootc-images#adding-modules-to-the-bootc-image-initramfs_managing-rhel-bootc-images
