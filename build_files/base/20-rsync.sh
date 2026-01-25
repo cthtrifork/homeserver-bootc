@@ -1,0 +1,1 @@
+rsync -rvpK /ctx/system_files/homeserver/ /
