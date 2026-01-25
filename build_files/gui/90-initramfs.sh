@@ -11,6 +11,7 @@ set -eou pipefail
 plymouth-set-default-theme spinner
 
 # Update initramfs
-#set -x
-#kver=$(cd /usr/lib/modules && echo *)
-#dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+# https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/managing-rhel-bootc-images#adding-modules-to-the-bootc-image-initramfs_managing-rhel-bootc-images
+set -x
+kver=$(cd /usr/lib/modules && echo *)
+dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
