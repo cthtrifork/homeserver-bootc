@@ -42,10 +42,9 @@ RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 RUN cat /etc/dracut.conf.d/no-xattr.conf || true
 ENV DRACUT_NO_XATTR=1
 
-RUN <<EORUN
-dnf install -y clevis clevis-dracut clevis-luks clevis-systemd
-set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
-EORUN
+ 
+RUN dnf install -y clevis clevis-dracut clevis-luks clevis-systemd
+RUN set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
 
 RUN plymouth-set-default-theme spinner -R && \
   systemctl enable plymouth-start.service
