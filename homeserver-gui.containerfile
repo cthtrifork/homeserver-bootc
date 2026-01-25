@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.21@sha256:27f9262d43452075f3c410287a2c43f5ef1bf7ec2bb06e8c9eeb1b8d453087bc
-FROM scratch AS ctx
+FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
@@ -23,7 +23,7 @@ RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y rem
 # Set default applications
 RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     chmod +x -R /ctx/build_files/**/*.sh && \
     for dir in /ctx/build_files/base /ctx/build_files/gui /ctx/build_files/post; do \
