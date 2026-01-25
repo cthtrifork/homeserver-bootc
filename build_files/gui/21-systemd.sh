@@ -12,10 +12,10 @@ systemctl disable pinggy.service
 
 log "Enabling system services"
 
-# Power stuff
+# Power management
 systemctl enable tlp.service
 systemctl enable tlp-pd.service
-# kernal stuff
+# disable rf-kill to avoid known conflicts on reboots
 systemctl mask systemd-rfkill.service systemd-rfkill.socket
 
 # startup speed improvements
