@@ -5,7 +5,7 @@ set -eou pipefail
 trap '[[ $BASH_COMMAND != echo* ]] && [[ $BASH_COMMAND != log* ]] && echo "+ $BASH_COMMAND"' DEBUG
 
 log() {
-  echo "=== $* ==="
+    echo "=== $* ==="
 }
 
 log "Starting system cleanup"
@@ -41,7 +41,7 @@ find /var/* -maxdepth 0 -type d \! -name cache -exec rm -fr {} \;
 # Clean /var/cache but preserve dnf + rpm-ostree
 find /var/cache/* -maxdepth 0 -type d \! -name dnf \! -name rpm-ostree -exec rm -fr {} \;
 # Clean dnf cache
-#rm /var/{cache,lib}/dnf /var/lib/rhsm /var/cache/ldconfig -rf 
+#rm /var/{cache,lib}/dnf /var/lib/rhsm /var/cache/ldconfig -rf
 
 # Restore and setup directories
 mkdir -p /var/tmp

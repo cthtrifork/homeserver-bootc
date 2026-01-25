@@ -12,8 +12,8 @@ debug() {
 }
 
 PLATFORM_ARCH="$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')" # amd64
-HOST_ARCH="$(uname -m)" # x86_64
-MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"  # linux
+HOST_ARCH="$(uname -m)"                                               # x86_64
+MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"                    # linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
@@ -68,47 +68,46 @@ extract() {
     shift
 
     case "$source" in
-        *.tar.gz|*.tgz)
-            tar -zxvf "$source" -C "$BIN_DIR"/ "$@" \
-                --exclude=LICENSE \
-                --exclude=CHANGELOG.md \
-                --exclude=license \
-                --exclude=licenses \
-                --exclude='*.md' \
-                --owner=root --group=root \
-                --no-same-owner
-            ;;
-        *.tar.xz)
-            tar -xvJf "$source" -C "$BIN_DIR"/ "$@" \
-                --exclude=LICENSE \
-                --exclude=CHANGELOG.md \
-                --exclude=license \
-                --exclude=licenses \
-                --exclude='*.md' \
-                --owner=root --group=root \
-                --no-same-owner
-            ;;
-        *.tar.bz2)
-            tar -xvjf "$source" -C "$BIN_DIR"/ "$@" \
-                --exclude=LICENSE \
-                --exclude=CHANGELOG.md \
-                --exclude=license \
-                --exclude=licenses \
-                --exclude='*.md' \
-                --owner=root --group=root \
-                --no-same-owner
-            ;;
-        *.zip)
-            unzip "$source" -d "$BIN_DIR"/ \
-                -x LICENSE license licenses '*.md'
-            ;;
-        *)
-            echo "Unsupported archive format: $source" >&2
-            return 1
-            ;;
+    *.tar.gz | *.tgz)
+        tar -zxvf "$source" -C "$BIN_DIR"/ "$@" \
+            --exclude=LICENSE \
+            --exclude=CHANGELOG.md \
+            --exclude=license \
+            --exclude=licenses \
+            --exclude='*.md' \
+            --owner=root --group=root \
+            --no-same-owner
+        ;;
+    *.tar.xz)
+        tar -xvJf "$source" -C "$BIN_DIR"/ "$@" \
+            --exclude=LICENSE \
+            --exclude=CHANGELOG.md \
+            --exclude=license \
+            --exclude=licenses \
+            --exclude='*.md' \
+            --owner=root --group=root \
+            --no-same-owner
+        ;;
+    *.tar.bz2)
+        tar -xvjf "$source" -C "$BIN_DIR"/ "$@" \
+            --exclude=LICENSE \
+            --exclude=CHANGELOG.md \
+            --exclude=license \
+            --exclude=licenses \
+            --exclude='*.md' \
+            --owner=root --group=root \
+            --no-same-owner
+        ;;
+    *.zip)
+        unzip "$source" -d "$BIN_DIR"/ \
+            -x LICENSE license licenses '*.md'
+        ;;
+    *)
+        echo "Unsupported archive format: $source" >&2
+        return 1
+        ;;
     esac
 }
-
 
 log "Installing oh-my-bash"
 mkdir -p /usr/local
