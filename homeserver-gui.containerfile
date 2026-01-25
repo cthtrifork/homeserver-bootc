@@ -23,6 +23,13 @@ RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y rem
 # Set default applications
 RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+		chmod +x /ctx/build_files/pre.d/*.sh /ctx/build_files/post.d/*.sh && \
+    for dir in /ctx/build_files/pre.d /ctx/build_files/post.d; do \
+      for s in "$dir"/*.sh; do [ -f "$s" ] && "$s"; done; \
+    done
+
 # Install VSCode
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
