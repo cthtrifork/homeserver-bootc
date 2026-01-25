@@ -42,10 +42,13 @@ RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 RUN plymouth-set-default-theme spinner -R && \
   systemctl enable plymouth-start.service
 
-RUN depmod -a "$(ls -1 /lib/modules/ | tail -1)"
-RUN for kver in $(ls -1 /usr/lib/modules); do \
-      dracut -f "/usr/lib/modules/${kver}/initramfs.img" "${kver}"; \
-    done
+RUN cat /etc/dracut.conf.d/no-xattr.conf
+ENV DRACUT_NO_XATTR=1
+
+RUN <<EORUN
+dnf install -y clevis clevis-dracut clevis-luks clevis-systemd
+set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+EORUN
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
