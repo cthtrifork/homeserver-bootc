@@ -1,4 +1,6 @@
-/usr/bin/env bash
+#!/usr/bin/bash
+#shellcheck disable=SC2115
+set -eou pipefail
 
 # dracut hacks
 # https://gitlab.com/fedora/bootc/tracker/-/issues/66#note_2590604787
