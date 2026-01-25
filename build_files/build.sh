@@ -8,7 +8,7 @@ log() {
     echo "=== $* ==="
 }
 
-VARIANT=${1:?missing}
+VARIANT=${1:?"Usage: $0 <core|gui>"}
 
 for dir in /ctx/build_files/base /ctx/build_files/${VARIANT} /ctx/build_files/post; do
     for s in "$dir"/*.sh; do 
