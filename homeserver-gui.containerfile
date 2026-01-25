@@ -3,6 +3,7 @@ FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
+# this will also inherit all build_files/core/* applied changes
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 RUN dnf copr enable -y scottames/ghostty && \
