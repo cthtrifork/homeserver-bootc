@@ -30,14 +30,6 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
       for s in "$dir"/*.sh; do [ -f "$s" ] && "$s"; done; \
     done
 
-# Do not run pinggy on a GUI client
-RUN systemctl disable pinggy.service && \
-	systemctl enable NetworkManager && \
-	systemctl enable tlp.service && \
-	systemctl enable tlp-pd.service && \
-	systemctl mask systemd-rfkill.service systemd-rfkill.socket && \
-  systemctl mask systemd-networkd-wait-online.service
-
 # Enable GUI by default
 RUN systemctl set-default graphical.target
 
