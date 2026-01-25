@@ -4,8 +4,6 @@ FROM quay.io/fedora/fedora-bootc:43 as base
 # Split context so cache keys are scoped to the actual inputs per RUN
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
-
-FROM scratch AS ctx_system
 COPY system_files/ /system_files/
 
 FROM base AS final
