@@ -75,7 +75,6 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=secret,id=pinggy_token,required=true \
     PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
     PINGGY_HOST="${PINGGY_HOST}" \
-    chmod +x -R /ctx/build_files/**/*.sh && \
     for dir in /ctx/build_files/base /ctx/build_files/core /ctx/build_files/post; do \
       for s in "$dir"/*.sh; do [ -f "$s" ] && "$s"; done; \
     done

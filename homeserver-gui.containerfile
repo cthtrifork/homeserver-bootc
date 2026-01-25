@@ -25,7 +25,6 @@ RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    chmod +x -R /ctx/build_files/**/*.sh && \
     for dir in /ctx/build_files/base /ctx/build_files/gui /ctx/build_files/post; do \
       for s in "$dir"/*.sh; do [ -f "$s" ] && "$s"; done; \
     done
