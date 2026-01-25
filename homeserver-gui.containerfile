@@ -39,7 +39,7 @@ RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
 #RUN kver=$(cd /usr/lib/modules && echo * | awk '{print $1}') \
 #	dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
 
-RUN cat /etc/dracut.conf.d/no-xattr.conf
+RUN cat /etc/dracut.conf.d/no-xattr.conf || true
 ENV DRACUT_NO_XATTR=1
 
 RUN <<EORUN
