@@ -5,10 +5,11 @@
 cat /etc/dracut.conf.d/no-xattr.conf || true
 export DRACUT_NO_XATTR=1
 
-# Setup Plymouth
+# Setup Plymouth with theme
 plymouth-set-default-theme spinner
 systemctl enable plymouth-start.service
 
 # Update initramfs
-dnf install -y clevis clevis-dracut clevis-luks clevis-systemd
-set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+set -x
+kver=$(cd /usr/lib/modules && echo *)
+dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
