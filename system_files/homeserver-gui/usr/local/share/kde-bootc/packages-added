@@ -52,6 +52,8 @@ google-roboto-fonts
 cascadia-code-fonts
 cascadia-code-nf-fonts
 jetbrains-mono-fonts
+# used by plymouth
+dejavu-sans-font
 
 
 ################
@@ -152,6 +154,7 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
 
 
