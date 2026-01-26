@@ -30,6 +30,8 @@ clevis
 clevis-dracut
 clevis-luks
 clevis-systemd
+plymouth
+plymouth-system-theme
 plymouth-theme-spinner
 
 # Wallet + crypto prompt
@@ -152,5 +154,6 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
 
