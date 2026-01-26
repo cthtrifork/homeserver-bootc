@@ -53,7 +53,7 @@ cascadia-code-fonts
 cascadia-code-nf-fonts
 jetbrains-mono-fonts
 # used by plymouth
-#dejavu-sans-font
+dejavu-sans-fonts
 
 ################
 # Applications #
@@ -152,4 +152,5 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+
 
