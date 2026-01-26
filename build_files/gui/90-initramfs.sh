@@ -8,7 +8,7 @@ set -eou pipefail
 #export DRACUT_NO_XATTR=1
 
 # Setup Plymouth with theme
-plymouth-set-default-theme spinner
+#plymouth-set-default-theme spinner
 plymouth-set-default-theme bgrt-better-luks
 
 # Update initramfs
