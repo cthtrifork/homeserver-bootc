@@ -1,2 +1,2 @@
-kargs = ["splash", "rhgb"]
+kargs = ["quiet", "rhgb"]
 match-architectures = ["x86_64", "aarch64"]
