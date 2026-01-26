@@ -250,7 +250,7 @@ download_if_missing_cmd "$NUMR_TGZ" /ctx/build_files/github-release-url.sh nased
 extract "$NUMR_TGZ"
 
 log "Installing lazyjournal"
-LAZYJOURNAL_VERSION="0.8.3" # renovate: datasource=github-releases depName=Lifailon/lazyjournal
+LAZYJOURNAL_VERSION="0.8.4" # renovate: datasource=github-releases depName=Lifailon/lazyjournal
 LAZYJOURNAL_BIN="$(tmp_name lazyjournal "$LAZYJOURNAL_VERSION" bin)"
 download_if_missing_cmd "$LAZYJOURNAL_BIN" /ctx/build_files/github-release-url.sh Lifailon/lazyjournal "lazyjournal-${LAZYJOURNAL_VERSION}.${MACHINE}.${PLATFORM_ARCH}" "$LAZYJOURNAL_VERSION"
 install -o root -g root -m 0755 "$LAZYJOURNAL_BIN" "$BIN_DIR/lazyjournal"
