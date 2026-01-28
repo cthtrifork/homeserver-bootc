@@ -57,7 +57,7 @@ jobs:
     outputs:
       image: ${{ steps.ensure-matrix.outputs.image }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Filter paths
         id: filter
@@ -134,7 +134,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
 
@@ -378,7 +378,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -460,7 +460,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -554,7 +554,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -708,7 +708,7 @@ jobs:
       attestations: write
     steps:
       - name: Clone the repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -774,7 +774,7 @@ jobs:
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Attach build provenance attestation
-        uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
           subject-digest: ${{ steps.push-latest.outputs.digest }}
