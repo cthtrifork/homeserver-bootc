@@ -26,6 +26,7 @@ RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
+	--mount=type=cache,target=/runner/cache \
     /ctx/build_files/build.sh "gui"
 
 # Enable GUI by default

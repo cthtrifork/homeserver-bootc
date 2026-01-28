@@ -70,6 +70,7 @@ RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
+    --mount=type=cache,target=/runner/cache \
     --mount=type=secret,id=pinggy_token,required=true \
     PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
     PINGGY_HOST="${PINGGY_HOST}" \
