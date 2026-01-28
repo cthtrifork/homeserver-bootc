@@ -25,7 +25,13 @@ plasma-breeze
 # screenlocker
 kscreenlocker
 
-# startup
+# startup / initramfs
+clevis
+clevis-dracut
+clevis-luks
+clevis-systemd
+plymouth
+plymouth-system-theme
 plymouth-theme-spinner
 
 # Wallet + crypto prompt
@@ -48,7 +54,8 @@ google-roboto-fonts
 cascadia-code-fonts
 cascadia-code-nf-fonts
 jetbrains-mono-fonts
-
+# used by plymouth
+dejavu-sans-fonts
 
 ################
 # Applications #
@@ -78,7 +85,6 @@ kdialog
 # Utils
 btop
 wl-clipboard
-
 
 ##################
 # Virtualization #

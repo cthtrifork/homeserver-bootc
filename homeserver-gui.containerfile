@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1.21@sha256:27f9262d43452075f3c410287a2c43f5ef1bf7ec2bb06e8c9eeb1b8d453087bc
-FROM scratch AS ctx
+FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
+# this will also inherit all build_files/core/* applied changes
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 RUN dnf copr enable -y scottames/ghostty && \
@@ -23,37 +24,11 @@ RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y rem
 # Set default applications
 RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
-# Install VSCode
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/gui-vscode.sh
-
-# Sync /usr and /etc
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    --mount=type=tmpfs,dst=/tmp \
-    rsync -rvpK /ctx/system_files/homeserver/ / \
-    && rsync -rvpK /ctx/system_files/homeserver-gui/ /
-
-RUN echo "KEYMAP=dk" | tee -a /etc/vconsole.conf
-
-#RUN kver=$(cd /usr/lib/modules && echo * | awk '{print $1}') \
-#	dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
-
-# Cleanup
-RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    --mount=type=tmpfs,dst=/tmp \
-    /ctx/build_files/cleanup.sh
-
-# Do not run pinggy on a GUI client
-RUN systemctl disable pinggy.service && \
-	systemctl enable NetworkManager && \
-	systemctl enable tlp.service && \
-	systemctl enable tlp-pd.service && \
-	systemctl mask systemd-rfkill.service systemd-rfkill.socket && \
-  systemctl mask systemd-networkd-wait-online.service
+    /ctx/build_files/build.sh "gui"
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target
 
 RUN bootc container lint || true
-

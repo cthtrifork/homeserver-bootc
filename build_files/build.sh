@@ -1,24 +1,34 @@
 #!/usr/bin/bash
 # shellcheck disable=SC1091
-
 set -euo pipefail
 
 trap '[[ $BASH_COMMAND != echo* ]] && [[ $BASH_COMMAND != log* ]] && echo "+ $BASH_COMMAND"' DEBUG
 
 log() {
-  echo "=== $* ==="
+    echo "=== $* ==="
 }
 
-mkdir -p /etc/homeserver/metadata/
-cat > /etc/homeserver/metadata/pinggy <<EOF
-PINGGY_TOKEN=$PINGGY_TOKEN
-PINGGY_HOST=$PINGGY_HOST
-EOF
-chmod 600 /etc/homeserver/metadata/pinggy
+usage() {
+    echo "Usage: ${0##*/} <core|gui>" >&2
+    exit 2
+}
 
-/ctx/build_files/server-docker-ce.sh
-/ctx/build_files/systemd.sh
-/ctx/build_files/decrypt.sh
-/ctx/build_files/cleanup.sh
+[[ $# -eq 1 ]] || usage
 
-log "Build process completed"
+case "$1" in
+core | gui) VARIANT="$1" ;;
+*) usage ;;
+esac
+
+for dir in \
+    /ctx/build_files/base \
+    "/ctx/build_files/$VARIANT" \
+    /ctx/build_files/post; do
+    [[ -d "$dir" ]] || {
+        echo "Missing directory: $dir" >&2
+        exit 2
+    }
+    for s in "$dir"/*.sh; do
+        bash "$s"
+    done
+done

@@ -49,12 +49,12 @@ debug "Temporary JSON file=${API_JSON}"
 
 # retry up to 5 times with 5 second delays for any error including HTTP 404 etc
 curl --fail \
-     --retry 5 \
-     --retry-delay 5 \
-     --retry-all-errors \
-     -sL \
-     "${API}" \
-     -o "${API_JSON}"
+    --retry 5 \
+    --retry-delay 5 \
+    --retry-all-errors \
+    -sL \
+    "${API}" \
+    -o "${API_JSON}"
 
 debug "GitHub API response downloaded"
 debug "Filtering assets using jq"
