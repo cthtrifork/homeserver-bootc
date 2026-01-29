@@ -21,7 +21,7 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
-RUN  dnf4 group install multimedia && \
+RUN  dnf group install multimedia && \
   dnf swap 'ffmpeg-free' 'ffmpeg' --allowerasing && \
   dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
