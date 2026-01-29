@@ -21,6 +21,10 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
+RUN  dnf4 group install multimedia && \
+  dnf swap 'ffmpeg-free' 'ffmpeg' --allowerasing && \
+  dnf config-manager setopt fedora-cisco-openh264.enabled=1
+
 # Set default applications
 RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
@@ -31,5 +35,8 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 
 # Enable GUI by default
 RUN systemctl set-default graphical.target
+
+# NetworkManager-wait-online can slow down boot time significantly
+RUN systemctl disable NetworkManager-wait-online.service
 
 RUN bootc container lint || true
