@@ -22,7 +22,7 @@ RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y insta
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
 
 RUN  dnf group install -y multimedia && \
-  dnf swap 'ffmpeg-free' 'ffmpeg' --allowerasing && \
+  dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \
   dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
 # Set default applications
