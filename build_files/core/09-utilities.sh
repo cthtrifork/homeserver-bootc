@@ -209,7 +209,7 @@ download_if_missing_cmd "$JQ_BIN" /ctx/build_files/github-release-url.sh jqlang/
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
 log "Installing yq"
-YQ_VERSION="v4.50.1" # renovate: datasource=github-releases depName=mikefarah/yq
+YQ_VERSION="v4.52.2" # renovate: datasource=github-releases depName=mikefarah/yq
 YQ_BIN="$(tmp_name yq "$YQ_VERSION" bin)"
 download_if_missing_cmd "$YQ_BIN" /ctx/build_files/github-release-url.sh mikefarah/yq "${MACHINE}.${PLATFORM_ARCH}" "$YQ_VERSION"
 install -o root -g root -m 0755 "$YQ_BIN" "$BIN_DIR/yq"
