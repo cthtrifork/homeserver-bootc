@@ -30,6 +30,13 @@ fzf
 bat
 
 ##################
+# Other          #
+##################
+
+# This is troublesome and brittle to install outside dnf
+azure-cli
+
+##################
 # Virtualisation #
 ##################
 
