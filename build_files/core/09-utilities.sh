@@ -236,7 +236,7 @@ install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
 "$BIN_DIR/talosctl" completion bash >"$COMPLETION_DIR/talosctl"
 
 log "Installing helm"
-HELM_VERSION="v3.20.0" # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION="v4.1.1" # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
 download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${PLATFORM_ARCH}.tar.gz"
 extract "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
