@@ -299,7 +299,7 @@ download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sine
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
 
 log "Installing crane"
-CRANE_VERSION=v0.20.7 # renovate: datasource=github-releases depName=google/go-containerregistry
+CRANE_VERSION=v0.21.0 # renovate: datasource=github-releases depName=google/go-containerregistry
 CRANE_TGZ="$(tmp_name crane "$CRANE_VERSION" tar.gz)"
 download_if_missing_cmd "$CRANE_TGZ" /ctx/build_files/github-release-url.sh google/go-containerregistry "go-containerregistry_${MACHINE}_${HOST_ARCH}.tar.gz" "$CRANE_VERSION"
 extract "$CRANE_TGZ"
