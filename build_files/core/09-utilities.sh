@@ -191,7 +191,7 @@ extract "$K9S_TGZ"
 "$BIN_DIR/k9s" completion bash >"$COMPLETION_DIR/k9s"
 
 log "Installing sops"
-SOPS_VERSION=v3.11.0 # renovate: datasource=github-releases depName=getsops/sops
+SOPS_VERSION=v3.12.1 # renovate: datasource=github-releases depName=getsops/sops
 SOPS_BIN="$(tmp_name sops "$SOPS_VERSION" bin)"
 download_if_missing_cmd "$SOPS_BIN" /ctx/build_files/github-release-url.sh getsops/sops "${MACHINE}.${PLATFORM_ARCH}" "$SOPS_VERSION"
 install -o root -g root -m 0755 "$SOPS_BIN" "$BIN_DIR/sops"
