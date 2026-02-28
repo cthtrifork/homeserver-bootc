@@ -170,7 +170,7 @@ install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
 log "Installing flux"
-FLUX_VERSION="v2.8.0" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.8.1" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux2 "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_VERSION"
 extract "$FLUX_TGZ"
