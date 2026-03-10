@@ -223,13 +223,13 @@ install -o root -g root -m 0755 "$COSIGN_BIN" "$BIN_DIR/cosign"
 "$BIN_DIR/cosign" completion bash >"$COMPLETION_DIR/cosign"
 
 log "Installing shfmt"
-SHFMT_VERSION="v3.12.0" # renovate: datasource=github-releases depName=mvdan/sh
+SHFMT_VERSION="v3.13.0" # renovate: datasource=github-releases depName=mvdan/sh
 SHFMT_BIN="$(tmp_name shfmt "$SHFMT_VERSION" bin)"
 download_if_missing_cmd "$SHFMT_BIN" /ctx/build_files/github-release-url.sh mvdan/sh "${MACHINE}.${PLATFORM_ARCH}" "$SHFMT_VERSION"
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.12.4" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.12.5" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing_cmd "$TALOSCTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/talos "talosctl-${MACHINE}.${PLATFORM_ARCH}" "$TALOSCTL_VERSION"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
