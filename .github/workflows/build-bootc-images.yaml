@@ -774,7 +774,7 @@ jobs:
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Attach build provenance attestation
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
+        uses: actions/attest@v4
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
           subject-digest: ${{ steps.push-latest.outputs.digest }}
@@ -785,15 +785,17 @@ jobs:
           # Attach the Trivy JSON as an attestation of type "vuln"
           cosign attest \
             --yes \
+            --key env://COSIGN_PRIVATE_KEY \
             --type vuln \
             --predicate ${{ github.workspace }}/current_trivy.json \
             ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
       - name: Verify
         run: |
-          cosign verify --key ./cosign.pub \
+          cosign verify --key ./cosign.pub --type signature \
             ${{ env.IMAGE_FULL }}@${DIGEST}
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
