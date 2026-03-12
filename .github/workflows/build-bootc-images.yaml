@@ -795,7 +795,7 @@ jobs:
 
       - name: Verify
         run: |
-          cosign verify --key ./cosign.pub --type signature \
+          cosign verify --key ./cosign.pub \
             ${{ env.IMAGE_FULL }}@${DIGEST}
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
