@@ -15,7 +15,8 @@ REPO="traiproject/yaml-schema-router"
 PROJECT_NAME="yaml-schema-router"
 
 platform="$(uname -s)" # Linux
-arch="$(uname -m)"     # x86_64
+OS_NAME="linux"
+ARCH_NAME="$(uname -m)"     # x86_64
 
 YAML_SCHEMA_ROUTER_VERSION="v0.2.0" # renovate: datasource=github-releases depName=traiproject/yaml-schema-router
 
