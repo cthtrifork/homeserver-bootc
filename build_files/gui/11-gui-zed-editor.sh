@@ -64,6 +64,7 @@ case "$channel" in
 esac
 
 # Unpack
+HOME=usr/share/dotfiles # hack
 rm -rf "$HOME/.local/zed$suffix.app"
 mkdir -p "$HOME/.local/zed$suffix.app"
 tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$HOME/.local/"
