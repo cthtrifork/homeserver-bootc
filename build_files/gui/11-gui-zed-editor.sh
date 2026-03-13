@@ -36,7 +36,7 @@ fi
 arch="x86_64"
 
 debug "Downloading Zed version: $ZED_VERSION"
-curl "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" > "$temp/zed-linux-$arch.tar.gz"
+curl -sfL "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" > "$temp/zed-linux-$arch.tar.gz"
 
 suffix=""
 if [ "$channel" != "stable" ]; then
