@@ -17,7 +17,7 @@ PROJECT_NAME="yaml-schema-router"
 platform="$(uname -s)" # Linux
 arch="$(uname -m)"     # x86_64
 
-YAML_SCHEMA_ROUTER_VERSION="v0.2.0" # renovate: datasource=github-releases depName=traiproject/yaml-schema-router
+YAML_SCHEMA_ROUTER_VERSION="0.2.0" # renovate: datasource=github-releases depName=traiproject/yaml-schema-router
 
 # Construct file name based on your .goreleaser.yaml template
 # e.g., yaml-schema-router_v1.0.0_linux_x86_64.tar.gz
