@@ -20,8 +20,7 @@ echo "::group:: ===$(basename "$0")==="
 ZED_VERSION="0.227.1" # renovate: datasource=github-releases depName=zed-industries/zed
 
 platform="$(uname -s)" # Linux
-arch="$(uname -m)"  # x86_64
-channel="${ZED_CHANNEL:-stable}"
+arch="$(uname -m)"     # x86_64
 ZED_VERSION="${ZED_VERSION:-latest}"
 
 log "Installing zed-editor $ZED_VERSION..."
@@ -34,52 +33,12 @@ else
 fi
 
 debug "Downloading Zed version: $ZED_VERSION"
-curl -sfL "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" >"$temp/zed-linux-$arch.tar.gz"
-
-suffix=""
-if [ "$channel" != "stable" ]; then
-    suffix="-$channel"
-fi
-
-appid=""
-case "$channel" in
-stable)
-    appid="dev.zed.Zed"
-    ;;
-nightly)
-    appid="dev.zed.Zed-Nightly"
-    ;;
-preview)
-    appid="dev.zed.Zed-Preview"
-    ;;
-dev)
-    appid="dev.zed.Zed-Dev"
-    ;;
-*)
-    debug "Unknown release channel: ${channel}. Using stable app ID."
-    appid="dev.zed.Zed"
-    ;;
-esac
+curl -sfL "https://cloud.zed.dev/releases/stable/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" >"$temp/zed-linux-$arch.tar.gz"
 
 # Unpack
-HOME=usr/share/dotfiles # hack
-rm -rf "$HOME/.local/zed$suffix.app"
-mkdir -p "$HOME/.local/zed$suffix.app"
-tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$HOME/.local/"
-
-# Setup ~/.local directories
-mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
-
-# Copy .desktop file
-desktop_file_path="$HOME/.local/share/applications/${appid}.desktop"
-src_dir="$HOME/.local/zed$suffix.app/share/applications"
-if [ -f "$src_dir/${appid}.desktop" ]; then
-    cp "$src_dir/${appid}.desktop" "${desktop_file_path}"
-else
-    # Fallback for older tarballs
-    cp "$src_dir/zed$suffix.desktop" "${desktop_file_path}"
-fi
-sed -i "s|Icon=zed|Icon=$HOME/.local/zed$suffix.app/share/icons/hicolor/512x512/apps/zed.png|g" "${desktop_file_path}"
-sed -i "s|Exec=zed|Exec=$HOME/.local/zed$suffix.app/bin/zed|g" "${desktop_file_path}"
+INSTALL_DIR=/usr/share/dotfiles
+rm -rf "$INSTALL_DIR/zed.app"
+mkdir -p "$INSTALL_DIR/zed.app"
+tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$INSTALL_DIR/"
 
 echo "::endgroup::"
