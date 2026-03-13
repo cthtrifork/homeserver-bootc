@@ -72,14 +72,6 @@ tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$HOME/.local/"
 # Setup ~/.local directories
 mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
 
-# Link the binary
-if [ -f "$HOME/.local/zed$suffix.app/bin/zed" ]; then
-    ln -sf "$HOME/.local/zed$suffix.app/bin/zed" "$HOME/.local/bin/zed"
-else
-    # support for versions before 0.139.x.
-    ln -sf "$HOME/.local/zed$suffix.app/bin/cli" "$HOME/.local/bin/zed"
-fi
-
 # Copy .desktop file
 desktop_file_path="$HOME/.local/share/applications/${appid}.desktop"
 src_dir="$HOME/.local/zed$suffix.app/share/applications"
