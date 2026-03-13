@@ -13,7 +13,7 @@ debug() {
 
 # Copied from https://zed.dev/install.sh
 # Downloads a tarball from https://zed.dev/releases and unpacks it
-# into ~/.local/. 
+# into ~/.local/.
 
 echo "::group:: ===$(basename "$0")==="
 
@@ -36,7 +36,7 @@ fi
 arch="x86_64"
 
 debug "Downloading Zed version: $ZED_VERSION"
-curl -sfL "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" > "$temp/zed-linux-$arch.tar.gz"
+curl -sfL "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" >"$temp/zed-linux-$arch.tar.gz"
 
 suffix=""
 if [ "$channel" != "stable" ]; then
@@ -45,19 +45,19 @@ fi
 
 appid=""
 case "$channel" in
-    stable)
+stable)
     appid="dev.zed.Zed"
     ;;
-    nightly)
+nightly)
     appid="dev.zed.Zed-Nightly"
     ;;
-    preview)
+preview)
     appid="dev.zed.Zed-Preview"
     ;;
-    dev)
+dev)
     appid="dev.zed.Zed-Dev"
     ;;
-    *)
+*)
     debug "Unknown release channel: ${channel}. Using stable app ID."
     appid="dev.zed.Zed"
     ;;

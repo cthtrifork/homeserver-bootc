@@ -9,10 +9,10 @@ cd "$HOME_DIR"
 # Install dotfiles from /usr/share/dotfiles
 # Alternative: https://www.chezmoi.io/
 dotfiles_sync() {
+    # --chmod=F644,D755 \
     rsync -a \
         --numeric-ids \
         --ignore-times \
-        --chmod=F644,D755 \
         --chown="${TARGET_USER}:${TARGET_USER}" \
         /usr/share/dotfiles/ "${HOME_DIR}/"
 
