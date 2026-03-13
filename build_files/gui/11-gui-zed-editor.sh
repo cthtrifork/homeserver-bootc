@@ -36,7 +36,7 @@ debug "Downloading Zed version: $ZED_VERSION"
 curl -sfL "https://cloud.zed.dev/releases/stable/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" >"$temp/zed-linux-$arch.tar.gz"
 
 # Unpack
-INSTALL_DIR=/usr/share/dotfiles
+INSTALL_DIR=/usr/share/dotfiles/.local
 rm -rf "$INSTALL_DIR/zed.app"
 mkdir -p "$INSTALL_DIR/zed.app"
 tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$INSTALL_DIR/"
