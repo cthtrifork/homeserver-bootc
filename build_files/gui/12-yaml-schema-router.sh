@@ -26,7 +26,7 @@ DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${YAML_SCHEMA_ROUTER_
 
 TMP_DIR=$(mktemp -d)
 log "Downloading ${PROJECT_NAME} ${YAML_SCHEMA_ROUTER_VERSION} for ${OS_NAME} ${ARCH_NAME}..."
-curl -sL "${DOWNLOAD_URL}" -o "${TMP_DIR}/${TAR_FILE}"
+curl -sfL "${DOWNLOAD_URL}" -o "${TMP_DIR}/${TAR_FILE}"
 
 debug "Extracting..."
 tar -xzf "${TMP_DIR}/${TAR_FILE}" -C "${TMP_DIR}"
