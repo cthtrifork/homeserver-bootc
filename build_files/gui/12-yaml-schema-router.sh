@@ -21,7 +21,7 @@ YAML_SCHEMA_ROUTER_VERSION="v0.2.0" # renovate: datasource=github-releases depNa
 
 # Construct file name based on your .goreleaser.yaml template
 # e.g., yaml-schema-router_v1.0.0_linux_x86_64.tar.gz
-TAR_FILE="${PROJECT_NAME}_${YAML_SCHEMA_ROUTER_VERSION}_${OS_NAME}_${ARCH_NAME}.tar.gz"
+TAR_FILE="${PROJECT_NAME}_${YAML_SCHEMA_ROUTER_VERSION#v}_${OS_NAME}_${ARCH_NAME}.tar.gz"
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${YAML_SCHEMA_ROUTER_VERSION}/${TAR_FILE}"
 
 TMP_DIR=$(mktemp -d)
