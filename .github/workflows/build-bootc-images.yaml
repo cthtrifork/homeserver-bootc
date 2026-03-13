@@ -74,7 +74,7 @@ jobs:
               - 'system_files/homeserver-gui/**'
               - 'homeserver-gui.containerfile'
               - '**/homeserver-gui/**'
-              - 'build_files/gui'
+              - 'build_files/gui/**'
             jumphost:
               - 'system_files/jumphost/**'
               - 'jumphost.containerfile'
