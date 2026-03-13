@@ -1,169 +1,94 @@
-#!/usr/bin/env sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
+
+trap '[[ $BASH_COMMAND != echo* ]] && [[ $BASH_COMMAND != log* ]] && echo "+ $BASH_COMMAND"' DEBUG
+
+log() {
+    echo "=== $* ==="
+}
+
+debug() {
+    echo "[DEBUG] $*" >&2
+}
 
 # Copied from https://zed.dev/install.sh
 # Downloads a tarball from https://zed.dev/releases and unpacks it
 # into ~/.local/. 
 
-
 echo "::group:: ===$(basename "$0")==="
 
-set -ouex pipefail
+ZED_VERSION="v0.227.1" # renovate: datasource=github-releases depName=zed-industries/zed
 
-# VSCode package from Microsoft repo
-echo "Installing VSCode from official repo..."
+platform="$(uname -s)"
+arch="$(uname -m)"
+channel="${ZED_CHANNEL:-stable}"
+ZED_VERSION="${ZED_VERSION:-latest}"
 
-main() {
-    platform="$(uname -s)"
-    arch="$(uname -m)"
-    channel="${ZED_CHANNEL:-stable}"
-    ZED_VERSION="${ZED_VERSION:-latest}"
-    # Use TMPDIR if available (for environments with non-standard temp directories)
-    if [ -n "${TMPDIR:-}" ] && [ -d "${TMPDIR}" ]; then
-        temp="$(mktemp -d "$TMPDIR/zed-XXXXXX")"
-    else
-        temp="$(mktemp -d "/tmp/zed-XXXXXX")"
-    fi
+log "Installing zed-editor $ZED_VERSION..."
 
-    if [ "$platform" = "Darwin" ]; then
-        platform="macos"
-    elif [ "$platform" = "Linux" ]; then
-        platform="linux"
-    else
-        echo "Unsupported platform $platform"
-        exit 1
-    fi
+# Use TMPDIR if available (for environments with non-standard temp directories)
+if [ -n "${TMPDIR:-}" ] && [ -d "${TMPDIR}" ]; then
+    temp="$(mktemp -d "$TMPDIR/zed-XXXXXX")"
+else
+    temp="$(mktemp -d "/tmp/zed-XXXXXX")"
+fi
 
-    case "$platform-$arch" in
-        macos-arm64* | linux-arm64* | linux-armhf | linux-aarch64)
-            arch="aarch64"
-            ;;
-        macos-x86* | linux-x86* | linux-i686*)
-            arch="x86_64"
-            ;;
-        *)
-            echo "Unsupported platform or architecture"
-            exit 1
-            ;;
-    esac
+arch="x86_64"
 
-    if command -v curl >/dev/null 2>&1; then
-        curl () {
-            command curl -fL "$@"
-        }
-    elif command -v wget >/dev/null 2>&1; then
-        curl () {
-            wget -O- "$@"
-        }
-    else
-        echo "Could not find 'curl' or 'wget' in your path"
-        exit 1
-    fi
+debug "Downloading Zed version: $ZED_VERSION"
+curl "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" > "$temp/zed-linux-$arch.tar.gz"
 
-    "$platform" "$@"
+suffix=""
+if [ "$channel" != "stable" ]; then
+    suffix="-$channel"
+fi
 
-    if [ "$(command -v zed)" = "$HOME/.local/bin/zed" ]; then
-        echo "Zed has been installed. Run with 'zed'"
-    else
-        echo "To run Zed from your terminal, you must add ~/.local/bin to your PATH"
-        echo "Run:"
+appid=""
+case "$channel" in
+    stable)
+    appid="dev.zed.Zed"
+    ;;
+    nightly)
+    appid="dev.zed.Zed-Nightly"
+    ;;
+    preview)
+    appid="dev.zed.Zed-Preview"
+    ;;
+    dev)
+    appid="dev.zed.Zed-Dev"
+    ;;
+    *)
+    debug "Unknown release channel: ${channel}. Using stable app ID."
+    appid="dev.zed.Zed"
+    ;;
+esac
 
-        case "$SHELL" in
-            *zsh)
-                echo "   echo 'export PATH=\$HOME/.local/bin:\$PATH' >> ~/.zshrc"
-                echo "   source ~/.zshrc"
-                ;;
-            *fish)
-                echo "   fish_add_path -U $HOME/.local/bin"
-                ;;
-            *)
-                echo "   echo 'export PATH=\$HOME/.local/bin:\$PATH' >> ~/.bashrc"
-                echo "   source ~/.bashrc"
-                ;;
-        esac
+# Unpack
+rm -rf "$HOME/.local/zed$suffix.app"
+mkdir -p "$HOME/.local/zed$suffix.app"
+tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$HOME/.local/"
 
-        echo "To run Zed now, '~/.local/bin/zed'"
-    fi
-}
+# Setup ~/.local directories
+mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
 
-linux() {
-    if [ -n "${ZED_BUNDLE_PATH:-}" ]; then
-        cp "$ZED_BUNDLE_PATH" "$temp/zed-linux-$arch.tar.gz"
-    else
-        echo "Downloading Zed version: $ZED_VERSION"
-        curl "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" > "$temp/zed-linux-$arch.tar.gz"
-    fi
+# Link the binary
+if [ -f "$HOME/.local/zed$suffix.app/bin/zed" ]; then
+    ln -sf "$HOME/.local/zed$suffix.app/bin/zed" "$HOME/.local/bin/zed"
+else
+    # support for versions before 0.139.x.
+    ln -sf "$HOME/.local/zed$suffix.app/bin/cli" "$HOME/.local/bin/zed"
+fi
 
-    suffix=""
-    if [ "$channel" != "stable" ]; then
-        suffix="-$channel"
-    fi
+# Copy .desktop file
+desktop_file_path="$HOME/.local/share/applications/${appid}.desktop"
+src_dir="$HOME/.local/zed$suffix.app/share/applications"
+if [ -f "$src_dir/${appid}.desktop" ]; then
+    cp "$src_dir/${appid}.desktop" "${desktop_file_path}"
+else
+    # Fallback for older tarballs
+    cp "$src_dir/zed$suffix.desktop" "${desktop_file_path}"
+fi
+sed -i "s|Icon=zed|Icon=$HOME/.local/zed$suffix.app/share/icons/hicolor/512x512/apps/zed.png|g" "${desktop_file_path}"
+sed -i "s|Exec=zed|Exec=$HOME/.local/zed$suffix.app/bin/zed|g" "${desktop_file_path}"
 
-    appid=""
-    case "$channel" in
-      stable)
-        appid="dev.zed.Zed"
-        ;;
-      nightly)
-        appid="dev.zed.Zed-Nightly"
-        ;;
-      preview)
-        appid="dev.zed.Zed-Preview"
-        ;;
-      dev)
-        appid="dev.zed.Zed-Dev"
-        ;;
-      *)
-        echo "Unknown release channel: ${channel}. Using stable app ID."
-        appid="dev.zed.Zed"
-        ;;
-    esac
-
-    # Unpack
-    rm -rf "$HOME/.local/zed$suffix.app"
-    mkdir -p "$HOME/.local/zed$suffix.app"
-    tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$HOME/.local/"
-
-    # Setup ~/.local directories
-    mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
-
-    # Link the binary
-    if [ -f "$HOME/.local/zed$suffix.app/bin/zed" ]; then
-        ln -sf "$HOME/.local/zed$suffix.app/bin/zed" "$HOME/.local/bin/zed"
-    else
-        # support for versions before 0.139.x.
-        ln -sf "$HOME/.local/zed$suffix.app/bin/cli" "$HOME/.local/bin/zed"
-    fi
-
-    # Copy .desktop file
-    desktop_file_path="$HOME/.local/share/applications/${appid}.desktop"
-    src_dir="$HOME/.local/zed$suffix.app/share/applications"
-    if [ -f "$src_dir/${appid}.desktop" ]; then
-        cp "$src_dir/${appid}.desktop" "${desktop_file_path}"
-    else
-        # Fallback for older tarballs
-        cp "$src_dir/zed$suffix.desktop" "${desktop_file_path}"
-    fi
-    sed -i "s|Icon=zed|Icon=$HOME/.local/zed$suffix.app/share/icons/hicolor/512x512/apps/zed.png|g" "${desktop_file_path}"
-    sed -i "s|Exec=zed|Exec=$HOME/.local/zed$suffix.app/bin/zed|g" "${desktop_file_path}"
-}
-
-macos() {
-    echo "Downloading Zed version: $ZED_VERSION"
-    curl "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&os=macos&arch=$arch&source=install.sh" > "$temp/Zed-$arch.dmg"
-    hdiutil attach -quiet "$temp/Zed-$arch.dmg" -mountpoint "$temp/mount"
-    app="$(cd "$temp/mount/"; echo *.app)"
-    echo "Installing $app"
-    if [ -d "/Applications/$app" ]; then
-        echo "Removing existing $app"
-        rm -rf "/Applications/$app"
-    fi
-    ditto "$temp/mount/$app" "/Applications/$app"
-    hdiutil detach -quiet "$temp/mount"
-
-    mkdir -p "$HOME/.local/bin"
-    # Link the binary
-    ln -sf "/Applications/$app/Contents/MacOS/cli" "$HOME/.local/bin/zed"
-}
-
-main "$@"
+echo "::endgroup::"
