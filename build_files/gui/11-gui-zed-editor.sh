@@ -19,8 +19,8 @@ echo "::group:: ===$(basename "$0")==="
 
 ZED_VERSION="0.227.1" # renovate: datasource=github-releases depName=zed-industries/zed
 
-platform="$(uname -s)"
-arch="$(uname -m)"
+platform="$(uname -s)" # Linux
+arch="$(uname -m)"  # x86_64
 channel="${ZED_CHANNEL:-stable}"
 ZED_VERSION="${ZED_VERSION:-latest}"
 
@@ -32,8 +32,6 @@ if [ -n "${TMPDIR:-}" ] && [ -d "${TMPDIR}" ]; then
 else
     temp="$(mktemp -d "/tmp/zed-XXXXXX")"
 fi
-
-arch="x86_64"
 
 debug "Downloading Zed version: $ZED_VERSION"
 curl -sfL "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" >"$temp/zed-linux-$arch.tar.gz"
