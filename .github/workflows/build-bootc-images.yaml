@@ -70,6 +70,7 @@ jobs:
               - 'homeserver.containerfile'
               - '**/homeserver/**'
               - 'build_files/**'
+              - '!build_files/gui/**'
             homeserver-gui:
               - 'system_files/homeserver-gui/**'
               - 'homeserver-gui.containerfile'
