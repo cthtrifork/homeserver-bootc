@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+set -u
+
+manifest_size() {
+  local image="$1"
+  local machine="$(uname -s | tr '[:upper:]' '[:lower:]')"                    # linux
+  local platform_arch="$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')" # amd64
+
+  platform="${machine}/${platform_arch}"
+
+  crane manifest --platform linux/amd64 "$image" |
+    jq '.config.size + ([.layers[].size] | add)' |
+    numfmt --to=iec
+}
+
+manifest_size "$1"
