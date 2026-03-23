@@ -17,7 +17,7 @@ MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"                    # linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
-mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "/runner/cache"
+mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "/runner/cache" "$BIN_DIR/.docker"
 
 setfattr -n user.component -v "utilities" /usr/local/bin
 setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
@@ -309,6 +309,13 @@ DYSK_VERSION="latest"
 DYSK_BIN="$(tmp_name dysk "$DYSK_VERSION" bin)"
 download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-${MACHINE}/dysk"
 install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
+
+log "Installing docker-scout"
+DOCKER_SCOUT_VERSION="v1.20.3" # renovate: datasource=github-releases depName=docker/scout-cli
+DOCKER_SCOUT_TGZ="$(tmp_name docker-scout "$DOCKER_SCOUT_VERSION" tar.gz)"
+download_if_missing_cmd "$DOCKER_SCOUT_TGZ" /ctx/build_files/github-release-url.sh docker/scout-cli "docker-scout_${DOCKER_SCOUT_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$DOCKER_SCOUT_VERSION"
+extract "$DOCKER_SCOUT_TGZ"
+ln -sf "$BIN_DIR/docker-scout" "$BIN_DIR/.docker/docker-scout"
 
 chmod -R 755 "$BIN_DIR"/
 chmod -R 755 "$COMPLETION_DIR"/
