@@ -315,7 +315,7 @@ DOCKER_SCOUT_VERSION="v1.20.3" # renovate: datasource=github-releases depName=do
 DOCKER_SCOUT_TGZ="$(tmp_name docker-scout "$DOCKER_SCOUT_VERSION" tar.gz)"
 download_if_missing_cmd "$DOCKER_SCOUT_TGZ" /ctx/build_files/github-release-url.sh docker/scout-cli "docker-scout_${DOCKER_SCOUT_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$DOCKER_SCOUT_VERSION"
 extract "$DOCKER_SCOUT_TGZ"
-install -o root -g root -m 0755 "$DOCKER_SCOUT_BIN" "$BIN_DIR/.docker/docker-scout"
+ln -sf "$BIN_DIR/docker-scout" "$BIN_DIR/.docker/docker-scout"
 
 chmod -R 755 "$BIN_DIR"/
 chmod -R 755 "$COMPLETION_DIR"/
