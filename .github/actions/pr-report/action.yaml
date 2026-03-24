@@ -77,7 +77,7 @@ runs:
         } > comment.md
 
     - name: Sticky PR comment (update in-place)
-      uses: marocchino/sticky-pull-request-comment@447031a6bb83f7438d890bb0136932be78342022 # v3
+      uses: marocchino/sticky-pull-request-comment@70d2764d1a7d5d9560b100cbea0077fc8f633987 # v3.0.2
       with:
         path: comment.md
         skip_unchanged: true
