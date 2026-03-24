@@ -76,7 +76,7 @@ jobs:
 
       - name: Attach build provenance attestation
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: "ghcr.io/${{ github.repository }}/hello"
           subject-digest: ${{ steps.push-latest.outputs.digest }}
