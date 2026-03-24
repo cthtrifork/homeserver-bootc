@@ -25,7 +25,7 @@ runs:
         TRIVY_SKIP_JAVA_DB_UPDATE: true
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
+      uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc # v4.34.1
       with:
         token: ${{ inputs.github_token }}
         sarif_file: "${{ github.workspace }}/trivy-results.sarif"
