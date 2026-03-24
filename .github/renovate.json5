@@ -38,26 +38,13 @@
   rebaseWhen: 'auto',
   packageRules: [
     {
-      automerge: true,
-      pinDigests: false,
-      matchUpdateTypes: [
-        'major',
-        'minor',
-        'patch',
+      "extends": [
+        "helpers:pinGitHubActionDigests"
       ],
-    },
-    {
-      automerge: true,
-      pinDigests: false,
-      matchManagers: [
-        'github-actions',
-      ],
-      matchUpdateTypes: [
-        'major',
-        'minor',
-        'patch',
-      ],
-    },
+      "extractVersion": "^(?<version>v?\\d+\\.\\d+\\.\\d+)$",
+      "versioning": "regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$",
+      "recreateWhen": "always",
+    }
   ],
   customManagers: [
     {
