@@ -15,7 +15,7 @@ runs:
         cache: "false"
 
     - name: Restore DB from cache
-      uses: actions/cache/restore@a7833574556fa59680c1b7cb190c1735db73ebf0 # v5
+      uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       if: ${{ runner.environment != 'self-hosted' }}
       with:
         path: ${{ github.workspace }}/.cache/trivy
