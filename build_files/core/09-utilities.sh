@@ -145,7 +145,7 @@ ln -sf "$BIN_DIR/kubelogin" "$BIN_DIR/kubectl-oidc_login"
 "$BIN_DIR/kubelogin" completion bash >"$COMPLETION_DIR/kubelogin"
 
 log "Installing kubectl virt"
-KUBEVIRT_VERSION="v1.7.2" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+KUBEVIRT_VERSION="v1.8.0" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 KUBEVIRT_TGZ="$(tmp_name kubectl-virt "$KUBEVIRT_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBEVIRT_TGZ" /ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin "virtctl-${MACHINE}-${PLATFORM_ARCH}.tar.gz" "$KUBEVIRT_VERSION"
