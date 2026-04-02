@@ -165,6 +165,7 @@ jobs:
         run: |
           sudo mkdir -p /root/.config/containers
           sudo cp /run/user/1001/containers/auth.json /root/.config/containers/auth.json
+          sudo cp /run/user/1001/containers/auth.json ${HOME}/.docker/config.json
 
       - name: Mount BTRFS for podman storage
         if: ${{ runner.environment != 'self-hosted' }}
