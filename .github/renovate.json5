@@ -1,12 +1,8 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    'config:best-practices',
-    ':disableDigestUpdates',
+    'config:best-practices'
   ],
-  digest: {
-    enabled: false,
-  },
   labels: [
     'dependencies',
     'automated-pr',
