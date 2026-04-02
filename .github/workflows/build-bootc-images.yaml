@@ -158,7 +158,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT_RENOVATEBOT }}
+          password: ${{ github.token }}
 
       - name: Make registry credentials available for sudo
         shell: bash
