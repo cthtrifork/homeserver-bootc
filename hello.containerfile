@@ -1,4 +1,4 @@
-FROM docker.io/library/gcc:15@sha256:27be068a2580bed7c32ccf2349352e29f86e0a5c8cda8c9c98c6b59e4ad98d53 AS build
+FROM docker.io/library/gcc:15@sha256:34214606c5ff7f9f6f0530c0edf7ce30d12ff6ac973fda861e61c92e99f4f607 AS build
 RUN printf '%s\n' \
   '#include <stdio.h>' \
   'int main() { printf("Hello%c",0x0A); }' > /hello.c \
