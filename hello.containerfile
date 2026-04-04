@@ -1,4 +1,4 @@
-FROM alpine:3.20 AS build
+FROM alpine:3.23 AS build
 RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app
@@ -11,5 +11,4 @@ RUN printf '%s\n' \
 FROM scratch
 
 COPY --from=build /app/hello /hello
-USER 65532:65532
 CMD ["/hello"]
