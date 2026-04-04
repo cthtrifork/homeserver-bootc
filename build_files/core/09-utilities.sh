@@ -278,12 +278,6 @@ WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh pranshuparmar/witr "witr-${MACHINE}.${PLATFORM_ARCH}" "$WITR_VERSION"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
-log "Installing tre"
-TRE_VERSION="v0.4.0" # renovate: datasource=github-releases depName=dduan/tre
-TRE_TGZ="$(tmp_name tre "$TRE_VERSION" tar.gz)"
-download_if_missing_cmd "$TRE_TGZ" /ctx/build_files/github-release-url.sh dduan/tre "${HOST_ARCH}.unknown.${MACHINE}.musl.tar.gz" "$TRE_VERSION"
-extract "$TRE_TGZ"
-
 log "Installing tealdeer"
 TEALDEER_VERSION="v1.8.1" # renovate: datasource=github-releases depName=tealdeer-rs/tealdeer
 TEALDEER_BIN="$(tmp_name witr "$TEALDEER_VERSION" bin)"
