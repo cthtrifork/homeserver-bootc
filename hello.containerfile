@@ -1,4 +1,4 @@
-FROM alpine:latest AS build
+FROM alpine:3.20 AS build
 RUN apk add --no-cache gcc musl-dev
 
 WORKDIR /app
