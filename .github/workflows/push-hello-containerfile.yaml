@@ -60,6 +60,7 @@ jobs:
           load: true
 
       - name: Run image
+        if: ${{ github.ref != 'refs/heads/main' }}
         run: docker run --rm ${{ steps.meta.outputs.tags }}
 
       - name: Install Cosign
