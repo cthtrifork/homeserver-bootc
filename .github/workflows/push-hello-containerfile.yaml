@@ -57,9 +57,10 @@ jobs:
           push: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          load: true
 
       - name: Run image
-        run: docker run --rm hello:${{ steps.meta.outputs.tags }}
+        run: docker run --rm ${{ steps.meta.outputs.tags }}
 
       - name: Install Cosign
         if: ${{ github.ref == 'refs/heads/main' }}
