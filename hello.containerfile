@@ -11,4 +11,5 @@ RUN printf '%s\n' \
 FROM scratch
 
 COPY --from=build /app/hello /hello
+USER 65532:65532
 CMD ["/hello"]
