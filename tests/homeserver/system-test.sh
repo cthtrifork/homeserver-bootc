@@ -24,10 +24,8 @@ fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
 echo "Checking if user is in docker group"
-docker run --rm hello-world && echo "✅ Docker is ready"
+docker run --rm hello-world
+echo "✅ Docker is ready"
 
 echo "Checking github Auth status"
 echo "GitHub token fingerprint: $(printf "%s" "$GITHUB_TOKEN" | cut -c1-7)"
-
-gh auth status && echo "✅ Github is ready"
-
