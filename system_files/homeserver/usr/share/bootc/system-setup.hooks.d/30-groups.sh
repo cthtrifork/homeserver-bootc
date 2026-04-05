@@ -9,7 +9,7 @@ ensure_group() {
     fi
 
     echo "Creating system group: $group"
-    groupadd --system "$group"
+    groupadd "$group"
 }
 
 ensure_group docker
