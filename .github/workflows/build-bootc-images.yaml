@@ -46,6 +46,7 @@ env:
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   DEFAULT_TAG: "latest"
   CONTEXT: ./
+  TRIVY_VERSION: 0.69.3
 
 jobs:
   changes:
@@ -403,6 +404,8 @@ jobs:
 
       - name: Ensure trivy is installed and DB is cached
         uses: ./.github/actions/setup-trivy
+        with:
+          trivy_version: ${{ env.TRIVY_VERSION }}
 
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
@@ -493,6 +496,8 @@ jobs:
 
       - name: Ensure trivy is installed and DB is cached
         uses: ./.github/actions/setup-trivy
+        with:
+          trivy_version: ${{ env.TRIVY_VERSION }}
 
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
@@ -745,6 +750,8 @@ jobs:
 
       - name: Ensure trivy is installed and DB is cached
         uses: ./.github/actions/setup-trivy
+        with:
+          trivy_version: ${{ env.TRIVY_VERSION }}
 
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
