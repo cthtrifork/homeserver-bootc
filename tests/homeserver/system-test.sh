@@ -24,6 +24,7 @@ fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
 echo "Checking if user is in docker group"
+cat "$REGISTRY_AUTH_FILE"
 docker run --rm hello-world && echo "✅ Docker is ready"
 
 echo "Checking github Auth status"
