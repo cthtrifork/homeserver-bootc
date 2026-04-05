@@ -33,26 +33,4 @@ p = pam.pam()
 print("OK" if p.authenticate("$WHOAMI", "Password") else "FAIL")
 EOF
 
-echo "Finished testing"
-
-#ssh_github_auth() {
-#  ssh -o IdentitiesOnly=yes \
-#	  -i ~/.ssh/id_ed25519 \
-#	  -o BatchMode=yes \
-#	  -o ConnectTimeout=10 \
-#	  -o StrictHostKeyChecking=accept-new \
-#	  -T git@github.com
-#}
-
-#echo "Trying to authenticate..."
-# output=$(ssh_github_auth 2>&1)
-
-# echo "$output"
-
-# if echo "$output" | grep -q "successfully"; then
-#   echo "✅ SSH authentication succeeded"
-# else
-#   echo "❌ SSH authentication failed"
-#   exit 1
-# fi
-
+echo "== User testing finished =="

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
+
+trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
+
+echo "== System testing =="
 
 echo "Running as"
 id
@@ -27,5 +31,4 @@ echo "Checking if user is in docker group"
 docker run --rm hello-world
 echo "✅ Docker is ready"
 
-echo "Checking github Auth status"
-echo "GitHub token fingerprint: $(printf "%s" "$GITHUB_TOKEN" | cut -c1-7)"
+echo "== System testing finished =="
