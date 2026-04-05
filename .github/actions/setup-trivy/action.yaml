@@ -1,18 +1,34 @@
 name: "Ensure trivy is installed and DB is cached"
 description: "Ensure trivy is installed and its database is cached for faster scans"
+inputs:
+  trivy_version:
+    description: 'TRIVY_VERSION'
+    required: true
+    default: '0.69.3'
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Get current date
       shell: bash
       id: date
       run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-    - name: Manual Trivy Setup
-      uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
-      with:
-        #version: v0.65.0
-        cache: "false"
+    - name: Setup trivy
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        version="${{ env.TRIVY_VERSION }}"
+        arch=amd64
+        install_dir="$HOME/.local/bin"
+        mkdir -p "$install_dir"
+
+        curl -sL \
+          "https://github.com/aquasecurity/trivy/releases/download/v${version}/trivy_${version}_Linux-64bit.tar.gz" \
+          -o "$install_dir/trivy.tar.gz"
+        tar -xzf "$install_dir/trivy.tar.gz" -C "$install_dir"
+        chmod +x "$install_dir/trivy"
+        echo "$install_dir" >> "$GITHUB_PATH"
 
     - name: Restore DB from cache
       uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
