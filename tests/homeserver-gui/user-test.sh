@@ -16,6 +16,7 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
+echo "== System Auth =="
 python3 - <<EOF
 import pam
 p = pam.pam()

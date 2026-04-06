@@ -16,7 +16,12 @@ echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
 gh auth status && echo "✅ Github CLI is ready"
 
 
-echo "== utilities =="
+echo "== Docker =="
+echo "Checking if user is in docker group"
+docker run --rm hello-world
+echo "✅ Docker is ready"
+
+echo "== Utilities =="
 printf "Display: %s\n" "$DISPLAY"
 echo "Copy and paste date:"
 date | $HOME/.local/bin/copy
@@ -27,32 +32,11 @@ echo "Public key and SHA: "
 ssh-keygen -y -f ~/.ssh/id_ed25519 | head -c 80; echo
 ssh-keygen -lf ~/.ssh/id_ed25519.pub
 
+echo "== System Auth =="
 python3 - <<EOF
 import pam
 p = pam.pam()
 print("OK" if p.authenticate("$WHOAMI", "Password") else "FAIL")
 EOF
 
-echo "Finished testing"
-
-#ssh_github_auth() {
-#  ssh -o IdentitiesOnly=yes \
-#	  -i ~/.ssh/id_ed25519 \
-#	  -o BatchMode=yes \
-#	  -o ConnectTimeout=10 \
-#	  -o StrictHostKeyChecking=accept-new \
-#	  -T git@github.com
-#}
-
-#echo "Trying to authenticate..."
-# output=$(ssh_github_auth 2>&1)
-
-# echo "$output"
-
-# if echo "$output" | grep -q "successfully"; then
-#   echo "✅ SSH authentication succeeded"
-# else
-#   echo "❌ SSH authentication failed"
-#   exit 1
-# fi
-
+echo "== User testing finished =="
