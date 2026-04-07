@@ -17,7 +17,7 @@ debug() {
 
 echo "::group:: ===$(basename "$0")==="
 
-ZED_VERSION="0.230.1" # renovate: datasource=github-releases depName=zed-industries/zed
+ZED_VERSION="0.230.2" # renovate: datasource=github-releases depName=zed-industries/zed
 
 platform="$(uname -s)" # Linux
 arch="$(uname -m)"     # x86_64
