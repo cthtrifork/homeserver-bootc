@@ -177,7 +177,7 @@ install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 "$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
 
 log "Installing flux"
-FLUX_VERSION="v2.8.3" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.8.5" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux2 "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_VERSION"
 extract "$FLUX_TGZ"
