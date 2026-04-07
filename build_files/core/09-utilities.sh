@@ -169,6 +169,13 @@ download_if_missing_cmd "$KIND_BIN" /ctx/build_files/github-release-url.sh kuber
 install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
+log "Installing omnictl"
+OMNICTL_VERSION="v1.6.4" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
+download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
+install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
+"$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
+
 log "Installing flux"
 FLUX_VERSION="v2.8.3" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
