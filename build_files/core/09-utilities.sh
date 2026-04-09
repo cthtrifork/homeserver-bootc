@@ -312,7 +312,7 @@ download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-
 install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
 
 log "Installing docker-scout"
-DOCKER_SCOUT_VERSION="v1.20.3" # renovate: datasource=github-releases depName=docker/scout-cli
+DOCKER_SCOUT_VERSION="v1.20.4" # renovate: datasource=github-releases depName=docker/scout-cli
 DOCKER_SCOUT_TGZ="$(tmp_name docker-scout "$DOCKER_SCOUT_VERSION" tar.gz)"
 download_if_missing_cmd "$DOCKER_SCOUT_TGZ" /ctx/build_files/github-release-url.sh docker/scout-cli "docker-scout_${DOCKER_SCOUT_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$DOCKER_SCOUT_VERSION"
 extract "$DOCKER_SCOUT_TGZ"
