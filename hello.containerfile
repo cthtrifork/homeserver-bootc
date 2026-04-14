@@ -1,10 +1,14 @@
-FROM docker.io/library/gcc:15@sha256:27be068a2580bed7c32ccf2349352e29f86e0a5c8cda8c9c98c6b59e4ad98d53 AS build
+FROM alpine:3.23 AS build
+RUN apk add --no-cache gcc musl-dev
+
+WORKDIR /app
+
 RUN printf '%s\n' \
   '#include <stdio.h>' \
   'int main() { printf("Hello%c",0x0A); }' > /hello.c \
- && cc -static /hello.c -o /hello
+ && cc -static /hello.c -o /app/hello
 
-#FROM scratch
-FROM cgr.dev/chainguard/static:latest
-COPY --from=build /hello /hello
+FROM scratch
+
+COPY --from=build /app/hello /hello
 CMD ["/hello"]

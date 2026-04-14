@@ -1,0 +1,5 @@
+{
+  "cliPluginsExtraDirs": [
+    "/usr/local/bin/.docker"
+  ]
+}

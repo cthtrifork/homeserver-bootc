@@ -9,15 +9,18 @@ ensure_group() {
     fi
 
     echo "Creating system group: $group"
-    groupadd --system "$group"
+    groupadd "$group"
 }
 
 ensure_group docker
 ensure_group libvirt
 ensure_group kvm
 
+echo "Configuring groups all users in group wheel"
+
 mapfile -t wheelarray < <(getent group wheel | cut -d: -f4 | tr ',' '\n')
 for user in "${wheelarray[@]}"; do
     [[ -n "$user" ]] || continue
     usermod -aG docker,libvirt,kvm "$user"
+    echo "Added user: $user to standard system groups"
 done

@@ -8,7 +8,7 @@ runs:
   using: "composite"
   steps:
     - name: Trivy REPORT sarif (base:latest)
-      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
       with:
         image-ref: ${{ env.LOCAL_PR_IMAGE }}
         ignore-unfixed: true
@@ -25,14 +25,14 @@ runs:
         TRIVY_SKIP_JAVA_DB_UPDATE: true
 
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4
+      uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
       with:
         token: ${{ inputs.github_token }}
         sarif_file: "${{ github.workspace }}/trivy-results.sarif"
         category: trivy
 
     - name: Trivy SBOM - current
-      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
       with:
         image-ref: ${{ env.LOCAL_PR_IMAGE }}
         scan-type: image
@@ -49,7 +49,7 @@ runs:
         TRIVY_SKIP_JAVA_DB_UPDATE: true
 
     - name: Upload trivy report as a Github artifact
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: trivy-${{ matrix.image }}-sbom-report
         path: "${{ github.workspace }}/dependency-results.sbom.json"
