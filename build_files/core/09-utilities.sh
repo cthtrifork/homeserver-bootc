@@ -220,7 +220,7 @@ COPA_VERSION="v0.13.0" # renovate: datasource=github-releases depName=project-co
 COPA_TGZ="$(tmp_name copa "$COPA_VERSION" tar.gz)"
 download_if_missing_cmd "$COPA_TGZ" /ctx/build_files/github-release-url.sh project-copacetic/copacetic "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$COPA_VERSION"
 extract "$COPA_TGZ"
-"$COPA_TGZ/copa" completion bash >"$COMPLETION_DIR/copa"
+"$BIN_DIR/copa" completion bash >"$COMPLETION_DIR/copa"
 
 log "Installing yq"
 YQ_VERSION="v4.52.5" # renovate: datasource=github-releases depName=mikefarah/yq
