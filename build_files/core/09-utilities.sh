@@ -215,6 +215,13 @@ JQ_BIN="$(tmp_name jq "$JQ_VERSION" bin)"
 download_if_missing_cmd "$JQ_BIN" /ctx/build_files/github-release-url.sh jqlang/jq "${MACHINE}.${PLATFORM_ARCH}" "$JQ_VERSION"
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
+log "Installing copa"
+COPA_VERSION="v0.13.0" # renovate: datasource=github-releases depName=project-copacetic/copacetic
+COPA_TGZ="$(tmp_name copa "$COPA_VERSION" bin)"
+download_if_missing_cmd "$COPA_TGZ" /ctx/build_files/github-release-url.sh project-copacetic/copacetic "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$COPA_VERSION"
+extract "$COPA_TGZ"
+"$COPA_TGZ/copa" completion bash >"$COMPLETION_DIR/copa"
+
 log "Installing yq"
 YQ_VERSION="v4.52.5" # renovate: datasource=github-releases depName=mikefarah/yq
 YQ_BIN="$(tmp_name yq "$YQ_VERSION" bin)"
