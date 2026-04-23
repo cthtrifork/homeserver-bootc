@@ -412,7 +412,7 @@ jobs:
         uses: ./.github/actions/load-image
 
       - name: Trivy REPORT table - current
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.LOCAL_PR_IMAGE }}
           ignore-unfixed: true
@@ -504,7 +504,7 @@ jobs:
         uses: ./.github/actions/load-image
 
       - name: Trivy vuln scan (JSON) - current
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.LOCAL_PR_IMAGE }}
           format: json
@@ -520,7 +520,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Trivy vuln scan (JSON) - latest
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE_FULL }}:latest
           format: json
@@ -755,7 +755,7 @@ jobs:
           trivy_version: ${{ env.TRIVY_VERSION }}
 
       - name: Trivy vuln scan (JSON) - current
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
           format: json
