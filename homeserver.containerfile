@@ -8,7 +8,9 @@ COPY system_files/ /system_files/
 
 FROM base AS final
 
+RUN bootc --version
 RUN sudo dnf upgrade -qy --enablerepo=updates-testing --refresh --advisory=FEDORA-2026-286c1b4e81
+RUN bootc --version
 
 # setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
