@@ -179,7 +179,7 @@ install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 log "Installing flux-operator-mcp"
 FLUX_MCP_VERSION="v0.48.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
 FLUX_MCP_TGZ="$(tmp_name flux-operator-mcp "$FLUX_MCP_VERSION" tar.gz)"
-download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}-${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
+download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}_${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
 extract "$FLUX_MCP_TGZ"
 "$BIN_DIR/flux-operator-mcp" completion bash >"$COMPLETION_DIR/flux-operator-mcp"
 
