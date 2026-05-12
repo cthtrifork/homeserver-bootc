@@ -156,7 +156,7 @@ ln -sf "$BIN_DIR/virtctl" "$BIN_DIR/kubectl-virt"
 "$BIN_DIR/virtctl" completion bash >"$COMPLETION_DIR/virtctl"
 
 log "Installing kubectl-cnpg"
-KUBECTLCNPG_VERSION="v1.29.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
+KUBECTLCNPG_VERSION="v1.29.1" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 KUBECTLCNPG_TGZ="$(tmp_name kubectl-cnpg "$KUBECTLCNPG_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBECTLCNPG_TGZ" /ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_${HOST_ARCH}.tar.gz" "$KUBECTLCNPG_VERSION"
 extract "$KUBECTLCNPG_TGZ"
@@ -169,12 +169,26 @@ download_if_missing_cmd "$KIND_BIN" /ctx/build_files/github-release-url.sh kuber
 install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
+log "Installing kubecolor"
+KUBECOLOR_VERSION="v0.6.0" # renovate: datasource=github-releases depName=kubecolor/kubecolor/
+KUBECOLOR_TGZ="$(tmp_name kubecolor "$KUBECOLOR_VERSION" tar.gz)"
+download_if_missing_cmd "$KUBECOLOR_TGZ" /ctx/build_files/github-release-url.sh kubecolor/kubecolor "kubecolor_${KUBECOLOR_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$KUBECOLOR_VERSION"
+extract "$KUBECOLOR_TGZ"
+"$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
+
 log "Installing omnictl"
-OMNICTL_VERSION="v1.7.1" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_VERSION="v1.7.2" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
 download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "omnictl.${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
 install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 "$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
+
+log "Installing flux-operator-mcp"
+FLUX_MCP_VERSION="v0.48.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
+FLUX_MCP_TGZ="$(tmp_name flux-operator-mcp "$FLUX_MCP_VERSION" tar.gz)"
+download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}_${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
+extract "$FLUX_MCP_TGZ"
+"$BIN_DIR/flux-operator-mcp" completion bash >"$COMPLETION_DIR/flux-operator-mcp"
 
 log "Installing flux"
 FLUX_VERSION="v2.8.6" # renovate: datasource=github-releases depName=fluxcd/flux2
@@ -198,7 +212,7 @@ extract "$K9S_TGZ"
 "$BIN_DIR/k9s" completion bash >"$COMPLETION_DIR/k9s"
 
 log "Installing sops"
-SOPS_VERSION=v3.12.2 # renovate: datasource=github-releases depName=getsops/sops
+SOPS_VERSION=v3.13.0 # renovate: datasource=github-releases depName=getsops/sops
 SOPS_BIN="$(tmp_name sops "$SOPS_VERSION" bin)"
 download_if_missing_cmd "$SOPS_BIN" /ctx/build_files/github-release-url.sh getsops/sops "${MACHINE}.${PLATFORM_ARCH}" "$SOPS_VERSION"
 install -o root -g root -m 0755 "$SOPS_BIN" "$BIN_DIR/sops"
@@ -216,7 +230,7 @@ download_if_missing_cmd "$JQ_BIN" /ctx/build_files/github-release-url.sh jqlang/
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
 log "Installing copa"
-COPA_VERSION="v0.13.0" # renovate: datasource=github-releases depName=project-copacetic/copacetic
+COPA_VERSION="v0.14.0" # renovate: datasource=github-releases depName=project-copacetic/copacetic
 COPA_TGZ="$(tmp_name copa "$COPA_VERSION" tar.gz)"
 download_if_missing_cmd "$COPA_TGZ" /ctx/build_files/github-release-url.sh project-copacetic/copacetic "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$COPA_VERSION"
 extract "$COPA_TGZ"
@@ -301,7 +315,7 @@ install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
 cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.3.2" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.3.5" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins

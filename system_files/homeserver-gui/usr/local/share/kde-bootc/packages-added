@@ -120,6 +120,9 @@ guestfs-tools
 libosinfo
 # A system tuning service for Linux
 # tuned
+# Podman
+podman
+slirp4netns
 
 ###########
 # Network #
