@@ -18,6 +18,12 @@ export DISABLE_AUTO_UPDATE=true
 # PATH
 export PATH="$PATH:$HOME/.local/bin"
 
+# Kubecolor
+alias kubectl=kubecolor
+complete -o default -F __start_kubectl kubecolor
+alias k=kubectl
+complete -o default -F __start_kubectl k
+
 # Shell Options
 shopt -s cdspell
 shopt -s checkwinsize

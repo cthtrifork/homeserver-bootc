@@ -169,6 +169,13 @@ download_if_missing_cmd "$KIND_BIN" /ctx/build_files/github-release-url.sh kuber
 install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
+log "Installing kubecolor"
+KUBECOLOR_VERSION="v0.6.0" # renovate: datasource=github-releases depName=kubecolor/kubecolor/
+KUBECOLOR_TGZ="$(tmp_name kubecolor "$KUBECOLOR_VERSION" tar.gz)"
+download_if_missing_cmd "$KUBECOLOR_TGZ" /ctx/build_files/github-release-url.sh kubecolor/kubecolor "kubecolor_${KUBECOLOR_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$KUBECOLOR_VERSION"
+extract "$KUBECOLOR_TGZ"
+"$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
+
 log "Installing omnictl"
 OMNICTL_VERSION="v1.7.2" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
