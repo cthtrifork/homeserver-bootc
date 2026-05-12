@@ -50,19 +50,18 @@ runs:
         [ -n "${ROOTFS}" ] && INPUT_ARGS+="--rootfs=${ROOTFS} "
 
         sudo podman run \
-          --rm \
-          --privileged \
-          --pull=newer \
-          --security-opt label=type:unconfined_t \
-          -v ${CONFIG_FILE}:/config.toml:ro \
-          -v ./output:/output \
-          -v /var/lib/containers/storage:/var/lib/containers/storage \
-          ${BOOTC_IMAGE_BUILDER_IMAGE} \
-          --type ${IMAGE_TYPE} \
-          --local \
-          --chown $DESIRED_UID:$DESIRED_GID \
-          ${INPUT_ARGS} \
-          $IMAGE
+            --rm \
+            -it \
+            --privileged \
+            --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v ${CONFIG_FILE}:/config.toml:ro \
+            -v ./output:/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            ${BOOTC_IMAGE_BUILDER_IMAGE} \
+            --type ${IMAGE_TYPE} \
+            ${INPUT_ARGS} \
+            $IMAGE
 
         case "${IMAGE_TYPE}" in
         "raw"|"ami") OUTPUT_DIRECTORY="./output/image" ;;
