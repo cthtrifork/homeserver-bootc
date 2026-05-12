@@ -8,6 +8,9 @@ COPY system_files/ /system_files/
 
 FROM base AS final
 
+RUN [ -e /etc/subuid ] || touch /etc/subuid; \
+    [ -e /etc/subgid ] || touch /etc/subgid
+
 # setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
 
