@@ -601,8 +601,6 @@ jobs:
         run: | #sh
           set -e
           {
-            echo '[customizations.disk]'
-            echo 'type = "gpt"'
             echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/"'
             echo 'minsize   = "20 GiB"'
