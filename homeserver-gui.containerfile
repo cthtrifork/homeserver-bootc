@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
+# syntax=docker/dockerfile:1.24@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
