@@ -177,7 +177,7 @@ extract "$KUBECOLOR_TGZ"
 "$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
 
 log "Installing omnictl"
-OMNICTL_VERSION="v1.7.2" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_VERSION="v1.7.3" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
 download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "omnictl.${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
 install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
