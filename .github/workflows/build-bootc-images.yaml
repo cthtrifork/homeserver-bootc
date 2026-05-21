@@ -558,7 +558,7 @@ jobs:
       id-token: write
       pull-requests: write
     env:
-      SSH_USERNAME: ci
+      SSH_USERNAME: runner
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
 
     steps:
