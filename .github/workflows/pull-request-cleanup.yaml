@@ -13,10 +13,10 @@ jobs:
       actions: write
     steps:
       - name: Delete image
-        uses: dataaxiom/ghcr-cleanup-action@374e2028c8fb93b7219f3771cd405fab95d3dec4 # v1.2.0
+        uses: dataaxiom/ghcr-cleanup-action@f092b48ba3b604b2a83690dc4b2bbb3392e1045f # v1.2.1
         with:
           delete-tags: pr-${{github.event.pull_request.number}}
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
 
       - name: Delete Untagged Images
-        uses: dataaxiom/ghcr-cleanup-action@374e2028c8fb93b7219f3771cd405fab95d3dec4 # v1.2.0
+        uses: dataaxiom/ghcr-cleanup-action@f092b48ba3b604b2a83690dc4b2bbb3392e1045f # v1.2.1
