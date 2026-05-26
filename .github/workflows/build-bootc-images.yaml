@@ -601,9 +601,9 @@ jobs:
         run: | #sh
           set -e
           {
-            echo '[[customizations.filesystem]]'
-            echo 'mountpoint = "/"'
-            echo 'minsize   = "20 GiB"'
+            #echo '[[customizations.filesystem]]'
+            #echo 'mountpoint = "/"'
+            #echo 'minsize   = "20 GiB"'
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
