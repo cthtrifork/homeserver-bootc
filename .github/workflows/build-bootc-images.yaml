@@ -248,13 +248,16 @@ jobs:
         env:
           LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
-          CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
+          GITHUB_CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
+          CLUSTER_CACHE_REPO: zot.registry-system.svc.cluster.local:5000/buildcache/${{ env.IMAGE_NAME }}
         run: |
           # Build a labels array from the multi-line env var
           labels=()
           while IFS= read -r line; do
             labels+=( --label "$line" )
           done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+
+          CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }}
     
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
