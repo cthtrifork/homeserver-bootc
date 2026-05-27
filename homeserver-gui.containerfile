@@ -4,7 +4,8 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 # this will also inherit all build_files/core/* applied changes
-FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
+ARG BASE_IMAGE=ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
+FROM ${BASE_IMAGE}
 
 RUN dnf copr enable -y sneexy/zen-browser && \
 	dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
