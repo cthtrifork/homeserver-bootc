@@ -252,7 +252,7 @@ jobs:
           GITHUB_CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
           CLUSTER_CACHE_REPO: zot.registry-system.svc.cluster.local:5000/buildcache/${{ env.IMAGE_NAME }}
           BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
-          ZOT_BASE_IMAGE: zot.registry-system.svc.cluster.local:5000/ghcr-cache/cthtrifork/homeserver-centos-bootc:latest
+          ZOT_BASE_IMAGE: zot.registry-system.svc.cluster.local:5000/ghcr-cache/${{ env.REPO_NAME }}/homeserver-centos-bootc:latest
         run: |
           # Build a labels array from the multi-line env var
           labels=()
@@ -264,16 +264,6 @@ jobs:
           CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }}
           TLS_VERIFY=${{ matrix.image == 'homeserver-gui' && 'false' || 'true' }}
           BASE_IMAGE=${{ matrix.image == 'homeserver-gui' && '$ZOT_BASE_IMAGE' || '$BASE_IMAGE' }}
-
-          # todo: move to setup podman
-          sudo mkdir -p /etc/containers/registries.conf.d
-          sudo tee /etc/containers/registries.conf.d/zot.conf >/dev/null <<EOF
-          [[registry]]
-          location = "zot-test.registry-system.svc.cluster.local:5000"
-          insecure = true
-          EOF
-
-          #CACHE_REPOSITORY=$GITHUB_CACHE_REPOSITORY
     
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
