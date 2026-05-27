@@ -280,9 +280,7 @@ jobs:
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
             --tls-verify=${TLS_VERIFY} \
-            --layers=true \
-            --cache-to ${CACHE_REPOSITORY} \
-            --cache-from ${CACHE_REPOSITORY} \
+            --layers=false \
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
