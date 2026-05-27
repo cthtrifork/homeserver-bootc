@@ -251,6 +251,8 @@ jobs:
           DOCKER_BUILDKIT: "1"
           GITHUB_CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
           CLUSTER_CACHE_REPO: zot.registry-system.svc.cluster.local:5000/buildcache/${{ env.IMAGE_NAME }}
+          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
+          ZOT_BASE_IMAGE: zot.registry-system.svc.cluster.local:5000/mirror/cthtrifork/homeserver-centos-bootc:latest
         run: |
           # Build a labels array from the multi-line env var
           labels=()
@@ -258,13 +260,16 @@ jobs:
             labels+=( --label "$line" )
           done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
 
-          CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }} # todo: need https handling
+          # todo: need https handling
+          CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }}
+          TLS_VERIFY=${{ matrix.image == 'homeserver-gui' && 'false' || 'true' }}
+          BASE_IMAGE=${{ matrix.image == 'homeserver-gui' && '$ZOT_BASE_IMAGE' || '$BASE_IMAGE' }}
 
           # todo: move to setup podman
           sudo mkdir -p /etc/containers/registries.conf.d
           sudo tee /etc/containers/registries.conf.d/zot.conf >/dev/null <<EOF
           [[registry]]
-          location = "zot.registry-system.svc.cluster.local:5000"
+          location = "zot-test.registry-system.svc.cluster.local:5000"
           insecure = true
           EOF
 
@@ -272,6 +277,7 @@ jobs:
     
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
+            --build-arg BASE_IMAGE=${BASE_IMAGE} \
             --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
             --build-arg REGISTRY_URL=ghcr.io \
             --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
@@ -280,7 +286,7 @@ jobs:
             --build-arg "HTTPS_PROXY=${HTTPS_PROXY}" \
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
-            --tls-verify=false \
+            --tls-verify=${TLS_VERIFY} \
             --layers=true \
             --cache-to ${CACHE_REPOSITORY} \
             --cache-from ${CACHE_REPOSITORY} \
