@@ -162,6 +162,13 @@ download_if_missing_cmd "$KUBECTLCNPG_TGZ" /ctx/build_files/github-release-url.s
 extract "$KUBECTLCNPG_TGZ"
 "$BIN_DIR/kubectl-cnpg" completion bash >"$COMPLETION_DIR/kubectl-cnpg"
 
+log "Installing kubectl-df-pvc"
+KUBECTLDFPVC_VERSION="v1.29.1" # renovate: datasource=github-releases depName=yashbhutwala/kubectl-df-pv
+KUBECTLDFPVC_TGZ="$(tmp_name kubectl-df-pvc "$KUBECTLDFPVC_VERSION" tar.gz)"
+download_if_missing_cmd "$KUBECTLDFPVC_TGZ" /ctx/build_files/github-release-url.sh yashbhutwala/kubectl-df-pv "kubectl-df-pv.*_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$KUBECTLDFPVC_VERSION"
+extract "$KUBECTLDFPVC_TGZ"
+"$BIN_DIR/kubectl-df-pvc" completion bash >"$COMPLETION_DIR/kubectl-df-pvc"
+
 log "Installing kind"
 KIND_VERSION="v0.31.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 KIND_BIN="$(tmp_name kind "$KIND_VERSION" bin)"
