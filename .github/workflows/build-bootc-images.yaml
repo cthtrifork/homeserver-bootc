@@ -225,6 +225,7 @@ jobs:
           chmod 600 /tmp/AGE_KEY
 
       - name: Restore runner cache
+        if: ${{ !endsWith(matrix.image, 'gui') }}
         id: runner-cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
@@ -257,7 +258,8 @@ jobs:
             labels+=( --label "$line" )
           done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
 
-          CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }}
+          CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }} # todo: need https handling
+          CACHE_REPOSITORY=$GITHUB_CACHE_REPOSITORY
     
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
