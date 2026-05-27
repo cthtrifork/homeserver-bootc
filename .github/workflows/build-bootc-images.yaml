@@ -259,7 +259,21 @@ jobs:
           done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
 
           CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }} # todo: need https handling
-          CACHE_REPOSITORY=$GITHUB_CACHE_REPOSITORY
+
+          sudo mkdir -p /etc/containers/registries.conf.d
+          sudo tee /etc/containers/registries.conf.d/zot.conf >/dev/null <<EOF
+          [[registry]]
+          location = "zot.registry-system.svc.cluster.local:5000"
+          insecure = true
+          EOF
+
+          cat > ~/.config/containers/registries.conf <<EOF
+          [[registry]]
+          location = "zot.local:5000"
+          insecure = true
+          EOF
+          
+          #CACHE_REPOSITORY=$GITHUB_CACHE_REPOSITORY
     
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
