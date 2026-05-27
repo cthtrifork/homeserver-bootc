@@ -260,6 +260,7 @@ jobs:
 
           CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }} # todo: need https handling
 
+          # todo: move to setup podman
           sudo mkdir -p /etc/containers/registries.conf.d
           sudo tee /etc/containers/registries.conf.d/zot.conf >/dev/null <<EOF
           [[registry]]
@@ -267,12 +268,6 @@ jobs:
           insecure = true
           EOF
 
-          cat > ~/.config/containers/registries.conf <<EOF
-          [[registry]]
-          location = "zot.local:5000"
-          insecure = true
-          EOF
-          
           #CACHE_REPOSITORY=$GITHUB_CACHE_REPOSITORY
     
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
@@ -285,7 +280,7 @@ jobs:
             --build-arg "HTTPS_PROXY=${HTTPS_PROXY}" \
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
-            --tls-verify=true \
+            --tls-verify=false \
             --layers=true \
             --cache-to ${CACHE_REPOSITORY} \
             --cache-from ${CACHE_REPOSITORY} \
