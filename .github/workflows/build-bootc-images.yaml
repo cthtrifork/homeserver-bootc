@@ -251,8 +251,8 @@ jobs:
           DOCKER_BUILDKIT: "1"
           GITHUB_CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
           CLUSTER_CACHE_REPO: zot.registry-system.svc.cluster.local:5000/buildcache/${{ env.IMAGE_NAME }}
-          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
-          ZOT_BASE_IMAGE: zot.registry-system.svc.cluster.local:5000/ghcr-cache/${{ env.REPO_NAME }}/homeserver-centos-bootc:latest
+          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/homeserver-centos-bootc:latest
+          ZOT_BASE_IMAGE: zot.registry-system.svc.cluster.local:5000/ghcr-cache/${{ github.repository_owner }}/${{ env.REPO_NAME }}/homeserver-centos-bootc:latest
         run: |
           # Build a labels array from the multi-line env var
           labels=()
