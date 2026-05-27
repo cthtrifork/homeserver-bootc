@@ -262,7 +262,7 @@ jobs:
 
           # todo: need https handling
           CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }}
-          TLS_VERIFY=${{ matrix.image == 'homeserver-gui' && 'false' || 'true' }}
+          TLS_VERIFY=true # ${{ matrix.image == 'homeserver-gui' && 'false' || 'true' }}
           BASE_IMAGE=${{ matrix.image == 'homeserver-gui' && '$ZOT_BASE_IMAGE' || '$BASE_IMAGE' }}
 
           sudo /usr/bin/buildah pull --tls-verify=${TLS_VERIFY} "${BASE_IMAGE}"
