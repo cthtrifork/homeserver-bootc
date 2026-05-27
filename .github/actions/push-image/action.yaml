@@ -12,34 +12,39 @@ runs:
   using: "composite"
   steps:
     - name: Push to Container registry
+      uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
       id: push-to-ghcr
-      shell: bash
-      run: | #sh
-        podman tag \
-          ${{ env.LOCAL_PR_IMAGE }} \
-          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-        echo "Push"
-        podman push \
-          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
-          --digestfile digest.txt
-        DIGEST=$(cat digest.txt)
-        echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
-        echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-        for tag in $TAGS; do
-          skopeo copy -q --all \
-            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
-            "docker://${{ env.IMAGE_FULL }}:${tag}"
-        done
-        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+      with: # give up to 3x15 minutes
+        timeout_minutes: 15
+        max_attempts: 3
+        retry_on: any
+        command: | #sh
+          podman tag \
+            ${{ env.LOCAL_PR_IMAGE }} \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          echo "Push"
+          podman push \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
+            --digestfile digest.txt
+          DIGEST=$(cat digest.txt)
+          echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
+          echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          for tag in $TAGS; do
+            skopeo copy -q --all \
+              "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+              "docker://${{ env.IMAGE_FULL }}:${tag}"
+          done
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
       env:
         TAGS: ${{ steps.metadata.outputs.tags }}
+
 
     - name: Push to cache registry
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        # Tag the image for the local registry 
+        # Tag the image for the local registry
         podman tag \
           ${{ env.LOCAL_PR_IMAGE }} \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
