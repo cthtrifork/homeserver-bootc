@@ -248,6 +248,7 @@ jobs:
         env:
           LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
+          CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
         run: |
           # Build a labels array from the multi-line env var
           labels=()
@@ -266,7 +267,9 @@ jobs:
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
             --tls-verify=true \
-            --layers=false \
+            --layers=true \
+            --cache-to ${CACHE_REPOSITORY} \
+            --cache-from ${CACHE_REPOSITORY} \
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
