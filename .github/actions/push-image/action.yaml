@@ -15,9 +15,9 @@ runs:
       uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
       id: push-to-ghcr
-      with: # give up to 3x15 minutes
-        timeout_minutes: 15
-        max_attempts: 3
+      with: # give up to 2x30 minutes
+        timeout_minutes: 30
+        max_attempts: 2
         retry_on: any
         command: | #sh
           podman tag \
