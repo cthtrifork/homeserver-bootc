@@ -225,6 +225,7 @@ jobs:
           chmod 600 /tmp/AGE_KEY
 
       - name: Restore runner cache
+        if: ${{ !endsWith(matrix.image, 'gui') }}
         id: runner-cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
@@ -248,6 +249,10 @@ jobs:
         env:
           LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
+          GITHUB_CACHE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}-cache
+          CLUSTER_CACHE_REPO: zot.registry-system.svc.cluster.local:5000/buildcache/${{ env.IMAGE_NAME }}
+          BASE_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/homeserver-centos-bootc:latest
+          ZOT_BASE_IMAGE: zot.registry-system.svc.cluster.local:5000/ghcr-private/${{ github.repository_owner }}/${{ env.REPO_NAME }}/homeserver-centos-bootc:latest
         run: |
           # Build a labels array from the multi-line env var
           labels=()
@@ -255,8 +260,17 @@ jobs:
             labels+=( --label "$line" )
           done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
 
+          # todo: need https handling
+          CACHE_REPOSITORY=${{ matrix.image == 'homeserver-gui' && '$CLUSTER_CACHE_REPO' || '$GITHUB_CACHE_REPOSITORY' }}
+          TLS_VERIFY=true # ${{ matrix.image == 'homeserver-gui' && 'false' || 'true' }}
+          BASE_IMAGE=${{ matrix.image == 'homeserver-gui' && '$ZOT_BASE_IMAGE' || '$BASE_IMAGE' }}
+
+          sudo /usr/bin/buildah pull --tls-verify=${TLS_VERIFY} "${BASE_IMAGE}"
+
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
+            --pull=false \
+            --build-arg BASE_IMAGE=${BASE_IMAGE} \
             --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
             --build-arg REGISTRY_URL=ghcr.io \
             --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
@@ -265,7 +279,7 @@ jobs:
             --build-arg "HTTPS_PROXY=${HTTPS_PROXY}" \
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
-            --tls-verify=true \
+            --tls-verify=${TLS_VERIFY} \
             --layers=false \
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
