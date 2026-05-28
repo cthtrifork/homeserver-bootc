@@ -370,7 +370,6 @@ jobs:
           prerelease: false
 
       - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-        timeout-minutes: 60
         id: push-to-ghcr
         uses: ./.github/actions/push-image
         with:
