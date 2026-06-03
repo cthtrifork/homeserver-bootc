@@ -171,7 +171,7 @@ mv "$BIN_DIR/df-pv" "$BIN_DIR/kubectl-df-pv"
 "$BIN_DIR/kubectl-df-pv" completion bash >"$COMPLETION_DIR/kubectl-df-pv"
 
 log "Installing kind"
-KIND_VERSION="v0.31.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+KIND_VERSION="v0.32.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 KIND_BIN="$(tmp_name kind "$KIND_VERSION" bin)"
 download_if_missing_cmd "$KIND_BIN" /ctx/build_files/github-release-url.sh kubernetes-sigs/kind "${MACHINE}.${PLATFORM_ARCH}" "$KIND_VERSION"
 install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
