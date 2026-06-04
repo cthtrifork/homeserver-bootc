@@ -2,4 +2,6 @@
 
 # show memory usage
 
-ps -eo rss,comm | awk '{arr[$2]+=$1} END {for (i in arr) {print arr[i]/1024 " MB\t" i}}' | sort -n -r
+# rss is resident set size in KiB, meaning physical RAM currently used by the process. comm is the executable name.
+
+ps -eo rss,comm | awk '{arr[$2]+=$1} END {for (i in arr) {print arr[i]/1024 " MiB\t" i}}' | sort -n -r
