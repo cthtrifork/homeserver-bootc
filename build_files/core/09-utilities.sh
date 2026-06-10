@@ -185,7 +185,7 @@ extract "$KUBECOLOR_TGZ"
 "$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
 
 log "Installing omnictl"
-OMNICTL_VERSION="v1.8.1" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_VERSION="v1.8.2" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
 download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "omnictl.${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
 install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
@@ -213,7 +213,7 @@ extract "$KUSTOMIZE_TGZ"
 "$BIN_DIR/kustomize" completion bash >"$COMPLETION_DIR/kustomize"
 
 log "Installing k9s"
-K9S_VERSION=v0.50.18 # renovate: datasource=github-releases depName=derailed/k9s
+K9S_VERSION=v0.51.0 # renovate: datasource=github-releases depName=derailed/k9s
 K9S_TGZ="$(tmp_name k9s "$K9S_VERSION" tar.gz)"
 download_if_missing_cmd "$K9S_TGZ" /ctx/build_files/github-release-url.sh derailed/k9s "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$K9S_VERSION"
 extract "$K9S_TGZ"
@@ -245,14 +245,14 @@ extract "$COPA_TGZ"
 "$BIN_DIR/copa" completion bash >"$COMPLETION_DIR/copa"
 
 log "Installing yq"
-YQ_VERSION="v4.53.2" # renovate: datasource=github-releases depName=mikefarah/yq
+YQ_VERSION="v4.53.3" # renovate: datasource=github-releases depName=mikefarah/yq
 YQ_BIN="$(tmp_name yq "$YQ_VERSION" bin)"
 download_if_missing_cmd "$YQ_BIN" /ctx/build_files/github-release-url.sh mikefarah/yq "${MACHINE}.${PLATFORM_ARCH}" "$YQ_VERSION"
 install -o root -g root -m 0755 "$YQ_BIN" "$BIN_DIR/yq"
 "$BIN_DIR/yq" completion bash >"$COMPLETION_DIR/yq"
 
 log "Installing cosign"
-COSIGN_VERSION="v3.0.6" # renovate: datasource=github-releases depName=sigstore/cosign
+COSIGN_VERSION="v3.1.1" # renovate: datasource=github-releases depName=sigstore/cosign
 COSIGN_BIN="$(tmp_name cosign "$COSIGN_VERSION" bin)"
 download_if_missing_cmd "$COSIGN_BIN" /ctx/build_files/github-release-url.sh sigstore/cosign "${MACHINE}.${PLATFORM_ARCH}" "$COSIGN_VERSION"
 install -o root -g root -m 0755 "$COSIGN_BIN" "$BIN_DIR/cosign"
@@ -265,7 +265,7 @@ download_if_missing_cmd "$SHFMT_BIN" /ctx/build_files/github-release-url.sh mvda
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.13.3" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.13.4" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing_cmd "$TALOSCTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/talos "talosctl-${MACHINE}.${PLATFORM_ARCH}" "$TALOSCTL_VERSION"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
@@ -297,7 +297,7 @@ download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh
 extract "$LAZYDOCKER_TGZ"
 
 log "Installing lazygit"
-LAZYGIT_VERSION="v0.62.1" # renovate: datasource=github-releases depName=jesseduffield/lazygit
+LAZYGIT_VERSION="v0.62.2" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
 extract "$LAZYGIT_TGZ"
@@ -323,7 +323,7 @@ install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
 cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.3.10" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.3.12" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
