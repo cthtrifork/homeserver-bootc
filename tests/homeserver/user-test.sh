@@ -39,4 +39,7 @@ p = pam.pam()
 print("OK" if p.authenticate("$WHOAMI", "Password") else "FAIL")
 EOF
 
+echo "== user binaries =="
+memoryusage
+
 echo "== User testing finished =="
