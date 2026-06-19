@@ -59,8 +59,6 @@ runs:
           -v /var/lib/containers/storage:/var/lib/containers/storage \
           ${BOOTC_IMAGE_BUILDER_IMAGE} \
           --type ${IMAGE_TYPE} \
-          --local \
-          --chown $DESIRED_UID:$DESIRED_GID \
           ${INPUT_ARGS} \
           $IMAGE
 
