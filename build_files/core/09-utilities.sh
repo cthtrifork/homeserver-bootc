@@ -238,7 +238,7 @@ download_if_missing_cmd "$JQ_BIN" /ctx/build_files/github-release-url.sh jqlang/
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
 log "Installing copa"
-COPA_VERSION="v0.14.1" # renovate: datasource=github-releases depName=project-copacetic/copacetic
+COPA_VERSION="v0.14.2" # renovate: datasource=github-releases depName=project-copacetic/copacetic
 COPA_TGZ="$(tmp_name copa "$COPA_VERSION" tar.gz)"
 download_if_missing_cmd "$COPA_TGZ" /ctx/build_files/github-release-url.sh project-copacetic/copacetic "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$COPA_VERSION"
 extract "$COPA_TGZ"
