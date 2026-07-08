@@ -199,7 +199,7 @@ extract "$FLUX_MCP_TGZ"
 "$BIN_DIR/flux-operator-mcp" completion bash >"$COMPLETION_DIR/flux-operator-mcp"
 
 log "Installing flux"
-FLUX_VERSION="v2.9.0" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.9.1" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux2 "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_VERSION"
 extract "$FLUX_TGZ"
