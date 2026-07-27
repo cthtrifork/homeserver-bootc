@@ -19,7 +19,7 @@ runs:
     - name: Wait for SSH and run startup checks
       shell: bash
       env:
-        SSH_KEY: ${{ inputs.SSH_KEY}}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         SLEEP_SECONDS: 10
@@ -82,10 +82,26 @@ runs:
           ${SSH_USERNAME}@localhost \
           "fastfetch || true"
 
+    - name: Reboot VM
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          sudo reboot
+
     - name: Run diagnostics
       shell: bash
       env:
-        SSH_KEY: ${{ inputs.SSH_KEY}}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
