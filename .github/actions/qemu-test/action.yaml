@@ -93,10 +93,10 @@ runs:
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
         ssh "${SSH_OPTS[@]}" \
-          -i "${SSH_KEY}" \
+          -i "$SSH_KEY" \
           -p 2222 \
           ${SSH_USERNAME}@localhost \
-          sudo reboot
+          "sudo reboot"
 
     - name: Run diagnostics
       shell: bash
