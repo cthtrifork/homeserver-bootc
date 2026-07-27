@@ -100,7 +100,7 @@ runs:
     - name: Run system tests
       shell: bash
       env:
-        SSH_KEY: ${{ inputs.SSH_KEY}}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
@@ -121,6 +121,14 @@ runs:
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        ssh "${SSH_OPTS[@]}" \
+          -i "${SSH_KEY}" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          bash -l -s 'id'
+
+        sleep 5s
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
