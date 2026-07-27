@@ -125,10 +125,10 @@ runs:
         ssh "${SSH_OPTS[@]}" \
           -i "${SSH_KEY}" \
           -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          bash -l -s 'id'
+          "${SSH_USERNAME}@localhost" \
+          id
 
-        sleep 15s
+        sleep 60s
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
