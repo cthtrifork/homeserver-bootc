@@ -58,11 +58,11 @@ jobs:
     outputs:
       image: ${{ steps.ensure-matrix.outputs.image }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Filter paths
         id: filter
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         with:
           token: ${{ github.token }}
           filters: |
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
 
@@ -182,7 +182,7 @@ jobs:
           run_as_sudo: "true"
 
       - name: Image Metadata
-        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         id: metadata
         with:
           # This generates all the tags for your image, you can add custom tags here too!
@@ -226,7 +226,7 @@ jobs:
 
       - name: Restore runner cache
         id: runner-cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             /home/runner/.cache/tmp
@@ -337,7 +337,7 @@ jobs:
 
       - name: Changelog PR comment
         if: ${{ github.event_name == 'pull_request' }}
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           path: ${{ steps.rechunk.outputs.changelog }}
           skip_unchanged: true
@@ -383,7 +383,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -467,7 +467,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -563,7 +563,7 @@ jobs:
 
     steps:
       - name: Clone the repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -717,7 +717,7 @@ jobs:
       attestations: write
     steps:
       - name: Clone the repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -785,7 +785,7 @@ jobs:
           COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Attach build provenance attestation
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
           subject-digest: ${{ steps.push-latest.outputs.digest }}

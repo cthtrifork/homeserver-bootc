@@ -122,14 +122,14 @@ download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSo
 extract "$AGE_TGZ" --strip-components=1
 
 log "Installing gh-cli"
-GH_CLI_VERSION="v2.93.0" # renovate: datasource=github-releases depName=cli/cli
+GH_CLI_VERSION="v2.96.0" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
 download_if_missing_cmd "$GH_CLI_TGZ" /ctx/build_files/github-release-url.sh cli/cli "${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$GH_CLI_VERSION"
 extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
 "$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
 
 log "Installing kubectl"
-KUBECTL_VERSION="v1.36.1" # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION="v1.36.2" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_BIN="$(tmp_name kubectl "$KUBECTL_VERSION" bin)"
 download_if_missing "$KUBECTL_BIN" "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${PLATFORM_ARCH}/kubectl"
 install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
@@ -145,7 +145,7 @@ ln -sf "$BIN_DIR/kubelogin" "$BIN_DIR/kubectl-oidc_login"
 "$BIN_DIR/kubelogin" completion bash >"$COMPLETION_DIR/kubelogin"
 
 log "Installing kubectl virt"
-KUBEVIRT_VERSION="v1.8.3" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+KUBEVIRT_VERSION="v1.8.4" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 KUBEVIRT_TGZ="$(tmp_name kubectl-virt "$KUBEVIRT_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBEVIRT_TGZ" /ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin "virtctl-${MACHINE}-${PLATFORM_ARCH}.tar.gz" "$KUBEVIRT_VERSION"
@@ -156,7 +156,7 @@ ln -sf "$BIN_DIR/virtctl" "$BIN_DIR/kubectl-virt"
 "$BIN_DIR/virtctl" completion bash >"$COMPLETION_DIR/virtctl"
 
 log "Installing kubectl-cnpg"
-KUBECTLCNPG_VERSION="v1.29.1" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
+KUBECTLCNPG_VERSION="v1.30.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 KUBECTLCNPG_TGZ="$(tmp_name kubectl-cnpg "$KUBECTLCNPG_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBECTLCNPG_TGZ" /ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_${HOST_ARCH}.tar.gz" "$KUBECTLCNPG_VERSION"
 extract "$KUBECTLCNPG_TGZ"
@@ -185,21 +185,21 @@ extract "$KUBECOLOR_TGZ"
 "$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
 
 log "Installing omnictl"
-OMNICTL_VERSION="v1.8.2" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_VERSION="v1.9.1" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
 download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "omnictl.${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
 install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 "$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
 
 log "Installing flux-operator-mcp"
-FLUX_MCP_VERSION="v0.50.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
+FLUX_MCP_VERSION="v0.56.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
 FLUX_MCP_TGZ="$(tmp_name flux-operator-mcp "$FLUX_MCP_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}_${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
 extract "$FLUX_MCP_TGZ"
 "$BIN_DIR/flux-operator-mcp" completion bash >"$COMPLETION_DIR/flux-operator-mcp"
 
 log "Installing flux"
-FLUX_VERSION="v2.8.8" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.9.2" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux2 "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_VERSION"
 extract "$FLUX_TGZ"
@@ -220,7 +220,7 @@ extract "$K9S_TGZ"
 "$BIN_DIR/k9s" completion bash >"$COMPLETION_DIR/k9s"
 
 log "Installing sops"
-SOPS_VERSION=v3.13.1 # renovate: datasource=github-releases depName=getsops/sops
+SOPS_VERSION=v3.13.2 # renovate: datasource=github-releases depName=getsops/sops
 SOPS_BIN="$(tmp_name sops "$SOPS_VERSION" bin)"
 download_if_missing_cmd "$SOPS_BIN" /ctx/build_files/github-release-url.sh getsops/sops "${MACHINE}.${PLATFORM_ARCH}" "$SOPS_VERSION"
 install -o root -g root -m 0755 "$SOPS_BIN" "$BIN_DIR/sops"
@@ -238,7 +238,7 @@ download_if_missing_cmd "$JQ_BIN" /ctx/build_files/github-release-url.sh jqlang/
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
 log "Installing copa"
-COPA_VERSION="v0.14.1" # renovate: datasource=github-releases depName=project-copacetic/copacetic
+COPA_VERSION="v0.14.2" # renovate: datasource=github-releases depName=project-copacetic/copacetic
 COPA_TGZ="$(tmp_name copa "$COPA_VERSION" tar.gz)"
 download_if_missing_cmd "$COPA_TGZ" /ctx/build_files/github-release-url.sh project-copacetic/copacetic "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$COPA_VERSION"
 extract "$COPA_TGZ"
@@ -265,21 +265,21 @@ download_if_missing_cmd "$SHFMT_BIN" /ctx/build_files/github-release-url.sh mvda
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.13.4" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.13.6" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing_cmd "$TALOSCTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/talos "talosctl-${MACHINE}.${PLATFORM_ARCH}" "$TALOSCTL_VERSION"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
 "$BIN_DIR/talosctl" completion bash >"$COMPLETION_DIR/talosctl"
 
 log "Installing helm"
-HELM_VERSION="v4.2.0" # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION="v4.2.3" # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
 download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${PLATFORM_ARCH}.tar.gz"
 extract "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
 log "Installing numr"
-NUMR_VERSION="v0.5.5" # renovate: datasource=github-releases depName=nasedkinpv/numr
+NUMR_VERSION="v0.8.0" # renovate: datasource=github-releases depName=nasedkinpv/numr
 NUMR_TGZ="$(tmp_name numr "$NUMR_VERSION" tar.gz)"
 download_if_missing_cmd "$NUMR_TGZ" /ctx/build_files/github-release-url.sh nasedkinpv/numr "${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.gz" "$NUMR_VERSION"
 extract "$NUMR_TGZ"
@@ -297,7 +297,7 @@ download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh
 extract "$LAZYDOCKER_TGZ"
 
 log "Installing lazygit"
-LAZYGIT_VERSION="v0.62.2" # renovate: datasource=github-releases depName=jesseduffield/lazygit
+LAZYGIT_VERSION="v0.63.1" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
 extract "$LAZYGIT_TGZ"
@@ -309,7 +309,7 @@ download_if_missing_cmd "$DOXX_TGZ" /ctx/build_files/github-release-url.sh bgree
 extract "$DOXX_TGZ"
 
 log "Installing witr"
-WITR_VERSION="v0.3.2" # renovate: datasource=github-releases depName=pranshuparmar/witr
+WITR_VERSION="v0.3.3" # renovate: datasource=github-releases depName=pranshuparmar/witr
 WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
 download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh pranshuparmar/witr "witr-${MACHINE}.${PLATFORM_ARCH}" "$WITR_VERSION"
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
@@ -323,13 +323,13 @@ install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
 cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.3.12" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.4.5" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
 
 log "Installing crane"
-CRANE_VERSION=v0.21.6 # renovate: datasource=github-releases depName=google/go-containerregistry
+CRANE_VERSION=v0.21.7 # renovate: datasource=github-releases depName=google/go-containerregistry
 CRANE_TGZ="$(tmp_name crane "$CRANE_VERSION" tar.gz)"
 download_if_missing_cmd "$CRANE_TGZ" /ctx/build_files/github-release-url.sh google/go-containerregistry "go-containerregistry_${MACHINE}_${HOST_ARCH}.tar.gz" "$CRANE_VERSION"
 extract "$CRANE_TGZ"
@@ -341,7 +341,7 @@ download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-
 install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
 
 log "Installing docker-scout"
-DOCKER_SCOUT_VERSION="v1.21.0" # renovate: datasource=github-releases depName=docker/scout-cli
+DOCKER_SCOUT_VERSION="v1.23.1" # renovate: datasource=github-releases depName=docker/scout-cli
 DOCKER_SCOUT_TGZ="$(tmp_name docker-scout "$DOCKER_SCOUT_VERSION" tar.gz)"
 download_if_missing_cmd "$DOCKER_SCOUT_TGZ" /ctx/build_files/github-release-url.sh docker/scout-cli "docker-scout_${DOCKER_SCOUT_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$DOCKER_SCOUT_VERSION"
 extract "$DOCKER_SCOUT_TGZ"
