@@ -88,6 +88,8 @@ runs:
         SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SLEEP_SECONDS: 10
+        RETRIES: 10
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -97,6 +99,24 @@ runs:
           -p 2222 \
           ${SSH_USERNAME}@localhost \
           "sudo reboot"
+
+        wait_for_ssh_up() {
+          SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+          if [[ $SSH_STATUS == "READY" ]]; then
+            echo 1
+          else
+            echo 0
+          fi
+        }
+
+        for _ in $(seq 0 ${RETRIES}); do
+          RESULT=$(wait_for_ssh_up "localhost")
+          if [[ $RESULT == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+          fi
+          sleep ${SLEEP_SECONDS}
+        done
 
     - name: Run diagnostics
       shell: bash
