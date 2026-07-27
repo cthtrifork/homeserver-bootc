@@ -128,7 +128,7 @@ runs:
           ${SSH_USERNAME}@localhost \
           bash -l -s 'id'
 
-        sleep 5s
+        sleep 15s
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
