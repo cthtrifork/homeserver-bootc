@@ -46,7 +46,7 @@ env:
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   DEFAULT_TAG: "latest"
   CONTEXT: ./
-  TRIVY_VERSION: 0.69.3
+  TRIVY_VERSION: 0.72.0
 
 jobs:
   changes:
