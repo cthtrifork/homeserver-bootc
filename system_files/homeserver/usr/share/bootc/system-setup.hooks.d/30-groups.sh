@@ -1,29 +1,40 @@
 #!/usr/bin/env bash
-set -euo pipefail
 
-ensure_group() {
-    local group="$1"
+# SCRIPT VERSION
+GROUP_SETUP_VER=1
+GROUP_SETUP_VER_FILE="/etc/homeserver/dx-groups"
+GROUP_SETUP_VER_RAN=$(cat "$GROUP_SETUP_VER_FILE")
 
-    if getent group "$group" >/dev/null; then
-        echo "[DEBUG] System group: $group exists. Skipping"
-        return 0
-    fi
+# make the directory if it doesn't exist
+mkdir -p /etc/homeserver
 
-    echo "[INFO] Creating system group: $group"
-    groupadd "$group"
+# Run script if updated
+if [[ -f $GROUP_SETUP_VER_FILE && "$GROUP_SETUP_VER" = "$GROUP_SETUP_VER_RAN" ]]; then
+  echo "Group setup has already run. Exiting..."
+  exit 0
+fi
+
+# Function to append a group entry to /etc/group
+append_group() {
+  local group_name="$1"
+  if ! grep -q "^$group_name:" /etc/group; then
+    echo "Appending $group_name to /etc/group"
+    grep "^$group_name:" /usr/lib/group | tee -a /etc/group >/dev/null
+  fi
 }
 
-ensure_group docker
-ensure_group libvirt
-ensure_group kvm
+# Setup Groups
+append_group docker
+append_group kvm
+append_group libvirt
 
-echo "[INFO] Configuring groups all users in group wheel"
-
-mapfile -t wheelarray < <(getent group wheel | cut -d: -f4 | tr ',' '\n')
-for user in "${wheelarray[@]}"; do
-    [[ -n "$user" ]] || continue
-    usermod -aG docker "$user" || echo "[ERROR] failed adding $user to docker group"
-    usermod -aG libvirt "$user" || echo "[ERROR] failed adding $user to libvirt group"
-    usermod -aG kvm "$user" || echo "[ERROR] failed adding $user to kvm group"
-    echo "[INFO] Added user: $user to standard system groups"
+wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
+for user in $wheelarray; do
+  usermod -aG docker $user
+  usermod -aG kvm $user
+  usermod -aG libvirt $user
 done
+
+# Prevent future executions
+echo "Writing state file"
+echo "$GROUP_SETUP_VER" >"$GROUP_SETUP_VER_FILE"

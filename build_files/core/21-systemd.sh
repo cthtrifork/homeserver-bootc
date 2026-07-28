@@ -16,6 +16,7 @@ systemctl enable sshd.service
 systemctl enable bootc-user-setup@caspertdk.service
 systemctl enable bootc-system-setup.service
 systemctl enable pinggy.service
+systemctl enable libvirt-workaround.service
 systemctl enable systemd-userdbd.service 2>/dev/null || true
 
 # Enhance logging, but heavy in resources - journalctl is better alternative
