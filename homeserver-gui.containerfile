@@ -1,10 +1,12 @@
 # syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
+ARG BASE_IMAGE=ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
+
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 # this will also inherit all build_files/core/* applied changes
-FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
+FROM ${BASE_IMAGE}
 
 RUN dnf copr enable -y sneexy/zen-browser && \
 	dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
