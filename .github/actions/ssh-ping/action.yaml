@@ -1,0 +1,52 @@
+name: "Wait for SSH"
+description: "This action will try to wait for established SSH connection"
+inputs:
+  SSH_USERNAME:
+    description: "SSH_USERNAME"
+    required: true
+  SSH_KEY:
+    description: "SSH_KEY"
+    required: true
+  SSH_OPTIONS:
+    description: "SSH_OPTIONS"
+    required: true
+  SLEEP_SECONDS:
+    description: "SLEEP_SECONDS"
+    required: false
+    default: "10"
+  RETRIES:
+    description: "RETRIES"
+    required: false
+    default: "10"
+runs:
+  using: "composite"
+  steps:
+    - name: Wait for SSH and run startup checks
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SLEEP_SECONDS: ${{ inputs.SLEEP_SECONDS }}
+        RETRIES: ${{ inputs.RETRIES }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        wait_for_ssh_up() {
+          SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+          if [[ $SSH_STATUS == "READY" ]]; then
+            echo 1
+          else
+            echo 0
+          fi
+        }
+
+        for _ in $(seq 0 ${RETRIES}); do
+          RESULT=$(wait_for_ssh_up "localhost")
+          if [[ $RESULT == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+          fi
+          sleep ${SLEEP_SECONDS}
+        done
