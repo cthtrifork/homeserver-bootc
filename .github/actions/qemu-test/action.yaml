@@ -1,14 +1,14 @@
 name: "Run QEMU tests"
 description: "Run QEMU tests on the built image"
 inputs:
+  SSH_USERNAME:
+    description: "SSH_USERNAME for runner account"
+    required: true
   SSH_KEY:
-    description: "SSH_KEY"
+    description: "SSH_KEY for runner account"
     required: true
   SSH_PRIVATE_KEY:
-    description: "SSH_PRIVATE_KEY"
-    required: true
-  SSH_USERNAME:
-    description: "SSH_USERNAME"
+    description: "SSH_PRIVATE_KEY used by personal account"
     required: true
   SSH_OPTIONS:
     description: "SSH_OPTIONS"
@@ -16,35 +16,22 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Wait for SSH and run startup checks
-      shell: bash
-      env:
-        SSH_KEY: ${{ inputs.SSH_KEY}}
+    - name: Wait for SSH
+      uses: ./.github/actions/ssh-ping
+      with:
+        SSH_KEY: ${{ env.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-        SLEEP_SECONDS: 10
-        RETRIES: 10
+
+    - name: Run startup checks
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-
-        wait_for_ssh_up() {
-          SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
-          if [[ $SSH_STATUS == "READY" ]]; then
-            echo 1
-          else
-            echo 0
-          fi
-        }
-
-        for _ in $(seq 0 ${RETRIES}); do
-          RESULT=$(wait_for_ssh_up "localhost")
-          if [[ $RESULT == 1 ]]; then
-            echo "SSH is ready now! 🥳"
-            break
-          fi
-          sleep ${SLEEP_SECONDS}
-        done
 
         # Make sure VM is ready for testing
         echo "--- system is-running ---"
@@ -82,10 +69,33 @@ runs:
           ${SSH_USERNAME}@localhost \
           "fastfetch || true"
 
+    - name: Reboot VM
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+        ssh "${SSH_OPTS[@]}" \
+          -i "$SSH_KEY" \
+          -p 2222 \
+          ${SSH_USERNAME}@localhost \
+          "sudo reboot"
+
+    - name: Wait on reboot
+      uses: ./.github/actions/ssh-ping
+      with:
+        SSH_KEY: ${{ env.SSH_KEY }}
+        SSH_USERNAME: ${{ env.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+
     - name: Run diagnostics
       shell: bash
       env:
-        SSH_KEY: ${{ inputs.SSH_KEY}}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
@@ -100,7 +110,7 @@ runs:
     - name: Run system tests
       shell: bash
       env:
-        SSH_KEY: ${{ inputs.SSH_KEY}}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
         SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
       run: | #sh
