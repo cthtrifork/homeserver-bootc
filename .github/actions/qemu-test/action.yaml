@@ -158,14 +158,6 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
 
-        ssh "${SSH_OPTS[@]}" \
-          -i "${SSH_KEY}" \
-          -p 2222 \
-          "${SSH_USERNAME}@localhost" \
-          id
-
-        sleep 60s
-
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
