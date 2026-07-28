@@ -59,8 +59,6 @@ runs:
           -v /var/lib/containers/storage:/var/lib/containers/storage \
           ${BOOTC_IMAGE_BUILDER_IMAGE} \
           --type ${IMAGE_TYPE} \
-          --local \
-          --chown $DESIRED_UID:$DESIRED_GID \
           ${INPUT_ARGS} \
           $IMAGE
 
@@ -74,9 +72,10 @@ runs:
         ISO_PATH=(${OUTPUT_DIRECTORY}/*)
 
         # Create a checksum of the output file, stored in the same directory
-        CHECKSUM=$(sha256sum $ISO_PATH | awk '{print $1}')
+        CHECKSUM=$(sudo sha256sum $ISO_PATH | awk '{print $1}')
         CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
-        echo $CHECKSUM > ${CHECKSUM_PATH}
+        echo $CHECKSUM | sudo tee ${CHECKSUM_PATH} > /dev/null
+        sudo chown $DESIRED_UID:$DESIRED_GID ${CHECKSUM_PATH}
 
         echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
         echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
