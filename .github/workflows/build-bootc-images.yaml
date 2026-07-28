@@ -608,7 +608,7 @@ jobs:
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
             echo "key = \"${PUBKEY}\""
-            echo 'groups = ["wheel", "sudo"]'
+            #echo 'groups = ["wheel"]'
           } > out/config.toml
 
           cat ./out/config.toml
