@@ -165,6 +165,5 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
-
-
-
+# thunderbolt
+bolt

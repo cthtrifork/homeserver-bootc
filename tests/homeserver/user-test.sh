@@ -18,7 +18,8 @@ gh auth status && echo "✅ Github CLI is ready"
 
 echo "== Docker =="
 echo "Checking if user is in docker group"
-docker run --rm hello-world
+getent group docker || echo "docker group not found"
+sudo -n docker run --rm hello-world
 echo "✅ Docker is ready"
 
 echo "== Utilities =="

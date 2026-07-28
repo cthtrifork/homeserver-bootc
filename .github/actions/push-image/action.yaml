@@ -39,7 +39,7 @@ runs:
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        # Tag the image for the local registry 
+        # Tag the image for the local registry
         podman tag \
           ${{ env.LOCAL_PR_IMAGE }} \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
