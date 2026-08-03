@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=docker.io/kasmweb/terminal:1.17.0
+Image=docker.io/kasmweb/terminal:1.17.0@sha256:14e785413489df26d77855afe29019cc7d11d735c740196475959ac18e65d258
 Network=host
 PublishPort=6901:6901
 
