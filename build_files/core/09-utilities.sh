@@ -122,7 +122,7 @@ download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSo
 extract "$AGE_TGZ" --strip-components=1
 
 log "Installing gh-cli"
-GH_CLI_VERSION="v2.96.0" # renovate: datasource=github-releases depName=cli/cli
+GH_CLI_VERSION="v2.97.0" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
 download_if_missing_cmd "$GH_CLI_TGZ" /ctx/build_files/github-release-url.sh cli/cli "${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$GH_CLI_VERSION"
 extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
@@ -145,7 +145,7 @@ ln -sf "$BIN_DIR/kubelogin" "$BIN_DIR/kubectl-oidc_login"
 "$BIN_DIR/kubelogin" completion bash >"$COMPLETION_DIR/kubelogin"
 
 log "Installing kubectl virt"
-KUBEVIRT_VERSION="v1.8.4" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+KUBEVIRT_VERSION="v1.9.0" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
 mkdir -p /tmp/kubectl-virt
 KUBEVIRT_TGZ="$(tmp_name kubectl-virt "$KUBEVIRT_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBEVIRT_TGZ" /ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin "virtctl-${MACHINE}-${PLATFORM_ARCH}.tar.gz" "$KUBEVIRT_VERSION"
@@ -192,7 +192,7 @@ install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 "$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
 
 log "Installing flux-operator-mcp"
-FLUX_MCP_VERSION="v0.56.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
+FLUX_MCP_VERSION="v0.57.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
 FLUX_MCP_TGZ="$(tmp_name flux-operator-mcp "$FLUX_MCP_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}_${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
 extract "$FLUX_MCP_TGZ"
@@ -323,13 +323,13 @@ install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
 cp "${TEALDEER_BIN}_bash_tealdeer" "$COMPLETION_DIR/tldr"
 
 log "Installing fresh-editor"
-FRESH_VERSION="v0.4.5" # renovate: datasource=github-releases depName=sinelaw/fresh
+FRESH_VERSION="v0.4.6" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
 
 log "Installing crane"
-CRANE_VERSION=v0.21.7 # renovate: datasource=github-releases depName=google/go-containerregistry
+CRANE_VERSION=v0.21.8 # renovate: datasource=github-releases depName=google/go-containerregistry
 CRANE_TGZ="$(tmp_name crane "$CRANE_VERSION" tar.gz)"
 download_if_missing_cmd "$CRANE_TGZ" /ctx/build_files/github-release-url.sh google/go-containerregistry "go-containerregistry_${MACHINE}_${HOST_ARCH}.tar.gz" "$CRANE_VERSION"
 extract "$CRANE_TGZ"
@@ -341,7 +341,7 @@ download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-
 install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
 
 log "Installing docker-scout"
-DOCKER_SCOUT_VERSION="v1.23.1" # renovate: datasource=github-releases depName=docker/scout-cli
+DOCKER_SCOUT_VERSION="v1.24.0" # renovate: datasource=github-releases depName=docker/scout-cli
 DOCKER_SCOUT_TGZ="$(tmp_name docker-scout "$DOCKER_SCOUT_VERSION" tar.gz)"
 download_if_missing_cmd "$DOCKER_SCOUT_TGZ" /ctx/build_files/github-release-url.sh docker/scout-cli "docker-scout_${DOCKER_SCOUT_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$DOCKER_SCOUT_VERSION"
 extract "$DOCKER_SCOUT_TGZ"
