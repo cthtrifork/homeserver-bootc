@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
-FROM quay.io/fedora/fedora-bootc:44@sha256:d3730d465cadce1c28535b934b9ce1acdb5e510fc94e1464288a72dd7cefca71 as base
+FROM quay.io/fedora/fedora-bootc:44@sha256:976729e245e4579729c755dc7725c2aaebcf8969d68e90a77facbdda6886c03e as base
 
 # Split context so cache keys are scoped to the actual inputs per RUN
 FROM scratch AS ctx_build
