@@ -265,7 +265,7 @@ download_if_missing_cmd "$SHFMT_BIN" /ctx/build_files/github-release-url.sh mvda
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.13.7" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.13.8" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing_cmd "$TALOSCTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/talos "talosctl-${MACHINE}.${PLATFORM_ARCH}" "$TALOSCTL_VERSION"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
@@ -297,7 +297,7 @@ download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh
 extract "$LAZYDOCKER_TGZ"
 
 log "Installing lazygit"
-LAZYGIT_VERSION="v0.63.1" # renovate: datasource=github-releases depName=jesseduffield/lazygit
+LAZYGIT_VERSION="v0.64.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
 extract "$LAZYGIT_TGZ"
