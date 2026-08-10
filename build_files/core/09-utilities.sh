@@ -337,7 +337,7 @@ install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
 log "Installing nektos act"
 ACT_VERSION="v0.2.89" # renovate: datasource=github-releases depName=nektos/act
 ACT_TGZ="$(tmp_name act "$ACT_VERSION" tar.gz)"
-download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_${MACHINE}-${HOST_ARCH}.tar.xz" "$ACT_VERSION"
+download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_${MACHINE}-${HOST_ARCH}.tar.gz" "$ACT_VERSION"
 extract "$ACT_TGZ" --strip-components=1 --exclude=themes --exclude=plugins
 
 log "Installing docker-scout"
