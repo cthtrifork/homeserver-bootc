@@ -302,12 +302,6 @@ LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
 extract "$LAZYGIT_TGZ"
 
-log "Installing doxx"
-DOXX_VERSION="v0.1.2" # renovate: datasource=github-releases depName=bgreenwell/doxx
-DOXX_TGZ="$(tmp_name doxx "$DOXX_VERSION" tar.gz)"
-download_if_missing_cmd "$DOXX_TGZ" /ctx/build_files/github-release-url.sh bgreenwell/doxx "doxx-${MACHINE}.${HOST_ARCH}.tar.gz" "$DOXX_VERSION"
-extract "$DOXX_TGZ"
-
 log "Installing witr"
 WITR_VERSION="v0.3.3" # renovate: datasource=github-releases depName=pranshuparmar/witr
 WITR_BIN="$(tmp_name witr "$WITR_VERSION" bin)"
@@ -339,6 +333,16 @@ DYSK_VERSION="latest"
 DYSK_BIN="$(tmp_name dysk "$DYSK_VERSION" bin)"
 download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-${MACHINE}/dysk"
 install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
+
+log "Installing nektos act"
+ACT_VERSION="v0.2.89" # renovate: datasource=github-releases depName=nektos/act
+ACT_TGZ="$(tmp_name act "$FRESH_VERSION" tar.gz)"
+download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_Linux-${HOST_ARCH}.tar.xz" "$FRESH_VERSION"
+extract "$ACT_TGZ" --strip-components=1 --exclude=themes --exclude=plugins
+
+nektos/act/releases/
+/v0.2.89/act_Linux_x86_64.tar.gz
+
 
 log "Installing docker-scout"
 DOCKER_SCOUT_VERSION="v1.24.0" # renovate: datasource=github-releases depName=docker/scout-cli
