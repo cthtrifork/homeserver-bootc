@@ -19,7 +19,7 @@ COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packag
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
 
 RUN grep -vE '^(#|$)' /usr/local/share/bootc/gui/packages-added | xargs -r -n 50 dnf -y install --setopt install_weak_deps=false
-RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
+RUN grep -vE '^(#|$)' /usr/local/share/bootc/gui/packages-removed | xargs -r -n 50 dnf -y remove
 
 RUN dnf -y install --setopt install_weak_deps=false zen-browser ghostty
 
