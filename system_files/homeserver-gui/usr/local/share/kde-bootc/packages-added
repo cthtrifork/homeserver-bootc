@@ -69,8 +69,7 @@ dejavu-sans-fonts
 ################
 
 # Browser
-# zen-browser is installed separately in the containerfile, after KDE/X11 deps are present
-#zen-browser
+zen-browser
 # Terminal
 ghostty
 ## Screenshot manager
