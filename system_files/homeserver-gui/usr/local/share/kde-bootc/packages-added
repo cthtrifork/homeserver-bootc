@@ -35,7 +35,7 @@ plymouth-system-theme
 plymouth-theme-spinner
 
 # media codecs
-ffmpeg-libs
+# ffmpeg-libs is installed via 'dnf swap ffmpeg-free ffmpeg' further below in the containerfile
 libva
 libva-utils
 openh264
@@ -60,7 +60,6 @@ google-noto-serif-fonts
 google-noto-sans-fonts
 google-roboto-fonts
 cascadia-code-fonts
-cascadia-code-nf-fonts
 jetbrains-mono-fonts
 # used by plymouth
 dejavu-sans-fonts
@@ -70,7 +69,6 @@ dejavu-sans-fonts
 ################
 
 # Browser
-#brave-browser
 zen-browser
 # Terminal
 ghostty
