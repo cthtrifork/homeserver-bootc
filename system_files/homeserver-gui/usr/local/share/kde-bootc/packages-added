@@ -74,9 +74,7 @@ dejavu-sans-fonts
 # zen-browser is installed separately in the containerfile, after KDE/X11 deps are present
 #zen-browser
 # Terminal
-# ghostty is installed separately via terra repo (see containerfile) to prevent terra from
-# replacing core system libraries during the main install via --allowerasing
-#ghostty
+ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop

@@ -7,6 +7,7 @@ COPY system_files/ /system_files/
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
 RUN dnf copr enable -y sneexy/zen-browser && \
+	dnf copr enable -y scottames/ghostty && \
 	dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
 	dnf install -y "https://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm" && \
 	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
@@ -23,9 +24,6 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 # --allowerasing, which would break packages with exact-version dependencies.
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false --disablerepo=terra
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
-
-# Install terra-specific packages separately now that core X11/KDE libraries are in place
-RUN dnf install -y --enablerepo=terra --setopt install_weak_deps=false ghostty cascadia-code-nf-fonts
 
 # Install zen-browser separately after KDE/X11 libraries are installed so its deps are met
 RUN dnf install -y zen-browser
