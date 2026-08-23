@@ -18,8 +18,17 @@ COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packag
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-removed /usr/local/share/bootc/gui/packages-removed
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/gui/packages-fedora-bootc
 
-RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
+# Install KDE and other packages from Fedora/RPMFusion. Terra is disabled here to prevent
+# it from replacing core system libraries (libX11, dbus, glibc, pipewire, etc.) via
+# --allowerasing, which would break packages with exact-version dependencies.
+RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs dnf -y install --allowerasing --setopt install_weak_deps=false --disablerepo=terra
 RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs dnf -y remove
+
+# Install terra-specific packages separately now that core X11/KDE libraries are in place
+RUN dnf install -y --enablerepo=terra --setopt install_weak_deps=false ghostty cascadia-code-nf-fonts
+
+# Install zen-browser separately after KDE/X11 libraries are installed so its deps are met
+RUN dnf install -y zen-browser
 
 RUN  dnf group install -y multimedia && \
   dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \

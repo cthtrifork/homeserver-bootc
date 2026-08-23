@@ -35,7 +35,7 @@ plymouth-system-theme
 plymouth-theme-spinner
 
 # media codecs
-ffmpeg-libs
+# ffmpeg-libs is installed via 'dnf swap ffmpeg-free ffmpeg' further below in the containerfile
 libva
 libva-utils
 openh264
@@ -60,7 +60,8 @@ google-noto-serif-fonts
 google-noto-sans-fonts
 google-roboto-fonts
 cascadia-code-fonts
-cascadia-code-nf-fonts
+# cascadia-code-nf-fonts is installed separately via terra repo (see containerfile)
+#cascadia-code-nf-fonts
 jetbrains-mono-fonts
 # used by plymouth
 dejavu-sans-fonts
@@ -70,10 +71,12 @@ dejavu-sans-fonts
 ################
 
 # Browser
-#brave-browser
-zen-browser
+# zen-browser is installed separately in the containerfile, after KDE/X11 deps are present
+#zen-browser
 # Terminal
-ghostty
+# ghostty is installed separately via terra repo (see containerfile) to prevent terra from
+# replacing core system libraries during the main install via --allowerasing
+#ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop
