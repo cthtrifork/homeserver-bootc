@@ -68,10 +68,10 @@ dejavu-sans-fonts
 # Applications #
 ################
 
-# Browser
-zen-browser
-# Terminal
-ghostty
+# Browser / Terminal
+# Installed separately in the containerfile after core GUI/X11 packages are in place.
+#zen-browser
+#ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop
