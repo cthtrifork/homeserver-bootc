@@ -60,8 +60,6 @@ google-noto-serif-fonts
 google-noto-sans-fonts
 google-roboto-fonts
 cascadia-code-fonts
-# cascadia-code-nf-fonts is installed separately via terra repo (see containerfile)
-#cascadia-code-nf-fonts
 jetbrains-mono-fonts
 # used by plymouth
 dejavu-sans-fonts
