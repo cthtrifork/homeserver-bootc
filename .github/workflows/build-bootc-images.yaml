@@ -288,7 +288,7 @@ jobs:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
           ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           prev-ref: ""
-          max-layers: ${{ matrix.image == 'homeserver-gui' && '20' || '16' }}
+          max-layers: ${{ matrix.image == 'homeserver-gui' && '36' || '32' }}
           #prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           skip_compression: true
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
