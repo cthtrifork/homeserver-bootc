@@ -12,10 +12,10 @@ plasma-desktop
 plasma-workspace
 plasma-workspace-wallpapers
 # Display/login manager
-sddm-wayland-plasma
-sddm
-sddm-breeze
-sddm-kcm
+kcm-plasmalogin
+kde-settings-plasmalogin
+plasma-login-manager
+plasma-setup
 # KDE default icon pack
 breeze-icon-theme
 # window decorations
@@ -55,7 +55,8 @@ kde-gtk-config
 systemd-oomd-defaults
 
 # Fonts
-google-noto-emoji-color-fonts
+#google-noto-emoji-color-fonts
+google-noto-color-emoji-fonts
 google-noto-serif-fonts
 google-noto-sans-fonts
 google-roboto-fonts
@@ -71,6 +72,10 @@ cpio
 bzip2
 curl
 ca-certificates
+cryptsetup
+diffutils
+iproute
+json-c
 
 ################
 # Applications #
@@ -158,7 +163,6 @@ tlp-rdw
 ## drivers
 kamera
 lm_sensors
-kcm_touchpad
 ## Bluetooth stack
 bluedevil
 ## thermal management
