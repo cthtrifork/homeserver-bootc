@@ -321,11 +321,12 @@ jobs:
             pkgupd.remove=- **<package>** <old> → Removed\n
 
       - name: Load rechunked image
-        if: false
+        env:
+          IMAGE_REF: "${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}" # ${{ steps.rechunk.outputs.ref }}
         id: load
         run: |
           unset CONTAINER_HOST
-          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+          IMAGE=$(podman pull ${IMAGE_REF})
           sudo rm -rf ${{ steps.rechunk.outputs.output }}
 
           podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
