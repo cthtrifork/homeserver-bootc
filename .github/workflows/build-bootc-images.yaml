@@ -230,7 +230,7 @@ jobs:
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-${{ hashFiles('/build_files/core/09-utilities.sh') }}
+          key: cache-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
           restore-keys: |
             cache-
 
@@ -239,7 +239,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
-          tree . -f -D -L 3 /home/runner/.cache/tmp
+          tree -f -D -L 3 /home/runner/.cache/tmp
+          echo "Deleting old files:"
           find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
           find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
 
