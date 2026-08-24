@@ -328,6 +328,7 @@ jobs:
         run: |
           unset CONTAINER_HOST
           #IMAGE=$(podman pull ${IMAGE_REF})
+          sudo podman save "${IMAGE}" | podman load # transfer to rootless
           sudo rm -rf ${{ steps.rechunk.outputs.output }}
 
           podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
