@@ -322,7 +322,7 @@ jobs:
 
       - name: Load rechunked image
         env:
-          IMAGE_REF: "${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}" # ${{ steps.rechunk.outputs.ref }}
+          IMAGE_REF: "localhost/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}" # ${{ steps.rechunk.outputs.ref }}
         id: load
         run: |
           unset CONTAINER_HOST
