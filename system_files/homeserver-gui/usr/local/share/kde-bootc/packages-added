@@ -64,6 +64,14 @@ jetbrains-mono-fonts
 # used by plymouth
 dejavu-sans-fonts
 
+# Core
+dbus
+coreutils
+cpio
+bzip2
+curl
+ca-certificates
+
 ################
 # Applications #
 ################
