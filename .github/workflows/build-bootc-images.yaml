@@ -294,6 +294,7 @@ jobs:
 
       - name: Run Rechunker
         id: rechunk
+        if: false
         uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
         with:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
@@ -302,7 +303,7 @@ jobs:
           max-layers: ${{ matrix.image == 'homeserver-gui' && '36' || '32' }}
           #prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           skip_compression: true
-          clear-plan: true
+          #clear-plan: true
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
           pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
           #registry_auth_file: /home/runner/.docker/config.json
@@ -331,10 +332,14 @@ jobs:
             pkgupd.remove=- **<package>** <old> → Removed\n
 
       - name: Load rechunked image
+        env:
+          IMAGE: "localhost/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          IMAGE_REF: ${{ steps.rechunk.outputs.ref }}
         id: load
         run: |
           unset CONTAINER_HOST
-          IMAGE=$(podman pull ${{ steps.rechunk.outputs.ref }})
+          #IMAGE=$(podman pull ${IMAGE_REF})
+          sudo podman save "${IMAGE}" | podman load # transfer to rootless
           sudo rm -rf ${{ steps.rechunk.outputs.output }}
 
           podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
@@ -349,7 +354,8 @@ jobs:
           echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
 
       - name: Changelog PR comment
-        if: ${{ github.event_name == 'pull_request' }}
+        if: false
+        #if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           path: ${{ steps.rechunk.outputs.changelog }}
@@ -357,7 +363,8 @@ jobs:
           header: "🧾 Changelog for ${{ env.IMAGE_FULL }}"
 
       - name: Create Release
-        if: github.ref == 'refs/heads/main'
+        if: false
+        #if: github.ref == 'refs/heads/main'
         uses: comnoco/create-release-action@7dea6dc82ac9d97ced7a764aa82811451bba80e0 # v2.0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
