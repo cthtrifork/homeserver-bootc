@@ -6,6 +6,8 @@ COPY system_files/ /system_files/
 # this will also inherit all build_files/core/* applied changes
 FROM ghcr.io/cthtrifork/homeserver-bootc/homeserver-centos-bootc:latest
 
+RUN echo -e "keepcache=True\nmetadata_expire=6h" >> /etc/dnf/dnf.conf
+
 RUN dnf copr enable -y sneexy/zen-browser && \
 	dnf copr enable -y scottames/ghostty && \
 	dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
@@ -26,6 +28,8 @@ RUN dnf -y install --setopt install_weak_deps=false zen-browser ghostty
 RUN  dnf group install -y multimedia && \
   dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \
   dnf config-manager setopt fedora-cisco-openh264.enabled=1
+
+RUN du -sh /var/cache/dnf && ls /var/cache/dnf/*/packages/ | wc -l
 
 # Set default applications
 RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
