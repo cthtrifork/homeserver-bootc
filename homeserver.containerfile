@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
-FROM quay.io/fedora/fedora-bootc:44 as base
+FROM quay.io/fedora/fedora-bootc:44 AS base
 
 # Split context so cache keys are scoped to the actual inputs per RUN
 FROM scratch AS ctx_build
@@ -44,15 +44,11 @@ RUN --mount=type=secret,id=creds,required=true \
     ln -sf /usr/lib/container-auth.json /etc/docker/config.json
 
 # PREPARE PACKAGES
-COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/packages-added /usr/local/share/bootc/packages-added
-COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/packages-removed /usr/local/share/bootc/packages-removed
+COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/* /usr/local/share/bootc/
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
 
-RUN --mount=type=cache,target=/var/cache/dnf \
-    grep -vE '^#' /usr/local/share/bootc/packages-added \
-    | xargs dnf -y install --allowerasing --setopt install_weak_deps=false
-
-RUN --mount=type=cache,target=/var/cache/dnf \
+RUN grep -vE '^#' /usr/local/share/bootc/packages-added \
+    | xargs dnf -y install --allowerasing --setopt install_weak_deps=false && \
     grep -vE '^#' /usr/local/share/bootc/packages-removed \
     | xargs dnf -y remove
 

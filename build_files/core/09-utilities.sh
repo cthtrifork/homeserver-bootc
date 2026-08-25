@@ -149,7 +149,7 @@ KUBEVIRT_VERSION="v1.9.0" # renovate: datasource=github-releases depName=kubevir
 mkdir -p /tmp/kubectl-virt
 KUBEVIRT_TGZ="$(tmp_name kubectl-virt "$KUBEVIRT_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBEVIRT_TGZ" /ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin "virtctl-${MACHINE}-${PLATFORM_ARCH}.tar.gz" "$KUBEVIRT_VERSION"
-tar -zxvf "$KUBEVIRT_TGZ" -C /tmp/kubectl-virt/ --strip-components=1 --exclude=LICENSE
+tar -zxvf "$KUBEVIRT_TGZ" -C /tmp/kubectl-virt/ --strip-components=1 --exclude=LICENSE --no-same-owner
 install -o root -g root -m 0755 "/tmp/kubectl-virt/virtctl-${MACHINE}-${PLATFORM_ARCH}" "$BIN_DIR/virtctl"
 # Create symlinks so kubectl recognizes the plugin
 ln -sf "$BIN_DIR/virtctl" "$BIN_DIR/kubectl-virt"
