@@ -7,7 +7,6 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
-RUN rpm --rebuilddb && rpm -q --whatprovides 'libX11.so.6()(64bit)' # db fix
 
 RUN [ -e /etc/subuid ] || touch /etc/subuid; \
     [ -e /etc/subgid ] || touch /etc/subgid
