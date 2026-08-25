@@ -10,10 +10,7 @@ RUN dnf check-upgrade
 RUN df -h /tmp
 
 RUN dnf copr enable -y sneexy/zen-browser && \
-	dnf copr enable -y scottames/ghostty && \
-	dnf install -y "https://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm" && \
-	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
-	dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+	dnf copr enable -y scottames/ghostty
 
 # PREPARE PACKAGES
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/packages-added /usr/local/share/bootc/gui/packages-added
