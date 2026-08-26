@@ -52,7 +52,7 @@ RUN dnf group install -y multimedia && \
   dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
 # Set default applications
-RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
+#RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
 # AGE and SOPS
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh
