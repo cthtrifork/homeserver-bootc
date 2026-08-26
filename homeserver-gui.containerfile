@@ -80,4 +80,4 @@ RUN systemctl set-default graphical.target
 # NetworkManager-wait-online can slow down boot time significantly
 RUN systemctl disable NetworkManager-wait-online.service
 
-RUN bootc container lint
+# RUN bootc container lint

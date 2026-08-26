@@ -17,7 +17,7 @@ dnf -y remove \
     at
 
 # Clean package manager cache
-# dnf -y autoremove
+dnf -y autoremove
 #dnf -y clean all
 
 # Documentation is available online
