@@ -226,11 +226,12 @@ jobs:
 
       - name: Restore runner cache
         id: runner-cache
+        if: ${{ runner.environment != 'self-hosted' }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-${{ hashFiles('/build_files/core/09-utilities.sh') }}
+          key: cache-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
           restore-keys: |
             cache-
 
@@ -239,6 +240,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
+          tree -f -D -L 3 /home/runner/.cache/tmp
+          echo "Deleting old files:"
           find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
           find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
 
@@ -271,8 +274,8 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
-            -v /home/runner/.cache/dnf:/var/cache/dnf \
-            -v /home/runner/.cache/tmp:/runner/cache \
+            -v /home/runner/.cache/dnf:/var/cache/libdnf5:z \
+            -v /home/runner/.cache/tmp:/runner/cache:z \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
 
