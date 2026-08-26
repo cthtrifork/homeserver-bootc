@@ -68,6 +68,7 @@ echo "" > /tmp/PINGGY_TOKEN
 echo "${GITHUB_TOKEN}" > /tmp/REGISTRY_TOKEN
 cp "${HOME}/.docker/config.json" /tmp/creds
 echo "${SOPS_AGE_KEY}" > /tmp/AGE_KEY
+mkdir -p /tmp/runner/.cache/dnf /tmp/runner/.cache/tmp
 
 podman build \
   --network=slirp4netns:enable_ipv6=false \
@@ -80,6 +81,6 @@ podman build \
   --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
   --secret id=creds,src=/tmp/creds \
   --secret id=agekey,src=/tmp/AGE_KEY \
-  -v /tmp/runner/.cache/dnf:/var/cache/dnf:z \
+  -v /tmp/runner/.cache/dnf:/var/cache/libdnf5:z \
   -v /tmp/runner/.cache/tmp:/runner/cache:z
 ```

@@ -6,10 +6,7 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
-RUN mount | grep dnf; ls -la /var/cache/dnf; touch /var/cache/dnf/marker-from-build
-
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True" >> /etc/dnf/dnf.conf
-
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
 RUN [ -e /etc/subuid ] || touch /etc/subuid; \
@@ -35,6 +32,13 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
     /ctx/build_files/container-auth.sh
 
 # PREPARE PACKAGES
+# GUI
+RUN dnf copr enable -y sneexy/zen-browser && \
+dnf copr enable -y scottames/ghostty && \
+dnf install -y "https://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm" && \
+dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
+dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+
 COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/* /usr/local/share/bootc/
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/* /usr/local/share/kde-bootc/
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
@@ -42,18 +46,8 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed /usr/local/share/kde-bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove
 
-# PREPARE PACKAGES
-# GUI
-RUN dnf copr enable -y sneexy/zen-browser && \
-	dnf copr enable -y scottames/ghostty && \
-	dnf install -y "https://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm" && \
-	dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
-	dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
-
-RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-added | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false
-RUN grep -vE '^#' /usr/local/share/bootc/gui/packages-removed | xargs -r dnf -y remove
-
-RUN  dnf group install -y multimedia && \
+# multimedia
+RUN dnf group install -y multimedia && \
   dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \
   dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
@@ -71,13 +65,11 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=cache,target=/runner/cache \
     --mount=type=secret,id=pinggy_token,required=true \
-    PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
-    PINGGY_HOST="${PINGGY_HOST}" \
     /ctx/build_files/build.sh "/ctx/build_files/base" \
-    && /ctx/build_files/build.sh "/ctx/build_files/core" \
+    && PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
+    PINGGY_HOST="${PINGGY_HOST}" /ctx/build_files/build.sh "/ctx/build_files/core" \
     && /ctx/build_files/build.sh "/ctx/build_files/gui" \
     && /ctx/build_files/build.sh "/ctx/build_files/post"
-
 
 # COSIGN
 ADD --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
@@ -89,4 +81,4 @@ RUN systemctl set-default graphical.target
 # NetworkManager-wait-online can slow down boot time significantly
 RUN systemctl disable NetworkManager-wait-online.service
 
-RUN bootc container lint || true
+RUN bootc container lint
