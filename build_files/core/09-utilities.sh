@@ -17,7 +17,7 @@ MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"                    # linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
-mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "/runner/cache" "$BIN_DIR/.docker"
+mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "$BIN_DIR/.docker"
 
 setfattr -n user.component -v "utilities" /usr/local/bin
 setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
