@@ -69,9 +69,9 @@ dejavu-sans-fonts
 ################
 
 # Browser
-#zen-browser
+zen-browser
 # Terminal
-#ghostty
+ghostty
 ## Screenshot manager
 spectacle
 # Remote desktop

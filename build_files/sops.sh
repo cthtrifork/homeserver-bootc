@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 SOPS_AGE_KEY="$(cat /run/secrets/agekey)"
