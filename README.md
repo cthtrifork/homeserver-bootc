@@ -60,3 +60,27 @@ sops --encrypt --in-place encrypted.sops
 
 [Using toolbox](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/managing-rhel-bootc-images#using-toolbx-to-inspect-bootc-containers_managing-rhel-bootc-images)
 
+
+#### Build test
+
+```sh
+echo "" > /tmp/PINGGY_TOKEN
+echo "${GITHUB_TOKEN}" > /tmp/REGISTRY_TOKEN
+cp "${HOME}/.docker/config.json" /tmp/creds
+echo "${SOPS_AGE_KEY}" > /tmp/AGE_KEY
+mkdir -p /tmp/runner/.cache/dnf /tmp/runner/.cache/tmp
+
+podman build \
+  --network=slirp4netns:enable_ipv6=false \
+  -f homeserver-gui.containerfile \
+  --build-arg REGISTRY_USERNAME="caspertdk" \
+  --build-arg REGISTRY_URL=ghcr.io \
+  --build-arg PINGGY_HOST="test.com" \
+  --build-arg REPOSITORY="https://github.com/cthtrifork/homeserver-bootc" \
+  --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
+  --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
+  --secret id=creds,src=/tmp/creds \
+  --secret id=agekey,src=/tmp/AGE_KEY \
+  -v /tmp/runner/.cache/dnf:/var/cache/libdnf5:z \
+  -v /tmp/runner/.cache/tmp:/runner/cache:z
+```

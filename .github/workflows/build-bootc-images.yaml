@@ -226,11 +226,12 @@ jobs:
 
       - name: Restore runner cache
         id: runner-cache
+        if: ${{ runner.environment != 'self-hosted' }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-${{ hashFiles('/build_files/core/09-utilities.sh') }}
+          key: cache-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
           restore-keys: |
             cache-
 
@@ -239,6 +240,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
+          tree -f -D -L 3 /home/runner/.cache/tmp
+          echo "Deleting old files:"
           find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
           find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
 
@@ -271,8 +274,8 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
-            -v /home/runner/.cache/dnf:/var/cache/dnf \
-            -v /home/runner/.cache/tmp:/runner/cache \
+            -v /home/runner/.cache/dnf:/var/cache/libdnf5:z \
+            -v /home/runner/.cache/tmp:/runner/cache:z \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
 
@@ -283,7 +286,6 @@ jobs:
 
       - name: Run Rechunker
         id: rechunk
-        if: false
         uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
         with:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.1
@@ -327,8 +329,8 @@ jobs:
         id: load
         run: |
           unset CONTAINER_HOST
-          #IMAGE=$(podman pull ${IMAGE_REF})
-          sudo podman save "${IMAGE}" | podman load # transfer to rootless
+          IMAGE=$(podman pull ${IMAGE_REF})
+          #sudo podman save "${IMAGE}" | podman load # transfer to rootless
           sudo rm -rf ${{ steps.rechunk.outputs.output }}
 
           podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
@@ -343,8 +345,7 @@ jobs:
           echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
 
       - name: Changelog PR comment
-        if: false
-        #if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
           path: ${{ steps.rechunk.outputs.changelog }}
@@ -352,8 +353,7 @@ jobs:
           header: "🧾 Changelog for ${{ env.IMAGE_FULL }}"
 
       - name: Create Release
-        if: false
-        #if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         uses: comnoco/create-release-action@7dea6dc82ac9d97ced7a764aa82811451bba80e0 # v2.0.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
