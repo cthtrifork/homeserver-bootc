@@ -12,6 +12,10 @@ plasma-desktop
 plasma-workspace
 plasma-workspace-wallpapers
 # Display/login manager
+sddm-wayland-plasma
+sddm
+sddm-breeze
+sddm-kcm
 kcm-plasmalogin
 kde-settings-plasmalogin
 plasma-login-manager
