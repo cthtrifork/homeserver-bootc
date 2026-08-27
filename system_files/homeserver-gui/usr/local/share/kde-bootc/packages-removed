@@ -24,6 +24,9 @@ dracut-config-rescue
 # Remove DNF4
 dnf-data
 
+# sddm
+sddm-kcm
+
 python3-boto3
 python3-botocore
 
