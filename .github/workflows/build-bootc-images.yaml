@@ -231,9 +231,9 @@ jobs:
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
+          key: cache-runners-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
           restore-keys: |
-            cache-
+            cache-runners
 
       - name: Remove old runner cache
         #if: steps.runner-cache.outputs.cache-hit == 'true'
