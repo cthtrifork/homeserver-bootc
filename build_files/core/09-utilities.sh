@@ -309,7 +309,7 @@ download_if_missing_cmd "$WITR_BIN" /ctx/build_files/github-release-url.sh prans
 install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
 log "Installing tealdeer"
-TEALDEER_VERSION="v1.8.1" # renovate: datasource=github-releases depName=tealdeer-rs/tealdeer
+TEALDEER_VERSION="v1.9.0" # renovate: datasource=github-releases depName=tealdeer-rs/tealdeer
 TEALDEER_BIN="$(tmp_name witr "$TEALDEER_VERSION" bin)"
 download_if_missing_cmd "$TEALDEER_BIN" /ctx/build_files/github-release-url.sh tealdeer-rs/tealdeer "tealdeer-${MACHINE}.${HOST_ARCH}" "$TEALDEER_VERSION"
 download_if_missing_cmd "${TEALDEER_BIN}_bash_tealdeer" /ctx/build_files/github-release-url.sh tealdeer-rs/tealdeer "completions_bash" "$TEALDEER_VERSION"
