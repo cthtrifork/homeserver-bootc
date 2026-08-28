@@ -70,6 +70,7 @@ runs:
           "fastfetch || true"
 
     - name: Reboot VM
+      if: false
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
@@ -87,6 +88,7 @@ runs:
 
     - name: Wait on reboot
       uses: ./.github/actions/ssh-ping
+      if: false
       with:
         SSH_KEY: ${{ env.SSH_KEY }}
         SSH_USERNAME: ${{ env.SSH_USERNAME }}
