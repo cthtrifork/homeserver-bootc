@@ -370,6 +370,12 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cleanup
+        if: always()
+        run: |
+          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
+
   trivy:
     name: "Trivy scan: ${{ matrix.image }}"
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
@@ -453,6 +459,12 @@ jobs:
         uses: ./.github/actions/trivy-uploads
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
@@ -546,6 +558,11 @@ jobs:
       - name: Generate a report for the PR
         uses: ./.github/actions/pr-report
 
+      - name: Cleanup
+        if: always()
+        run: |
+          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
@@ -705,6 +722,12 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup
+        if: always()
+        run: |
+          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
 
   push-latest:
     name: "Push and sign latest tag for: ${{ matrix.image }}"
