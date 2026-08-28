@@ -373,8 +373,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
-          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi -i ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
 
   trivy:
     name: "Trivy scan: ${{ matrix.image }}"
@@ -463,8 +464,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
-          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi -i ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
@@ -561,8 +563,10 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
-          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi -i ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
@@ -726,8 +730,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          podman rmi ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
-          podman rmi ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
+          podman rmi -i ${{ env.LOCAL_PR_IMAGE }} || true
+          podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} || true
 
   push-latest:
     name: "Push and sign latest tag for: ${{ matrix.image }}"
