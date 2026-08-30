@@ -33,7 +33,7 @@ runs:
       if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
       run: |
-        $PODMAN --log-level trace pull ${{ env.IMAGE_FULL }}:latest
+        $PODMAN -q pull ${{ env.IMAGE_FULL }}:latest
         
         $PODMAN pull --tls-verify=false -q \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
