@@ -74,11 +74,8 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 ADD --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
 ADD --chmod=0644 policy.json /etc/containers/policy.json
 
-# Plasma Login Manager
-RUN echo 'plasmalogin:!*:::::::' >> /etc/shadow && \
-    systemctl mask plasma-setup.service && \
-    systemctl enable --force plasmalogin.service && \
-    systemctl set-default graphical.target
+# Plassma Login Manager
+RUN systemctl set-default graphical.target
 
 # NetworkManager-wait-online can slow down boot time significantly
 RUN systemctl disable NetworkManager-wait-online.service
