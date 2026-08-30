@@ -13,7 +13,7 @@ systemctl disable pinggy.service
 log "Enabling system services"
 
 # Login
-systemctl enable plasmalogin
+systemctl enable --force plasmalogin.service
 
 # Power management
 systemctl enable tlp.service
