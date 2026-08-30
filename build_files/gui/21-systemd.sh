@@ -12,6 +12,9 @@ systemctl disable pinggy.service
 
 log "Enabling system services"
 
+# Login
+systemctl enable plasmalogin
+
 # Power management
 systemctl enable tlp.service
 systemctl enable tlp-pd.service
@@ -20,6 +23,3 @@ systemctl mask systemd-rfkill.service systemd-rfkill.socket
 
 # startup speed improvements
 systemctl mask systemd-networkd-wait-online.service
-
-# Enhance logging, but heavy in resources - journalctl is better alternative
-systemctl disable rsyslog || true
