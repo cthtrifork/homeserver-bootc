@@ -46,9 +46,6 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed /usr/local/share/kde-bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove
 
-RUN systemd-sysusers && \
-    systemd-tmpfiles --create
-
 # multimedia
 RUN dnf group install -y multimedia && \
   dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \
@@ -77,8 +74,11 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 ADD --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
 ADD --chmod=0644 policy.json /etc/containers/policy.json
 
-# Enable GUI by default
-RUN systemctl set-default graphical.target
+# Plasma Login Manager
+RUN echo 'plasmalogin:!*:::::::' >> /etc/shadow && \
+    systemctl mask plasma-setup.service && \
+    systemctl enable --force plasmalogin.service && \
+    systemctl set-default graphical.target
 
 # NetworkManager-wait-online can slow down boot time significantly
 RUN systemctl disable NetworkManager-wait-online.service
