@@ -7,9 +7,9 @@ runs:
       if: ${{ runner.environment == 'self-hosted' }}
       shell: bash
       run: |
-        sudo rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-        sudo rmi -i ${{ env.LOCAL_PR_IMAGE }}
-        sudo rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        sudo podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        sudo podman rmi -i ${{ env.LOCAL_PR_IMAGE }}
+        sudo podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
         podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         podman rmi -i ${{ env.LOCAL_PR_IMAGE }}
