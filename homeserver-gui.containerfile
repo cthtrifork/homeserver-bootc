@@ -74,7 +74,4 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 ADD --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
 ADD --chmod=0644 policy.json /etc/containers/policy.json
 
-# NetworkManager-wait-online can slow down boot time significantly
-RUN systemctl disable NetworkManager-wait-online.service
-
 # RUN bootc container lint
