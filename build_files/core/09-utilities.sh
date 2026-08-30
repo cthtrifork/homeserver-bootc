@@ -171,14 +171,14 @@ mv "$BIN_DIR/df-pv" "$BIN_DIR/kubectl-df-pv"
 "$BIN_DIR/kubectl-df-pv" completion bash >"$COMPLETION_DIR/kubectl-df-pv"
 
 log "Installing kind"
-KIND_VERSION="v0.32.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+KIND_VERSION="v0.33.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 KIND_BIN="$(tmp_name kind "$KIND_VERSION" bin)"
 download_if_missing_cmd "$KIND_BIN" /ctx/build_files/github-release-url.sh kubernetes-sigs/kind "${MACHINE}.${PLATFORM_ARCH}" "$KIND_VERSION"
 install -o root -g root -m 0755 "$KIND_BIN" "$BIN_DIR/kind"
 "$BIN_DIR/kind" completion bash >"$COMPLETION_DIR/kind"
 
 log "Installing kubecolor"
-KUBECOLOR_VERSION="v0.6.0" # renovate: datasource=github-releases depName=kubecolor/kubecolor/
+KUBECOLOR_VERSION="v0.7.1" # renovate: datasource=github-releases depName=kubecolor/kubecolor/
 KUBECOLOR_TGZ="$(tmp_name kubecolor "$KUBECOLOR_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBECOLOR_TGZ" /ctx/build_files/github-release-url.sh kubecolor/kubecolor "kubecolor_${KUBECOLOR_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$KUBECOLOR_VERSION"
 extract "$KUBECOLOR_TGZ"
