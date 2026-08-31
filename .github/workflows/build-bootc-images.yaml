@@ -146,7 +146,7 @@ jobs:
 
       - name: Install crane
         run: |
-          if [ ! command -v crane ]; then
+          if ! command -v "crane" &> /dev/null; then
             curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
             tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
           fi
