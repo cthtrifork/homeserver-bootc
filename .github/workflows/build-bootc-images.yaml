@@ -335,6 +335,7 @@ jobs:
           
           SOURCE="${IMAGE_REF}"
           DEST="${IMAGE_FULL}:${DOCKER_TAG}"
+          UNIQUE_DEST="${IMAGE_FULL}:${UNIQUE_VERSION}"
           
           # Push OCI layout directly to GHCR
           sudo skopeo copy \
