@@ -337,7 +337,7 @@ jobs:
           DEST="${IMAGE_FULL}:${DOCKER_TAG}"
           
           # Push OCI layout directly to GHCR
-          skopeo copy \
+          sudo skopeo copy \
             --authfile "${REGISTRY_AUTH_FILE}" \
             --all \
             "${SOURCE}" \
