@@ -24,7 +24,7 @@ runs:
         mkdir -p "$install_dir"
 
         curl -sL \
-          "https://github.com/aquasecurity/trivy/releases/download/v${version}/trivy_${version}_Linux-64bit.tar.gz" \
+          "https://github.com/aquasecurity/trivy/releases/download/${version}/trivy_${version#v}_Linux-64bit.tar.gz" \
           -o "$install_dir/trivy.tar.gz"
         tar -xzf "$install_dir/trivy.tar.gz" -C "$install_dir"
         chmod +x "$install_dir/trivy"
