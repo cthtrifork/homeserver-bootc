@@ -325,6 +325,10 @@ jobs:
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
 
+      - name: Install go-crane
+        run: |
+          go install github.com/google/go-containerregistry/cmd/crane@latest
+
       - name: Load rechunked image
         env:
           IMAGE: "localhost/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
@@ -335,7 +339,6 @@ jobs:
           
           SOURCE="${IMAGE_REF}"
           DEST="${IMAGE_FULL}:${DOCKER_TAG}"
-          UNIQUE_DEST="${IMAGE_FULL}:${UNIQUE_VERSION}"
           
           # Push OCI layout directly to GHCR
           sudo skopeo copy \
@@ -344,20 +347,11 @@ jobs:
             "${SOURCE}" \
             "docker://${DEST}"
           
-          # Create second tag in GHCR
-          sudo skopeo copy \
-            --authfile "${REGISTRY_AUTH_FILE}" \
-            --all \
-            "docker://${DEST}" \
-            "docker://${UNIQUE_DEST}"
+          # Add additional tags remotely — no blob transfer
+          crane tag "${DEST}" "${UNIQUE_VERSION}"
           
           # Get digest from remote registry
-          IMAGE_DIGEST="$(
-            sudo skopeo inspect \
-              --authfile "${REGISTRY_AUTH_FILE}" \
-              --format '{{.Digest}}' \
-              "docker://${DEST}"
-          )"
+          IMAGE_DIGEST="$(crane digest "${DEST}")"
           
           echo "image=${DEST}" >> "${GITHUB_OUTPUT}"
           echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
