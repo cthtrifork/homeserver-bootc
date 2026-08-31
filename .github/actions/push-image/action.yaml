@@ -46,14 +46,23 @@ runs:
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        # Tag the image for the local registry
-        podman tag \
-          ${{ env.LOCAL_PR_IMAGE }} \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        if [[ -z "${DIGEST}" ]]; then
+          echo "Tag the image for the local registry"
+          podman tag \
+            ${{ env.LOCAL_PR_IMAGE }} \
+            localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
-        # Push to the local registry without tls
-        podman push -q --tls-verify=false \
+          echo "Push to the local registry without tls"
+          podman push -q --tls-verify=false \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        else
+          echo "Push to the local registry without tls"
+          skopeo copy -q --all --dest-tls-verify=false \
+            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+            localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        fi
+      env:
+        DIGEST: ${{ inputs.digest }}
 
     - name: List images
       shell: bash
