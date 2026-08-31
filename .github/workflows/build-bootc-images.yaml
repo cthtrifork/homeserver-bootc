@@ -258,6 +258,8 @@ jobs:
             labels+=( --label "$line" )
           done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
 
+          sudo podman pull quay.io/fedora/fedora-bootc:44
+
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
             --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
