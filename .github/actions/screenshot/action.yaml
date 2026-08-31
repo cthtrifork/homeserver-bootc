@@ -21,6 +21,7 @@ runs:
         with:
           name: vm-screenshot
           path: /tmp/vm.png
+          archive: false
 
       - name: create screenshot pr comment
         shell: bash

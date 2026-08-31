@@ -284,6 +284,9 @@ jobs:
           # Work around Rechunker not being able to use private registry auth details
           skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile /home/runner/.docker/config.json > previous.manifest.json
 
+      - name: Clean stale rechunk cache
+        run: sudo podman volume rm -f cache_ostree || true
+
       - name: Run Rechunker
         id: rechunk
         uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
@@ -370,6 +373,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build cleanup
+        if: always()
+        uses: ./.github/actions/build-cleanup
+
   trivy:
     name: "Trivy scan: ${{ matrix.image }}"
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
@@ -453,6 +460,10 @@ jobs:
         uses: ./.github/actions/trivy-uploads
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build cleanup
+        if: always()
+        uses: ./.github/actions/build-cleanup
 
   run-on-pr:
     name: "Run on PR: ${{ matrix.image }}"
@@ -545,6 +556,10 @@ jobs:
 
       - name: Generate a report for the PR
         uses: ./.github/actions/pr-report
+
+      - name: Build cleanup
+        if: always()
+        uses: ./.github/actions/build-cleanup
 
   test:
     name: "E2E Test on: ${{ matrix.image }}"
@@ -705,6 +720,10 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
+      - name: Build cleanup
+        if: always()
+        uses: ./.github/actions/build-cleanup
 
   push-latest:
     name: "Push and sign latest tag for: ${{ matrix.image }}"

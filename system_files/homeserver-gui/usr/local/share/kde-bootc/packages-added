@@ -16,10 +16,6 @@ sddm-wayland-plasma
 sddm
 sddm-breeze
 sddm-kcm
-#kcm-plasmalogin
-#kde-settings-plasmalogin
-#plasma-login-manager
-#plasma-setup
 # KDE default icon pack
 breeze-icon-theme
 # window decorations
