@@ -269,6 +269,7 @@ jobs:
             --build-arg "HTTP_PROXY=${HTTP_PROXY}" \
             --build-arg "HTTPS_PROXY=${HTTPS_PROXY}" \
             --build-arg "NO_PROXY=${NO_PROXY}" \
+            --pull=never \
             --format docker \
             --tls-verify=true \
             --layers=false \
