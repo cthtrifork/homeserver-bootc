@@ -46,7 +46,10 @@ env:
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   DEFAULT_TAG: "latest"
   CONTEXT: ./
-  TRIVY_VERSION: 0.72.0
+  TRIVY_VERSION: v0.74.0 # renovate: datasource=github-releases depName=aquasecurity/trivy
+  CRANE_VERSION: v0.21.9 # renovate: datasource=github-releases packageName=google/go-containerregistry
+  OS: Linux
+  ARCH: x86_64
 
 jobs:
   changes:
@@ -140,6 +143,13 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
+
+      - name: Install crane
+        run: |
+          if ! command -v "crane" &> /dev/null; then
+            curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
+            tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
+          fi
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -332,20 +342,28 @@ jobs:
         id: load
         run: |
           unset CONTAINER_HOST
-          IMAGE=$(podman pull ${IMAGE_REF})
-          #sudo podman save "${IMAGE}" | podman load # transfer to rootless
-          sudo rm -rf ${{ steps.rechunk.outputs.output }}
-
-          podman image tag "${IMAGE}" ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-          podman image tag "${IMAGE}" ${{ env.LOCAL_PR_IMAGE }}
-
-          IMAGE="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}"
-          IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "${IMAGE}")"
-          echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
+          
+          SOURCE="${IMAGE_REF}"
+          DEST="${IMAGE_FULL}:${DOCKER_TAG}"
+          
+          # Push OCI layout directly to GHCR
+          sudo skopeo copy \
+            --authfile "${REGISTRY_AUTH_FILE}" \
+            --all \
+            "${SOURCE}" \
+            "docker://${DEST}"
+          
+          # Add additional tags remotely — no blob transfer
+          crane tag "${DEST}" "${UNIQUE_VERSION}"
+          
+          # Get digest from remote registry
+          IMAGE_DIGEST="$(crane digest "${DEST}")"
+          
+          echo "image=${DEST}" >> "${GITHUB_OUTPUT}"
           echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
-
+          
           export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
-          echo "CONTAINER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock" >> $GITHUB_ENV
+          echo "CONTAINER_HOST=${CONTAINER_HOST}" >> "${GITHUB_ENV}"
 
       - name: Changelog PR comment
         if: ${{ github.event_name == 'pull_request' }}
@@ -372,6 +390,7 @@ jobs:
         uses: ./.github/actions/push-image
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          digest: ${{ steps.load.outputs.digest }}
 
       - name: Build cleanup
         if: always()

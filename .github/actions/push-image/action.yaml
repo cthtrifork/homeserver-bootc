@@ -4,6 +4,9 @@ inputs:
   github_token:
     description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
     required: true
+  digest:
+    description: "digest if pushed already"
+    required: false
 outputs:
   digest: # id of the output
     description: "The digest of the pushed image"
@@ -16,14 +19,16 @@ runs:
       id: push-to-ghcr
       shell: bash
       run: | #sh
-        podman tag \
-          ${{ env.LOCAL_PR_IMAGE }} \
-          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-        echo "Push"
-        podman push \
-          ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
-          --digestfile digest.txt
-        DIGEST=$(cat digest.txt)
+        if [[ -z "${DIGEST}" ]]; then
+          podman tag \
+            ${{ env.LOCAL_PR_IMAGE }} \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          echo "Push"
+          podman push \
+            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
+            --digestfile digest.txt
+          DIGEST=$(cat digest.txt)
+        fi
         echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
         echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
         for tag in $TAGS; do
@@ -34,19 +39,30 @@ runs:
         echo "digest=$DIGEST" >> $GITHUB_OUTPUT
       env:
         TAGS: ${{ steps.metadata.outputs.tags }}
+        SOURCE: "${IMAGE_FULL}:${DOCKER_TAG}"
+        DIGEST: ${{ inputs.digest }}
 
     - name: Push to cache registry
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        # Tag the image for the local registry
-        podman tag \
-          ${{ env.LOCAL_PR_IMAGE }} \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        if [[ -z "${DIGEST}" ]]; then
+          echo "Tag the image for the local registry"
+          podman tag \
+            ${{ env.LOCAL_PR_IMAGE }} \
+            localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
-        # Push to the local registry without tls
-        podman push -q --tls-verify=false \
+          echo "Push to the local registry without tls"
+          podman push -q --tls-verify=false \
           localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        else
+          echo "Push to the local registry without tls"
+          skopeo copy -q --all --dest-tls-verify=false \
+            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+            localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        fi
+      env:
+        DIGEST: ${{ inputs.digest }}
 
     - name: List images
       shell: bash
