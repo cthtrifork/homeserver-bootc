@@ -325,9 +325,9 @@ jobs:
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
 
-      - name: Install go-crane
+      - name: Install crane
         run: |
-          go install github.com/google/go-containerregistry/cmd/crane@latest
+          brew install crane
 
       - name: Load rechunked image
         env:
