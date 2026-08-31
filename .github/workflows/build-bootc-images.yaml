@@ -144,6 +144,13 @@ jobs:
         with:
           fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
 
+      - name: Install crane
+        run: |
+          if [ ! command -v crane ]; then
+            curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
+            tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
+          fi
+
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
         with:
@@ -327,11 +334,6 @@ jobs:
             pkgupd.add=- **<package>** Added at <new>\n
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
-
-      - name: Install crane
-        run: |
-          curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
-          tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
 
       - name: Load rechunked image
         env:
