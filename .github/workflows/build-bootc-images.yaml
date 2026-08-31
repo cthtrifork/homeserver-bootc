@@ -390,6 +390,7 @@ jobs:
         uses: ./.github/actions/push-image
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          digest: ${{ steps.load.outputs.digest }}
 
       - name: Build cleanup
         if: always()
