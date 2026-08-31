@@ -343,11 +343,20 @@ jobs:
             "${SOURCE}" \
             "docker://${DEST}"
           
-          # Add additional tags remotely — no blob transfer
-          crane tag "${DEST}" "${UNIQUE_VERSION}"
+          # Create second tag in GHCR
+          sudo skopeo copy \
+            --authfile "${REGISTRY_AUTH_FILE}" \
+            --all \
+            "docker://${DEST}" \
+            "docker://${UNIQUE_DEST}"
           
           # Get digest from remote registry
-          IMAGE_DIGEST="$(crane digest "${DEST}")"
+          IMAGE_DIGEST="$(
+            sudo skopeo inspect \
+              --authfile "${REGISTRY_AUTH_FILE}" \
+              --format '{{.Digest}}' \
+              "docker://${DEST}"
+          )"
           
           echo "image=${DEST}" >> "${GITHUB_OUTPUT}"
           echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
