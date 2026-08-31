@@ -46,7 +46,10 @@ env:
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   DEFAULT_TAG: "latest"
   CONTEXT: ./
-  TRIVY_VERSION: 0.72.0
+  TRIVY_VERSION: v0.74.0 # renovate: datasource=github-releases depName=aquasecurity/trivy
+  CRANE_VERSION: v0.21.9 # renovate: datasource=github-releases packageName=google/go-containerregistry
+  OS: Linux
+  ARCH: x86_64
 
 jobs:
   changes:
@@ -327,7 +330,8 @@ jobs:
 
       - name: Install crane
         run: |
-          brew install crane
+          curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
+          tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
 
       - name: Load rechunked image
         env:
