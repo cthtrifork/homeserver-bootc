@@ -24,10 +24,9 @@ runs:
           
         # Push OCI layout directly to GHCR
         sudo skopeo copy \
-            --authfile "${REGISTRY_AUTH_FILE}" \
-            --all \
-            "${SOURCE}" \
-            "docker://${DEST}"
+          --all \
+          "${SOURCE}" \
+          "docker://${DEST}"
           
         # Add additional tags remotely — no blob transfer
         crane tag "${DEST}" "${UNIQUE_VERSION}"
@@ -42,7 +41,7 @@ runs:
         echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
         for tag in $TAGS; do
           skopeo copy -q --all \
-            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+            "docker://${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}" \
             "docker://${{ env.IMAGE_FULL }}:${tag}"
         done
       env:
@@ -59,10 +58,9 @@ runs:
           
         # Push OCI layout directly to GHCR
         sudo skopeo copy \
-            --authfile "${REGISTRY_AUTH_FILE}" \
-            --all \
-            --dest-tls-verify=false \
-            "${SOURCE}" \
-            "docker://${DEST}"
+          --all \
+          --dest-tls-verify=false \
+          "${SOURCE}" \
+          "docker://${DEST}"
       env:
         IMAGE_REF: ${{ inputs.oci_ref }}
