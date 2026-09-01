@@ -361,7 +361,8 @@ jobs:
         uses: ./.github/actions/push-image
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          oci_ref: ${{ steps.rechunk.outputs.ref }}
+          source_ref: ${{ steps.rechunk.outputs.ref }}
+          additional_tags: ${{ steps.metadata.outputs.tags }}
 
       - name: Build cleanup
         if: always()
