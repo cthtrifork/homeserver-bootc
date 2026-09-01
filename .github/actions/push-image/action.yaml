@@ -20,7 +20,9 @@ runs:
   steps:
     - name: Login with skopeo
       shell: bash
-      run: echo "${{ inputs.github_token }}" | sudo skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+      run: |
+        echo "${{ inputs.github_token }}" | sudo skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+        echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
 
     - name: Push to Container registry
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
@@ -54,7 +56,6 @@ runs:
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        SOURCE="${IMAGE_REF}"
         DEST="localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
           
         # Push OCI layout directly to GHCR
@@ -65,7 +66,7 @@ runs:
           "${SOURCE}" \
           "docker://${DEST}"
       env:
-        SOURCE: ${{ inputs.oci_ref }}
+        SOURCE: ${{ inputs.source_ref }}
 
     - name: Get Digest
       id: digest
