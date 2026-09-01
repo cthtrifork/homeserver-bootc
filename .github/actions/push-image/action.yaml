@@ -61,6 +61,7 @@ runs:
         sudo skopeo copy \
             --authfile "${REGISTRY_AUTH_FILE}" \
             --all \
+            --dest-tls-verify=false \
             "${SOURCE}" \
             "docker://${DEST}"
       env:
