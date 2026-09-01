@@ -13,6 +13,9 @@ tuigreet
 xdg-desktop-portal
 xdg-desktop-portal-gtk
 swaylock
+# needed for screencasting
+xdg-desktop-portal-gnome
+gnome-keyring
 
 # startup / initramfs
 clevis
