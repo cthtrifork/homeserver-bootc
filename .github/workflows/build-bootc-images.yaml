@@ -335,37 +335,7 @@ jobs:
             pkgupd.add=- **<package>** Added at <new>\n
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
-
-      - name: Load rechunked image
-        env:
-          IMAGE: "localhost/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
-          IMAGE_REF: ${{ steps.rechunk.outputs.ref }}
-        id: load
-        run: |
-          unset CONTAINER_HOST
           
-          SOURCE="${IMAGE_REF}"
-          DEST="${IMAGE_FULL}:${DOCKER_TAG}"
-          
-          # Push OCI layout directly to GHCR
-          sudo skopeo copy \
-            --authfile "${REGISTRY_AUTH_FILE}" \
-            --all \
-            "${SOURCE}" \
-            "docker://${DEST}"
-          
-          # Add additional tags remotely — no blob transfer
-          crane tag "${DEST}" "${UNIQUE_VERSION}"
-          
-          # Get digest from remote registry
-          IMAGE_DIGEST="$(crane digest "${DEST}")"
-          
-          echo "image=${DEST}" >> "${GITHUB_OUTPUT}"
-          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
-          
-          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
-          echo "CONTAINER_HOST=${CONTAINER_HOST}" >> "${GITHUB_ENV}"
-
       - name: Changelog PR comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
@@ -391,7 +361,7 @@ jobs:
         uses: ./.github/actions/push-image
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          digest: ${{ steps.load.outputs.digest }}
+          oci_ref: ${{ steps.rechunk.outputs.ref }}
 
       - name: Build cleanup
         if: always()
