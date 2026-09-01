@@ -8,6 +8,7 @@ inputs:
     description: "ref to oci artifact e.g. oci://xxx or docker://ghcr.io/yyy:tag"
     required: true
   additional_tags:
+    description: "Space-separated list of tag strings to apply to IMAGE_FULL (e.g. 'latest pr-123')"
     required: false
     default: ""
 outputs:
