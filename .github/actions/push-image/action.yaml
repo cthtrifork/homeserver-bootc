@@ -22,7 +22,6 @@ runs:
       shell: bash
       run: |
         echo "${{ inputs.github_token }}" | sudo skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-        #echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
 
     - name: Push to Container registry
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
@@ -42,7 +41,7 @@ runs:
           
         echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}"
         for tag in $TAGS; do
-          skopeo copy -q --all \
+          sudo skopeo copy -q --all \
             "docker://${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}" \
             "docker://${{ env.IMAGE_FULL }}:${tag}"
         done
