@@ -50,7 +50,7 @@ runs:
         
       env:
         TAGS: ${{ inputs.additional_tags }}
-        SOURCE: ${{ inputs.oci_ref }}
+        SOURCE: ${{ inputs.source_ref }}
 
     - name: Push to cache registry
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
