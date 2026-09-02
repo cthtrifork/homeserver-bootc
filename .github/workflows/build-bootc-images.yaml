@@ -97,6 +97,7 @@ jobs:
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
         run: | #sh
+          set -x
           IMAGES='${{ steps.filter.outputs.changes }}'
           if [ -n "${{ github.event.inputs.override_image }}" ]; then
             IMAGES='["${{ github.event.inputs.override_image }}"]'
