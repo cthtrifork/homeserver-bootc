@@ -68,6 +68,7 @@ jobs:
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           token: ${{ github.token }}
+          predicate-quantifier: some-with-excludes
           filters: |
             homeserver:
               - 'system_files/homeserver/**'
@@ -96,6 +97,7 @@ jobs:
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
         run: | #sh
+          set -x
           IMAGES='${{ steps.filter.outputs.changes }}'
           if [ -n "${{ github.event.inputs.override_image }}" ]; then
             IMAGES='["${{ github.event.inputs.override_image }}"]'
@@ -171,13 +173,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
           #password: ${{ github.token }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Make registry credentials available for sudo
         shell: bash
         run: |
           sudo mkdir -p /root/.config/containers
-          sudo cp /run/user/1001/containers/auth.json /root/.config/containers/auth.json
-          #sudo cp /run/user/1001/containers/auth.json ${HOME}/.docker/config.json
+          sudo cp ${{ runner.temp }}/auth.json /root/.config/containers/auth.json
+          sudo chmod 644 /root/.config/containers/auth.json
 
       - name: Mount BTRFS for podman storage
         if: ${{ runner.environment != 'self-hosted' }}
@@ -292,7 +295,7 @@ jobs:
       - name: Extract previous manifest
         run: |
           # Work around Rechunker not being able to use private registry auth details
-          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile /home/runner/.docker/config.json > previous.manifest.json
+          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json
 
       - name: Clean stale rechunk cache
         run: sudo podman volume rm -f cache_ostree || true
@@ -334,37 +337,7 @@ jobs:
             pkgupd.add=- **<package>** Added at <new>\n
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
-
-      - name: Load rechunked image
-        env:
-          IMAGE: "localhost/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
-          IMAGE_REF: ${{ steps.rechunk.outputs.ref }}
-        id: load
-        run: |
-          unset CONTAINER_HOST
           
-          SOURCE="${IMAGE_REF}"
-          DEST="${IMAGE_FULL}:${DOCKER_TAG}"
-          
-          # Push OCI layout directly to GHCR
-          sudo skopeo copy \
-            --authfile "${REGISTRY_AUTH_FILE}" \
-            --all \
-            "${SOURCE}" \
-            "docker://${DEST}"
-          
-          # Add additional tags remotely — no blob transfer
-          crane tag "${DEST}" "${UNIQUE_VERSION}"
-          
-          # Get digest from remote registry
-          IMAGE_DIGEST="$(crane digest "${DEST}")"
-          
-          echo "image=${DEST}" >> "${GITHUB_OUTPUT}"
-          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
-          
-          export CONTAINER_HOST="unix://$XDG_RUNTIME_DIR/podman/podman.sock"
-          echo "CONTAINER_HOST=${CONTAINER_HOST}" >> "${GITHUB_ENV}"
-
       - name: Changelog PR comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
@@ -390,7 +363,9 @@ jobs:
         uses: ./.github/actions/push-image
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          digest: ${{ steps.load.outputs.digest }}
+          source_ref: ${{ steps.rechunk.outputs.ref }}
+          additional_tags: ${{ steps.metadata.outputs.tags }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Build cleanup
         if: always()
