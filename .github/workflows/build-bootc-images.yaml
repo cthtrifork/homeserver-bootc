@@ -97,6 +97,7 @@ jobs:
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
         run: | #sh
+          set -x
           IMAGES='${{ steps.filter.outputs.changes }}'
           if [ -n "${{ github.event.inputs.override_image }}" ]; then
             IMAGES='["${{ github.event.inputs.override_image }}"]'
@@ -172,12 +173,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
           #password: ${{ github.token }}
-          
+          auth_file_path: ${{ runner.temp }}/auth.json
+
       - name: Make registry credentials available for sudo
         shell: bash
         run: |
           sudo mkdir -p /root/.config/containers
-          sudo cp /run/user/1001/containers/auth.json /root/.config/containers/auth.json
+          sudo cp ${{ runner.temp }}/auth.json /root/.config/containers/auth.json
           sudo chmod 644 /root/.config/containers/auth.json
 
       - name: Mount BTRFS for podman storage
@@ -293,7 +295,7 @@ jobs:
       - name: Extract previous manifest
         run: |
           # Work around Rechunker not being able to use private registry auth details
-          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile /home/runner/.docker/config.json > previous.manifest.json
+          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json
 
       - name: Clean stale rechunk cache
         run: sudo podman volume rm -f cache_ostree || true
@@ -363,6 +365,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Build cleanup
         if: always()

@@ -1,9 +1,6 @@
 name: "Push image"
 description: "Push container images to the registry"
 inputs:
-  github_token:
-    description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
-    required: true
   source_ref:
     description: "ref to oci artifact e.g. oci://xxx or docker://ghcr.io/yyy:tag"
     required: true
@@ -11,6 +8,9 @@ inputs:
     description: "Space-separated list of tag strings to apply to IMAGE_FULL (e.g. 'latest pr-123')"
     required: false
     default: ""
+  auth_file_path:
+    description: "auth file"
+    required: true
 outputs:
   digest: # id of the output
     description: "The digest of the pushed image"
@@ -18,11 +18,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Login with skopeo
-      shell: bash
-      run: |
-        echo "${{ inputs.github_token }}" | sudo skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
-
     - name: Push to Container registry
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
       id: push-to-ghcr
@@ -33,6 +28,7 @@ runs:
         # Push OCI layout directly to GHCR
         sudo skopeo copy \
           --digestfile digest.txt \
+          --authfile ${{ inputs.auth_file_path }} \
           --all \
           "${SOURCE}" \
           "docker://${DEST}"
@@ -42,6 +38,7 @@ runs:
         echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}"
         for tag in $TAGS; do
           sudo skopeo copy -q --all \
+            --authfile ${{ inputs.auth_file_path }} \
             "docker://${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}" \
             "docker://${{ env.IMAGE_FULL }}:${tag}"
         done
@@ -60,6 +57,7 @@ runs:
         # Push OCI layout directly to GHCR
         sudo skopeo copy \
           --digestfile digest.txt \
+          --authfile ${{ inputs.auth_file_path }} \
           --all \
           --dest-tls-verify=false \
           "${SOURCE}" \
