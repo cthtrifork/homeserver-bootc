@@ -4,67 +4,70 @@ inputs:
   github_token:
     description: "Token with permissions to push/copy images (pass secrets.GITHUB_TOKEN or a PAT)"
     required: true
-  digest:
-    description: "digest if pushed already"
+  source_ref:
+    description: "ref to oci artifact e.g. oci://xxx or docker://ghcr.io/yyy:tag"
+    required: true
+  additional_tags:
+    description: "Space-separated list of tag strings to apply to IMAGE_FULL (e.g. 'latest pr-123')"
     required: false
+    default: ""
 outputs:
   digest: # id of the output
     description: "The digest of the pushed image"
-    value: ${{ steps.push-to-ghcr.outputs.digest }}
+    value: ${{ steps.digest.outputs.digest }}
 runs:
   using: "composite"
   steps:
+    - name: Login with skopeo
+      shell: bash
+      run: |
+        echo "${{ inputs.github_token }}" | sudo skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+
     - name: Push to Container registry
       if: ${{ runner.environment != 'self-hosted' || github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'push') }}
       id: push-to-ghcr
       shell: bash
       run: | #sh
-        if [[ -z "${DIGEST}" ]]; then
-          podman tag \
-            ${{ env.LOCAL_PR_IMAGE }} \
-            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
-          echo "Push"
-          podman push \
-            ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} \
-            --digestfile digest.txt
-          DIGEST=$(cat digest.txt)
-        fi
-        echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${DIGEST}"
-        echo "${{ inputs.github_token }}" | skopeo login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+        DEST="${IMAGE_FULL}:${DOCKER_TAG}"
+          
+        # Push OCI layout directly to GHCR
+        sudo skopeo copy \
+          --digestfile digest.txt \
+          --all \
+          "${SOURCE}" \
+          "docker://${DEST}"
+
+        IMAGE_DIGEST=$(cat digest.txt)
+          
+        echo "Adding additional tags to ${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}"
         for tag in $TAGS; do
-          skopeo copy -q --all \
-            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
+          sudo skopeo copy -q --all \
+            "docker://${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}" \
             "docker://${{ env.IMAGE_FULL }}:${tag}"
         done
-        echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+        crane tag "${DEST}" "${UNIQUE_VERSION}"
+        
       env:
-        TAGS: ${{ steps.metadata.outputs.tags }}
-        SOURCE: "${IMAGE_FULL}:${DOCKER_TAG}"
-        DIGEST: ${{ inputs.digest }}
+        TAGS: ${{ inputs.additional_tags }}
+        SOURCE: ${{ inputs.source_ref }}
 
     - name: Push to cache registry
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        if [[ -z "${DIGEST}" ]]; then
-          echo "Tag the image for the local registry"
-          podman tag \
-            ${{ env.LOCAL_PR_IMAGE }} \
-            localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-
-          echo "Push to the local registry without tls"
-          podman push -q --tls-verify=false \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-        else
-          echo "Push to the local registry without tls"
-          skopeo copy -q --all --dest-tls-verify=false \
-            "docker://${{ env.IMAGE_FULL }}@${DIGEST}" \
-            localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-        fi
+        DEST="localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+          
+        # Push OCI layout directly to GHCR
+        sudo skopeo copy \
+          --digestfile digest.txt \
+          --all \
+          --dest-tls-verify=false \
+          "${SOURCE}" \
+          "docker://${DEST}"
       env:
-        DIGEST: ${{ inputs.digest }}
+        SOURCE: ${{ inputs.source_ref }}
 
-    - name: List images
+    - name: Get Digest
+      id: digest
       shell: bash
-      run: | #sh
-        podman images
+      run: echo "digest=$(cat digest.txt)" >> "${GITHUB_OUTPUT}"
