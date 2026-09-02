@@ -295,7 +295,7 @@ jobs:
       - name: Extract previous manifest
         run: |
           # Work around Rechunker not being able to use private registry auth details
-          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile /home/runner/.docker/config.json > previous.manifest.json
+          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json
 
       - name: Clean stale rechunk cache
         run: sudo podman volume rm -f cache_ostree || true
@@ -365,6 +365,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Build cleanup
         if: always()
