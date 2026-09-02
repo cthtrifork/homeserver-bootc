@@ -23,6 +23,7 @@ tree
 git-core
 make
 fastfetch
+direnv
 iotop
 tmux
 podman-compose
