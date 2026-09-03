@@ -29,7 +29,9 @@ shopt -s cdspell
 shopt -s checkwinsize
 shopt -s extglob
 
+# Load plugins
 . ~/.local/bin/z.sh
+eval "$(direnv hook bash)"
 
 # Load external files
 . ~/.bash_aliases    2>/dev/null || true
