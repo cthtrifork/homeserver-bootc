@@ -24,7 +24,7 @@ mv /usr/bin/docker /usr/bin/docker.real
 mv /usr/bin/docker-compose /usr/bin/docker-compose.real
 
 # prefer to have docker-compose available for legacy muscle-memory
-ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose.real
+#ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose.real
 
 # Docker sysctl.d
 mkdir -p /usr/lib/sysctl.d
