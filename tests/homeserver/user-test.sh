@@ -19,6 +19,15 @@ gh auth status && echo "✅ Github CLI is ready"
 echo "== Docker =="
 echo "Checking if user is in docker group"
 getent group docker || echo "docker group not found"
+SOCKET_PATH="/run/user/$(id -u)/podman/podman.sock"
+if [[ ! -S "$SOCKET_PATH" ]]; then
+  echo "Starting rootless podman socket at $SOCKET_PATH"
+  systemctl --user start podman.socket
+  for _ in {1..10}; do
+    [[ -S "$SOCKET_PATH" ]] && break
+    sleep 1
+  done
+fi
 docker run --rm hello-world
 echo "✅ Docker is ready"
 
