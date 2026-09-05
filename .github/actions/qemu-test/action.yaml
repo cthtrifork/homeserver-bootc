@@ -19,16 +19,16 @@ runs:
     - name: Wait for SSH
       uses: ./.github/actions/ssh-ping
       with:
-        SSH_KEY: ${{ env.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
 
     - name: Run startup checks
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -74,8 +74,8 @@ runs:
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -90,16 +90,16 @@ runs:
       uses: ./.github/actions/ssh-ping
       if: false
       with:
-        SSH_KEY: ${{ env.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
 
     - name: Run diagnostics
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -113,8 +113,8 @@ runs:
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -129,7 +129,7 @@ runs:
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -148,7 +148,7 @@ runs:
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
         IMAGE_FULL: ${{ env.IMAGE_FULL }}
       run: | #sh
         # turn the env string into a Bash array

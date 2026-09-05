@@ -15,11 +15,18 @@ echo "== Github CLI =="
 echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
 gh auth status && echo "✅ Github CLI is ready"
 
+echo "== Podman =="
+systemctl --user status podman.socket
+loginctl show-user $USER | grep Linger
+# Rootless
+curl --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
+# Rootful
+sudo curl --unix-socket /run/podman/podman.sock http://localhost/_ping
 
 echo "== Docker =="
 echo "Checking if user is in docker group"
 getent group docker || echo "docker group not found"
-sudo -n docker run --rm hello-world
+docker run --rm hello-world
 echo "✅ Docker is ready"
 
 echo "== Utilities =="

@@ -8,10 +8,14 @@ log() {
 }
 
 log "Enabling system services"
+
+# User services
+systemctl --global enable podman.socket
 #systemctl --global enable podman-auto-update.timer
+
+# System services
 systemctl enable docker.socket
 systemctl enable qemu-guest-agent
-systemctl enable podman.socket
 systemctl enable sshd.service
 systemctl enable bootc-user-setup@caspertdk.service
 systemctl enable bootc-system-setup.service
