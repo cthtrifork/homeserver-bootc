@@ -16,7 +16,8 @@ echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
 gh auth status && echo "✅ Github CLI is ready"
 
 echo "== Podman =="
-sudo systemctl status podman.socket
+systemctl --user status podman.socket
+loginctl show-user $USER | grep Linger
 # Rootless
 curl --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
 # Rootful
