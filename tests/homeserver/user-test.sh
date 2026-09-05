@@ -23,6 +23,12 @@ curl --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
 # Rootful
 sudo curl --unix-socket /run/podman/podman.sock http://localhost/_ping
 
+echo "== Podman =="
+# Rootless
+curl --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
+# Rootful
+sudo curl --unix-socket /run/podman/podman.sock http://localhost/_ping
+
 echo "== Docker =="
 echo "Checking if user is in docker group"
 getent group docker || echo "docker group not found"
