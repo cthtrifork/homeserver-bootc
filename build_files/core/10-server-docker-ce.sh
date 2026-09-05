@@ -21,13 +21,11 @@ dnf -y install --enablerepo=docker-ce-stable \
 
 # hide docker so we can rely on podman via a shim
 mv /usr/bin/docker /usr/bin/docker.real
-mv /usr/bin/docker-compose /usr/bin/docker-compose.real
-
 mv /usr/bin/docker.shim /usr/bin/docker
 mv /usr/bin/docker-compose.shim /usr/bin/docker-compose
 
 # prefer to have docker-compose available for legacy muscle-memory
-#ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose.real
+ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose.real
 
 # Docker sysctl.d
 mkdir -p /usr/lib/sysctl.d
