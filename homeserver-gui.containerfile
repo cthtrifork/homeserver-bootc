@@ -35,7 +35,6 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
 # GUI
 RUN dnf copr enable -y sneexy/zen-browser && \
 dnf copr enable -y scottames/ghostty && \
-dnf install -y "https://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm" && \
 dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
 dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
