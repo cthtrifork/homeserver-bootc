@@ -3,4 +3,4 @@ vt = 1
 
 [default_session]
 command = "tuigreet --time --remember --remember-user-session --cmd niri-session"
-user = "greeter"
+user = "greetd"
