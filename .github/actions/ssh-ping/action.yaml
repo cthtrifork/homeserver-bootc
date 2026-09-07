@@ -25,13 +25,13 @@ runs:
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
         SLEEP_SECONDS: ${{ inputs.SLEEP_SECONDS }}
         RETRIES: ${{ inputs.RETRIES }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         wait_for_ssh_up() {
           SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
