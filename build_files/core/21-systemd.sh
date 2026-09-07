@@ -15,6 +15,7 @@ systemctl --global enable podman.socket
 
 # System services
 systemctl enable docker.socket
+systemctl enable podman.socket
 systemctl enable qemu-guest-agent
 systemctl enable sshd.service
 systemctl enable bootc-user-setup@caspertdk.service
