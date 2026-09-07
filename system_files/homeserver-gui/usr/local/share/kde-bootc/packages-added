@@ -82,11 +82,18 @@ qemu-img
 guestfs-tools
 # A library for managing OS information for virtualization.
 libosinfo
+# swtpm
+swtpm
+swtpm-tools
+swtpm-selinux
+
 # A system tuning service for Linux
 # tuned
 # Podman
 podman
 slirp4netns
+
+
 
 ###########
 # Network #
