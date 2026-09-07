@@ -33,7 +33,7 @@ docker run --rm hello-world
 echo "Testing docker.real"
 DOCKER_HOST="unix:///var/run/docker.sock" docker run --rm hello-world
 echo "Testing docker.real as root"
-DOCKER_HOST="unix:///var/run/docker.sock" sudo docker run --rm hello-world
+sudo /usr/bin/docker.real run --rm hello-world
 echo "✅ Docker is ready"
 
 echo "== Utilities =="
