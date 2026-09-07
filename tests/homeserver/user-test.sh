@@ -27,7 +27,13 @@ echo
 echo "== Docker =="
 echo "Checking if user is in docker group"
 getent group docker || echo "docker group not found"
+echo
+echo "Testing docker.shim"
 docker run --rm hello-world
+echo "Testing docker.real"
+DOCKER_HOST="/var/run/docker.sock" docker run --rm hello-world
+echo "Testing docker.real as root"
+DOCKER_HOST="/var/run/docker.sock" sudo docker run --rm hello-world
 echo "✅ Docker is ready"
 
 echo "== Utilities =="
@@ -45,7 +51,7 @@ echo "== System Auth =="
 python3 - <<EOF
 import pam
 p = pam.pam()
-print("OK" if p.authenticate("$WHOAMI", "Password") else "FAIL")
+print("OK (PAM)" if p.authenticate("$WHOAMI", "Password") else "FAIL (PAM)")
 EOF
 
 echo "== user binaries =="
