@@ -33,7 +33,7 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
 
 # PREPARE PACKAGES
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
-  dnf -y install rsync && \
+  dnf -y install --setopt install_weak_deps=false rsync && \
   rsync -rvpKl /ctx/system_files/homeserver/ /ctx/system_files/homeserver-gui/ \
   /
 
