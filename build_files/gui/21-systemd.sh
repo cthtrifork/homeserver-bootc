@@ -13,6 +13,7 @@ systemctl disable pinggy.service
 log "Enabling system services"
 
 # GUI
+systemctl enable greetd.service
 systemctl set-default graphical.target
 
 # Power management
