@@ -19,19 +19,19 @@ runs:
     - name: Wait for SSH
       uses: ./.github/actions/ssh-ping
       with:
-        SSH_KEY: ${{ env.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
 
     - name: Run startup checks
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         # Make sure VM is ready for testing
         echo "--- system is-running ---"
@@ -74,11 +74,11 @@ runs:
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         ssh "${SSH_OPTS[@]}" \
           -i "$SSH_KEY" \
@@ -90,19 +90,19 @@ runs:
       uses: ./.github/actions/ssh-ping
       if: false
       with:
-        SSH_KEY: ${{ env.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
 
     - name: Run diagnostics
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         cat ./tests/diagnostics.sh | ssh "${SSH_OPTS[@]}" \
           -i "${SSH_KEY}" \
@@ -113,11 +113,11 @@ runs:
       shell: bash
       env:
         SSH_KEY: ${{ inputs.SSH_KEY }}
-        SSH_USERNAME: ${{ env.SSH_USERNAME }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
           -i "${SSH_KEY}" \
@@ -129,10 +129,10 @@ runs:
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
           cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
@@ -148,11 +148,11 @@ runs:
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
-        SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
         IMAGE_FULL: ${{ env.IMAGE_FULL }}
       run: | #sh
         # turn the env string into a Bash array
-        read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
         cat ./tests/verify-cosign.sh | ssh "${SSH_OPTS[@]}" \
           -i "$SSH_KEY" \
           -p 2222 \

@@ -122,7 +122,7 @@ download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSo
 extract "$AGE_TGZ" --strip-components=1
 
 log "Installing gh-cli"
-GH_CLI_VERSION="v2.99.0" # renovate: datasource=github-releases depName=cli/cli
+GH_CLI_VERSION="v2.100.0" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
 download_if_missing_cmd "$GH_CLI_TGZ" /ctx/build_files/github-release-url.sh cli/cli "${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$GH_CLI_VERSION"
 extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
@@ -185,7 +185,7 @@ extract "$KUBECOLOR_TGZ"
 "$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
 
 log "Installing omnictl"
-OMNICTL_VERSION="v1.10.5" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_VERSION="v1.11.0" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
 download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "omnictl.${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
 install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
@@ -238,7 +238,7 @@ download_if_missing_cmd "$JQ_BIN" /ctx/build_files/github-release-url.sh jqlang/
 install -o root -g root -m 0755 "$JQ_BIN" "$BIN_DIR/jq"
 
 log "Installing copa"
-COPA_VERSION="v0.14.2" # renovate: datasource=github-releases depName=project-copacetic/copacetic
+COPA_VERSION="v0.15.0" # renovate: datasource=github-releases depName=project-copacetic/copacetic
 COPA_TGZ="$(tmp_name copa "$COPA_VERSION" tar.gz)"
 download_if_missing_cmd "$COPA_TGZ" /ctx/build_files/github-release-url.sh project-copacetic/copacetic "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$COPA_VERSION"
 extract "$COPA_TGZ"
@@ -259,13 +259,13 @@ install -o root -g root -m 0755 "$COSIGN_BIN" "$BIN_DIR/cosign"
 "$BIN_DIR/cosign" completion bash >"$COMPLETION_DIR/cosign"
 
 log "Installing shfmt"
-SHFMT_VERSION="v3.14.0" # renovate: datasource=github-releases depName=mvdan/sh
+SHFMT_VERSION="v3.14.1" # renovate: datasource=github-releases depName=mvdan/sh
 SHFMT_BIN="$(tmp_name shfmt "$SHFMT_VERSION" bin)"
 download_if_missing_cmd "$SHFMT_BIN" /ctx/build_files/github-release-url.sh mvdan/sh "${MACHINE}.${PLATFORM_ARCH}" "$SHFMT_VERSION"
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.13.9" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.14.0" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing_cmd "$TALOSCTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/talos "talosctl-${MACHINE}.${PLATFORM_ARCH}" "$TALOSCTL_VERSION"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
@@ -297,7 +297,7 @@ download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh
 extract "$LAZYDOCKER_TGZ"
 
 log "Installing lazygit"
-LAZYGIT_VERSION="v0.64.1" # renovate: datasource=github-releases depName=jesseduffield/lazygit
+LAZYGIT_VERSION="v0.65.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
 extract "$LAZYGIT_TGZ"
@@ -323,7 +323,7 @@ download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sine
 extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
 
 log "Installing crane"
-CRANE_VERSION=v0.22.0 # renovate: datasource=github-releases depName=google/go-containerregistry
+CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases depName=google/go-containerregistry
 CRANE_TGZ="$(tmp_name crane "$CRANE_VERSION" tar.gz)"
 download_if_missing_cmd "$CRANE_TGZ" /ctx/build_files/github-release-url.sh google/go-containerregistry "go-containerregistry_${MACHINE}_${HOST_ARCH}.tar.gz" "$CRANE_VERSION"
 extract "$CRANE_TGZ"
