@@ -32,14 +32,6 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
     /ctx/build_files/container-auth.sh
 
 # PREPARE PACKAGES
-# GUI
-# NB: See system_files/homeserver-gui/etc/yum.repos.d/*
-#RUN dnf copr enable -y sneexy/zen-browser && \
-#  dnf copr enable -y scottames/ghostty && \
-#  dnf install -y "https://repo.linrunner.de/fedora/tlp/repos/releases/tlp-release.fc$(rpm -E %fedora).noarch.rpm" && \
-#  dnf install -y "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" && \
-#  dnf install -y "https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
-
 COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/* /usr/local/share/bootc/
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/* /usr/local/share/kde-bootc/
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc
