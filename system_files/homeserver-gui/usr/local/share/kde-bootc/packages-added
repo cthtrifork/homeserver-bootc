@@ -56,7 +56,6 @@ zen-browser
 # Terminal
 ghostty
 ## Utils
-btop
 wl-clipboard
 
 ##################
@@ -96,8 +95,6 @@ slirp4netns
 # captive portal support
 NetworkManager-config-connectivity-fedora
 NetworkManager
-# VPN plugins (L2TP, VPNC, OpenConnect, OpenVPN, PPTP)
-plasma-nm-*
 
 # Wifi
 NetworkManager-wifi
@@ -123,7 +120,6 @@ bluedevil
 thermald
 # Wayland/OBS/webcam compatibility
 xwaylandvideobridge
-plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
