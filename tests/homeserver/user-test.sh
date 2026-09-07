@@ -19,12 +19,11 @@ echo "== Podman =="
 systemctl --user status podman.socket
 loginctl show-user $USER | grep Linger
 echo "Docker.shim can use rootless podman:"
-echo
 curl --silent --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
-echo "Docker.shim can use rootful podman:"
 echo
+echo "Docker.shim can use rootful podman:"
 sudo curl  --silent --unix-socket /run/podman/podman.sock http://localhost/_ping
-
+echo
 echo "== Docker =="
 echo "Checking if user is in docker group"
 getent group docker || echo "docker group not found"
