@@ -32,6 +32,8 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
     /ctx/build_files/container-auth.sh
 
 # PREPARE PACKAGES
+COPY system_files/homeserver-gui/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+COPY system_files/homeserver-gui/etc/pki/rpm-gpg/ /etc/pki/rpm-gpg/
 COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/* /usr/local/share/bootc/
 COPY --chmod=0644 ./system_files/homeserver-gui/usr/local/share/kde-bootc/* /usr/local/share/kde-bootc/
 RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/bootc/packages-fedora-bootc

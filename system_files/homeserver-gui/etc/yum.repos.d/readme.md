@@ -21,6 +21,6 @@ dnf install -y \
   https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-44.noarch.rpm
 
 # Copy files
-cp -a /etc/yum.repos.d/*.repo /out/repos
+cp -a /etc/yum.repos.d/*.repo /out/repos/
 cp -a /etc/pki/rpm-gpg/* /out/rpm-gpg/
 ```
