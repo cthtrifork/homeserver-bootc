@@ -18,10 +18,12 @@ gh auth status && echo "✅ Github CLI is ready"
 echo "== Podman =="
 systemctl --user status podman.socket
 loginctl show-user $USER | grep Linger
-# Rootless
-curl --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
-# Rootful
-sudo curl --unix-socket /run/podman/podman.sock http://localhost/_ping
+echo "Docker.shim can use rootless podman:"
+echo
+curl --silent --unix-socket $XDG_RUNTIME_DIR/podman/podman.sock http://localhost/_ping
+echo "Docker.shim can use rootful podman:"
+echo
+sudo curl  --silent --unix-socket /run/podman/podman.sock http://localhost/_ping
 
 echo "== Docker =="
 echo "Checking if user is in docker group"
