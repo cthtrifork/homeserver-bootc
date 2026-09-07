@@ -6,7 +6,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-#ExecStartPre=/usr/bin/bash -c 'for i in {1..30}; do getent ahostsv4 free.pinggy.io >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1'
+ExecStartPre=/usr/bin/bash -c 'for i in {1..30}; do getent ahostsv4 free.pinggy.io >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1'
 EnvironmentFile=/etc/homeserver/metadata/pinggy
 ExecStart=/usr/libexec/pinggy.sh
 Restart=always
