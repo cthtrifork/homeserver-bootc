@@ -34,7 +34,7 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
 # PREPARE PACKAGES
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
   dnf -y install rsync && \
-  rsync -rvpK /ctx/system_files/homeserver/ /ctx/system_files/homeserver-gui/ \
+  rsync -rvpKl /ctx/system_files/homeserver/ /ctx/system_files/homeserver-gui/ \
   /
 
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
