@@ -1,5 +1,5 @@
-#!/usr/bin/bash
-set -euo pipefail
+#!/usr/bin/env bash
+set -e
 
 trap '[[ $BASH_COMMAND != echo* ]] && [[ $BASH_COMMAND != log* ]] && echo "+ $BASH_COMMAND"' DEBUG
 
@@ -7,10 +7,14 @@ log() {
     echo "=== $* ==="
 }
 
-# We dont want pinggy running on the gui container
-systemctl disable pinggy.service
+debug() {
+    echo "[DEBUG] $*" >&2
+}
 
 log "Enabling system services"
+
+# We dont want pinggy running on the gui container
+systemctl disable pinggy.service
 
 # GUI
 systemctl set-default graphical.target

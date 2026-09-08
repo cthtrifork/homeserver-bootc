@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -e
 
 trap '[[ $BASH_COMMAND != echo* ]] && [[ $BASH_COMMAND != log* ]] && echo "+ $BASH_COMMAND"' DEBUG
 
-echo "::group:: ===$(basename "$0")==="
+log() {
+    echo "=== $* ==="
+}
 
-rm -rf /etc/selinux/targeted/tmp /etc/selinux/targeted/previous
+debug() {
+    echo "[DEBUG] $*" >&2
+}
 
-semodule -i /usr/share/selinux/packages/swtpm*.pp
+log "Fixing swtpm SELinux policy"
+
+semodule -i /usr/share/selinux/packages/swtpm*.pp || true
+
+semanage fcontext -a -t swtpm_exec_t "/usr/bin/swtpm" || true
+semanage fcontext -a -t swtpm_exec_t "/usr/bin/swtpm_setup" || true
 
 restorecon -v \
-  /usr/bin/swtpm \
-  /usr/bin/swtpm_setup
+    /usr/bin/swtpm \
+    /usr/bin/swtpm_setup
 
-ls -lZ /usr/bin/swtpm
+debug "swtpm permissions: $(ls -lZ /usr/bin/swtpm)"
