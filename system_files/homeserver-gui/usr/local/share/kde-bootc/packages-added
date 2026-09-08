@@ -72,7 +72,7 @@ dejavu-sans-fonts
 zen-browser
 # Terminal
 ghostty
-## Screenshot manager
+# Screenshot manager
 spectacle
 # Remote desktop
 krdp
@@ -116,18 +116,12 @@ qemu-img
 guestfs-tools
 # A library for managing OS information for virtualization.
 libosinfo
-# swtpm
-swtpm
-swtpm-tools
-swtpm-selinux
 
 # A system tuning service for Linux
 # tuned
 # Podman
 podman
 slirp4netns
-
-
 
 ###########
 # Network #
@@ -142,24 +136,24 @@ plasma-nm-*
 # Wifi
 NetworkManager-wifi
 # Move to dedicated tagged image when switching to multiple hardware
-## Used by Dell laptop 2022
+# Used by Dell laptop 2022
 iwlwifi-mvm-firmware
 linux-firmware-whence
 
 ############
 # Hardware #
 ############
-## Power
+# Power
 upower
 tlp
 tlp-pd
 tlp-rdw
-## drivers
+# drivers
 kamera
 lm_sensors
-## Bluetooth stack
+# Bluetooth stack
 bluedevil
-## thermal management
+# thermal management
 thermald
 # Wayland/OBS/webcam compatibility
 xwaylandvideobridge
