@@ -169,5 +169,6 @@ plasma-pa
 pipewire
 pipewire-pulseaudio
 wireplumber
+alsa-sof-firmware
 # thunderbolt
 bolt
