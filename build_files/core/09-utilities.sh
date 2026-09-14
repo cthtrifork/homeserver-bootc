@@ -136,7 +136,7 @@ install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
 "$BIN_DIR/kubectl" completion bash >"$COMPLETION_DIR/kubectl"
 
 log "Installing kubectl-oidc-login (kubelogin)"
-KUBELOGIN_VERSION="v1.36.3" # renovate: datasource=github-releases depName=int128/kubelogin
+KUBELOGIN_VERSION="v1.36.4" # renovate: datasource=github-releases depName=int128/kubelogin
 KUBELOGIN_ZIP="$(tmp_name kubelogin "$KUBELOGIN_VERSION" zip)"
 download_if_missing_cmd "$KUBELOGIN_ZIP" /ctx/build_files/github-release-url.sh int128/kubelogin "${MACHINE}.${PLATFORM_ARCH}.zip" "$KUBELOGIN_VERSION"
 extract "$KUBELOGIN_ZIP"
@@ -185,14 +185,14 @@ extract "$KUBECOLOR_TGZ"
 "$BIN_DIR/kubecolor" completion bash >"$COMPLETION_DIR/kubecolor"
 
 log "Installing omnictl"
-OMNICTL_VERSION="v1.11.0" # renovate: datasource=github-releases depName=siderolabs/omni
+OMNICTL_VERSION="v1.12.0" # renovate: datasource=github-releases depName=siderolabs/omni
 OMNICTL_BIN="$(tmp_name omnictl "$OMNICTL_VERSION" bin)"
 download_if_missing_cmd "$OMNICTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/omni "omnictl.${MACHINE}.${PLATFORM_ARCH}" "$OMNICTL_VERSION"
 install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 "$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
 
 log "Installing flux-operator-mcp"
-FLUX_MCP_VERSION="v0.59.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
+FLUX_MCP_VERSION="v0.60.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
 FLUX_MCP_TGZ="$(tmp_name flux-operator-mcp "$FLUX_MCP_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}_${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
 extract "$FLUX_MCP_TGZ"
@@ -272,7 +272,7 @@ install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
 "$BIN_DIR/talosctl" completion bash >"$COMPLETION_DIR/talosctl"
 
 log "Installing helm"
-HELM_VERSION="v4.2.4" # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION="v4.3.0" # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
 download_if_missing "$HELM_TGZ" "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${PLATFORM_ARCH}.tar.gz"
 extract "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
@@ -297,7 +297,7 @@ download_if_missing_cmd "$LAZYDOCKER_TGZ" /ctx/build_files/github-release-url.sh
 extract "$LAZYDOCKER_TGZ"
 
 log "Installing lazygit"
-LAZYGIT_VERSION="v0.65.0" # renovate: datasource=github-releases depName=jesseduffield/lazygit
+LAZYGIT_VERSION="v0.65.1" # renovate: datasource=github-releases depName=jesseduffield/lazygit
 LAZYGIT_TGZ="$(tmp_name lazygit "$LAZYGIT_VERSION" tar.gz)"
 download_if_missing_cmd "$LAZYGIT_TGZ" /ctx/build_files/github-release-url.sh jesseduffield/lazygit "${MACHINE}.${HOST_ARCH}.tar.gz" "$LAZYGIT_VERSION"
 extract "$LAZYGIT_TGZ"
