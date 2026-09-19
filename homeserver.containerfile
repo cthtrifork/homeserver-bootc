@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
-FROM quay.io/fedora/fedora-bootc:44 AS base
+FROM quay.io/fedora/fedora-bootc:44@sha256:3d28554659f56aea45638c6da31d95dcfd09c4028b12de6b9de7e40ea831cda0 AS base
 
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
