@@ -172,3 +172,5 @@ wireplumber
 alsa-sof-firmware
 # thunderbolt
 bolt
+# webcam
+intel-vsc-firmware
