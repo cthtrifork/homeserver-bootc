@@ -15,6 +15,14 @@ runs:
         podman rmi -i ${{ env.LOCAL_PR_IMAGE }}
         podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
+        podman system prune -f
+        sudo podman system prune -f
+        
+        # remove all PR images
+        #podman images --format '{{.Repository}}:{{.Tag}}' \
+        #  | grep ':pr-' \
+        #  | xargs -r podman rmi
+
     - name: List images
       shell: bash
       run: |
