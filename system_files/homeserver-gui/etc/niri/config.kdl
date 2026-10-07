@@ -1,0 +1,148 @@
+input {
+    keyboard {
+        xkb {
+            layout "dk"
+        }
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+layout {
+    gaps 8
+
+    center-focused-column "never"
+
+    default-column-width {
+        proportion 0.5
+    }
+}
+
+prefer-no-csd
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+screenshot-path "~/Pictures/Screenshots/Screenshot-%Y-%m-%d-%H%M%S.png"
+
+binds {
+    // Applications
+    Mod+T {
+        spawn "ghostty";
+    }
+
+    Mod+B {
+        spawn "zen-browser";
+    }
+
+    // Window navigation
+    Mod+Left {
+        focus-column-left;
+    }
+
+    Mod+Right {
+        focus-column-right;
+    }
+
+    Mod+H {
+        focus-column-left;
+    }
+
+    Mod+L {
+        focus-column-right;
+    }
+
+    Mod+Up {
+        focus-window-up;
+    }
+
+    Mod+Down {
+        focus-window-down;
+    }
+
+    // Move windows
+    Mod+Ctrl+Left {
+        move-column-left;
+    }
+
+    Mod+Ctrl+Right {
+        move-column-right;
+    }
+
+    // Workspaces
+    Mod+Page_Up {
+        focus-workspace-up;
+    }
+
+    Mod+Page_Down {
+        focus-workspace-down;
+    }
+
+    Mod+Ctrl+Page_Up {
+        move-column-to-workspace-up;
+    }
+
+    Mod+Ctrl+Page_Down {
+        move-column-to-workspace-down;
+    }
+
+    // Window sizing
+    Mod+M {
+        maximize-column;
+    }
+
+    Mod+F {
+        fullscreen-window;
+    }
+
+    // Close
+    Mod+Q {
+        close-window;
+    }
+
+    // Screenshots
+    Print {
+        screenshot;
+    }
+
+    Alt+Print {
+        screenshot-window;
+    }
+
+    Ctrl+Print {
+        screenshot-screen;
+    }
+
+    // Audio
+    XF86AudioRaiseVolume {
+        spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.0";
+    }
+
+    XF86AudioLowerVolume {
+        spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-";
+    }
+
+    XF86AudioMute {
+        spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+    }
+
+    XF86AudioMicMute {
+        spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+    }
+
+    // Screen lock
+    Super+Alt+L {
+        spawn "swaylock";
+    }
+
+    // Exit niri
+    Mod+Shift+E {
+        quit;
+    }
+}
+
+spawn-at-startup "zen-browser"
