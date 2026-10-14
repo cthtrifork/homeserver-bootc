@@ -4,7 +4,7 @@ Wants=network-online.target caddy-config.service
 After=network-online.target caddy-config.service
 
 [Container]
-Image=docker.io/library/caddy:2@sha256:844f60b64e4724a5aa8245e019dace0d3f199f7433ce6c57676cb30a920dbad9
+Image=docker.io/library/caddy:2@sha256:685ae3d7c34d9b5f8caeddc5d14051db7bbd88ff1f5a2fa0c16bd8ca328fb7af
 PublishPort=8443:8443
 AutoUpdate=registry
 
