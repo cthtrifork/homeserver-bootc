@@ -12,6 +12,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Prepare Renovate cache dir
+        run: |
+          mkdir -p /tmp/renovate/cache/renovate/repository
+          sudo chown -R 12021:0 /tmp/renovate
+          sudo chmod -R g+w /tmp/renovate
+
+      - name: Restore Renovate cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/renovate/cache/renovate/repository
+          key: renovate-cache-${{ github.run_id }}
+          restore-keys: |
+            renovate-cache-
+
       - name: Self-hosted Renovate
         uses: renovatebot/github-action@a63d9a7bc606f7336fd20b47f2f32259a35e6213 # v46.3.9
         with:
@@ -21,4 +35,5 @@ jobs:
           RENOVATE_PAT_TOKEN: '${{ secrets.PAT_RENOVATEBOT }}'
           RENOVATE_PLATFORM_COMMIT: 'true'
           RENOVATE_X_GITHUB_HOST_RULES: 'true'
-          LOG_LEVEL: debug
+          RENOVATE_REPOSITORY_CACHE: 'enabled'
+          LOG_LEVEL: info
