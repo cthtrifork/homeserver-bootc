@@ -22,6 +22,11 @@ EOF
     podman pull --signature-policy /tmp/policy-permissive.json ${IMAGE_FULL}@latest
 }
 
+# The policy baked into the image must enforce signatures for our registry scope
+grep -q '"sigstoreSigned"' /etc/containers/policy.json
+grep -q 'ghcr.io/cthtrifork/homeserver-bootc"' /etc/containers/policy.json
+echo "Signature policy is enforcing for ghcr.io/cthtrifork/homeserver-bootc"
+
 #podman pull --log-level=debug ${IMAGE_FULL}:latest 2>&1 | grep -iE 'digest|signature|sigstore' || true
 podman pull ${IMAGE_FULL}:latest
 
