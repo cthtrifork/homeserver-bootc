@@ -38,6 +38,10 @@
   rebaseWhen: 'auto',
   packageRules: [
     {
+      matchUpdateTypes: ['digest', 'pin', 'pinDigest'],
+      automerge: true,
+    },
+    {
       "extends": [
         "helpers:pinGitHubActionDigests"
       ],
