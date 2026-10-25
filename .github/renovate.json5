@@ -31,6 +31,10 @@
   patch: {
     automerge: true,
   },
+  // Renovate merges the PR itself once the status checks pass, so no branch protection / GitHub auto-merge is required.
+  automergeType: 'pr',
+  platformAutomerge: false,
+  ignoreTests: false,
   rebaseWhen: 'auto',
   packageRules: [
     {
