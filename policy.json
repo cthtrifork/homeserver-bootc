@@ -6,7 +6,7 @@
     ],
     "transports": {
         "docker": {
-            "ghcr.io/cthtrifork-disabled": [
+            "ghcr.io/cthtrifork/homeserver-bootc": [
                 {
                     "type": "sigstoreSigned",
                     "keyPath": "/etc/pki/cosign/cosign.pub",
