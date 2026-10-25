@@ -832,7 +832,10 @@ jobs:
         run: | #sh
           set -euo pipefail
           echo "--- cosign vuln attestation ---"
-          cosign verify-attestation --key ./cosign.pub --type vuln \
+          # the legacy-format vuln attestation lives next to the cert-signed
+          # provenance bundle, which a --key lookup would reject
+          cosign verify-attestation --new-bundle-format=false \
+            --key ./cosign.pub --type vuln \
             "${IMAGE_FULL}@${DIGEST}" > /dev/null
           echo "--- build provenance attestation ---"
           gh attestation verify "oci://${IMAGE_FULL}@${DIGEST}" \
@@ -843,7 +846,7 @@ jobs:
 
       - name: Verify
         run: |
-          cosign verify --key ./cosign.pub \
+          cosign verify --new-bundle-format=false --key ./cosign.pub \
             ${{ env.IMAGE_FULL }}@${DIGEST}
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
