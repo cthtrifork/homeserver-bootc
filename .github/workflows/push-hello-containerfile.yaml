@@ -70,14 +70,12 @@ jobs:
       - name: Sign container image
         if: ${{ github.ref == 'refs/heads/main' }}
         run: | #sh
-          export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          cosign sign -y --use-signing-config=false --new-bundle-format=false --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
-          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/hello.sigstore
 
       - name: Attach build provenance attestation
         if: ${{ github.ref == 'refs/heads/main' }}
