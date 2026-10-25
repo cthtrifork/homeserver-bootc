@@ -127,6 +127,10 @@ swtpm-selinux
 podman
 slirp4netns
 
+# Trivy Scanner (Wails GUI) runtime
+gtk4
+webkitgtk6.0
+
 
 
 ###########
