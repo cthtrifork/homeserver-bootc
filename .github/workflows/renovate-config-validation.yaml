@@ -1,0 +1,31 @@
+name: Validate Renovate config
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - ".github/renovate.json5"
+      - ".github/workflows/renovate-config.js"
+      - ".github/workflows/renovate-config-validation.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/renovate.json5"
+      - ".github/workflows/renovate-config.js"
+      - ".github/workflows/renovate-config-validation.yaml"
+jobs:
+  validate:
+    name: Validate Renovate config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate repository config
+        run: npx --yes --package renovate -- renovate-config-validator --strict
+
+      - name: Validate self-hosted config
+        env:
+          RENOVATE_PAT_TOKEN: placeholder # only needs to be a string for validation
+        run: npx --yes --package renovate -- renovate-config-validator --strict .github/workflows/renovate-config.js
