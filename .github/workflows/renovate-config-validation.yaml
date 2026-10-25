@@ -26,4 +26,6 @@ jobs:
         run: npx --yes --package renovate -- renovate-config-validator --strict
 
       - name: Validate self-hosted config
+        env:
+          RENOVATE_PAT_TOKEN: placeholder # only needs to be a string for validation
         run: npx --yes --package renovate -- renovate-config-validator --strict .github/workflows/renovate-config.js
