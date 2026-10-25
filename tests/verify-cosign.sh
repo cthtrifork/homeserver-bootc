@@ -35,3 +35,5 @@ DIGEST=$(skopeo inspect --format "{{.Digest}}" docker://${IMAGE_FULL}:latest)
 echo "Verifying build provenance attestation for ${IMAGE_FULL}@${DIGEST}"
 gh attestation verify "oci://${IMAGE_FULL}@${DIGEST}" --repo cthtrifork/homeserver-bootc
 echo "Attestation verified"
+
+# e2e verification run
