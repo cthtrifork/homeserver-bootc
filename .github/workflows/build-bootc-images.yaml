@@ -558,7 +558,8 @@ jobs:
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
-    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    # pinned: bootc-image-builder fails to mount containers-storage on ubuntu-latest
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     needs:
       - changes
       - build-bootc-image

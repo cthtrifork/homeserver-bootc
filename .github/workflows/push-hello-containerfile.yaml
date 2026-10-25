@@ -70,7 +70,9 @@ jobs:
       - name: Sign container image
         if: ${{ github.ref == 'refs/heads/main' }}
         run: | #sh
-          cosign sign -y --use-signing-config=false --new-bundle-format=false --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          # build-push-action pushes an index (image + provenance); containers/image also
+          # checks the platform manifest it pulls, so sign the children too
+          cosign sign -y --recursive --use-signing-config=false --new-bundle-format=false --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
