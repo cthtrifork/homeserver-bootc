@@ -825,6 +825,22 @@ jobs:
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ""
+          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
+
+      - name: Verify attestations
+        run: | #sh
+          set -euo pipefail
+          echo "--- cosign vuln attestation ---"
+          cosign verify-attestation --key ./cosign.pub --type vuln \
+            "${IMAGE_FULL}@${DIGEST}" > /dev/null
+          echo "--- build provenance attestation ---"
+          gh attestation verify "oci://${IMAGE_FULL}@${DIGEST}" \
+            --repo "${GITHUB_REPOSITORY}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST: ${{ steps.push-latest.outputs.digest }}
+          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Verify
         run: |
