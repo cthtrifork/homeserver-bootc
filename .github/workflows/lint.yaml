@@ -65,6 +65,6 @@ jobs:
 
       - name: Run hadolint (errors only, ADD is used intentionally)
         run: | #sh
-          curl -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 3 -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
           chmod +x hadolint
           git ls-files '*.containerfile' | xargs ./hadolint --failure-threshold error --ignore DL3020
