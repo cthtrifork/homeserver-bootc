@@ -2,7 +2,7 @@ name: "Set BootC image vars"
 description: "Resolve IMAGE_NAME and related variables based on image type"
 inputs:
   image:
-    description: "Image selector (homeserver|jumphost|githubrunner|httpsproxy)"
+    description: "Image selector (homeserver|homeserver-gui)"
     required: true
 runs:
   using: "composite"
@@ -22,21 +22,9 @@ runs:
             IMAGE_NAME="homeserver-gui-bootc"
             CONTAINERFILE="homeserver-gui.containerfile"
             ;;
-          jumphost)
-            IMAGE_NAME="jumphost-bootc"
-            CONTAINERFILE="jumphost.containerfile"
-            ;;
-          httpsproxy)
-            IMAGE_NAME="httpsproxy-bootc"
-            CONTAINERFILE="httpsproxy.containerfile"
-            ;;
-          githubrunner)
-            IMAGE_NAME="github-runner-bootc"
-            CONTAINERFILE="github-runner.containerfile"
-            ;;
           *)
             echo "Unsupported image type: '${{ inputs.image }}'." >&2
-            echo "Expected one of: homeserver, homeserver-gui, jumphost, httpsproxy, githubrunner." >&2
+            echo "Expected one of: homeserver, homeserver-gui." >&2
             exit 1
             ;;
         esac
