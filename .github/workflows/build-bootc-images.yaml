@@ -222,16 +222,20 @@ jobs:
 
       - name: Prepare build secrets
         shell: bash
+        env:
+          PINGGY_TOKEN_SECRET: ${{ secrets.PINGGY_TOKEN }}
+          HOMESERVER_PAT_SECRET: ${{ secrets.HOMESERVER_PAT }}
+          AGE_KEY_SECRET: ${{ secrets.AGE_KEY }}
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
             echo "" > /tmp/PINGGY_TOKEN
           else
-            echo "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
+            printf "%s\n" "${PINGGY_TOKEN_SECRET}" > /tmp/PINGGY_TOKEN
           fi
 
-          echo "${{ secrets.HOMESERVER_PAT }}" > /tmp/REGISTRY_TOKEN
+          printf "%s\n" "${HOMESERVER_PAT_SECRET}" > /tmp/REGISTRY_TOKEN
           cp "${HOME}/.docker/config.json" /tmp/creds
-          echo "${{ secrets.AGE_KEY }}" > /tmp/AGE_KEY
+          printf "%s\n" "${AGE_KEY_SECRET}" > /tmp/AGE_KEY
           chmod 600 /tmp/creds
           chmod 600 /tmp/REGISTRY_TOKEN
           chmod 600 /tmp/PINGGY_TOKEN
@@ -757,8 +761,10 @@ jobs:
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
         id: push-latest
         shell: bash
+        env:
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: | #sh
-          echo "${{ secrets.GITHUB_TOKEN }}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
+          printf "%s" "${REGISTRY_PASSWORD}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
           skopeo copy --all \
             --digestfile digest.txt \
             "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
