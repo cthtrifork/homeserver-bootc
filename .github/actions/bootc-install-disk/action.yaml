@@ -66,7 +66,16 @@ runs:
         sudo udevadm settle
         ROOT_PART=$(lsblk -lnpo NAME,FSTYPE "${LOOP}" | awk '$2=="xfs"{print $1}')
         sudo mount "${ROOT_PART}" "${MNT}"
-        sudo sh -c "mkdir -p ${MNT}/ostree/deploy/*/var/home"
-        sudo ls -d "${MNT}"/ostree/deploy/*/var/home
+        lsblk -lno NAME,FSTYPE,SIZE "${LOOP}"
+        sudo find "${MNT}" -maxdepth 4 -type d -not -path "${MNT}/ostree/repo/*" | head -40
+        VAR_DIRS=$(sudo find "${MNT}/ostree/deploy" -mindepth 2 -maxdepth 2 -type d -name var)
+        if [ -z "${VAR_DIRS}" ]; then
+          echo "::error::could not find the deployment's var directory"
+          exit 1
+        fi
+        for d in ${VAR_DIRS}; do
+          sudo mkdir -p "${d}/home"
+          echo "created ${d}/home"
+        done
 
         echo "path=${DISK}" >> "$GITHUB_OUTPUT"
