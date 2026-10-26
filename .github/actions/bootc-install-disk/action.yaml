@@ -49,10 +49,23 @@ runs:
           DEV_SRC=/host-dev
         fi
 
+        # Fast path (~2.5 min): bootc installs the running container itself. bootc only allows that when
+        # PID 1 is root-owned and it shares the PID namespace (--pid=host), i.e. on a real host/VM.
+        # In runner pods PID 1 is the unprivileged runner process, so fall back to --source-imgref
+        # (skips those checks, but exports the image from containers-storage: ~4x slower).
+        PID_ARGS=()
+        SOURCE_ARGS=()
+        if [ "$(stat -c %u /proc/1)" = "0" ]; then
+          PID_ARGS=(--pid=host)
+        else
+          SOURCE_ARGS=(--source-imgref "containers-storage:${IMAGE}" --target-imgref "${IMAGE}")
+        fi
+
         # image must already be in root containers-storage (see load-image with run_as_sudo)
         sudo podman run \
           --rm \
           --privileged \
+          "${PID_ARGS[@]}" \
           --security-opt label=type:unconfined_t \
           -v "${DEV_SRC}:/dev" \
           "${UDEV_ARGS[@]}" \
@@ -61,8 +74,7 @@ runs:
           -v "$(realpath "${AUTHORIZED_KEYS}"):/authorized_keys:ro" \
           "${IMAGE}" \
           bootc install to-disk \
-            --source-imgref "containers-storage:${IMAGE}" \
-            --target-imgref "${IMAGE}" \
+            "${SOURCE_ARGS[@]}" \
             --via-loopback \
             --generic-image \
             --filesystem xfs \
