@@ -1,0 +1,56 @@
+name: "Install image to a raw disk"
+description: "Install the bootc image into a sparse raw disk with `bootc install to-disk --via-loopback` (faster than bootc-image-builder)"
+inputs:
+  authorized_keys_file:
+    description: "File with the public key(s) to authorize for root SSH access"
+    required: true
+  disk_size:
+    description: "Size of the (sparse) raw disk"
+    default: "30G"
+    required: false
+outputs:
+  path:
+    description: "The path to the raw disk image"
+    value: ${{ steps.install.outputs.path }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install qemu deps (socat sqlite3 qemu-system-x86 qemu-utils)
+      shell: bash
+      run: | #sh
+        set -e
+        # apt index was already refreshed by prepare-podman in the same job
+        sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
+
+    - name: Install to raw disk
+      id: install
+      shell: bash
+      env:
+        IMAGE: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+        AUTHORIZED_KEYS: ${{ inputs.authorized_keys_file }}
+        DISK_SIZE: ${{ inputs.disk_size }}
+      run: | #sh
+        set -euo pipefail
+        mkdir -p output
+        DISK="${PWD}/output/disk.raw"
+        truncate -s "${DISK_SIZE}" "${DISK}"
+
+        # image must already be in root containers-storage (see load-image with run_as_sudo)
+        sudo podman run \
+          --rm \
+          --privileged \
+          --pid=host \
+          --security-opt label=type:unconfined_t \
+          -v /dev:/dev \
+          -v /var/lib/containers:/var/lib/containers \
+          -v "${PWD}/output:/output" \
+          -v "$(realpath "${AUTHORIZED_KEYS}"):/authorized_keys:ro" \
+          "${IMAGE}" \
+          bootc install to-disk \
+            --via-loopback \
+            --generic-image \
+            --filesystem xfs \
+            --root-ssh-authorized-keys /authorized_keys \
+            /output/disk.raw
+
+        echo "path=${DISK}" >> "$GITHUB_OUTPUT"

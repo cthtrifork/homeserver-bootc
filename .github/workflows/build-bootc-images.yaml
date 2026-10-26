@@ -574,7 +574,7 @@ jobs:
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
-    # pinned: bootc-image-builder fails to mount containers-storage on ubuntu-latest
+    # pinned: loop devices/containers-storage mounts are unreliable on ubuntu-latest
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     needs:
       - changes
@@ -593,7 +593,7 @@ jobs:
       id-token: write
       pull-requests: write
     env:
-      SSH_USERNAME: runner
+      SSH_USERNAME: root
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
 
     steps:
@@ -618,12 +618,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           minimal: "true"
 
-      - name: Prefetch bootc-image-builder in background
-        run: | #sh
-          rm -f /tmp/bib-pulled
-          touch /tmp/bib-prefetch-started
-          (sudo podman pull -q quay.io/centos-bootc/bootc-image-builder:latest > /tmp/bib-pull.log 2>&1; echo $? > /tmp/bib-pulled) &
-
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
         with:
@@ -640,25 +634,16 @@ jobs:
 
           echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
 
-      - name: Write bootc-image-builder user config (SSH access)
+      - name: Write authorized_keys for root SSH access
         run: | #sh
           set -e
-          {
-            #echo '[[customizations.filesystem]]'
-            #echo 'mountpoint = "/"'
-            #echo 'minsize   = "20 GiB"'
-            echo '[[customizations.user]]'
-            echo "name = \"${{ env.SSH_USERNAME }}\""
-            echo 'password = ""'
-            echo "key = \"${PUBKEY}\""
-            echo 'groups = ["wheel"]'
-          } > out/config.toml
-
-          cat ./out/config.toml
+          echo "${PUBKEY}" > out/authorized_keys
 
       - name: Create bootable image
         id: create-vmdk
-        uses: ./.github/actions/bootc-image-builder
+        uses: ./.github/actions/bootc-install-disk
+        with:
+          authorized_keys_file: out/authorized_keys
 
       - name: Boot QEMU (headless) with SSH forward
         env:
