@@ -1,5 +1,10 @@
 name: "Create bootable image"
 description: "Create a bootable image from the specified configuration"
+inputs:
+  checksum:
+    description: "Create a sha256 checksum file next to the image (slow for large disks)"
+    default: "false"
+    required: false
 outputs:
   output_directory:
     description: "The output directory of the built image"
@@ -20,7 +25,7 @@ runs:
       shell: bash
       run: | #sh
         set -e
-        sudo apt-get update -qq
+        # apt index was already refreshed by prepare-podman in the same job
         sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
 
     # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
@@ -34,7 +39,15 @@ runs:
         USE_LIBREPO: false
         IMAGE_TYPE: qcow2
         ROOTFS: xfs
+        CREATE_CHECKSUM: ${{ inputs.checksum }}
       run: | #sh
+        # wait for the background prefetch started in the workflow (if any)
+        if [ -e /tmp/bib-prefetch-started ]; then
+          for _ in $(seq 1 300); do
+            [ -e /tmp/bib-pulled ] && break
+            sleep 2
+          done
+        fi
         DESIRED_UID=$(id -u)
         DESIRED_GID=$(id -g)
 
@@ -52,7 +65,7 @@ runs:
         sudo podman run \
           --rm \
           --privileged \
-          --pull=newer \
+          --pull=missing \
           --security-opt label=type:unconfined_t \
           -v ${CONFIG_FILE}:/config.toml:ro \
           -v ./output:/output \
@@ -71,11 +84,15 @@ runs:
 
         ISO_PATH=(${OUTPUT_DIRECTORY}/*)
 
-        # Create a checksum of the output file, stored in the same directory
-        CHECKSUM=$(sudo sha256sum $ISO_PATH | awk '{print $1}')
-        CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
-        echo $CHECKSUM | sudo tee ${CHECKSUM_PATH} > /dev/null
-        sudo chown $DESIRED_UID:$DESIRED_GID ${CHECKSUM_PATH}
+        # Checksumming a multi-GB disk is slow; only do it when asked for
+        CHECKSUM=""
+        CHECKSUM_PATH=""
+        if [ "${CREATE_CHECKSUM}" == "true" ]; then
+          CHECKSUM=$(sudo sha256sum $ISO_PATH | awk '{print $1}')
+          CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
+          echo $CHECKSUM | sudo tee ${CHECKSUM_PATH} > /dev/null
+          sudo chown $DESIRED_UID:$DESIRED_GID ${CHECKSUM_PATH}
+        fi
 
         echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
         echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT

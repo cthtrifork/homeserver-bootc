@@ -13,12 +13,26 @@ runs:
       id: date
       run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
+    - name: Restore trivy binary from cache
+      id: trivy-bin
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.local/bin/trivy
+        key: trivy-bin-${{ inputs.trivy_version }}-${{ runner.os }}
+
     - name: Setup trivy
       shell: bash
+      env:
+        CACHE_HIT: ${{ steps.trivy-bin.outputs.cache-hit }}
       run: |
         set -euo pipefail
 
-        version="${{ env.TRIVY_VERSION }}"
+        if [ "$CACHE_HIT" == "true" ]; then
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          exit 0
+        fi
+
+        version="${{ inputs.trivy_version }}"
         arch=amd64
         install_dir="$HOME/.local/bin"
         mkdir -p "$install_dir"

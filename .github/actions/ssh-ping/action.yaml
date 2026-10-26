@@ -13,11 +13,11 @@ inputs:
   SLEEP_SECONDS:
     description: "SLEEP_SECONDS"
     required: false
-    default: "10"
+    default: "3"
   RETRIES:
     description: "RETRIES"
     required: false
-    default: "10"
+    default: "100"
 runs:
   using: "composite"
   steps:
@@ -34,7 +34,7 @@ runs:
         read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
         wait_for_ssh_up() {
-          SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+          SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"' 2>/dev/null || true)
           if [[ $SSH_STATUS == "READY" ]]; then
             echo 1
           else
@@ -46,7 +46,9 @@ runs:
           RESULT=$(wait_for_ssh_up "localhost")
           if [[ $RESULT == 1 ]]; then
             echo "SSH is ready now! 🥳"
-            break
+            exit 0
           fi
           sleep ${SLEEP_SECONDS}
         done
+        echo "::error::SSH did not become ready in time"
+        exit 1

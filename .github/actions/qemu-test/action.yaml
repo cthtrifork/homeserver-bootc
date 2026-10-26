@@ -33,41 +33,22 @@ runs:
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
-        # Make sure VM is ready for testing
-        echo "--- system is-running ---"
+        # Make sure VM is ready for testing (single SSH session)
         ssh "${SSH_OPTS[@]}" \
           -i "$SSH_KEY" \
           -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          "sudo bootc status"
-
+          ${SSH_USERNAME}@localhost 'bash -s' <<'EOF'
+        echo "--- bootc status ---"
+        sudo bootc status
         echo "--- rpm-ostree status ---"
-        ssh "${SSH_OPTS[@]}" \
-          -i "$SSH_KEY" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          "rpm-ostree status"
-
+        rpm-ostree status
         echo "--- systemctl is-system-running ---"
-        ssh "${SSH_OPTS[@]}" \
-          -i "$SSH_KEY" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          "timeout 30 systemctl is-system-running --wait || systemctl --failed"
-
+        timeout 30 systemctl is-system-running --wait || systemctl --failed
         echo "--- stats ---"
-        ssh "${SSH_OPTS[@]}" \
-          -i "$SSH_KEY" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          "df -h"
-
+        df -h
         echo "--- fastfetch ---"
-        ssh "${SSH_OPTS[@]}" \
-          -i "$SSH_KEY" \
-          -p 2222 \
-          ${SSH_USERNAME}@localhost \
-          "fastfetch || true"
+        fastfetch || true
+        EOF
 
     - name: Reboot VM
       if: false

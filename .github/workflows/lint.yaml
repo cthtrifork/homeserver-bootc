@@ -1,0 +1,68 @@
+name: Lint
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+      - "**/*.sh"
+      - "*.containerfile"
+      - "build_files/**"
+      - "tests/**"
+      - "system_files/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/**"
+      - "**/*.sh"
+      - "*.containerfile"
+      - "build_files/**"
+      - "tests/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  ACTIONLINT_VERSION: 1.7.7 # renovate: datasource=github-releases depName=rhysd/actionlint
+  HADOLINT_VERSION: v2.12.0 # renovate: datasource=github-releases depName=hadolint/hadolint
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run actionlint
+        run: | #sh
+          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}"
+          ./actionlint -color -ignore 'SC2086|SC2129|SC2046|SC2016|SC2002|SC2162|SC2155'
+
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run shellcheck (errors only)
+        run: | #sh
+          mapfile -t files < <(git ls-files '*.sh')
+          shellcheck --severity=error "${files[@]}"
+
+  hadolint:
+    name: hadolint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run hadolint (errors only)
+        run: | #sh
+          curl -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          chmod +x hadolint
+          git ls-files '*.containerfile' | xargs ./hadolint --failure-threshold error
