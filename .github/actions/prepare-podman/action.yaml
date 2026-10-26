@@ -8,6 +8,10 @@ inputs:
     description: "Run podman with sudo (rootfull)"
     default: "false"
     required: false
+  minimal:
+    description: "Only configure rootful podman (skip buildah/rootless setup, not needed to just load and run images)"
+    default: "false"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -21,11 +25,14 @@ runs:
       run: | #sh
         #
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
+        if [[ "${{ inputs.minimal }}" != "true" ]]; then
+          sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
+        fi
         mkdir -p /home/runner/.cache/dnf
 
 
     - name: Configure rootless Podman storage
+      if: ${{ inputs.minimal != 'true' }}
       shell: bash
       run: | #sh
         #
@@ -133,6 +140,7 @@ runs:
         $PODMAN pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
 
     - name: Enable Podman socket
+      if: ${{ inputs.minimal != 'true' }}
       shell: bash
       run: | #sh
         #

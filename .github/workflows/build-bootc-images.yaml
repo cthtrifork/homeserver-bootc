@@ -616,6 +616,7 @@ jobs:
         uses: ./.github/actions/prepare-podman
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          minimal: "true"
 
       - name: Prefetch bootc-image-builder in background
         run: | #sh
@@ -670,7 +671,7 @@ jobs:
             -cpu host \
             -smp "$(nproc)" \
             -m 4G \
-            -drive if=virtio,file="${DISK}",format=qcow2 \
+            -drive if=virtio,file="${DISK}",format=raw \
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
             -display none \

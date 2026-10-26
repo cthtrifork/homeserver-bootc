@@ -37,7 +37,7 @@ runs:
         IMAGE: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
         BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
         USE_LIBREPO: false
-        IMAGE_TYPE: qcow2
+        IMAGE_TYPE: raw # no qcow2 conversion needed, QEMU boots raw directly
         ROOTFS: xfs
         CREATE_CHECKSUM: ${{ inputs.checksum }}
       run: | #sh
