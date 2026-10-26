@@ -24,6 +24,8 @@ aurorae
 plasma-breeze
 # screenlocker
 kscreenlocker
+# used by several apps
+webkitgtk6.0
 
 # startup / initramfs
 clevis
