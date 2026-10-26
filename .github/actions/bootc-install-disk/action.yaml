@@ -53,29 +53,4 @@ runs:
             --root-ssh-authorized-keys /authorized_keys \
             /output/disk.raw
 
-        # /home is a symlink to /var/home and the image's tmpfiles rules (/home/<user>/...) fail on
-        # first boot if /var/home does not exist yet. bootc-image-builder used to create it as a side
-        # effect of adding a user, so create it in the new deployment's /var here.
-        LOOP=$(sudo losetup --find --show --partscan "${DISK}")
-        MNT=$(mktemp -d)
-        cleanup() {
-          sudo umount "${MNT}" 2>/dev/null || true
-          sudo losetup -d "${LOOP}" || true
-        }
-        trap cleanup EXIT
-        sudo udevadm settle
-        ROOT_PART=$(lsblk -lnpo NAME,FSTYPE "${LOOP}" | awk '$2=="xfs"{print $1}')
-        sudo mount "${ROOT_PART}" "${MNT}"
-        lsblk -lno NAME,FSTYPE,SIZE "${LOOP}"
-        sudo find "${MNT}" -maxdepth 4 -type d -not -path "${MNT}/ostree/repo/*" | head -40
-        VAR_DIRS=$(sudo find "${MNT}/ostree/deploy" -mindepth 2 -maxdepth 2 -type d -name var)
-        if [ -z "${VAR_DIRS}" ]; then
-          echo "::error::could not find the deployment's var directory"
-          exit 1
-        fi
-        for d in ${VAR_DIRS}; do
-          sudo mkdir -p "${d}/home"
-          echo "created ${d}/home"
-        done
-
         echo "path=${DISK}" >> "$GITHUB_OUTPUT"
