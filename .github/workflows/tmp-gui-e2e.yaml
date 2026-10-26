@@ -1,0 +1,181 @@
+name: tmp gui e2e (throwaway)
+on:
+  push:
+    branches:
+      - claude/tmp-gui-e2e
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: "E2E Test on: ${{ matrix.image }}"
+    runs-on: arc-ubuntu
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [homeserver-gui]
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      pull-requests: write
+    env:
+      SSH_USERNAME: root
+      SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
+
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
+        with:
+          image: ${{ matrix.image }}
+
+      - name: Use the already pushed PR image
+        run: | #sh
+          echo "DOCKER_TAG=pr-910-v0.1" >> "$GITHUB_ENV"
+          echo "LOCAL_PR_IMAGE=localhost/${IMAGE_NAME}:pr-910-v0.1" >> "$GITHUB_ENV"
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare Podman
+        uses: ./.github/actions/prepare-podman
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          minimal: "true"
+
+      - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        uses: ./.github/actions/load-image
+        with:
+          run_as_sudo: true
+          pull_latest: "false"
+
+      - name: Generate ephemeral SSH keypair
+        id: ssh-key
+        run: | #sh
+          set -e
+          mkdir -p out
+          ssh-keygen -t ed25519 -N "" -f out/ci_ssh_key
+          echo "PUBKEY=$(cat out/ci_ssh_key.pub)" >> $GITHUB_ENV
+
+          echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
+
+      - name: Write authorized_keys for root SSH access
+        run: | #sh
+          set -e
+          echo "${PUBKEY}" > out/authorized_keys
+
+      - name: Create bootable image (variants)
+        id: create-vmdk
+        run: | #sh
+          set -u
+          mkdir -p output
+          DISK="${PWD}/output/disk.raw"
+          ls -ln /proc/1 | head -2 || true
+          IMAGE="${IMAGE_FULL}:${DOCKER_TAG}"
+          try() {
+            name="$1"; shift
+            echo "::group::variant ${name}"
+            rm -f "${DISK}"; truncate -s 30G "${DISK}"
+            if sudo podman run --rm --privileged --security-opt label=type:unconfined_t \
+              "$@" \
+              -v /dev:/dev -v /var/lib/containers:/var/lib/containers \
+              -v "${PWD}/output:/output" -v "$(realpath out/authorized_keys):/authorized_keys:ro" \
+              "${IMAGE}" bootc install to-disk --via-loopback --generic-image --filesystem xfs \
+              --root-ssh-authorized-keys /authorized_keys /output/disk.raw; then
+              echo "::endgroup::"; echo "variant ${name}: OK"; return 0
+            fi
+            echo "::endgroup::"; echo "variant ${name}: FAILED"; return 1
+          }
+          try no-pid-host && { echo "path=${DISK}" >> "$GITHUB_OUTPUT"; exit 0; }
+          try pid-host --pid=host && { echo "path=${DISK}" >> "$GITHUB_OUTPUT"; exit 0; }
+          exit 1
+
+      - name: Boot QEMU (headless) with SSH forward
+        env:
+          DISK: ${{ steps.create-vmdk.outputs.path }}
+        run: | #sh
+          set -e
+          sudo qemu-system-x86_64 \
+            -name bootc-vm \
+            -enable-kvm \
+            -cpu host \
+            -smp "$(nproc)" \
+            -m 4G \
+            -drive if=virtio,file="${DISK}",format=raw \
+            -net nic,model=virtio \
+            -net user,hostfwd=tcp::2222-:22 \
+            -display none \
+            -monitor unix:/tmp/qemu-monitor-sock,server,nowait \
+            -daemonize > out/qemu-console.log 2>&1
+
+      - name: Load private key
+        id: private_key_path
+        env:
+          SSH_PRIVATEKEY_B64: ${{ secrets.SSH_PRIVATEKEY_B64 }}
+        shell: bash
+        run: |
+          echo "${SSH_PRIVATEKEY_B64}" | base64 -d > /tmp/ssh_privatekey
+          chmod 600 /tmp/ssh_privatekey
+
+          echo "Public key derived from secret:"
+          ssh-keygen -y -f /tmp/ssh_privatekey
+
+          echo "private_key_path=/tmp/ssh_privatekey" >> $GITHUB_OUTPUT
+
+      - name: Test (QEMU)
+        uses: ./.github/actions/qemu-test
+        with:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          SSH_PRIVATE_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+
+      - name: Take QEMU screenshot
+        if: ${{ endsWith(matrix.image, 'gui') }}
+        uses: ./.github/actions/screenshot
+
+      - name: Collect logs and stop QEMU
+        if: always()
+        env:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          mkdir -p out/journal
+          # Journal
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+              'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
+          # Stop QEMU
+          echo quit | sudo socat - unix-connect:/tmp/qemu-monitor-sock
+
+      - name: Publish Output to summary
+        if: always()
+        run: | #sh
+          {
+            echo "### QEMU Testing Output"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo "#### Journal"
+            echo '```'
+            cat out/journal/boot.log
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+
+      - name: Build cleanup
+        if: always()
+        uses: ./.github/actions/build-cleanup
