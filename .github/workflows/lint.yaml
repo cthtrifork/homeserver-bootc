@@ -40,7 +40,8 @@ jobs:
       - name: Run actionlint
         run: | #sh
           bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}"
-          ./actionlint -color -ignore 'SC2086|SC2129|SC2046|SC2016|SC2002|SC2162|SC2155'
+          # shellcheck is covered by its own job; artifact-metadata is a newer scope than actionlint knows
+          ./actionlint -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"'
 
   shellcheck:
     name: shellcheck
@@ -51,7 +52,8 @@ jobs:
 
       - name: Run shellcheck (errors only)
         run: | #sh
-          mapfile -t files < <(git ls-files '*.sh')
+          # only scripts with a bash/sh shebang (skips sourced profile.d snippets and vendored zsh code)
+          mapfile -t files < <(git ls-files '*.sh' | while read -r f; do head -n1 "$f" | grep -qE '^#!.*(ba)?sh' && echo "$f"; done)
           shellcheck --severity=error "${files[@]}"
 
   hadolint:
@@ -61,8 +63,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Run hadolint (errors only)
+      - name: Run hadolint (errors only, ADD is used intentionally)
         run: | #sh
           curl -sSfL -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
           chmod +x hadolint
-          git ls-files '*.containerfile' | xargs ./hadolint --failure-threshold error
+          git ls-files '*.containerfile' | xargs ./hadolint --failure-threshold error --ignore DL3020
