@@ -81,18 +81,6 @@ jobs:
               - 'homeserver-gui.containerfile'
               - '**/homeserver-gui/**'
               - 'build_files/gui/**'
-            jumphost:
-              - 'system_files/jumphost/**'
-              - 'jumphost.containerfile'
-              - '**/jumphost/**'
-            httpsproxy:
-              - 'system_files/httpsproxy/**'
-              - 'httpsproxy.containerfile'
-              - '**/httpsproxy/**'
-            githubrunner:
-              - 'system_files/githubrunner/**'
-              - 'github-runner.containerfile'
-              - '**/githubrunner/**'
 
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
