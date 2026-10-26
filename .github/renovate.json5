@@ -13,9 +13,7 @@
     'after 12am and before 7am every weekday',
     'on sunday',
   ],
-  automergeSchedule: [
-    'after 12pm and before 4pm every weekday',
-  ],
+  automergeSchedule: ['at any time'],
   vulnerabilityAlerts: {
     addLabels: [
       'vulnerability',
