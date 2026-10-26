@@ -379,7 +379,6 @@ jobs:
         id: push-to-ghcr
         uses: ./.github/actions/push-image
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
           auth_file_path: ${{ runner.temp }}/auth.json

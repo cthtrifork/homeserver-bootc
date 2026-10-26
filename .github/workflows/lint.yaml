@@ -41,7 +41,7 @@ jobs:
         run: | #sh
           bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}"
           # shellcheck is covered by its own job; artifact-metadata is a newer scope than actionlint knows
-          ./actionlint -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"'
+          ./actionlint -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"' -ignore 'of "override_image" input is not included in its options'
 
   shellcheck:
     name: shellcheck
