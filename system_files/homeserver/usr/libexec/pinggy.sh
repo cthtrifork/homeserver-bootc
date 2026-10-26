@@ -12,6 +12,5 @@ fi
 ssh -p 443 \
     -o StrictHostKeyChecking=no \
     -o ServerAliveInterval=30 \
-    -o LogLevel=ERROR \
     -R0:localhost:22 \
     "$USER"
