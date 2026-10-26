@@ -37,11 +37,23 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Restore actionlint from cache
+        id: cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/bin/actionlint
+          key: actionlint-${{ env.ACTIONLINT_VERSION }}-${{ runner.os }}
+
+      - name: Install actionlint
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: | #sh
+          mkdir -p "$HOME/.local/bin"
+          bash <(curl -sSf --retry 5 --retry-all-errors https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}" "$HOME/.local/bin"
+
       - name: Run actionlint
         run: | #sh
-          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash) "${ACTIONLINT_VERSION}"
           # shellcheck is covered by its own job; artifact-metadata is a newer scope than actionlint knows
-          ./actionlint -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"' -ignore 'of "override_image" input is not included in its options'
+          "$HOME/.local/bin/actionlint" -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"' -ignore 'of "override_image" input is not included in its options'
 
   shellcheck:
     name: shellcheck
@@ -63,8 +75,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Restore hadolint from cache
+        id: cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/bin/hadolint
+          key: hadolint-${{ env.HADOLINT_VERSION }}-${{ runner.os }}
+
+      - name: Install hadolint
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: | #sh
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 3 -o "$HOME/.local/bin/hadolint" "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          chmod +x "$HOME/.local/bin/hadolint"
+
       - name: Run hadolint (errors only, ADD is used intentionally)
         run: | #sh
-          curl -sSfL --retry 5 --retry-all-errors --retry-delay 3 -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x hadolint
-          git ls-files '*.containerfile' | xargs ./hadolint --failure-threshold error --ignore DL3020
+          git ls-files '*.containerfile' | xargs "$HOME/.local/bin/hadolint" --failure-threshold error --ignore DL3020
