@@ -13,9 +13,7 @@
     'after 12am and before 7am every weekday',
     'on sunday',
   ],
-  automergeSchedule: [
-    'after 12pm and before 4pm every weekday',
-  ],
+  automergeSchedule: ['at any time'],
   vulnerabilityAlerts: {
     addLabels: [
       'vulnerability',
@@ -31,8 +29,16 @@
   patch: {
     automerge: true,
   },
+  // Renovate merges the PR itself once the status checks pass, so no branch protection / GitHub auto-merge is required.
+  automergeType: 'pr',
+  platformAutomerge: false,
+  ignoreTests: false,
   rebaseWhen: 'auto',
   packageRules: [
+    {
+      matchUpdateTypes: ['digest', 'pin', 'pinDigest'],
+      automerge: true,
+    },
     {
       "extends": [
         "helpers:pinGitHubActionDigests"

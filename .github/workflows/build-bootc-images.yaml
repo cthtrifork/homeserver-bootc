@@ -558,7 +558,8 @@ jobs:
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
-    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    # pinned: bootc-image-builder fails to mount containers-storage on ubuntu-latest
+    runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     needs:
       - changes
       - build-bootc-image
@@ -797,14 +798,15 @@ jobs:
 
       - name: Sign container image
         run: | #sh
-          export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
+          # containers/image (podman, skopeo, bootc) only reads the legacy cosign
+          # signature format, stored next to the image as sha256-<digest>.sig
+          cosign sign -y --use-signing-config=false --new-bundle-format=false \
+            --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}@${{ env.DIGEST }}
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           #COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
-          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore
 
       - name: Attach build provenance attestation
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
@@ -817,7 +819,7 @@ jobs:
         run: |
           # Attach the Trivy JSON as an attestation of type "vuln"
           cosign attest \
-            --yes \
+            --yes --use-signing-config=false --new-bundle-format=false \
             --key env://COSIGN_PRIVATE_KEY \
             --type vuln \
             --predicate ${{ github.workspace }}/current_trivy.json \
@@ -825,13 +827,29 @@ jobs:
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ""
+
+      - name: Verify attestations
+        run: | #sh
+          set -euo pipefail
+          echo "--- cosign vuln attestation ---"
+          # the legacy-format vuln attestation lives next to the cert-signed
+          # provenance bundle, which a --key lookup would reject
+          cosign verify-attestation --new-bundle-format=false \
+            --key ./cosign.pub --type vuln \
+            "${IMAGE_FULL}@${DIGEST}" > /dev/null
+          echo "--- build provenance attestation ---"
+          gh attestation verify "oci://${IMAGE_FULL}@${DIGEST}" \
+            --repo "${GITHUB_REPOSITORY}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST: ${{ steps.push-latest.outputs.digest }}
 
       - name: Verify
         run: |
-          cosign verify --key ./cosign.pub \
+          cosign verify --new-bundle-format=false --key ./cosign.pub \
             ${{ env.IMAGE_FULL }}@${DIGEST}
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           DIGEST: ${{ steps.push-latest.outputs.digest }}
-          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}.sigstore

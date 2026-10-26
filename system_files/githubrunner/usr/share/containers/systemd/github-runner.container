@@ -4,7 +4,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Container]
-Image=ghcr.io/actions/actions-runner:latest@sha256:4ffadc0002b2581327e06101fc8c06cd189232baf79fe561fac9caeb76f5e807
+Image=ghcr.io/actions/actions-runner:latest@sha256:e275409999c37162649aa050ca573f03eab2eabcb3a1e7fcc47548de6b4f9690
 Pull=always
 AutoUpdate=registry
 

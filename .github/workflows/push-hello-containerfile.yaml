@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -70,14 +70,14 @@ jobs:
       - name: Sign container image
         if: ${{ github.ref == 'refs/heads/main' }}
         run: | #sh
-          export COSIGN_REPOSITORY=${{ env.COSIGN_REPOSITORY }}
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          # build-push-action pushes an index (image + provenance); containers/image also
+          # checks the platform manifest it pulls, so sign the children too
+          cosign sign -y --recursive --use-signing-config=false --new-bundle-format=false --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
           COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
-          COSIGN_REPOSITORY: ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/hello.sigstore
 
       - name: Attach build provenance attestation
         if: ${{ github.ref == 'refs/heads/main' }}
