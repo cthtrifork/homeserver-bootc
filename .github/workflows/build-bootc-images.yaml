@@ -574,7 +574,7 @@ jobs:
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
-    # pinned: loop devices/containers-storage mounts are unreliable on ubuntu-latest
+    # pinned: bootc-image-builder failed to mount containers-storage on ubuntu-latest (kept as a precaution for bootc install)
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     needs:
       - changes
@@ -705,9 +705,6 @@ jobs:
             -p 2222 \
             ${SSH_USERNAME}@localhost \
               'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
-          # Quick diagnostics in the job log when the tests fail
-          ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost \
-            'systemctl --failed --no-pager; ls -la /var/home /home; journalctl -b --no-pager -o short-precise -u systemd-tmpfiles-setup -u bootc-system-setup -u sshd | tail -n 80' || true
           # Stop QEMU
           echo quit | sudo socat - unix-connect:/tmp/qemu-monitor-sock
 
