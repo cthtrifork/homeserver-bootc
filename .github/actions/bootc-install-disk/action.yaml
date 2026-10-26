@@ -43,6 +43,12 @@ runs:
         DISK="${PWD}/output/disk.raw"
         truncate -s "${DISK_SIZE}" "${DISK}"
 
+        # bootc compares /run/udev with the one of PID 1; pass the host udev database through
+        UDEV_ARGS=()
+        if [ -d /run/udev ]; then
+          UDEV_ARGS=(-v /run/udev:/run/udev:ro)
+        fi
+
         # image must already be in root containers-storage (see load-image with run_as_sudo)
         sudo podman run \
           --rm \
@@ -50,6 +56,7 @@ runs:
           --pid=host \
           --security-opt label=type:unconfined_t \
           -v /dev:/dev \
+          "${UDEV_ARGS[@]}" \
           -v /var/lib/containers:/var/lib/containers \
           -v "${PWD}/output:/output" \
           -v "$(realpath "${AUTHORIZED_KEYS}"):/authorized_keys:ro" \
