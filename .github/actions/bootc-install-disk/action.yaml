@@ -31,6 +31,14 @@ runs:
         DISK_SIZE: ${{ inputs.disk_size }}
       run: | #sh
         set -euo pipefail
+
+        # bootc requires PID 1 to be owned by root and podman --pid=host; this is not the case in
+        # unprivileged runner pods (e.g. ARC with a non-root runner entrypoint)
+        if [ "$(stat -c %u /proc/1)" != "0" ]; then
+          echo "::error::bootc install needs PID 1 to be owned by root (found uid $(stat -c %u /proc/1)); run this job on a runner whose pod runs PID 1 as root / with the host PID namespace"
+          exit 1
+        fi
+
         mkdir -p output
         DISK="${PWD}/output/disk.raw"
         truncate -s "${DISK_SIZE}" "${DISK}"
