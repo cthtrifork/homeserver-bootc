@@ -36,10 +36,26 @@ on:
       - main
     paths-ignore:
       - "hello.containerfile"
+      - "**/*.md"
+      - ".vscode/**"
+      - ".editorconfig"
+      - ".github/renovate.json5"
+      - ".github/workflows/lint.yaml"
+      - ".github/workflows/renovate*"
+      - ".github/workflows/cleanup-*"
+      - ".github/workflows/pull-request-cleanup.yaml"
+      - ".github/workflows/update-trivy-cache.yaml"
+      - ".github/workflows/push-hello-containerfile.yaml"
+      - ".github/workflows/create-vmdk-image.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ github.event.inputs.override_image }}
-  cancel-in-progress: true
+  # never cancel release/scheduled builds on main, only superseded PR runs
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# least privilege by default, jobs elevate individually
+permissions:
+  contents: read
 
 env:
   IMAGE_DESC: "${{ github.event.repository.description }}"
@@ -48,13 +64,12 @@ env:
   CONTEXT: ./
   TRIVY_VERSION: v0.74.0 # renovate: datasource=github-releases depName=aquasecurity/trivy
   CRANE_VERSION: v0.21.9 # renovate: datasource=github-releases packageName=google/go-containerregistry
-  OS: Linux
-  ARCH: x86_64
 
 jobs:
   changes:
     name: Detect changed areas
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       pull-requests: read
       contents: read
@@ -84,20 +99,24 @@ jobs:
 
       - name: Ensure a matrix has a fallback
         id: ensure-matrix
+        env:
+          FILTER_CHANGES: ${{ steps.filter.outputs.changes }}
+          OVERRIDE_IMAGE: ${{ github.event.inputs.override_image }}
+          FORCE: ${{ github.event.inputs.force }}
         run: | #sh
           set -x
-          IMAGES='${{ steps.filter.outputs.changes }}'
-          if [ -n "${{ github.event.inputs.override_image }}" ]; then
-            IMAGES='["${{ github.event.inputs.override_image }}"]'
+          IMAGES="$FILTER_CHANGES"
+          if [ -n "$OVERRIDE_IMAGE" ]; then
+            IMAGES=$(jq -cn --arg i "$OVERRIDE_IMAGE" '[$i]')
           fi
-          if [ "${{ github.event.inputs.force }}" == "true" ]; then
+          if [ "$FORCE" == "true" ]; then
             IMAGES='["homeserver","homeserver-gui"]'
           fi
           # If no images were changed, default to building the homeserver image
           if [ "$IMAGES" == "[]" ]; then
             IMAGES='["homeserver"]'
           fi
-          echo "image=$IMAGES" >> $GITHUB_OUTPUT
+          echo "image=$IMAGES" >> "$GITHUB_OUTPUT"
 
   build-bootc-image:
     name: Build image ${{ matrix.image }}
@@ -107,7 +126,7 @@ jobs:
     #runs-on: ubuntu-latest
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.draft == false && github.event.pull_request.head.repo.fork == false) }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -135,11 +154,9 @@ jobs:
           fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
 
       - name: Install crane
-        run: |
-          if ! command -v "crane" &> /dev/null; then
-            curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
-            tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
-          fi
+        uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987 # v0.5
+        with:
+          version: ${{ env.CRANE_VERSION }}
 
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
@@ -354,7 +371,6 @@ jobs:
         id: push-to-ghcr
         uses: ./.github/actions/push-image
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
           auth_file_path: ${{ runner.temp }}/auth.json
@@ -550,7 +566,7 @@ jobs:
   test:
     name: "E2E Test on: ${{ matrix.image }}"
     # homeserver-gui has its own runner due to disksize requirements
-    # pinned: bootc-image-builder fails to mount containers-storage on ubuntu-latest
+    # pinned to 24.04: bootc-image-builder used to fail mounting containers-storage on ubuntu-latest (not re-checked with bootc install)
     runs-on: ${{ matrix.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     needs:
       - changes
@@ -569,7 +585,7 @@ jobs:
       id-token: write
       pull-requests: write
     env:
-      SSH_USERNAME: runner
+      SSH_USERNAME: root
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
 
     steps:
@@ -592,11 +608,13 @@ jobs:
         uses: ./.github/actions/prepare-podman
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          minimal: "true"
 
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
         with:
           run_as_sudo: true
+          pull_latest: "false"
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
@@ -608,29 +626,16 @@ jobs:
 
           echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
 
-      - name: Write bootc-image-builder user config (SSH access)
+      - name: Write authorized_keys for root SSH access
         run: | #sh
           set -e
-          {
-            #echo '[[customizations.filesystem]]'
-            #echo 'mountpoint = "/"'
-            #echo 'minsize   = "20 GiB"'
-            echo '[[customizations.user]]'
-            echo "name = \"${{ env.SSH_USERNAME }}\""
-            echo 'password = ""'
-            echo "key = \"${PUBKEY}\""
-            echo 'groups = ["wheel"]'
-          } > out/config.toml
-
-          cat ./out/config.toml
-
-      - name: Delete huge unnecessary tools folder
-        run: |
-          rm -rf /opt/hostedtoolcache
+          echo "${PUBKEY}" > out/authorized_keys
 
       - name: Create bootable image
         id: create-vmdk
-        uses: ./.github/actions/bootc-image-builder
+        uses: ./.github/actions/bootc-install-disk
+        with:
+          authorized_keys_file: out/authorized_keys
 
       - name: Boot QEMU (headless) with SSH forward
         env:
@@ -641,8 +646,9 @@ jobs:
             -name bootc-vm \
             -enable-kvm \
             -cpu host \
+            -smp "$(nproc)" \
             -m 4G \
-            -drive if=virtio,file="${DISK}",format=qcow2 \
+            -drive if=virtio,file="${DISK}",format=raw \
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
@@ -716,6 +722,7 @@ jobs:
     name: "Push and sign latest tag for: ${{ matrix.image }}"
     if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs:
       - changes
       - build-bootc-image

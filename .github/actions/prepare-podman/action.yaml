@@ -8,9 +8,27 @@ inputs:
     description: "Run podman with sudo (rootfull)"
     default: "false"
     required: false
+  minimal:
+    description: "Only configure rootful podman (skip buildah/rootless setup, not needed to just load and run images)"
+    default: "false"
+    required: false
 runs:
   using: "composite"
   steps:
+    # self-hosted runners start rootless registries below and so need the full setup
+    - name: Resolve setup mode
+      id: mode
+      shell: bash
+      env:
+        MINIMAL: ${{ inputs.minimal }}
+        SELF_HOSTED: ${{ runner.environment == 'self-hosted' }}
+      run: | #sh
+        if [[ "${MINIMAL}" == "true" && "${SELF_HOSTED}" != "true" ]]; then
+          echo "minimal=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "minimal=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Delete huge unnecessary tools folder
       shell: bash
       run: |
@@ -21,11 +39,14 @@ runs:
       run: | #sh
         #
         sudo apt-get update -qq
-        sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
+        if [[ "${{ steps.mode.outputs.minimal }}" != "true" ]]; then
+          sudo apt-get install -y --no-install-recommends buildah uidmap slirp4netns fuse-overlayfs
+        fi
         mkdir -p /home/runner/.cache/dnf
 
 
     - name: Configure rootless Podman storage
+      if: ${{ steps.mode.outputs.minimal != 'true' }}
       shell: bash
       run: | #sh
         #
@@ -133,6 +154,7 @@ runs:
         $PODMAN pull -q ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest || true
 
     - name: Enable Podman socket
+      if: ${{ steps.mode.outputs.minimal != 'true' }}
       shell: bash
       run: | #sh
         #

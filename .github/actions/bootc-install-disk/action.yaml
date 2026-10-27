@@ -1,0 +1,87 @@
+name: "Install image to a raw disk"
+description: "Install the bootc image into a sparse raw disk with `bootc install to-disk --via-loopback` (faster than bootc-image-builder)"
+inputs:
+  authorized_keys_file:
+    description: "File with the public key(s) to authorize for root SSH access"
+    required: true
+  disk_size:
+    description: "Size of the (sparse) raw disk"
+    default: "30G"
+    required: false
+outputs:
+  path:
+    description: "The path to the raw disk image"
+    value: ${{ steps.install.outputs.path }}
+runs:
+  using: "composite"
+  steps:
+    - name: Install QEMU and socat
+      shell: bash
+      run: | #sh
+        set -e
+        # needed to boot the disk and talk to the QEMU monitor; already present on the self-hosted runner
+        if ! command -v qemu-system-x86_64 >/dev/null || ! command -v socat >/dev/null; then
+          # apt index was already refreshed by prepare-podman in the same job
+          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86
+        fi
+
+    - name: Install to raw disk
+      id: install
+      shell: bash
+      env:
+        IMAGE: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+        AUTHORIZED_KEYS: ${{ inputs.authorized_keys_file }}
+        DISK_SIZE: ${{ inputs.disk_size }}
+      run: | #sh
+        set -euo pipefail
+
+        mkdir -p output
+        DISK="${PWD}/output/disk.raw"
+        truncate -s "${DISK_SIZE}" "${DISK}"
+
+        # Pass the host udev database through, bootc reads partition types from it
+        UDEV_ARGS=()
+        if [ -d /run/udev ]; then
+          UDEV_ARGS=(-v /run/udev:/run/udev:ro)
+        fi
+
+        # In a runner pod /dev is a static snapshot, so the partition nodes bootc creates
+        # (/dev/loopXpN) never appear. Such pods expose the live host devtmpfs at /host-dev instead.
+        DEV_SRC=/dev
+        if [ -d /host-dev ]; then
+          DEV_SRC=/host-dev
+        fi
+
+        # Fast path: bootc installs the running container itself. bootc only allows that when PID 1 is
+        # root-owned and it shares the PID namespace (--pid=host), i.e. on a real host/VM.
+        # In runner pods PID 1 is the unprivileged runner process, so fall back to --source-imgref, which
+        # skips those checks but exports the image from containers-storage (several times slower).
+        PID_ARGS=()
+        SOURCE_ARGS=()
+        if [ "$(stat -c %u /proc/1)" = "0" ]; then
+          PID_ARGS=(--pid=host)
+        else
+          SOURCE_ARGS=(--source-imgref "containers-storage:${IMAGE}" --target-imgref "${IMAGE}")
+        fi
+
+        # image must already be in root containers-storage (see load-image with run_as_sudo)
+        sudo podman run \
+          --rm \
+          --privileged \
+          "${PID_ARGS[@]}" \
+          --security-opt label=type:unconfined_t \
+          -v "${DEV_SRC}:/dev" \
+          "${UDEV_ARGS[@]}" \
+          -v /var/lib/containers:/var/lib/containers \
+          -v "${PWD}/output:/output" \
+          -v "$(realpath "${AUTHORIZED_KEYS}"):/authorized_keys:ro" \
+          "${IMAGE}" \
+          bootc install to-disk \
+            "${SOURCE_ARGS[@]}" \
+            --via-loopback \
+            --generic-image \
+            --filesystem xfs \
+            --root-ssh-authorized-keys /authorized_keys \
+            /output/disk.raw
+
+        echo "path=${DISK}" >> "$GITHUB_OUTPUT"

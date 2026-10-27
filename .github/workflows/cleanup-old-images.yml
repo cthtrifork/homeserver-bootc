@@ -16,6 +16,7 @@ jobs:
   cleanup-homeserver-images:
     name: Cleanup Homeserver Images
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     concurrency:
       group: cleanup-images
     permissions:
