@@ -5,7 +5,7 @@ echo "::group:: ===$(basename "$0")==="
 set -ouex pipefail
 
 # Trivy Scanner desktop app, installed from the PGP-signed RPM of a GitHub release.
-TRIVY_SCANNER_VERSION="v1.1.0" # renovate: datasource=github-releases depName=cthtrifork/trivy-dashboard-wail3
+TRIVY_SCANNER_VERSION="v1.2.1" # renovate: datasource=github-releases depName=cthtrifork/trivy-dashboard-wail3
 
 base="https://github.com/cthtrifork/trivy-dashboard-wail3/releases/download/${TRIVY_SCANNER_VERSION}"
 tmp="$(mktemp -d)"
