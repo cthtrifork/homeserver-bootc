@@ -15,12 +15,15 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Install qemu deps (socat sqlite3 qemu-system-x86 qemu-utils)
+    - name: Install QEMU and socat
       shell: bash
       run: | #sh
         set -e
-        # apt index was already refreshed by prepare-podman in the same job
-        sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
+        # needed to boot the disk and talk to the QEMU monitor; already present on the self-hosted runner
+        if ! command -v qemu-system-x86_64 >/dev/null || ! command -v socat >/dev/null; then
+          # apt index was already refreshed by prepare-podman in the same job
+          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86
+        fi
 
     - name: Install to raw disk
       id: install
@@ -42,17 +45,17 @@ runs:
           UDEV_ARGS=(-v /run/udev:/run/udev:ro)
         fi
 
-        # In unprivileged-ish runner pods /dev is a static snapshot, so the partition nodes bootc
-        # creates (/dev/loopXpN) never appear; the pod then exposes the live host devtmpfs at /host-dev
+        # In a runner pod /dev is a static snapshot, so the partition nodes bootc creates
+        # (/dev/loopXpN) never appear. Such pods expose the live host devtmpfs at /host-dev instead.
         DEV_SRC=/dev
         if [ -d /host-dev ]; then
           DEV_SRC=/host-dev
         fi
 
-        # Fast path (~2.5 min): bootc installs the running container itself. bootc only allows that when
-        # PID 1 is root-owned and it shares the PID namespace (--pid=host), i.e. on a real host/VM.
-        # In runner pods PID 1 is the unprivileged runner process, so fall back to --source-imgref
-        # (skips those checks, but exports the image from containers-storage: ~4x slower).
+        # Fast path: bootc installs the running container itself. bootc only allows that when PID 1 is
+        # root-owned and it shares the PID namespace (--pid=host), i.e. on a real host/VM.
+        # In runner pods PID 1 is the unprivileged runner process, so fall back to --source-imgref, which
+        # skips those checks but exports the image from containers-storage (several times slower).
         PID_ARGS=()
         SOURCE_ARGS=()
         if [ "$(stat -c %u /proc/1)" = "0" ]; then
