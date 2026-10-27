@@ -28,3 +28,5 @@ fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
 echo "== System testing finished =="
+
+# TEMP: trigger the homeserver-gui e2e on this PR (to be reverted)
