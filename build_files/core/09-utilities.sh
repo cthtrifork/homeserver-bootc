@@ -122,7 +122,7 @@ download_if_missing_cmd "$AGE_TGZ" /ctx/build_files/github-release-url.sh FiloSo
 extract "$AGE_TGZ" --strip-components=1
 
 log "Installing gh-cli"
-GH_CLI_VERSION="v2.102.1" # renovate: datasource=github-releases depName=cli/cli
+GH_CLI_VERSION="v2.103.3" # renovate: datasource=github-releases depName=cli/cli
 GH_CLI_TGZ="$(tmp_name gh-cli "$GH_CLI_VERSION" tar.gz)"
 download_if_missing_cmd "$GH_CLI_TGZ" /ctx/build_files/github-release-url.sh cli/cli "${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$GH_CLI_VERSION"
 extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
@@ -192,14 +192,14 @@ install -o root -g root -m 0755 "$OMNICTL_BIN" "$BIN_DIR/omnictl"
 "$BIN_DIR/omnictl" completion bash >"$COMPLETION_DIR/omnictl"
 
 log "Installing flux-operator-mcp"
-FLUX_MCP_VERSION="v0.61.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
+FLUX_MCP_VERSION="v0.62.0" # renovate: datasource=github-releases depName=controlplaneio-fluxcd/flux-operator
 FLUX_MCP_TGZ="$(tmp_name flux-operator-mcp "$FLUX_MCP_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_MCP_TGZ" /ctx/build_files/github-release-url.sh controlplaneio-fluxcd/flux-operator "flux-operator-mcp_${FLUX_MCP_VERSION#v}_${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_MCP_VERSION"
 extract "$FLUX_MCP_TGZ"
 "$BIN_DIR/flux-operator-mcp" completion bash >"$COMPLETION_DIR/flux-operator-mcp"
 
 log "Installing flux"
-FLUX_VERSION="v2.9.6" # renovate: datasource=github-releases depName=fluxcd/flux2
+FLUX_VERSION="v2.10.0" # renovate: datasource=github-releases depName=fluxcd/flux2
 FLUX_TGZ="$(tmp_name flux "$FLUX_VERSION" tar.gz)"
 download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux2 "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$FLUX_VERSION"
 extract "$FLUX_TGZ"
@@ -265,7 +265,7 @@ download_if_missing_cmd "$SHFMT_BIN" /ctx/build_files/github-release-url.sh mvda
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing talosctl"
-TALOSCTL_VERSION="v1.14.4" # renovate: datasource=github-releases depName=siderolabs/talos
+TALOSCTL_VERSION="v1.14.5" # renovate: datasource=github-releases depName=siderolabs/talos
 TALOSCTL_BIN="$(tmp_name talosctl "$TALOSCTL_VERSION" bin)"
 download_if_missing_cmd "$TALOSCTL_BIN" /ctx/build_files/github-release-url.sh siderolabs/talos "talosctl-${MACHINE}.${PLATFORM_ARCH}" "$TALOSCTL_VERSION"
 install -o root -g root -m 0755 "$TALOSCTL_BIN" "$BIN_DIR/talosctl"
