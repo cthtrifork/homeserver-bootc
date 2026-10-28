@@ -4,7 +4,6 @@ inputs:
   trivy_version:
     description: 'TRIVY_VERSION'
     required: true
-    default: '0.69.3'
 runs:
   using: composite
   steps:
