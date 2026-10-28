@@ -13,6 +13,10 @@
   // New releases wait 2 days. 'strict' means no branch or PR exists until the wait is over, so a
   // PR (and an automerge) never races a release that gets yanked or fixed within the first days.
   minimumReleaseAge: '2 days',
+  // A release with no timestamp (quay.io and ghcr.io images, for one) counts as old enough. By default
+  // it never is, so with 'strict' below an update from such a source would wait forever on the
+  // renovate/stability-days check, with no branch, no PR and no sign on the dashboard.
+  minimumReleaseAgeBehaviour: 'timestamp-optional',
   internalChecksFilter: 'strict',
   // Commits go through GitHub's API as the GitHub App, so they are verified (signed) without a key.
   platformCommit: 'enabled',
@@ -49,15 +53,6 @@
     {
       matchUpdateTypes: ['digest', 'pin', 'pinDigest'],
       automerge: true,
-    },
-    {
-      // quay.io and ghcr.io do not report when an image tag was published, and with
-      // internalChecksFilter 'strict' an update without a release timestamp waits forever on the
-      // renovate/stability-days check ("Pending Status Checks" on the dashboard, no branch or PR).
-      // So these images get no cooldown; Docker Hub images keep it.
-      matchDatasources: ['docker'],
-      matchPackageNames: ['quay.io/**', 'ghcr.io/**'],
-      minimumReleaseAge: null,
     },
     {
       // The Fedora base image: every update (new release, digest pin, digest bump) is only created
