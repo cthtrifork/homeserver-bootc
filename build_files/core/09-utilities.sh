@@ -328,24 +328,11 @@ CRANE_TGZ="$(tmp_name crane "$CRANE_VERSION" tar.gz)"
 download_if_missing_cmd "$CRANE_TGZ" /ctx/build_files/github-release-url.sh google/go-containerregistry "go-containerregistry_${MACHINE}_${HOST_ARCH}.tar.gz" "$CRANE_VERSION"
 extract "$CRANE_TGZ"
 
-log "Installing dysk"
-DYSK_VERSION="latest"
-DYSK_BIN="$(tmp_name dysk "$DYSK_VERSION" bin)"
-download_if_missing "$DYSK_BIN" "https://dystroy.org/dysk/download/${HOST_ARCH}-${MACHINE}/dysk"
-install -o root -g root -m 0755 "$DYSK_BIN" "$BIN_DIR/dysk"
-
 log "Installing nektos act"
 ACT_VERSION="v0.2.89" # renovate: datasource=github-releases depName=nektos/act
 ACT_TGZ="$(tmp_name act "$ACT_VERSION" tar.gz)"
 download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_${MACHINE}_${HOST_ARCH}.tar.gz" "$ACT_VERSION"
 extract "$ACT_TGZ" --strip-components=1 --exclude=themes --exclude=plugins
-
-log "Installing docker-scout"
-DOCKER_SCOUT_VERSION="v1.28.0" # renovate: datasource=github-releases depName=docker/scout-cli
-DOCKER_SCOUT_TGZ="$(tmp_name docker-scout "$DOCKER_SCOUT_VERSION" tar.gz)"
-download_if_missing_cmd "$DOCKER_SCOUT_TGZ" /ctx/build_files/github-release-url.sh docker/scout-cli "docker-scout_${DOCKER_SCOUT_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$DOCKER_SCOUT_VERSION"
-extract "$DOCKER_SCOUT_TGZ"
-ln -sf "$BIN_DIR/docker-scout" "$BIN_DIR/.docker/docker-scout"
 
 chmod -R 755 "$BIN_DIR"/
 chmod -R 755 "$COMPLETION_DIR"/

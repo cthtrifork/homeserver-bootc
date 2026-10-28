@@ -92,3 +92,25 @@ jobs:
       - name: Run hadolint (errors only, ADD is used intentionally)
         run: | #sh
           git ls-files '*.containerfile' | xargs "$HOME/.local/bin/hadolint" --failure-threshold error --ignore DL3020
+
+  # zizmor audits workflows for security problems. Scoped to the Renovate workflow for now: the
+  # other workflows still have findings (template injection, credential persistence) to clean up
+  # before this can run on everything (`zizmor --persona pedantic .`).
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Pedantic persona. The token lets zizmor run its online audits (impostor commits, known-vulnerable actions).
+      - name: Run zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZIZMOR_VERSION: 1.31.1 # renovate: datasource=pypi depName=zizmor
+        run: |
+          python3 -m pip install --user "zizmor==${ZIZMOR_VERSION}"
+          "$HOME/.local/bin/zizmor" --persona pedantic --format plain .github/workflows/renovate.yaml .github/workflows/renovate-config-validation.yaml
+
