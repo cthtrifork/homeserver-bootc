@@ -8,6 +8,16 @@
     'automated-pr',
   ],
   dependencyDashboard: true,
+  dependencyDashboardTitle: 'Dependency Dashboard',
+  dependencyDashboardLabels: ['dependencies'],
+  // New releases wait 2 days. 'strict' means no branch or PR exists until the wait is over, so a
+  // PR (and an automerge) never races a release that gets yanked or fixed within the first days.
+  minimumReleaseAge: '2 days',
+  internalChecksFilter: 'strict',
+  // Commits go through GitHub's API as the GitHub App, so they are verified (signed) without a key.
+  platformCommit: 'enabled',
+  // Security advisories from OSV.dev as well as GitHub's own alerts (the App's Dependabot alerts permission).
+  osvVulnerabilityAlerts: true,
   timezone: 'Europe/Copenhagen',
   schedule: [
     'after 12am and before 7am every weekday',
@@ -34,10 +44,24 @@
   platformAutomerge: false,
   ignoreTests: false,
   rebaseWhen: 'auto',
+  // Rules apply in order and a later rule wins, so the general ones come first.
   packageRules: [
     {
       matchUpdateTypes: ['digest', 'pin', 'pinDigest'],
       automerge: true,
+    },
+    {
+      // Patches stay out of the groups on purpose: a group is merged as a whole, so a minor in the
+      // same branch would hold the patches back. Patches get their own PR and automerge.
+      matchManagers: ['github-actions'],
+      matchUpdateTypes: ['minor'],
+      groupName: 'actions',
+    },
+    {
+      // The tool versions pinned with a `# renovate:` comment in build_files and the workflows.
+      matchManagers: ['custom.regex'],
+      matchUpdateTypes: ['minor'],
+      groupName: 'tools',
     },
     {
       "extends": [
@@ -49,6 +73,17 @@
     }
   ],
   customManagers: [
+    {
+      // Versions in the workflows with no manager of their own: a `# renovate: datasource=<ds>
+      // depName=<name>` (or packageName=) comment at the end of a `KEY: value` or `KEY=value` line.
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^\\.github/workflows/[^/]+\\.ya?ml$/',
+      ],
+      matchStrings: [
+        '\\S+\\s*[:=]\\s*[\'"]?(?<currentValue>[^\\s\'"]+)[\'"]?\\s+# renovate:\\s*datasource=(?<datasource>\\S+)\\s+(?:depName|packageName)=(?<depName>\\S+)',
+      ],
+    },
     {
       customType: 'regex',
       managerFilePatterns: [

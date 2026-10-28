@@ -7,6 +7,7 @@ on:
       - ".github/renovate.json5"
       - ".github/workflows/renovate-config.js"
       - ".github/workflows/renovate-config-validation.yaml"
+      - ".github/workflows/renovate.yaml"
   push:
     branches:
       - main
@@ -14,6 +15,11 @@ on:
       - ".github/renovate.json5"
       - ".github/workflows/renovate-config.js"
       - ".github/workflows/renovate-config-validation.yaml"
+      - ".github/workflows/renovate.yaml"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Validate Renovate config
@@ -21,11 +27,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Validate repository config
-        run: npx --yes --package renovate -- renovate-config-validator --strict
+        env:
+          RENOVATE_VERSION: 44.190.2 # renovate: datasource=npm depName=renovate
+        run: npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict .github/renovate.json5
 
       - name: Validate self-hosted config
         env:
+          RENOVATE_VERSION: 44.190.2 # renovate: datasource=npm depName=renovate
           RENOVATE_PAT_TOKEN: placeholder # only needs to be a string for validation
-        run: npx --yes --package renovate -- renovate-config-validator --strict .github/workflows/renovate-config.js
+        run: npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict .github/workflows/renovate-config.js
