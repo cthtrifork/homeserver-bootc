@@ -129,7 +129,7 @@ extract "$GH_CLI_TGZ" --wildcards "*/bin/*" --strip-components=2
 "$BIN_DIR/gh" completion bash >"$COMPLETION_DIR/gh"
 
 log "Installing kubectl"
-KUBECTL_VERSION="v1.37.1" # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION="v1.37.2" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_BIN="$(tmp_name kubectl "$KUBECTL_VERSION" bin)"
 download_if_missing "$KUBECTL_BIN" "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${PLATFORM_ARCH}/kubectl"
 install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
@@ -279,7 +279,7 @@ extract "$HELM_TGZ" -C "$BIN_DIR"/ --strip-components=1
 "$BIN_DIR/helm" completion bash >"$COMPLETION_DIR/helm"
 
 log "Installing numr"
-NUMR_VERSION="v0.8.0" # renovate: datasource=github-releases depName=nasedkinpv/numr
+NUMR_VERSION="v0.9.0" # renovate: datasource=github-releases depName=nasedkinpv/numr
 NUMR_TGZ="$(tmp_name numr "$NUMR_VERSION" tar.gz)"
 download_if_missing_cmd "$NUMR_TGZ" /ctx/build_files/github-release-url.sh nasedkinpv/numr "${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.gz" "$NUMR_VERSION"
 extract "$NUMR_TGZ"
