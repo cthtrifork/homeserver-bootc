@@ -51,6 +51,21 @@
       automerge: true,
     },
     {
+      // quay.io and ghcr.io do not report when an image tag was published, and with
+      // internalChecksFilter 'strict' an update without a release timestamp waits forever on the
+      // renovate/stability-days check ("Pending Status Checks" on the dashboard, no branch or PR).
+      // So these images get no cooldown; Docker Hub images keep it.
+      matchDatasources: ['docker'],
+      matchPackageNames: ['quay.io/**', 'ghcr.io/**'],
+      minimumReleaseAge: null,
+    },
+    {
+      // The Fedora base image: every update (new release, digest pin, digest bump) is only created
+      // once ticked on the Dependency Dashboard, so a rebuild of the whole image is a decision.
+      matchPackageNames: ['quay.io/fedora/fedora-bootc'],
+      dependencyDashboardApproval: true,
+    },
+    {
       // Patches stay out of the groups on purpose: a group is merged as a whole, so a minor in the
       // same branch would hold the patches back. Patches get their own PR and automerge.
       matchManagers: ['github-actions'],

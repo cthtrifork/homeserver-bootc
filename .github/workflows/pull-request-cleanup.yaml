@@ -4,6 +4,32 @@ on:
     types:
       - closed
 jobs:
+  cancel-runs:
+    name: cancel runs of the closed pull request
+    # A merge (or close) leaves the pull request's own build, trivy, run-on-pr and e2e jobs running
+    # for up to an hour. The merge triggers its own push build on main, which is not touched here:
+    # only runs of the pull_request event are cancelled. A fork's token is read-only.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write # cancel workflow runs
+    steps:
+      - name: Cancel in-progress and queued runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          # Skip this workflow's own run (it has the same head branch).
+          for status in in_progress queued waiting; do
+            gh run list --branch "$HEAD_REF" --event pull_request --status "$status" \
+              --json databaseId --jq '.[].databaseId' --limit 100
+          done | sort -u | { grep -vx "$GITHUB_RUN_ID" || true; } | while read -r id; do
+            echo "Cancelling run $id"
+            gh run cancel "$id" || true
+          done
+
   ghcr-cleanup-image:
     name: ghcr cleanup action
     runs-on: ubuntu-latest
