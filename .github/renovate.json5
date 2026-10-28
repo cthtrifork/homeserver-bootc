@@ -79,12 +79,14 @@
       groupName: 'tools',
     },
     {
-      // Our own release stream: no cooldown, and not grouped with the other tools. With the cooldown
-      // a new release restarted the 2 days every time and, inside the 'tools' group, a pending
-      // update is left out of the branch and off the dashboard.
+      // Our own release stream: no cooldown, not grouped with the other tools, and every update
+      // (minor and major too) automerges. With the cooldown a new release restarted the 2 days every
+      // time and, inside the 'tools' group, a pending update is left out of the branch and off the
+      // dashboard.
       matchPackageNames: ['cthtrifork/trivy-dashboard-wail3'],
       minimumReleaseAge: null,
       groupName: null,
+      automerge: true,
     },
     {
       "extends": [
