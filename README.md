@@ -8,7 +8,6 @@ Fedora bootc (`fedora-bootc:44`) images for a home server, built and published b
 | --- | --- |
 | `homeserver.containerfile` | Headless home server |
 | `homeserver-gui.containerfile` | Home server with GUI |
-| `hello.containerfile` | Minimal Alpine test image |
 
 ## Layout
 
