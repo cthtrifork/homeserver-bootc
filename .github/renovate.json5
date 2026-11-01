@@ -72,6 +72,8 @@
       matchManagers: ['custom.regex'],
       matchUpdateTypes: ['minor'],
       groupName: 'tools',
+      // Pinned CI/build tool versions (renovate itself included): minors automerge once checks pass.
+      automerge: true,
     },
     {
       // Our own release stream: no cooldown, not grouped with the other tools, and every update
