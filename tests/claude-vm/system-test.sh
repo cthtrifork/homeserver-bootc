@@ -27,6 +27,12 @@ if systemctl is-active --quiet claude-remote-control.service; then
 fi
 echo "✅ claude-remote-control enabled and idle (conditions unmet, as expected)"
 
+echo "--- bootc update schedule ---"
+systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
+systemctl cat bootc-fetch-apply-updates.timer | grep -qx 'OnCalendar=\*-\*-\* 00:30:00'
+systemctl cat bootc-fetch-apply-updates.service | grep -qx 'ExecStart=/usr/bin/bootc upgrade --quiet'
+echo "✅ nightly bootc upgrade is scheduled (staged, no auto-reboot)"
+
 echo "--- users ---"
 [ "$(id -u claude)" = "1100" ]
 if id -nG claude | tr ' ' '\n' | grep -qx wheel; then

@@ -41,7 +41,7 @@ COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.p
 
 COPY system_files/claude-vm/ /
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/run-remote-control \
-    && systemctl enable claude-remote-control.service qemu-guest-agent.service
+    && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
 
 # Guard: fail the build if anything that looks like a private key or token ended up in the image.
 RUN set -eu; \
