@@ -228,12 +228,12 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | Key | Value | Why |
 | --- | --- | --- |
 | `permissions.defaultMode` | `"auto"` | sessions start in auto mode so unattended Remote Control sessions do not stall on prompts; deny rules and the sandbox still apply |
-| `permissions.allow` | `git`, `gh`, linters, `jq`/`yq`, `curl` and read-only shell tools | common commands run without a prompt; the sandbox and deny rules still apply |
+| `permissions.allow` | all Bash, file tools (Write, Edit, Read, Glob, Grep, NotebookEdit), WebFetch, WebSearch, context7 and Google Calendar MCP tools, and selected plugin skills | no prompts for these tools; `permissions.deny` and the sandbox still apply |
 | `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
-| `sandbox.allowUnsandboxedCommands` | `true` | the model may retry a command outside the sandbox (`dangerouslyDisableSandbox`); each such call still needs approval |
+| `sandbox.allowUnsandboxedCommands` | `true` | the model may retry a command outside the sandbox (`dangerouslyDisableSandbox`); with `Bash` in `permissions.allow` this needs no approval |
 | `sandbox.autoAllowBashIfSandboxed` | `true` | Bash commands that run inside the sandbox are approved without a prompt |
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
