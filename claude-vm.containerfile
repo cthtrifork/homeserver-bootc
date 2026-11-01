@@ -18,7 +18,7 @@ ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=goo
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
-        openssh-clients bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck ripgrep tmux tree qemu-guest-agent \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
