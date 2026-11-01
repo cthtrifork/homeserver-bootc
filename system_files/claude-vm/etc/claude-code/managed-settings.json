@@ -1,7 +1,6 @@
 {
   "permissions": {
-    "defaultMode": "auto",
-    "disableBypassPermissionsMode": "disable",
+    "defaultMode": "bypassPermissions",
     "deny": [
       "Edit(~/.bashrc)",
       "Edit(~/.bash_profile)",
