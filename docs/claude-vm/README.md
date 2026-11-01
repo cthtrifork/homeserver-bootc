@@ -207,6 +207,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 
 | Key | Value | Why |
 | --- | --- | --- |
+| `permissions.defaultMode` | `"auto"` | sessions start in auto mode so unattended Remote Control sessions do not stall on prompts; deny rules and the sandbox still apply |
 | `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
@@ -214,7 +215,9 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `sandbox.allowUnsandboxedCommands` | `false` | the model cannot retry a command outside the sandbox |
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
+| `permissions.deny` / `sandbox.filesystem.denyWrite` | shell rc files, `~/.ssh`, `~/.gitconfig`, `~/.config/{systemd,autostart,containers/systemd,git}` | persistence and code-execution paths: the file tools (Edit/Write) run outside the sandbox, and podman lingering would start user units at boot |
 | `sandbox.filesystem.denyRead` | `~/.claude/.credentials.json` | the login token is hidden from commands |
+| `~/.claude.json` (seeded, not managed) | `context7` (`https://mcp.context7.com/mcp`) | user-scope MCP server for library docs; tmpfiles copies it only if the file is missing, and its host is on the allowlist |
 | `sandbox.network.allowedDomains` | generated at build time from `egress-allowlist.txt` | the same list the [egress gateway](#egress-gateway) enforces |
 
 ## Tests

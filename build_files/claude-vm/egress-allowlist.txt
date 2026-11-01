@@ -11,27 +11,64 @@ claude.com
 frame.claudeusercontent.com
 frame.staging.claudeusercontent.com
 
-# Source hosting and package registries
+# Source hosting and MCP
 github.com
+githubassets.com
+githubcopilot.com
 githubusercontent.com
+context7.com
+
+# Language package registries and toolchains
+npmjs.com
 npmjs.org
+nodejs.org
+bun.sh
 pypi.org
 files.pythonhosted.org
+astral.sh
 proxy.golang.org
 sum.golang.org
-debian.org
+crates.io
+rustup.rs
+static.rust-lang.org
+rubygems.org
+repo.maven.apache.org
+plugins.gradle.org
+nuget.org
 wails.io
 
+# OS packages
+debian.org
+fedoraproject.org
+
 # Container registries
+docker.io
+gcr.io
 ghcr.io
 quay.io
+registry.k8s.io
 mcr.microsoft.com
-mirror.gcr.io
 cgr.dev
 registry.access.redhat.com
 
-# Docs and vulnerability data
+# Documentation (WebFetch)
 docs.docker.com
 developers.redhat.com
+developer.mozilla.org
+docs.python.org
+go.dev
+kubernetes.io
+fluxcd.io
+readthedocs.io
+wikipedia.org
+stackoverflow.com
+
+# Vulnerability data
+nvd.nist.gov
+osv.dev
+security.snyk.io
 api.first.org
 www.cisa.gov
+
+# CDNs and docs for skills
+cloudflare.com
