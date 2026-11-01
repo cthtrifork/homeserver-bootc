@@ -2,7 +2,7 @@ name: "Set BootC image vars"
 description: "Resolve IMAGE_NAME and related variables based on image type"
 inputs:
   image:
-    description: "Image selector (homeserver|homeserver-gui)"
+    description: "Image selector (homeserver|homeserver-gui|claude-vm)"
     required: true
 runs:
   using: "composite"
@@ -22,9 +22,13 @@ runs:
             IMAGE_NAME="homeserver-gui-bootc"
             CONTAINERFILE="homeserver-gui.containerfile"
             ;;
+          claude-vm)
+            IMAGE_NAME="claude-vm-bootc"
+            CONTAINERFILE="claude-vm.containerfile"
+            ;;
           *)
             echo "Unsupported image type: '${{ inputs.image }}'." >&2
-            echo "Expected one of: homeserver, homeserver-gui." >&2
+            echo "Expected one of: homeserver, homeserver-gui, claude-vm." >&2
             exit 1
             ;;
         esac
