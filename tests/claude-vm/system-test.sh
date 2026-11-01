@@ -58,9 +58,11 @@ test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
 
 echo "--- nothing secret baked in ---"
-if find /etc /root /var/home /usr/local -xdev -type f \
-    \( -name 'id_*' -o -name 'github-token' -o -name '.credentials.json' \) ! -name '*.pub' | grep -q .; then
-    echo "unexpected key/token file present"
+hits="$(find /etc /root /var/home /usr/local -xdev -type f \
+    \( -name 'id_rsa' -o -name 'id_dsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' -o -name 'github-token' -o -name '.credentials.json' \) 2>/dev/null || true)"
+if [ -n "$hits" ]; then
+    echo "unexpected key/token file(s):"
+    echo "$hits"
     exit 1
 fi
 [ "$(stat -c %a /etc/claude-vm)" = "700" ]

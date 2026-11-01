@@ -18,7 +18,8 @@ fi
 token="${token//[[:space:]]/}"
 
 [[ -n "$token" ]] || { echo "Empty token, nothing written." >&2; exit 1; }
-if [[ "$token" == *"BEGIN"*"PRIVATE KEY"* ]]; then
+# whitespace is already stripped, so "PRIVATE KEY" is "PRIVATEKEY" here
+if [[ "$token" == *BEGIN*PRIVATEKEY* ]]; then
     echo "That looks like a private key. This VM only takes a GitHub token." >&2
     exit 1
 fi

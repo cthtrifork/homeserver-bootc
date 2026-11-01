@@ -13,11 +13,12 @@ ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai
 ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, rootless podman.
-# bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; tree is used by tests/diagnostics.sh.
+# bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
+# (weak dependencies are off); tree is used by tests/diagnostics.sh.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
-        bubblewrap socat skopeo git-core gh jq ripgrep tmux tree qemu-guest-agent \
+        bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
