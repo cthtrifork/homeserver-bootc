@@ -8,7 +8,7 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go podman gh git bwrap socat; do
+for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
 
@@ -24,7 +24,7 @@ systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'
 
 echo "--- staged-update notice ---"
-bootc status --json | jq -e '.status | has("staged")' >/dev/null
+sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null
 sudo /usr/libexec/claude-vm/note-staged-update
 test ! -e /run/claude-vm/update-staged   # nothing is staged on a fresh install
 sudo install -d /run/claude-vm && sudo touch /run/claude-vm/update-staged

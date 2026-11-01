@@ -7,7 +7,8 @@ set -euo pipefail
 dir=/run/claude-vm
 marker="$dir/update-staged"
 
-if bootc status --json | jq -e '.status.staged != null' >/dev/null; then
+# bootc status needs root; this runs as root in the upgrade service. The Claude hook only reads the marker.
+if bootc status --format json | jq -e '.status.staged != null' >/dev/null; then
     install -d -m 0755 "$dir"
     touch "$marker"
 else

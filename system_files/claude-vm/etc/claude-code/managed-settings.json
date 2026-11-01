@@ -19,6 +19,7 @@
         "*.npmjs.org",
         "pypi.org",
         "files.pythonhosted.org",
+        "ghcr.io",
         "proxy.golang.org",
         "sum.golang.org"
       ]

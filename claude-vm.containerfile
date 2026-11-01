@@ -10,13 +10,14 @@ FROM quay.io/fedora/fedora-bootc:44 AS base
 FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
+ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, rootless podman.
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; tree is used by tests/diagnostics.sh.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
-        bubblewrap socat git-core gh jq ripgrep tmux tree qemu-guest-agent \
+        bubblewrap socat skopeo git-core gh jq ripgrep tmux tree qemu-guest-agent \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
@@ -30,6 +31,15 @@ RUN npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
         npm install --global --prefix /usr "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
     && rm -rf /tmp/npm-cache \
     && claude --version
+
+# crane (not packaged in Fedora): pinned release, checksum-verified against the release's checksums.txt (amd64)
+RUN set -eux; cd /tmp; \
+    base="https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}"; \
+    curl -fsSL -O "${base}/go-containerregistry_Linux_x86_64.tar.gz" -O "${base}/checksums.txt"; \
+    grep ' go-containerregistry_Linux_x86_64.tar.gz$' checksums.txt | sha256sum -c -; \
+    tar -xzf go-containerregistry_Linux_x86_64.tar.gz -C /usr/bin crane; \
+    rm -f go-containerregistry_Linux_x86_64.tar.gz checksums.txt; \
+    crane version
 
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
