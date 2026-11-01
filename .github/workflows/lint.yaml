@@ -94,6 +94,27 @@ jobs:
         run: | #sh
           git ls-files '*.containerfile' | xargs "$HOME/.local/bin/hadolint" --failure-threshold error --ignore DL3020
 
+  # managed-settings.json is the policy Claude Code enforces on the VM: it must parse and match the published settings schema
+  managed-settings:
+    name: managed-settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CHECK_JSONSCHEMA_VERSION: 0.39.0 # renovate: datasource=pypi depName=check-jsonschema
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check JSON syntax
+        run: | #sh
+          jq empty system_files/claude-vm/etc/claude-code/managed-settings.json
+
+      - name: Validate against the Claude Code settings schema
+        run: | #sh
+          python3 -m pip install --user "check-jsonschema==${CHECK_JSONSCHEMA_VERSION}"
+          "$HOME/.local/bin/check-jsonschema" --schemafile https://json.schemastore.org/claude-code-settings.json system_files/claude-vm/etc/claude-code/managed-settings.json
+
   # zizmor audits workflows for security problems. Scoped to the Renovate workflow for now: the
   # other workflows still have findings (template injection, credential persistence) to clean up
   # before this can run on everything (`zizmor --persona pedantic .`).
