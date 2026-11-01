@@ -1,0 +1,34 @@
+# Free Pinggy SSH tunnel (no token) so the VM can be reached from outside. Login stays key-only
+# (PasswordAuthentication no) with the same public keys as the home server.
+# Opt-in, not enabled in the image: sudo systemctl enable --now claude-pinggy
+# Turn off again with: sudo systemctl disable --now claude-pinggy
+# https://pinggy.io/docs/run_tunnel_on_startup/linux/
+[Unit]
+Description=Pinggy free SSH tunnel
+Documentation=https://pinggy.io/docs/
+After=network-online.target sshd.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Wait (up to ~60s) for DNS, like pinggy.service on the home server
+ExecStartPre=/usr/bin/bash -c 'for i in {1..30}; do getent ahostsv4 free.pinggy.io >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1'
+ExecStart=/usr/libexec/claude-vm/run-pinggy
+Restart=always
+RestartSec=10s
+
+# The tunnel only needs outbound network and no files: run it as a throwaway user.
+DynamicUser=yes
+RuntimeDirectory=claude-pinggy
+RuntimeDirectoryMode=0755
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

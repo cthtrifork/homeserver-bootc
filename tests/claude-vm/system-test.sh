@@ -8,7 +8,7 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat; do
+for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat ssh; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
 
@@ -19,6 +19,15 @@ if systemctl is-active --quiet claude-remote-control.service; then
     echo "claude-remote-control is running but nothing was seeded"
     exit 1
 fi
+# free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
+systemctl cat claude-pinggy.service >/dev/null
+if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --quiet claude-pinggy.service; then
+    echo "claude-pinggy must be opt-in"
+    exit 1
+fi
+systemctl cat claude-pinggy.service | grep -q '^DynamicUser=yes'
+test -x /usr/bin/claude-vm-ssh-address
+grep -q claude-vm-ssh-address /etc/claude-code/CLAUDE.md
 # nightly bootc upgrade is staged only (no --apply, so no reboot)
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'

@@ -22,7 +22,7 @@ ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=goo
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
-        bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
     && dnf clean all
 
@@ -63,7 +63,7 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     /ctx/build_files/claude-vm/egress-allowlist.sh /ctx/build_files/claude-vm/egress-allowlist.txt \
         /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
 
-RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/* \
+RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
         claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
 

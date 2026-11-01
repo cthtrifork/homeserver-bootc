@@ -578,6 +578,7 @@ jobs:
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
           SSH_PRIVATE_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+          IMAGE: ${{ inputs.image }}
 
       - name: Take QEMU screenshot
         if: ${{ endsWith(inputs.image, 'gui') }}
