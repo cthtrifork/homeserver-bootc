@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-#
-# Installs the static release binaries the claude-vm image needs (crane, hadolint, actionlint).
-# Shares its helpers (download-lib.sh) with core/09-utilities.sh: downloads are kept under /runner/cache (the CI runner cache,
-# bind-mounted by the build workflow) so unchanged versions are not downloaded again.
-# Unlike 09-utilities.sh, every download is checksum-verified against the release's own checksum file,
-# which is always fetched fresh, so a poisoned or corrupt cache entry fails the build.
-#
-# Versions are bumped by Renovate (the `# renovate:` comments, see .github/renovate.json5).
+# Installs crane, hadolint and actionlint, checksum-verified (see download-lib.sh).
 set -euo pipefail
 
 BIN_DIR="/usr/bin"

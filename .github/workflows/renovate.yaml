@@ -1,20 +1,6 @@
 name: Renovate
 
-# Self-hosted Renovate (renovatebot/github-action). Config: .github/renovate.json5 (repository
-# settings) and renovate-config.js (global settings: repositories, registry credentials).
-#   - on a schedule and by hand, on the default branch only: opens or updates the update PRs and
-#     the "Dependency Dashboard" issue. Patch and digest updates automerge (renovate.json5).
-#   - on a pull request that changes the config or this workflow: a dry run, which writes nothing and
-#     shows what Renovate would do on the PR's branch in the job summary.
-# The real run authenticates as a GitHub App (renovatebot/github-action "Example with GitHub App"),
-# not with a PAT or GITHUB_TOKEN: PRs opened with GITHUB_TOKEN do not start other workflows, so CI
-# would not run on them and an automerge would have no checks to wait for. Commits made through the
-# App are verified (platformCommit). Setup: create a GitHub App with the permissions below, install it
-# on every repository in renovate-config.js, then add the repository variable RENOVATE_APP_CLIENT_ID
-# and the secret RENOVATE_APP_PRIVATE_KEY (the downloaded .pem). App permissions (repository):
-# Contents, Pull requests, Issues, Workflows and Commit statuses read & write; Checks and
-# Dependabot alerts read.
-# PAT_RENOVATEBOT is still used, but only to read ghcr.io images (hostRules): an App token cannot.
+# Self-hosted Renovate, authenticating as a GitHub App (so PRs trigger CI). Config: renovate.json5, renovate-config.js.
 on:
   pull_request:
     paths:

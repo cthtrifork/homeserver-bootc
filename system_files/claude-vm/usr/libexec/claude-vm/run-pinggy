@@ -1,11 +1,5 @@
 #!/usr/bin/bash
-# Started by claude-pinggy.service. Opens a free Pinggy TCP tunnel to the local sshd and records the
-# public address it is given, so you can `ssh -p <port> caspertdk@<host>` into the VM from anywhere.
-#
-# Free tier, no account and no token (the image holds no secrets): the address is random and changes
-# every time the tunnel (re)starts, and Pinggy closes free tunnels after about 60 minutes. systemd
-# restarts the tunnel; read the current address with `claude-vm-ssh-address`.
-# https://pinggy.io/docs/ and https://pinggy.io/docs/run_tunnel_on_startup/linux/
+# Opens a free Pinggy TCP tunnel to sshd and records its address (see `claude-vm-ssh-address`).
 set -uo pipefail
 
 state="${RUNTIME_DIRECTORY:?not started by systemd}/address"

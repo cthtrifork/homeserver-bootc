@@ -1,15 +1,5 @@
 #!/bin/bash
-#
-# A script to install an RPM from the latest Github release for a project.
-#
-# ORG_PROJ is the pair of URL components for organization/projectName in Github URL
-# example: https://github.com/wez/wezterm/releases
-#   ORG_PROJ would be "wez/wezterm"
-#
-# ARCH_FILTER is used to select the specific RPM. Typically this can just be the arch
-#   such as 'x86_64' but sometimes a specific filter is required when multiple match.
-# example: wezterm builds RPMs for different distros so we must be more specific.
-#   ARCH_FILTER of "fedora37.x86_64" gets the x86_64 RPM build for fedora37
+# Install an RPM from a project's GitHub release. See usage() below.
 
 ORG_PROJ=${1}
 ARCH_FILTER=${2}
