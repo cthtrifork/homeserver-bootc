@@ -65,9 +65,9 @@ sops --encrypt --in-place encrypted.sops
 
 ```sh
 echo "" > /tmp/PINGGY_TOKEN
-echo "${GITHUB_TOKEN}" > /tmp/REGISTRY_TOKEN
+sudo cat /usr/lib/homeserver/github-token > /tmp/REGISTRY_TOKEN
 cp "${HOME}/.docker/config.json" /tmp/creds
-echo "${SOPS_AGE_KEY}" > /tmp/AGE_KEY
+cp "${HOME}/sops/age/keys.txt" /tmp/AGE_KEY
 mkdir -p /tmp/runner/.cache/dnf /tmp/runner/.cache/tmp
 
 podman build \

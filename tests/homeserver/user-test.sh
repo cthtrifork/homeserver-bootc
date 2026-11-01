@@ -12,7 +12,8 @@ id
 echo "$WHOAMI"
 
 echo "== Github CLI =="
-echo "GitHub token fingerprint: ${GITHUB_TOKEN:0:7}********"
+TOKEN_FILE="$HOME/.config/github-token"
+echo "GitHub token fingerprint: $(head -c7 "$TOKEN_FILE")********"
 gh auth status && echo "✅ Github CLI is ready"
 
 echo "== Podman =="
