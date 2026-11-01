@@ -11,11 +11,11 @@ id
 echo "--- claude binary ---"
 claude --version
 
-echo "--- toolchain for Claude: bash, python, node/npm, podman ---"
-for c in bash python3 pip3 node npm podman gh git; do
+echo "--- toolchain for Claude: bash, python, node/npm, go, podman ---"
+for c in bash python3 pip3 node npm go podman gh git; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
-bash --version | head -1; python3 --version; pip3 --version; node --version; npm --version; podman --version
+bash --version | head -1; python3 --version; pip3 --version; node --version; npm --version; go version; podman --version
 grep -qx 'claude:100000:65536' /etc/subuid
 echo "✅ toolchain present, subuid configured for claude"
 

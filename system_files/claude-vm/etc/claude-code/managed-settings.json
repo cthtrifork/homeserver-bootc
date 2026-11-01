@@ -8,7 +8,7 @@
     "allowUnsandboxedCommands": false,
     "excludedCommands": ["podman *"],
     "filesystem": {
-      "allowWrite": ["~/.npm-global", "~/.npm", "~/.local", "~/.cache"],
+      "allowWrite": ["~/.npm-global", "~/.npm", "~/.local", "~/.cache", "~/go"],
       "denyRead": ["~/.claude/.credentials.json"]
     },
     "network": {
@@ -18,7 +18,9 @@
         "*.githubusercontent.com",
         "*.npmjs.org",
         "pypi.org",
-        "files.pythonhosted.org"
+        "files.pythonhosted.org",
+        "proxy.golang.org",
+        "sum.golang.org"
       ]
     }
   },

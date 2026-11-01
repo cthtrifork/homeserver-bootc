@@ -25,15 +25,16 @@ fi
 sudo test ! -e /etc/claude-vm/github-token
 echo "✅ private keys are refused"
 
-echo "== claude user toolchain (python, bash, npm, rootless podman) =="
+echo "== claude user toolchain (python, bash, npm, go, rootless podman) =="
 sudo -u claude -H bash -lc '
   export XDG_RUNTIME_DIR=/run/user/$(id -u)
   python3 -c "print(\"python ok\")"
   bash -c "echo bash ok"
+  go version
   npm --version && test "$(npm config get prefix)" = "$HOME/.npm-global"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
 '
-echo "✅ claude user can run python, bash, npm and rootless podman"
+echo "✅ claude user can run python, bash, npm, go and rootless podman"
 
 echo "== claude user =="
 sudo -u claude -H bash -lc 'cd ~/workspace && claude --version && git config --global user.name'

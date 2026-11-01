@@ -16,9 +16,9 @@ Environment=HOME=/var/home/claude
 Environment=DISABLE_AUTOUPDATER=1
 # rootless podman needs a runtime dir (user@1100 is started by lingering, see 14-claude-podman-linger.conf)
 Environment=XDG_RUNTIME_DIR=/run/user/1100
-# /usr is read-only: global npm installs and pip --user go to the home directory
+# /usr is read-only: global npm installs, pip --user and go install go to the home directory
 Environment=NPM_CONFIG_PREFIX=/var/home/claude/.npm-global
-Environment=PATH=/var/home/claude/.npm-global/bin:/var/home/claude/.local/bin:/usr/local/bin:/usr/bin:/usr/sbin
+Environment=PATH=/var/home/claude/.npm-global/bin:/var/home/claude/.local/bin:/var/home/claude/go/bin:/usr/local/bin:/usr/bin:/usr/sbin
 LoadCredential=github-token:/etc/claude-vm/github-token
 ExecStart=/usr/libexec/claude-vm/run-remote-control
 Restart=always

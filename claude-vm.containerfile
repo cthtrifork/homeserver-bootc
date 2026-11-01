@@ -11,11 +11,11 @@ FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 
-# Tooling Claude can use: bash, python (+pip), node (+npm), rootless podman.
+# Tooling Claude can use: bash, python (+pip), node (+npm), go, rootless podman.
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
-        bash python3 python3-pip nodejs npm podman shadow-utils fuse-overlayfs \
+        bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
         bubblewrap socat git-core gh jq ripgrep tmux qemu-guest-agent \
     && dnf clean all
 
