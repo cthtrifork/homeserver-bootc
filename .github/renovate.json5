@@ -110,9 +110,11 @@
     },
     {
       // Versions in the workflows with no manager of their own: a `# renovate: datasource=<ds>
-      // depName=<name>` (or packageName=) comment at the end of a `KEY: value` or `KEY=value` line.
+      // depName=<name>` (or packageName=) comment at the end of a `KEY: value` or `KEY=value` line
+      // (also `ARG KEY=value` in the *.containerfile files).
       customType: 'regex',
       managerFilePatterns: [
+        '/^[^/]+\\.containerfile$/',
         '/^\\.github/workflows/[^/]+\\.ya?ml$/',
         '/^\\.github/actions/[^/]+/action\\.ya?ml$/',
       ],

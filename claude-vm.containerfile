@@ -9,12 +9,17 @@ FROM quay.io/fedora/fedora-bootc:44 AS base
 
 FROM base AS final
 
-# renovate: datasource=npm depName=@anthropic-ai/claude-code
-ARG CLAUDE_CODE_VERSION=2.1.316
+ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 
+# Tooling Claude can use: bash, python (+pip), node (+npm), rootless podman.
+# Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
-        git-core gh nodejs npm jq ripgrep tmux qemu-guest-agent \
+        bash python3 python3-pip nodejs npm podman shadow-utils fuse-overlayfs \
+        git-core gh jq ripgrep tmux qemu-guest-agent \
     && dnf clean all
+
+# Rootless podman for the service user (claude, UID 1100; see sysusers.d)
+RUN echo "claude:100000:65536" >> /etc/subuid && echo "claude:100000:65536" >> /etc/subgid
 
 # Claude Code lives under /usr so it is part of the immutable image and is
 # upgraded by bootc, not by an in-place auto-updater.
