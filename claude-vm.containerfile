@@ -11,14 +11,17 @@ FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
+ARG HADOLINT_VERSION=v2.12.0 # renovate: datasource=github-releases packageName=hadolint/hadolint
+ARG ACTIONLINT_VERSION=v1.7.7 # renovate: datasource=github-releases packageName=rhysd/actionlint
 
-# Tooling Claude can use: bash, python (+pip), node (+npm), go, rootless podman.
+# Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman, plus linters/formatters
+# (ShellCheck, shfmt, yamllint, jq/yq; hadolint and actionlint are installed below).
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
 # (weak dependencies are off); tree is used by tests/diagnostics.sh.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
-        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck ripgrep tmux tree qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree qemu-guest-agent \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
@@ -41,6 +44,25 @@ RUN set -eux; cd /tmp; \
     tar -xzf go-containerregistry_Linux_x86_64.tar.gz -C /usr/bin crane; \
     rm -f go-containerregistry_Linux_x86_64.tar.gz checksums.txt; \
     crane version
+
+# hadolint and actionlint (not packaged in Fedora): pinned releases, checksum-verified against the release's own
+# checksum file (amd64)
+RUN set -eux; cd /tmp; \
+    base="https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}"; \
+    curl -fsSL -O "${base}/hadolint-Linux-x86_64" -O "${base}/hadolint-Linux-x86_64.sha256"; \
+    sha256sum -c hadolint-Linux-x86_64.sha256; \
+    install -m 0755 hadolint-Linux-x86_64 /usr/bin/hadolint; \
+    rm -f hadolint-Linux-x86_64 hadolint-Linux-x86_64.sha256; \
+    hadolint --version
+RUN set -eux; cd /tmp; \
+    base="https://github.com/rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}"; \
+    ver="${ACTIONLINT_VERSION#v}"; \
+    tarball="actionlint_${ver}_linux_amd64.tar.gz"; \
+    curl -fsSL -O "${base}/${tarball}" -O "${base}/actionlint_${ver}_checksums.txt"; \
+    grep " ${tarball}\$" "actionlint_${ver}_checksums.txt" | sha256sum -c -; \
+    tar -xzf "${tarball}" -C /usr/bin actionlint; \
+    rm -f "${tarball}" "actionlint_${ver}_checksums.txt"; \
+    actionlint -version
 
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
