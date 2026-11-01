@@ -42,7 +42,8 @@ RUN cat /usr/local/share/bootc/packages-added | grep -vE '^#' | xargs -r dnf -y 
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh
 
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
-    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/62-registry-auth-private.sh 1> /dev/null
+    install -m 0600 -o root -g root /dev/null /etc/profile.d/62-registry-auth-private.sh && \
+    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" > /etc/profile.d/62-registry-auth-private.sh
 
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \

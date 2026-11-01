@@ -17,7 +17,7 @@ MACHINE="$(uname -s | tr '[:upper:]' '[:lower:]')"                    # linux
 BIN_DIR="/usr/local/bin"
 COMPLETION_DIR="/usr/local/share/bash-completion/completions"
 
-mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "$BIN_DIR/.docker"
+mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "$BIN_DIR/.docker" /runner/cache
 
 setfattr -n user.component -v "utilities" /usr/local/bin
 setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
@@ -43,7 +43,7 @@ download_if_missing() {
         return 0
     fi
 
-    curl -sLo "$dest" "$url"
+    curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$dest.part" "$url" && mv "$dest.part" "$dest"
 }
 
 download_if_missing_cmd() {
@@ -59,7 +59,7 @@ download_if_missing_cmd() {
 
     local url
     url="$("$@")"
-    curl -sLo "$dest" "$url"
+    curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$dest.part" "$url" && mv "$dest.part" "$dest"
 }
 
 extract() {
@@ -164,7 +164,7 @@ extract "$KUBECTLCNPG_TGZ"
 
 log "Installing kubectl-df-pv"
 KUBECTLDFPV_VERSION="v0.5.0" # renovate: datasource=github-releases depName=yashbhutwala/kubectl-df-pv
-KUBECTLDFPV_TGZ="$(tmp_name kubectl-cnpg "$KUBECTLDFPV_VERSION" tar.gz)"
+KUBECTLDFPV_TGZ="$(tmp_name kubectl-df-pv "$KUBECTLDFPV_VERSION" tar.gz)"
 download_if_missing_cmd "$KUBECTLDFPV_TGZ" /ctx/build_files/github-release-url.sh yashbhutwala/kubectl-df-pv "kubectl-df-pv.*_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$KUBECTLDFPV_VERSION"
 extract "$KUBECTLDFPV_TGZ"
 mv "$BIN_DIR/df-pv" "$BIN_DIR/kubectl-df-pv"
@@ -310,7 +310,7 @@ install -o root -g root -m 0755 "$WITR_BIN" "$BIN_DIR/witr"
 
 log "Installing tealdeer"
 TEALDEER_VERSION="v1.9.1" # renovate: datasource=github-releases depName=tealdeer-rs/tealdeer
-TEALDEER_BIN="$(tmp_name witr "$TEALDEER_VERSION" bin)"
+TEALDEER_BIN="$(tmp_name tealdeer "$TEALDEER_VERSION" bin)"
 download_if_missing_cmd "$TEALDEER_BIN" /ctx/build_files/github-release-url.sh tealdeer-rs/tealdeer "tealdeer-${MACHINE}.${HOST_ARCH}" "$TEALDEER_VERSION"
 download_if_missing_cmd "${TEALDEER_BIN}_bash_tealdeer" /ctx/build_files/github-release-url.sh tealdeer-rs/tealdeer "completions_bash" "$TEALDEER_VERSION"
 install -o root -g root -m 0755 "$TEALDEER_BIN" "$BIN_DIR/tldr"
