@@ -41,6 +41,12 @@ sudo -u claude -H bash -lc '
   podman run --rm quay.io/podman/hello
 '
 
+echo "--- claude doctor reports no invalid settings ---"
+# doctor exits 0 even when a settings file is invalid, so look for its "Invalid settings" section
+doctor_out="$(sudo -u claude -H bash -lc 'cd ~ && timeout 60 claude doctor </dev/null' 2>&1)"
+echo "$doctor_out"
+if grep -q '^Invalid settings' <<<"$doctor_out"; then echo "claude doctor found invalid settings"; exit 1; fi
+
 echo "--- egress allowlist: claude user and podman subuid range ---"
 as_agent() { sudo -u claude -H "$@"; }
 # set -e ignores a failing "! cmd", so negative checks go through this

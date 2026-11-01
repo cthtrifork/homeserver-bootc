@@ -63,6 +63,9 @@ readthedocs.io
 wikipedia.org
 stackoverflow.com
 
+# JSON schemas (settings validation)
+json.schemastore.org
+
 # Vulnerability data
 nvd.nist.gov
 osv.dev
