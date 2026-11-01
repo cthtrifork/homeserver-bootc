@@ -28,6 +28,7 @@ files.pythonhosted.org
 astral.sh
 proxy.golang.org
 sum.golang.org
+storage.googleapis.com
 crates.io
 rustup.rs
 static.rust-lang.org
