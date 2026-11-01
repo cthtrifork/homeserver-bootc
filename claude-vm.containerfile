@@ -23,9 +23,11 @@ RUN echo "claude:100000:65536" >> /etc/subuid && echo "claude:100000:65536" >> /
 
 # Claude Code lives under /usr so it is part of the immutable image and is
 # upgraded by bootc, not by an in-place auto-updater.
-RUN npm install --global --prefix /usr "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
-    && npm cache clean --force \
-    && rm -rf /root/.npm /var/roothome/.npm \
+# /root is a dangling symlink to /var/roothome while building, so npm's default cache/log dir
+# (~/.npm) cannot be created; keep both in /tmp and remove them again.
+RUN npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
+        npm install --global --prefix /usr "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+    && rm -rf /tmp/npm-cache \
     && claude --version
 
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
