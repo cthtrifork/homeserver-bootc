@@ -48,6 +48,7 @@ cgr.dev
 registry.access.redhat.com
 
 # Docs and vulnerability data
+context7.com
 docs.docker.com
 developers.redhat.com
 api.first.org
