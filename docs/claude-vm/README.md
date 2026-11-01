@@ -229,6 +229,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | --- | --- | --- |
 | `permissions.defaultMode` | `"auto"` | sessions start in auto mode so unattended Remote Control sessions do not stall on prompts; deny rules and the sandbox still apply |
 | `permissions.allow` | all Bash, file tools (Write, Edit, Read, Glob, Grep, NotebookEdit), WebFetch, WebSearch, context7 and Google Calendar MCP tools, and selected plugin skills | no prompts for these tools; `permissions.deny` and the sandbox still apply |
+| `permissions.additionalDirectories` | `["~"]` | the home directory counts as a working directory, so `cd` into it does not prompt; `permissions.deny` and the sandbox still apply |
 | `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |

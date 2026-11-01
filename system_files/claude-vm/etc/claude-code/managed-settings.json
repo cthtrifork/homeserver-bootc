@@ -31,6 +31,9 @@
       "Skill(plugin-dev:*)",
       "Skill(pr-review-toolkit:*)",
       "Skill(frontend-design:*)"
+    ],
+    "additionalDirectories": [
+      "~"
     ]
   },
   "sandbox": {
