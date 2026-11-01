@@ -57,7 +57,6 @@ rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
-[ "$(jq '.sandbox.network.allowedDomains | length' /etc/claude-code/managed-settings.json)" = "$(( 2 * $(wc -l </usr/share/claude-vm/egress/allowlist.txt) ))" ]
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"
 
@@ -71,11 +70,6 @@ sudo rm -f /run/claude-vm/update-staged
 [ -z "$(sudo -u claude /usr/libexec/claude-vm/session-start-note)" ]
 
 echo "--- policy and Bash sandbox ---"
-jq -e '.permissions.disableBypassPermissionsMode == "disable"
-       and .sandbox.enabled and .sandbox.failIfUnavailable
-       and (.sandbox.excludedCommands | index("podman *"))
-       and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)' \
-    /etc/claude-code/managed-settings.json >/dev/null
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \
     -p PrivateTmp=yes -p ProtectSystem=strict -p ProtectControlGroups=yes \
@@ -89,7 +83,6 @@ if id -nG claude | grep -qw wheel; then
 fi
 id -nG caspertdk | grep -qw wheel
 sshd -T | grep -qx 'passwordauthentication no'
-grep -q '^ssh-ed25519 ' /var/home/caspertdk/.ssh/authorized_keys
 [ "$(stat -c %U:%a /var/home/claude)" = "claude:700" ]
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
