@@ -77,7 +77,8 @@ sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
 echo "--- egress allowlist: podman containers ---"
 img=quay.io/curl/curl:latest   # the curl project's image (~11 MB, one layer); quay.io is allowlisted
-agent_podman() { sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"; }
+# from /: podman keeps the caller's cwd, which is caspertdk's home and not enterable by claude
+agent_podman() { (cd / && sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"); }
 # the container must start and curl must fail: podman's own errors (125-127) do not count as "blocked"
 container_blocked() {
     local rc=0
