@@ -12,6 +12,10 @@ on: # yamllint disable-line rule:truthy
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: false
+
+permissions: {}
+
 jobs:
   cleanup-homeserver-images:
     name: Cleanup Homeserver Images

@@ -14,10 +14,19 @@ on:
       - ".github/workflows/push-hello-containerfile.yaml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # never cancel a publish on main, only superseded PR runs
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     name: Build and Push Hello Image
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     permissions:
       contents: read
