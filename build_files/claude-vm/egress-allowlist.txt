@@ -23,7 +23,6 @@ rubygems.org
 repo.maven.apache.org
 plugins.gradle.org
 nuget.org
-pkg.go.dev
 nodejs.org
 astral.sh
 bun.sh
@@ -50,6 +49,12 @@ registry.access.redhat.com
 # Docs and vulnerability data
 context7.com
 docs.docker.com
+wikipedia.org
+readthedocs.io
+kubernetes.io
+fluxcd.io
+docs.python.org
+go.dev
 developers.redhat.com
 api.first.org
 nvd.nist.gov
