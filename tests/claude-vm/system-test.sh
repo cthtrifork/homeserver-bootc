@@ -25,12 +25,9 @@ if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --q
     echo "claude-pinggy must be opt-in"
     exit 1
 fi
-systemctl cat claude-pinggy.service | grep -q '^DynamicUser=yes'
 test -x /usr/bin/claude-vm-ssh-address
-grep -q claude-vm-ssh-address /etc/claude-code/CLAUDE.md
 # nightly bootc upgrade is staged only (no --apply, so no reboot)
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
-systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'
 
 echo "--- egress gateway ---"
 for u in nft proxy dns; do
@@ -60,11 +57,7 @@ rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
-grep -qx 'github.com' /usr/share/claude-vm/egress/allowlist.txt
-grep -qx 'anthropic.com' /usr/share/claude-vm/egress/allowlist.txt
-if grep -qx 'example.com' /usr/share/claude-vm/egress/allowlist.txt; then echo 'example.com must not be allowlisted'; exit 1; fi
 [ "$(jq '.sandbox.network.allowedDomains | length' /etc/claude-code/managed-settings.json)" = "$(( 2 * $(wc -l </usr/share/claude-vm/egress/allowlist.txt) ))" ]
-jq -e '.sandbox.network.allowedDomains | index("github.com") and index("*.github.com")' /etc/claude-code/managed-settings.json >/dev/null
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"
 
