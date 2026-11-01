@@ -1,48 +1,18 @@
 #!/usr/bin/env bash
 #
 # Installs the static release binaries the claude-vm image needs (crane, hadolint, actionlint).
-# Same pattern as core/09-utilities.sh: downloads are kept under /runner/cache (the CI runner cache,
+# Shares its helpers (download-lib.sh) with core/09-utilities.sh: downloads are kept under /runner/cache (the CI runner cache,
 # bind-mounted by the build workflow) so unchanged versions are not downloaded again.
-# Unlike 09-utilities.sh every download is checksum-verified against the release's own checksum file,
+# Unlike 09-utilities.sh, every download is checksum-verified against the release's own checksum file,
 # which is always fetched fresh, so a poisoned or corrupt cache entry fails the build.
 #
 # Versions are bumped by Renovate (the `# renovate:` comments, see .github/renovate.json5).
 set -euo pipefail
 
 BIN_DIR="/usr/bin"
-CACHE_DIR="/runner/cache"
+# shellcheck source=download-lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/download-lib.sh"
 mkdir -p "$CACHE_DIR"
-
-log() { echo "=== $* ==="; }
-
-tmp_name() {
-    # Usage: tmp_name <name> <version> <ext>
-    local safe_version="${2//\//-}"
-    echo "${CACHE_DIR}/${1}-${safe_version// /_}.${3}"
-}
-
-fetch() {
-    # Usage: fetch <dest> <url>
-    curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$1.part" "$2" && mv "$1.part" "$1"
-}
-
-download_if_missing() {
-    # Usage: download_if_missing <dest> <url>
-    if [[ -f "$1" ]]; then
-        echo "[DEBUG] Using cached $1" >&2
-        return 0
-    fi
-    fetch "$1" "$2"
-}
-
-verify() {
-    # Usage: verify <file> <asset-name-in-checksum-file> <checksum-file>
-    # Checksum lines look like "<sha256>  <name>" or "<sha256> *<name>".
-    local want
-    want="$(awk -v n="$2" '{f=$2; sub(/^\*/, "", f); if (f == n) {print $1; exit}}' "$3")"
-    [[ -n "$want" ]] || { echo "No checksum for $2 in $3" >&2; return 1; }
-    echo "${want}  $1" | sha256sum -c -
-}
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT

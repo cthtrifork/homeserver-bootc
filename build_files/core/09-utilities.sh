@@ -3,13 +3,8 @@ set -euo pipefail
 
 trap '[[ $BASH_COMMAND != echo* ]] && [[ $BASH_COMMAND != log* ]] && echo "+ $BASH_COMMAND"' DEBUG
 
-log() {
-    echo "=== $* ==="
-}
-
-debug() {
-    echo "[DEBUG] $*" >&2
-}
+# shellcheck source=../download-lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../download-lib.sh"
 
 PLATFORM_ARCH="$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')" # amd64
 HOST_ARCH="$(uname -m)"                                               # x86_64
@@ -21,46 +16,6 @@ mkdir -p "$BIN_DIR" "$COMPLETION_DIR" "$BIN_DIR/.docker" /runner/cache
 
 setfattr -n user.component -v "utilities" /usr/local/bin
 setfattr -n user.component -v "utilities" /usr/local/share/bash-completion
-
-tmp_name() {
-    # Usage: tmp_name <name> <version> <ext>
-    # Normalizes version to be filesystem-safe.
-    local name="$1"
-    local version="$2"
-    local ext="$3"
-    local safe_version="${version//\//-}"
-    safe_version="${safe_version// /_}"
-    echo "/runner/cache/${name}-${safe_version}.${ext}"
-}
-
-download_if_missing() {
-    # Usage: download_if_missing <dest> <url>
-    local dest="$1"
-    local url="$2"
-
-    if [[ -f "$dest" ]]; then
-        debug "Using cached $dest"
-        return 0
-    fi
-
-    curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$dest.part" "$url" && mv "$dest.part" "$dest"
-}
-
-download_if_missing_cmd() {
-    # Usage: download_if_missing_cmd <dest> <command...>
-    # Runs the command ONLY if <dest> is missing, and expects the command to print the URL.
-    local dest="$1"
-    shift
-
-    if [[ -f "$dest" ]]; then
-        debug "Using cached $dest"
-        return 0
-    fi
-
-    local url
-    url="$("$@")"
-    curl -fsSL --retry 5 --retry-delay 5 --retry-all-errors -o "$dest.part" "$url" && mv "$dest.part" "$dest"
-}
 
 extract() {
     # Extracts the specified archive to BIN_DIR and ensures correct ownership
