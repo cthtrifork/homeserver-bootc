@@ -530,8 +530,23 @@ jobs:
         with:
           trivy_version: ${{ env.TRIVY_VERSION }}
 
+      # A new image has no published :latest yet, so there is nothing to diff against until its first release.
+      - name: Check for a published baseline (:latest)
+        id: baseline
+        env:
+          IMAGE_FULL: ${{ env.IMAGE_FULL }}
+        run: | #sh
+          if skopeo inspect --raw "docker://${IMAGE_FULL}:latest" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No ${IMAGE_FULL}:latest yet, skipping the baseline comparison"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
+        with:
+          pull_latest: ${{ steps.baseline.outputs.exists }}
 
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -550,6 +565,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Trivy vuln scan (JSON) - latest
+        if: ${{ steps.baseline.outputs.exists == 'true' }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE_FULL }}:latest
@@ -565,6 +581,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Generate a report for the PR
+        if: ${{ steps.baseline.outputs.exists == 'true' }}
         uses: ./.github/actions/pr-report
 
       - name: Build cleanup
