@@ -145,9 +145,10 @@ jobs:
 
       # Rolling cache: restore the newest entry for this image (the key is unique per run, so it is
       # always a prefix match and cache-hit is never 'true'); the save happens at the end of the job.
+      # claude-vm does not use /runner/cache, so it skips the whole cache lifecycle.
       - name: Restore runner cache
         id: runner-cache
-        if: ${{ runner.environment != 'self-hosted' }}
+        if: ${{ runner.environment != 'self-hosted' && inputs.image != 'claude-vm' }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -165,6 +166,11 @@ jobs:
           echo "Deleting old files:"
           find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
           find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
+
+      - name: Fingerprint runner cache
+        id: cache-before
+        if: ${{ runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' }}
+        run: echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Buildah build
         id: build-image
@@ -279,11 +285,15 @@ jobs:
       # build still keeps what it downloaded. The build runs as root via sudo, so hand the files
       # back to the runner user for the cache tar.
       - name: Fix runner cache ownership
-        if: ${{ always() && runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
-        run: sudo chown -R "$(id -u):$(id -g)" /home/runner/.cache/tmp || true
+        id: cache-after
+        if: ${{ always() && runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' }}
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" /home/runner/.cache/tmp || true
+          echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
+      # Skip the ~800 MB upload when the file list did not change during this run.
       - name: Save runner cache
-        if: ${{ always() && runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
+        if: ${{ always() && runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' && steps.cache-after.outputs.sum != steps.cache-before.outputs.sum }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -291,7 +301,7 @@ jobs:
           key: cache-runners-${{ inputs.image }}-${{ github.run_id }}
 
       - name: Prune old runner caches
-        if: ${{ always() && runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
+        if: ${{ always() && runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' && steps.cache-after.outputs.sum != steps.cache-before.outputs.sum }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
