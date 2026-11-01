@@ -12,4 +12,4 @@ debug() {
 }
 
 log "Syncing system files from build context"
-rsync -rvpK /ctx/system_files/homeserver-gui/ /
+rsync -rlvpK /ctx/system_files/homeserver-gui/ /

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-SOPS_AGE_KEY="$(cat /run/secrets/agekey)"
-install -D -m 0600 /run/secrets/agekey /usr/lib/sops/age/keys.txt
-chown root:root /usr/lib/sops/age/keys.txt
-chmod 0640 /usr/lib/sops/age/keys.txt
-printf "export SOPS_AGE_KEY=%s\n" "$SOPS_AGE_KEY" | tee /etc/profile.d/61-age-sops-private.sh 1>/dev/null
+# Root-only age key. Users get their own 0600 copy via tmpfiles.d
+# (13-caspertdk-sops.conf); nothing is exported into login shells.
+install -D -m 0600 -o root -g root /run/secrets/agekey /usr/lib/sops/age/keys.txt

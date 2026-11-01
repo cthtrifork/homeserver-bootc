@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
+set -euo pipefail
 # todo: move to system_files/homeserver/usr/lib/tmpfiles.d/link-podman-credentials.conf ?
 cp /run/secrets/creds /usr/lib/container-auth.json
 chmod 0600 /usr/lib/container-auth.json
 # For rpm-ostree / bootc / ostree-container pulls
+mkdir -p /etc/ostree
 ln -sf /usr/lib/container-auth.json /etc/ostree/auth.json
 # For podman/skopeo/buildah (root context)
 mkdir -p /etc/containers && \

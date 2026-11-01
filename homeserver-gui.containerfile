@@ -51,8 +51,9 @@ RUN dnf group install -y multimedia && \
 # AGE and SOPS
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh
 
-RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
-    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/62-registry-auth-private.sh 1> /dev/null
+# Registry/GitHub token: root-only file, read at runtime (copied 0600 to the user via tmpfiles.d)
+RUN --mount=type=secret,id=registry_token,required=true \
+    install -D -m 0600 -o root -g root /run/secrets/registry_token /usr/lib/homeserver/github-token
 
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
