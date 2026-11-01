@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+# Seed (or rotate) the GitHub token used by the Claude Remote Control service.
+#   sudo claude-vm-seed-github-token            # prompts, input hidden
+#   sudo claude-vm-seed-github-token < file     # or pipe it in
+# The token is never taken as an argument so it stays out of shell history and `ps`.
+set -euo pipefail
+
+dest=/etc/claude-vm/github-token
+
+[[ $EUID -eq 0 ]] || { echo "Run as root: sudo $0" >&2; exit 1; }
+
+if [[ -t 0 ]]; then
+    read -rsp "GitHub token: " token
+    echo
+else
+    token="$(cat)"
+fi
+token="${token//[[:space:]]/}"
+
+[[ -n "$token" ]] || { echo "Empty token, nothing written." >&2; exit 1; }
+if [[ "$token" == *"BEGIN"*"PRIVATE KEY"* ]]; then
+    echo "That looks like a private key. This VM only takes a GitHub token." >&2
+    exit 1
+fi
+
+install -d -m 0700 -o root -g root "$(dirname "$dest")"
+tmp="$(mktemp "$dest.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+chmod 0600 "$tmp"
+printf '%s\n' "$token" >"$tmp"
+mv -f "$tmp" "$dest"
+trap - EXIT
+echo "Token stored in $dest (root-only, 0600)."
+
+systemctl restart --no-block claude-remote-control.service || true
+echo "Service (re)start requested; it stays idle until 'claude' has been signed in as user 'claude'."

@@ -1,0 +1,32 @@
+[Unit]
+Description=Claude Code Remote Control
+Documentation=https://code.claude.com/docs/en/remote-control
+After=network-online.target systemd-tmpfiles-setup.service
+Wants=network-online.target
+# Stays inert until both manual steps are done: token seeded + `claude` signed in/trusted.
+ConditionPathExists=/etc/claude-vm/github-token
+ConditionPathExists=/var/home/claude/.claude/.credentials.json
+
+[Service]
+Type=simple
+User=claude
+Group=claude
+WorkingDirectory=/var/home/claude/workspace
+Environment=HOME=/var/home/claude
+Environment=DISABLE_AUTOUPDATER=1
+LoadCredential=github-token:/etc/claude-vm/github-token
+ExecStart=/usr/libexec/claude-vm/run-remote-control
+Restart=always
+RestartSec=15
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/home/claude /var/tmp
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target
