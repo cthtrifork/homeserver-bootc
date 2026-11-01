@@ -50,11 +50,11 @@ service as a systemd credential. The Claude login lives in `/var/home/claude/.cl
 `claude-pinggy.service` opens a free [Pinggy](https://pinggy.io/docs/run_tunnel_on_startup/linux/) TCP tunnel to the
 local sshd (`ssh -p 443 -R0:localhost:22 tcp@free.pinggy.io`), like `pinggy.service` on the home server, so you can
 log in without knowing the VM's IP. It needs **no account or token**, which keeps the image secret-free. It runs as a
-throwaway `DynamicUser` and is enabled by default. It does not start when the kernel command line contains
-`claude-vm.no-tunnel`, which the CI e2e test sets.
+throwaway `DynamicUser`. It is **opt-in**: shipped disabled, so a fresh VM (and the CI e2e VM) opens no tunnel until
+you run `sudo systemctl enable --now claude-pinggy`.
 
 ```sh
-# on the VM (console, or via claude.ai/code): print the current address
+# on the VM (after enabling the service above): print the current address
 claude-vm-ssh-address        # ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
 # or: journalctl -u claude-pinggy | grep 'tunnel up'
 
@@ -66,7 +66,7 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
   and systemd then restarts the tunnel with a new address, so re-run `claude-vm-ssh-address` if a login stops working.
   For a fixed address use a paid Pinggy token as on the home server (not wired up here, to keep the image secret-free).
 - **Anyone can reach the port, so only the key matters.** Password login is off and only the keys in
-  `authorized_keys.pub` work, but the sshd is on the internet and will see scan traffic. Disable it with
+  `authorized_keys.pub` work, but the sshd is on the internet and will see scan traffic. Turn it off with
   `sudo systemctl disable --now claude-pinggy` when you do not need it.
 
 ## Security model
@@ -137,7 +137,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 ## Tests
 
 `tests/claude-vm/` runs in QEMU when a pull request has the `e2e` label. The system test checks the tools, that the
-service is enabled but idle, that the Pinggy tunnel unit is enabled, the staged-update notice, the policy, that `bubblewrap` starts under the service's
+service is enabled but idle, that the Pinggy tunnel unit is present but not enabled, the staged-update notice, the policy, that `bubblewrap` starts under the service's
 hardening, users and SSH, home directories and lingering, and that no key or token file is on the VM. The user test
 checks that the seed helper refuses a private key, then, as `claude`, runs Python, builds a Go program and runs a real
 rootless podman container.

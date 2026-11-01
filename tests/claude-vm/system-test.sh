@@ -19,15 +19,13 @@ if systemctl is-active --quiet claude-remote-control.service; then
     echo "claude-remote-control is running but nothing was seeded"
     exit 1
 fi
-# free Pinggy SSH tunnel: enabled, throwaway user, no token anywhere (needs the internet, so only the unit is checked)
-systemctl is-enabled --quiet claude-pinggy.service
-systemctl cat claude-pinggy.service | grep -q '^DynamicUser=yes'
-# the e2e VM boots with claude-vm.no-tunnel, so the tunnel must not run here
-grep -qw 'claude-vm.no-tunnel' /proc/cmdline
-if systemctl is-active --quiet claude-pinggy.service; then
-    echo "claude-pinggy is running in the e2e test"
+# free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
+systemctl cat claude-pinggy.service >/dev/null
+if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --quiet claude-pinggy.service; then
+    echo "claude-pinggy must be opt-in"
     exit 1
 fi
+systemctl cat claude-pinggy.service | grep -q '^DynamicUser=yes'
 test -x /usr/bin/claude-vm-ssh-address
 # nightly bootc upgrade is staged only (no --apply, so no reboot)
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer

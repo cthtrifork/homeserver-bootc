@@ -53,7 +53,7 @@ COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.p
 
 COPY system_files/claude-vm/ /
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \
-    && systemctl enable claude-remote-control.service claude-pinggy.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
+    && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
 # runner UID, which does not exist in the image), which that lint reports as an unknown user.

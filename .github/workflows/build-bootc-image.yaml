@@ -538,8 +538,6 @@ jobs:
         uses: ./.github/actions/bootc-install-disk
         with:
           authorized_keys_file: out/authorized_keys
-          # keep the claude-vm Pinggy tunnel off in CI (see claude-pinggy.service)
-          kargs: ${{ inputs.image == 'claude-vm' && 'claude-vm.no-tunnel' || '' }}
 
       - name: Boot QEMU (headless) with SSH forward
         env:

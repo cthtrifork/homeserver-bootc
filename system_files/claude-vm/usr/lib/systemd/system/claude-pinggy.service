@@ -1,14 +1,13 @@
 # Free Pinggy SSH tunnel (no token) so the VM can be reached from outside. Login stays key-only
 # (PasswordAuthentication no) with the same public keys as the home server.
-# Disable with: sudo systemctl disable --now claude-pinggy
+# Opt-in, not enabled in the image: sudo systemctl enable --now claude-pinggy
+# Turn off again with: sudo systemctl disable --now claude-pinggy
 # https://pinggy.io/docs/run_tunnel_on_startup/linux/
 [Unit]
 Description=Pinggy free SSH tunnel
 Documentation=https://pinggy.io/docs/
 After=network-online.target sshd.service
 Wants=network-online.target
-# CI (e2e test) boots with claude-vm.no-tunnel on the kernel command line: no public tunnel from a test VM
-ConditionKernelCommandLine=!claude-vm.no-tunnel
 
 [Service]
 Type=simple

@@ -4,10 +4,6 @@ inputs:
   authorized_keys_file:
     description: "File with the public key(s) to authorize for root SSH access"
     required: true
-  kargs:
-    description: "Space-separated kernel arguments added to the installed system (bootc install --karg)"
-    default: ""
-    required: false
   disk_size:
     description: "Size of the (sparse) raw disk"
     default: "30G"
@@ -36,7 +32,6 @@ runs:
         IMAGE: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
         AUTHORIZED_KEYS: ${{ inputs.authorized_keys_file }}
         DISK_SIZE: ${{ inputs.disk_size }}
-        KARGS: ${{ inputs.kargs }}
       run: | #sh
         set -euo pipefail
 
@@ -69,11 +64,6 @@ runs:
           SOURCE_ARGS=(--source-imgref "containers-storage:${IMAGE}" --target-imgref "${IMAGE}")
         fi
 
-        KARG_ARGS=()
-        for karg in ${KARGS}; do
-          KARG_ARGS+=(--karg "${karg}")
-        done
-
         # image must already be in root containers-storage (see load-image with run_as_sudo)
         sudo podman run \
           --rm \
@@ -92,7 +82,6 @@ runs:
             --generic-image \
             --filesystem xfs \
             --root-ssh-authorized-keys /authorized_keys \
-            "${KARG_ARGS[@]}" \
             /output/disk.raw
 
         echo "path=${DISK}" >> "$GITHUB_OUTPUT"
