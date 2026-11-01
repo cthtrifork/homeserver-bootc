@@ -20,6 +20,8 @@ flowchart LR
         SETUP["Manual setup:<br/>GitHub token + Claude login"]
         RC["claude remote-control<br/>(user: claude)"]
         SB["Sandboxed shell<br/>limited paths + domains"]
+        POD["Rootless podman<br/>(approved commands)"]
+        GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
         UPD["Daily: stage update<br/>(applies on reboot)"]
         SSH["SSH<br/>(caspertdk, keys only)"]
     end
@@ -27,8 +29,13 @@ flowchart LR
     REG -->|install / pull| VM
     SETUP --> RC
     RC --> SB
-    SB --> GH
-    RC <--> ANTH <--> YOU
+    RC --> POD
+    SB --> GW
+    POD --> GW
+    RC <--> GW
+    GW --> GH
+    GW <--> ANTH
+    ANTH <--> YOU
     REG --> UPD
     UPD -.->|notice at session start| RC
     YOU -.->|"optional Pinggy tunnel"| SSH
