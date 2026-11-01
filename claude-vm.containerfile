@@ -1,10 +1,5 @@
 # syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
-#
-# Minimal bootc VM image that runs `claude remote-control` as an unprivileged user.
-#
-# Deliberately contains NO secrets: no registry token, no age/sops key, no SSH or
-# deploy keys, no GitHub token. The GitHub token is seeded by hand after first boot
-# (see "Claude VM" in README.md), and Claude itself is signed in interactively.
+# Minimal bootc VM running `claude remote-control`; contains no secrets.
 FROM quay.io/fedora/fedora-bootc:44 AS base
 
 # Build context for the helper scripts (same pattern as homeserver.containerfile)

@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-#
-# Shared helpers for build scripts that install release binaries (sourced, not executed; build.sh only
-# runs the *.sh files inside its per-stage directories, so this file at the top level is never run on its own).
-# Used by core/09-utilities.sh and claude-vm-utilities.sh.
-#
-# Downloads are kept under CACHE_DIR (the CI runner cache, bind-mounted by the build workflow) so an unchanged
-# version is not downloaded again.
+# Shared helpers for the release-binary install scripts (sourced, not executed).
 
 CACHE_DIR="${CACHE_DIR:-/runner/cache}"
 
