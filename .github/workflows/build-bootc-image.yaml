@@ -54,12 +54,10 @@ jobs:
         with:
           version: ${{ env.CRANE_VERSION }}
 
-      - name: Set up image
-        uses: ./.github/actions/setup-image
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
         with:
           image: ${{ inputs.image }}
-          registry-token: ${{ secrets.PAT_RENOVATEBOT }} # a ghcr.io image of another repository needs a PAT
-          auth-file-path: ${{ runner.temp }}/auth.json
 
       - name: Get current date
         id: date
@@ -68,6 +66,15 @@ jobs:
           # 2022-02-08T15:38:15Z
           # https://linux.die.net/man/1/date
           echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PAT_RENOVATEBOT }}
+          #password: ${{ github.token }}
+          auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Make registry credentials available for sudo
         shell: bash
@@ -288,10 +295,18 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up image
-        uses: ./.github/actions/setup-image
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
         with:
           image: ${{ inputs.image }}
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Prepare Podman
         uses: ./.github/actions/prepare-podman
@@ -366,10 +381,18 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up image
-        uses: ./.github/actions/setup-image
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
         with:
           image: ${{ inputs.image }}
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          #auth_file_path: ${{ runner.temp }}/auth.json
 
       - name: Get current date
         id: date
@@ -471,10 +494,17 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up image
-        uses: ./.github/actions/setup-image
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
         with:
           image: ${{ inputs.image }}
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare Podman
         uses: ./.github/actions/prepare-podman
@@ -608,10 +638,17 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up image
-        uses: ./.github/actions/setup-image
+      - name: Set image vars
+        uses: ./.github/actions/set-image-vars
         with:
           image: ${{ inputs.image }}
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
         id: push-latest
