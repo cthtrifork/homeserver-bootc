@@ -11,8 +11,8 @@ FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
-ARG HADOLINT_VERSION=v2.12.0 # renovate: datasource=github-releases packageName=hadolint/hadolint
-ARG ACTIONLINT_VERSION=v1.7.7 # renovate: datasource=github-releases packageName=rhysd/actionlint
+ARG HADOLINT_VERSION=v2.15.1 # renovate: datasource=github-releases packageName=hadolint/hadolint
+ARG ACTIONLINT_VERSION=v1.7.12 # renovate: datasource=github-releases packageName=rhysd/actionlint
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman, plus linters/formatters
 # (ShellCheck, shfmt, yamllint, jq/yq; hadolint and actionlint are installed below).
@@ -49,10 +49,10 @@ RUN set -eux; cd /tmp; \
 # checksum file (amd64)
 RUN set -eux; cd /tmp; \
     base="https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}"; \
-    curl -fsSL -O "${base}/hadolint-Linux-x86_64" -O "${base}/hadolint-Linux-x86_64.sha256"; \
-    sha256sum -c hadolint-Linux-x86_64.sha256; \
-    install -m 0755 hadolint-Linux-x86_64 /usr/bin/hadolint; \
-    rm -f hadolint-Linux-x86_64 hadolint-Linux-x86_64.sha256; \
+    curl -fsSL -O "${base}/hadolint-linux-x86_64" -O "${base}/checksums.sha256"; \
+    grep ' \*\?hadolint-linux-x86_64$' checksums.sha256 | sha256sum -c -; \
+    install -m 0755 hadolint-linux-x86_64 /usr/bin/hadolint; \
+    rm -f hadolint-linux-x86_64 checksums.sha256; \
     hadolint --version
 RUN set -eux; cd /tmp; \
     base="https://github.com/rhysd/actionlint/releases/download/${ACTIONLINT_VERSION}"; \
