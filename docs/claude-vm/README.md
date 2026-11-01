@@ -215,7 +215,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
 | `sandbox.filesystem.denyRead` | `~/.claude/.credentials.json` | the login token is hidden from commands |
-| `managed-mcp.json` | `context7` (`https://mcp.context7.com/mcp`) | library docs for Claude; this file is the only MCP config Claude Code loads, and its host is on the allowlist |
+| `~/.claude.json` (seeded, not managed) | `context7` (`https://mcp.context7.com/mcp`) | user-scope MCP server for library docs; tmpfiles copies it only if the file is missing, and its host is on the allowlist |
 | `sandbox.network.allowedDomains` | generated at build time from `egress-allowlist.txt` | the same list the [egress gateway](#egress-gateway) enforces |
 
 ## Tests
