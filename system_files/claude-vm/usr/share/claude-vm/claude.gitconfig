@@ -1,0 +1,5 @@
+[user]
+  name = Claude VM
+  email = claude-vm@users.noreply.github.com
+[init]
+  defaultBranch = main

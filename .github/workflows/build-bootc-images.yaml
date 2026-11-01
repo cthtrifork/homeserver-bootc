@@ -17,6 +17,7 @@ on:
         options:
           - homeserver
           - homeserver-gui
+          - claude-vm
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
@@ -95,6 +96,12 @@ jobs:
               - 'system_files/homeserver-gui/**'
               - 'homeserver-gui.containerfile'
               - '**/homeserver-gui/**'
+            claude-vm:
+              - 'system_files/claude-vm/**'
+              - 'claude-vm.containerfile'
+              - '**/claude-vm/**'
+              # the VM reuses the homeserver SSH public keys
+              - 'system_files/homeserver/usr/share/homeserver/authorized_keys.pub'
               - 'build_files/gui/**'
 
       - name: Ensure a matrix has a fallback
@@ -110,7 +117,7 @@ jobs:
             IMAGES=$(jq -cn --arg i "$OVERRIDE_IMAGE" '[$i]')
           fi
           if [ "$FORCE" == "true" ]; then
-            IMAGES='["homeserver","homeserver-gui"]'
+            IMAGES='["homeserver","homeserver-gui","claude-vm"]'
           fi
           # If no images were changed, default to building the homeserver image
           if [ "$IMAGES" == "[]" ]; then
@@ -304,7 +311,8 @@ jobs:
       - name: Extract previous manifest
         run: |
           # Work around Rechunker not being able to use private registry auth details
-          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json
+          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json \
+            || { echo "No previous manifest (first build of this image?)"; echo '{}' > previous.manifest.json; }
 
       - name: Clean stale rechunk cache
         run: sudo podman volume rm -f cache_ostree || true
