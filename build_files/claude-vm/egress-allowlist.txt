@@ -16,7 +16,20 @@ github.com
 githubassets.com
 githubcopilot.com
 githubusercontent.com
+npmjs.com
 npmjs.org
+crates.io
+rubygems.org
+repo.maven.apache.org
+plugins.gradle.org
+nuget.org
+pkg.go.dev
+nodejs.org
+astral.sh
+bun.sh
+rustup.rs
+static.rust-lang.org
+fedoraproject.org
 pypi.org
 files.pythonhosted.org
 proxy.golang.org
@@ -25,10 +38,12 @@ debian.org
 wails.io
 
 # Container registries
+docker.io
+gcr.io
 ghcr.io
+registry.k8s.io
 quay.io
 mcr.microsoft.com
-mirror.gcr.io
 cgr.dev
 registry.access.redhat.com
 
@@ -36,4 +51,9 @@ registry.access.redhat.com
 docs.docker.com
 developers.redhat.com
 api.first.org
+nvd.nist.gov
+osv.dev
+security.snyk.io
+developer.mozilla.org
+stackoverflow.com
 www.cisa.gov
