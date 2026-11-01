@@ -27,6 +27,7 @@ if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --q
 fi
 systemctl cat claude-pinggy.service | grep -q '^DynamicUser=yes'
 test -x /usr/bin/claude-vm-ssh-address
+grep -q claude-vm-ssh-address /etc/claude-code/CLAUDE.md
 # nightly bootc upgrade is staged only (no --apply, so no reboot)
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'

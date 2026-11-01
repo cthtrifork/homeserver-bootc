@@ -101,6 +101,8 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
   An unreachable VM shows as an offline session at claude.ai/code. For a push when a task finishes or needs a
   decision, run `/config` once in an interactive `claude` as `claude` and enable the push options
   ([push notifications](https://code.claude.com/docs/en/remote-control.md#mobile-push-notifications)).
+- **Claude knows about the tunnel.** `/etc/claude-code/CLAUDE.md` is managed memory loaded in every session. It tells
+  Claude to run `claude-vm-ssh-address` when you ask how to SSH in, so you can just ask it.
 - **`/var` and `/etc` are not re-applied on upgrade.** tmpfiles `C` never overwrites, so `authorized_keys` is copied from
   the image only if absent. **Revoking a key in a later image does not reach VMs that already booted**: edit
   `~caspertdk/.ssh/authorized_keys` on each VM. A hand-edited `/etc` file stops following the image; keep local
