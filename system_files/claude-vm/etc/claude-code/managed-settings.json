@@ -6,10 +6,20 @@
     "enabled": true,
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
-    "excludedCommands": ["podman *"],
+    "excludedCommands": [
+      "podman *"
+    ],
     "filesystem": {
-      "allowWrite": ["~/.npm-global", "~/.npm", "~/.local", "~/.cache", "~/go"],
-      "denyRead": ["~/.claude/.credentials.json"]
+      "allowWrite": [
+        "~/.npm-global",
+        "~/.npm",
+        "~/.local",
+        "~/.cache",
+        "~/go"
+      ],
+      "denyRead": [
+        "~/.claude/.credentials.json"
+      ]
     },
     "network": {
       "allowedDomains": [
@@ -21,7 +31,21 @@
         "files.pythonhosted.org",
         "ghcr.io",
         "proxy.golang.org",
-        "sum.golang.org"
+        "sum.golang.org",
+        "*.wails.io",
+        "*.frame.claudeusercontent.com",
+        "*.frame.staging.claudeusercontent.com",
+        "quay.io",
+        "*.debian.org",
+        "*.quay.io",
+        "api.first.org",
+        "www.cisa.gov",
+        "mcr.microsoft.com",
+        "mirror.gcr.io",
+        "docs.docker.com",
+        "cgr.dev",
+        "developers.redhat.com",
+        "registry.access.redhat.com"
       ]
     }
   },
@@ -31,7 +55,10 @@
       {
         "matcher": "startup|resume",
         "hooks": [
-          { "type": "command", "command": "/usr/libexec/claude-vm/session-start-note" }
+          {
+            "type": "command",
+            "command": "/usr/libexec/claude-vm/session-start-note"
+          }
         ]
       }
     ]
