@@ -34,7 +34,9 @@ systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet
 
 echo "--- egress gateway ---"
 for u in nft proxy dns; do systemctl is-active --quiet "claude-vm-egress-$u.service"; done
-sudo nft list table inet claude_egress | grep -q 'meta skuid != @agent_uids'
+# capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
+rules="$(sudo nft list table inet claude_egress)"
+grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
 grep -qx 'github.com' /usr/share/claude-vm/egress/allowlist.txt
@@ -42,7 +44,8 @@ grep -qx 'anthropic.com' /usr/share/claude-vm/egress/allowlist.txt
 if grep -qx 'example.com' /usr/share/claude-vm/egress/allowlist.txt; then echo 'example.com must not be allowlisted'; exit 1; fi
 [ "$(jq '.sandbox.network.allowedDomains | length' /etc/claude-code/managed-settings.json)" = "$(( 2 * $(wc -l </usr/share/claude-vm/egress/allowlist.txt) ))" ]
 jq -e '.sandbox.network.allowedDomains | index("github.com") and index("*.github.com")' /etc/claude-code/managed-settings.json >/dev/null
-systemctl show -p Requires claude-remote-control.service | grep -q claude-vm-egress-proxy
+requires="$(systemctl show -p Requires --value claude-remote-control.service)"
+grep -qF claude-vm-egress-proxy <<<"$requires"
 
 echo "--- staged-update notice ---"
 sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null
