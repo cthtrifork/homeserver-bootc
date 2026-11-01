@@ -18,7 +18,7 @@
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
-    "allowUnsandboxedCommands": false,
+    "allowUnsandboxedCommands": true,
     "excludedCommands": [
       "podman *"
     ],

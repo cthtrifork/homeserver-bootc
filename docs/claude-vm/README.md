@@ -232,7 +232,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
-| `sandbox.allowUnsandboxedCommands` | `false` | the model cannot retry a command outside the sandbox |
+| `sandbox.allowUnsandboxedCommands` | `true` | the model may retry a command outside the sandbox (`dangerouslyDisableSandbox`); each such call still needs approval |
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
 | `permissions.deny` / `sandbox.filesystem.denyWrite` | shell rc files, `~/.ssh`, `~/.gitconfig`, `~/.config/{systemd,autostart,containers/systemd,git}` | persistence and code-execution paths: the file tools (Edit/Write) run outside the sandbox, and podman lingering would start user units at boot |
