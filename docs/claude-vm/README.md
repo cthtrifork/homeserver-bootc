@@ -147,6 +147,10 @@ copy of the nginx binary under `/usr/libexec/claude-vm/` (`bin_t`, so `unconfine
 helpers) because the packaged binary's `httpd_t` domain may not connect to upstream servers without
 `httpd_can_network_connect`, which would allow all ports anyway. It still runs as the unprivileged `nginx` user with
 systemd sandboxing.
+systemd-resolved's varlink socket (`/run/systemd/resolve/io.systemd.Resolve`, used by glibc's `nss-resolve`) is root-only: otherwise `getent`,
+curl and python would resolve any name through it and bypass the DNS filter. Other users fall back to the `dns` NSS module and
+the filtered `127.0.0.53` stub. (The resolved D-Bus API is still open to `claude`, so a program that calls it deliberately can
+resolve arbitrary names.)
 Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel (a `DynamicUser`) are **not** restricted.
 `claude-remote-control` requires all three units: without them it does not start, and the user has no network anyway.
 

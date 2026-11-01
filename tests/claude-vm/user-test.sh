@@ -44,10 +44,25 @@ sudo -u claude -H bash -lc '
 echo "--- egress allowlist: claude user and podman subuid range ---"
 as_agent() { sudo -u claude -H "$@"; }
 # set -e ignores a failing "! cmd", so negative checks go through this
-must_fail() { if "$@" >/dev/null 2>&1; then echo "should have been blocked: $*"; exit 1; fi; }
+must_fail() { if "$@" >/dev/null 2>&1; then echo "should have been blocked: $*"; diagnose; exit 1; fi; }
+# raw UDP DNS query as claude to the stub resolver in /etc/resolv.conf; prints the response code (0 ok, 5 refused)
+dns_rcode() {
+    as_agent python3 - "$1" <<'PY'
+import socket, struct, sys
+name = sys.argv[1]
+query = struct.pack(">HHHHHH", 1, 0x0100, 1, 0, 0, 0) + b"".join(bytes([len(p)]) + p.encode() for p in name.split(".")) + b"\0\0\1\0\1"
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.settimeout(5)
+sock.sendto(query, ("127.0.0.53", 53))
+print(sock.recv(512)[3] & 15)
+PY
+}
 # allowed: on the list (DNS + SNI pass)
 as_agent curl -sS --max-time 20 -o /dev/null https://github.com
 as_agent getent hosts github.com >/dev/null
+# the DNS filter itself: a listed name is answered, anything else is refused (rcode 5)
+[ "$(dns_rcode github.com)" = 0 ]
+[ "$(dns_rcode example.com)" = 5 ]
 # blocked: not on the list (DNS refused), IP literal (no SNI), other ports, subuid range (host-network containers)
 must_fail as_agent getent hosts example.com
 must_fail as_agent curl -sS --max-time 10 -o /dev/null https://example.com

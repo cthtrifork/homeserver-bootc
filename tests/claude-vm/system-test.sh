@@ -48,6 +48,8 @@ test -x /usr/libexec/claude-vm/egress-proxy
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
+# resolved's varlink socket (glibc nss-resolve) bypasses the DNS redirect for everyone but root
+[ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
 grep -qF '127.0.0.1:8443' <<<"$tcp"
