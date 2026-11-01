@@ -60,7 +60,7 @@ COPY system_files/claude-vm/ /
 # Egress allowlist: validate it (fails the build on a bad entry) and derive the sandbox's allowedDomains and the
 # gateway's nginx/dnsmasq lists from the one source file.
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
-    /ctx/build_files/claude-vm/egress-allowlist.sh /ctx/build_files/claude-vm/egress-allowlist.txt \
+    python3 /ctx/build_files/claude-vm/egress_allowlist.py /ctx/build_files/claude-vm/egress-allowlist.txt \
         /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
 
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \

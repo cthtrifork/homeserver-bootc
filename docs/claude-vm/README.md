@@ -107,12 +107,15 @@ enforced in the kernel for the user's UID, so it does not depend on the sandbox 
   connects to that name itself; unlisted names are dropped (403 for HTTP). An IP address with no SNI is dropped.
 - **`claude-vm-egress-dns`** (dnsmasq): forwards only allowlisted domains to the system resolver and refuses the rest.
 - **One allowlist:** `build_files/claude-vm/egress-allowlist.txt` (one domain per line; a domain also covers its
-  subdomains). `build_files/claude-vm/egress-allowlist.sh` runs during the image build, **fails the build** on an invalid,
-  duplicate or redundant entry (wildcards, uppercase, IPs, ports, `api.github.com` next to `github.com`), and derives
+  subdomains). `build_files/claude-vm/egress_allowlist.py` runs during the image build, **fails the build** on an invalid,
+  duplicate or redundant entry (wildcards, uppercase, IPs, ports, `api.github.com` next to `github.com`; every problem
+  is reported with its line number), and derives
   from it `sandbox.network.allowedDomains` in the managed settings (`d` and `*.d` per entry) and the gateway's
   `nginx-allow.map` and `dnsmasq-servers` in `/usr/share/claude-vm/egress/`, which the static configs
   `/usr/share/claude-vm/egress-nginx.conf` and `egress-dnsmasq.conf` include. Nothing is generated at boot.
 - `claude-remote-control` requires all three units. Without them it does not start, and the user has no network anyway.
+
+The script has unit tests (`python3 -m unittest discover -s build_files/claude-vm`, run by the lint workflow).
 
 To allow another host, add it to `egress-allowlist.txt` and rebuild the image (it also allows it in the Claude sandbox, so
 approving a sandbox prompt for it is not enough; the gateway is stricter than the prompt).

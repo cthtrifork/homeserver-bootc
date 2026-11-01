@@ -69,6 +69,17 @@ jobs:
           mapfile -t files < <(git ls-files '*.sh' | while read -r f; do head -n1 "$f" | grep -qE '^#!.*(ba)?sh' && echo "$f"; done)
           shellcheck --severity=error "${files[@]}"
 
+  build-script-tests:
+    name: build script tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test the claude-vm egress allowlist build step (also validates the shipped allowlist)
+        run: | #sh
+          python3 -m unittest discover -s build_files/claude-vm -v
+
   hadolint:
     name: hadolint
     runs-on: ubuntu-latest
