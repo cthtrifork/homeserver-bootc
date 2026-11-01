@@ -78,12 +78,3 @@ podman build \
 
 `tests/homeserver/system-test.sh` and `user-test.sh`, run in QEMU when a pull request has the `e2e` label. The shared
 `tests/diagnostics.sh` runs for every image, and `tests/verify-cosign.sh` for the home server images.
-
-## Updates
-
-`bootc-fetch-apply-updates.timer` checks once a night at 04:00 (up to 30 minutes of random delay; a missed check runs
-soon after boot). Images only change on pushes to main and the Sunday build, so polling more often found nothing.
-`bootc upgrade` always stages a new image, but `/usr/libexec/homeserver/apply-staged-update` reboots into it only when
-no user is logged in, no libvirt VM is running and the 15 minute load average is below half the core count. Otherwise
-the image stays staged and the next night tries again. `sudo FORCE=1 /usr/libexec/homeserver/apply-staged-update`
-reboots right away.

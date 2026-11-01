@@ -19,9 +19,7 @@ Plasma desktop. Back to the [main README](../../README.md).
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.
 - **No pinggy tunnel:** `build_files/gui/21-systemd.sh` disables `pinggy.service`.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 and `bootc upgrade` does not reboot, because
-  this is a client machine. The check waits for the network, runs at idle priority and is skipped on battery
-  (`Persistent=true` runs it at the next opportunity). Drop-ins are in
-  `usr/lib/systemd/system/bootc-fetch-apply-updates.*.d/`.
+  this is a client machine. Drop-ins are in `usr/lib/systemd/system/bootc-fetch-apply-updates.*.d/`.
 
 ## CI
 
