@@ -434,8 +434,11 @@ jobs:
         with:
           trivy_version: ${{ env.TRIVY_VERSION }}
 
+      # only the PR image is scanned here, so the :latest baseline is not needed
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
+        with:
+          pull_latest: "false"
 
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
