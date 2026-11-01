@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+# Run as root by bootc-fetch-apply-updates.service after `bootc upgrade`.
+# Leaves a marker in /run when an update is staged. /run is a tmpfs, so the marker disappears on
+# reboot, which is exactly when the staged image gets applied.
+set -euo pipefail
+
+dir=/run/claude-vm
+marker="$dir/update-staged"
+
+if bootc status --json | jq -e '.status.staged != null' >/dev/null; then
+    install -d -m 0755 "$dir"
+    touch "$marker"
+else
+    rm -f "$marker"
+fi

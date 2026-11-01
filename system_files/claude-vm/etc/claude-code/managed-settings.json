@@ -24,6 +24,17 @@
       ]
     }
   },
+  "allowManagedHooksOnly": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          { "type": "command", "command": "/usr/libexec/claude-vm/session-start-note" }
+        ]
+      }
+    ]
+  },
   "env": {
     "DISABLE_AUTOUPDATER": "1"
   }

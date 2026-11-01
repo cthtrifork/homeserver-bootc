@@ -41,7 +41,7 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.pub /usr/share/claude-vm/authorized_keys.pub
 
 COPY system_files/claude-vm/ /
-RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/run-remote-control \
+RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
 
 # Guard: fail the build if anything that looks like a private key or token ended up in the image.

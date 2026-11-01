@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+# Claude Code SessionStart hook (see /etc/claude-code/managed-settings.json).
+# Tells Claude, and so you, that an OS update is staged. Silent when there is none.
+set -euo pipefail
+
+[[ -e /run/claude-vm/update-staged ]] || exit 0
+
+jq -n '{hookSpecificOutput: {hookEventName: "SessionStart",
+  additionalContext: "Heads-up for the user: a new OS image is staged on this VM and takes effect at its next reboot. Mention it once when convenient. You cannot reboot the VM yourself."}}'

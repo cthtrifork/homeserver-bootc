@@ -23,11 +23,21 @@ fi
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'
 
+echo "--- staged-update notice ---"
+bootc status --json | jq -e '.status | has("staged")' >/dev/null
+sudo /usr/libexec/claude-vm/note-staged-update
+test ! -e /run/claude-vm/update-staged   # nothing is staged on a fresh install
+sudo install -d /run/claude-vm && sudo touch /run/claude-vm/update-staged
+sudo -u claude /usr/libexec/claude-vm/session-start-note | jq -e '.hookSpecificOutput.additionalContext | test("staged")' >/dev/null
+sudo rm -f /run/claude-vm/update-staged
+[ -z "$(sudo -u claude /usr/libexec/claude-vm/session-start-note)" ]
+
 echo "--- policy and Bash sandbox ---"
 jq -e '.permissions.disableBypassPermissionsMode == "disable"
        and .sandbox.enabled and .sandbox.failIfUnavailable
        and (.sandbox.allowUnsandboxedCommands | not)
-       and (.sandbox.excludedCommands | index("podman *"))' \
+       and (.sandbox.excludedCommands | index("podman *"))
+       and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)' \
     /etc/claude-code/managed-settings.json >/dev/null
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \
