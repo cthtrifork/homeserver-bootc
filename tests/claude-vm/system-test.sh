@@ -33,7 +33,21 @@ systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'
 
 echo "--- egress gateway ---"
-for u in nft proxy dns; do systemctl is-active --quiet "claude-vm-egress-$u.service"; done
+for u in nft proxy dns; do
+    unit="claude-vm-egress-$u.service"
+    if ! timeout 30 bash -c "until systemctl is-active --quiet $unit; do sleep 1; done"; then
+        echo "$unit is not active"
+        systemctl status --no-pager "$unit" || true
+        journalctl -u "$unit" -b --no-pager -n 40 || true
+        journalctl -b --no-pager -g 'avc:' | tail -n 20 || true
+        exit 1
+    fi
+done
+tcp="$(ss -ltnH)"
+udp="$(ss -lunH)"
+grep -qF '127.0.0.1:8443' <<<"$tcp"
+grep -qF '127.0.0.1:8008' <<<"$tcp"
+grep -qF '127.0.0.55:53' <<<"$udp"
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
 rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
