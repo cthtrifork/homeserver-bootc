@@ -1,0 +1,38 @@
+#!/usr/bin/bash
+# Started by claude-pinggy.service. Opens a free Pinggy TCP tunnel to the local sshd and records the
+# public address it is given, so you can `ssh -p <port> caspertdk@<host>` into the VM from anywhere.
+#
+# Free tier, no account and no token (the image holds no secrets): the address is random and changes
+# every time the tunnel (re)starts, and Pinggy closes free tunnels after about 60 minutes. systemd
+# restarts the tunnel; read the current address with `claude-vm-ssh-address`.
+# https://pinggy.io/docs/ and https://pinggy.io/docs/run_tunnel_on_startup/linux/
+set -uo pipefail
+
+state="${RUNTIME_DIRECTORY:?not started by systemd}/address"
+host="${PINGGY_HOST:-free.pinggy.io}"
+
+rm -f "$state"
+trap 'rm -f "$state"' EXIT
+
+# Pinggy prints the tunnel URL(s) on the session's output, e.g. tcp://abcde-1-2-3-4.a.free.pinggy.link:41234
+ssh -p 443 \
+    -T \
+    -F /dev/null \
+    -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    -o ServerAliveInterval=30 \
+    -o ServerAliveCountMax=3 \
+    -o ExitOnForwardFailure=yes \
+    -o LogLevel=ERROR \
+    -R0:localhost:22 \
+    "tcp@${host}" 2>&1 |
+    while IFS= read -r line; do
+        if [[ "$line" =~ tcp://([A-Za-z0-9.-]+):([0-9]+) ]]; then
+            printf '%s %s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" >"$state.tmp"
+            mv -f "$state.tmp" "$state"
+            echo "Pinggy tunnel up: ssh -p ${BASH_REMATCH[2]} caspertdk@${BASH_REMATCH[1]}"
+        fi
+    done
+
+# ssh ended (free tunnel expired or network lost); exit non-zero so systemd restarts us
+exit 1

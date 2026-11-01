@@ -18,7 +18,7 @@ ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=goo
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
-        bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
@@ -52,7 +52,7 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.pub /usr/share/claude-vm/authorized_keys.pub
 
 COPY system_files/claude-vm/ /
-RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/* \
+RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the

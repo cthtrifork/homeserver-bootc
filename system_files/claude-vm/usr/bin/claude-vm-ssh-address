@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+# Print the current public SSH address of this VM (free Pinggy tunnel, see claude-pinggy.service).
+# The address changes whenever the tunnel restarts, and Pinggy's free tier restarts it about hourly.
+set -euo pipefail
+
+file=/run/claude-pinggy/address
+
+if [[ ! -s "$file" ]]; then
+    echo "No tunnel address yet. Check: systemctl status claude-pinggy; journalctl -u claude-pinggy" >&2
+    exit 1
+fi
+
+read -r host port <"$file"
+echo "ssh -p ${port} caspertdk@${host}"
