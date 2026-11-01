@@ -53,4 +53,27 @@ must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.
 # not affected: root (bootc, dnf)
 sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
+echo "--- egress allowlist: podman containers ---"
+img=quay.io/fedora/fedora:44   # has curl; quay.io is allowlisted
+agent_podman() { sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"; }
+# the container must start and curl must fail: podman's own errors (125-127) do not count as "blocked"
+container_blocked() {
+    local rc=0
+    agent_podman run --rm --pull=never "$@" >/dev/null 2>&1 || rc=$?
+    if [ "$rc" -eq 0 ] || [ "$rc" -ge 125 ]; then echo "expected curl in the container to fail (exit $rc): $*"; exit 1; fi
+}
+agent_podman pull -q "$img" >/dev/null
+agent_podman run --rm --pull=never "$img" curl --version >/dev/null
+# allowed host works from the default (pasta) network and from the host network
+agent_podman run --rm --pull=never "$img" curl -sS --max-time 20 -o /dev/null https://github.com
+agent_podman run --rm --pull=never --network=host "$img" curl -sS --max-time 20 -o /dev/null https://github.com
+# not on the list: refused name, IP literal, and host-network containers (also as a non-root user, i.e. a subuid)
+container_blocked "$img" curl -sS --max-time 10 -o /dev/null https://example.com
+container_blocked "$img" curl -sS --max-time 10 -o /dev/null https://1.1.1.1
+container_blocked --network=host "$img" curl -sS --max-time 10 -o /dev/null https://example.com
+container_blocked --network=host --user 1000:1000 "$img" curl -sS --max-time 10 -o /dev/null https://example.com
+container_blocked --network=host --user 1000:1000 "$img" curl -sS --max-time 10 -o /dev/null https://1.1.1.1
+# plain HTTP to a name that is not on the list is answered with 403 by the proxy (address pinned so DNS does not refuse first)
+[ "$(agent_podman run --rm --pull=never "$img" curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
+
 echo "✅ User testing finished"

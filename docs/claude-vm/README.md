@@ -220,7 +220,9 @@ generated allowlist files exist and the sandbox's `allowedDomains` match the all
 The user test checks that the seed helper refuses a private key, then, as `claude`, runs Python, builds a Go program and
 runs a real rootless podman container. It also exercises the gateway: an allowed host and its DNS work; a non-listed host,
 an IP literal, port 22 and the podman subuid range are blocked; plain HTTP to a non-listed `Host` gets a 403; and root is
-unaffected.
+unaffected. The same is checked from inside `podman run` containers (a curl image from quay.io): an allowed host works,
+and a non-listed host or IP literal is blocked on the default network, on `--network=host`, and as a non-root user in a
+host-network container.
 
 Not covered by CI, because it needs a logged-in Claude: the sign-in and the Remote Control session (and that it still
 reaches Anthropic through the gateway), the sandbox's network allowlist and the `SessionStart` hook inside a live session. The nightly upgrade also needs the image to be
