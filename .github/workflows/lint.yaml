@@ -52,8 +52,9 @@ jobs:
 
       - name: Run actionlint
         run: | #sh
-          # shellcheck is covered by its own job; artifact-metadata is a newer scope than actionlint knows
-          "$HOME/.local/bin/actionlint" -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"' -ignore 'of "override_image" input is not included in its options'
+          # shellcheck is covered by its own job; artifact-metadata is a newer scope than actionlint knows;
+          # 'if: false' is used deliberately to disable the image cleanup step
+          "$HOME/.local/bin/actionlint" -color -shellcheck= -ignore 'unknown permission scope "artifact-metadata"' -ignore 'of "override_image" input is not included in its options' -ignore 'constant expression "false" in condition'
 
   shellcheck:
     name: shellcheck
