@@ -179,3 +179,4 @@ jobs:
       attestations: write
       artifact-metadata: write
       pull-requests: write
+      actions: write # to prune old runner caches
