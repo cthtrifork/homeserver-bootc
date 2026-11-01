@@ -42,6 +42,7 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       attestations: write
       pull-requests: write # for PR comments
+      actions: write # to prune old runner caches
 
     steps:
       - name: Clone the repository
@@ -142,16 +143,33 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
+      # All images use /runner/cache for downloaded release binaries; hosted runners only (self-hosted keep
+      # the directory); only main saves, so PR runs do not fill the 10 GB repo cache quota.
+      - name: Runner cache config
+        id: cache-cfg
+        env:
+          SELF_HOSTED: ${{ runner.environment == 'self-hosted' }}
+        run: |
+          enabled=false; save=false
+          if [[ "${SELF_HOSTED}" != "true" ]]; then
+            enabled=true
+            [[ "${GITHUB_REF}" == "refs/heads/main" ]] && save=true
+          fi
+          echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
+          echo "save=${save}" >> "$GITHUB_OUTPUT"
+
+      # Rolling cache: restore the newest entry for this image (the key is unique per run, so it is
+      # always a prefix match and cache-hit is never 'true'); the save happens at the end of the job.
       - name: Restore runner cache
         id: runner-cache
-        if: ${{ runner.environment != 'self-hosted' }}
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: ${{ steps.cache-cfg.outputs.enabled == 'true' }}
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-runners-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
+          key: cache-runners-${{ inputs.image }}-${{ github.run_id }}
           restore-keys: |
-            cache-runners
+            cache-runners-${{ inputs.image }}-
 
       - name: Remove old runner cache
         #if: steps.runner-cache.outputs.cache-hit == 'true'
@@ -162,6 +180,11 @@ jobs:
           echo "Deleting old files:"
           find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
           find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
+
+      - name: Fingerprint runner cache
+        id: cache-before
+        if: ${{ steps.cache-cfg.outputs.save == 'true' }}
+        run: echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Buildah build
         id: build-image
@@ -271,6 +294,40 @@ jobs:
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
           auth_file_path: ${{ runner.temp }}/auth.json
+
+      # Only main saves, so PR runs do not fill the 10 GB repo cache quota. always() so a failed
+      # build still keeps what it downloaded. The build runs as root via sudo, so hand the files
+      # back to the runner user for the cache tar.
+      # The build runs as root via sudo; hand the files back to the runner user for the cache tar,
+      # then flag whether the file list changed so an identical ~800 MB cache is not uploaded again.
+      - name: Check runner cache changes
+        id: cache-after
+        if: ${{ always() && steps.cache-cfg.outputs.save == 'true' }}
+        env:
+          BEFORE: ${{ steps.cache-before.outputs.sum }}
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" /home/runner/.cache/tmp || true
+          after=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)
+          echo "changed=$([[ "${after}" != "${BEFORE}" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Save runner cache
+        if: ${{ always() && steps.cache-after.outputs.changed == 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            /home/runner/.cache/tmp
+          key: cache-runners-${{ inputs.image }}-${{ github.run_id }}
+
+      - name: Prune old runner caches
+        if: ${{ always() && steps.cache-after.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: | #sh
+          # keep only the newest entry for this image (the one just saved)
+          gh cache list --key "cache-runners-${{ inputs.image }}-" --ref refs/heads/main \
+            --sort created_at --order desc --limit 100 --json id --jq '.[1:][].id' \
+            | xargs -r -n1 gh cache delete || true
 
       - name: Build cleanup
         if: always()

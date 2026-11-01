@@ -48,12 +48,12 @@ flowchart LR
 - **SSH uses the same public keys as the home server.** `authorized_keys.pub` is copied from
   `system_files/homeserver/` at build time and installed for `caspertdk` by `11-caspertdk-ssh.conf`. Login is key-only.
   `caspertdk` has sudo; `claude` has none. Only public keys are used, so commits on the VM are not SSH-signed.
-- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh and rootless podman. `/usr` is
+- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint and rootless podman. `/usr` is
   read-only, so `npm -g`, `pip --user` and `go install` use the home directory.
 - **Egress allowlist:** everything the `claude` user runs, rootless podman containers included, can only reach the hosts in
   `build_files/claude-vm/egress-allowlist.txt`; see [Egress gateway](#egress-gateway).
-- **Versions:** Claude Code and crane are pinned by `ARG ... # renovate:` lines (Renovate's regex manager covers
-  `*.containerfile`). Everything else is a Fedora package that moves with the `fedora-bootc` base image.
+- **Versions:** Claude Code is pinned by an `ARG ... # renovate:` line in the containerfile; crane, hadolint and actionlint by
+  `# renovate:` lines in `build_files/claude-vm-utilities.sh` (downloaded checksum-verified, cached in the CI runner cache). Everything else is a Fedora package that moves with the `fedora-bootc` base image.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 with the same drop-ins as `homeserver-gui`, but
   `bootc upgrade` only stages the image. It takes effect at your next reboot, since a reboot would end a running
   session. A staged update leaves a marker in `/run` (gone after reboot), and a managed `SessionStart` hook tells
