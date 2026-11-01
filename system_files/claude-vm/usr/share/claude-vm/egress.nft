@@ -1,7 +1,7 @@
 # Egress gateway for the agent: everything the `claude` user (UID 1100) starts, including rootless podman,
 # may only talk to the local allowlist proxy (127.0.0.1:8008 http, :8443 https/SNI) and DNS filter (127.0.0.55:53).
-# The ports are ones SELinux lets the nginx (httpd_t) and dnsmasq (dnsmasq_t) domains bind: http_port_t and dns_port_t.
-# 127.0.0.53 and .54 are taken by systemd-resolved.
+# dnsmasq (dnsmasq_t) may bind dns_port_t, hence port 53 on its own address: 127.0.0.53 and .54 are taken by systemd-resolved.
+# The proxy runs unconfined (see claude-vm-egress-proxy.service), so its ports are free to choose.
 # Rootless podman: pasta opens its host-side sockets as UID 1100, so container traffic is caught too.
 # Containers that share the host network (--network=host) run their processes under the subuid range
 # (100000-165535, see /etc/subuid), so that range is matched as well.

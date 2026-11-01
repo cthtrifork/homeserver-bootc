@@ -63,6 +63,11 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     python3 /ctx/build_files/claude-vm/egress_allowlist.py /ctx/build_files/claude-vm/egress-allowlist.txt \
         /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
 
+# The egress proxy runs from a copy of nginx under /usr/libexec (bin_t -> unconfined_service_t, like the other
+# claude-vm helpers). The packaged binary runs in httpd_t, which SELinux does not let connect to upstream servers
+# (avc: denied { name_connect } ... tcontext=http_port_t) unless httpd_can_network_connect is on, which allows all ports.
+RUN install -m 0755 /usr/sbin/nginx /usr/libexec/claude-vm/egress-proxy
+
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
         claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service

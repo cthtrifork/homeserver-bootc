@@ -43,6 +43,11 @@ for u in nft proxy dns; do
         exit 1
     fi
 done
+# the proxy runs from a bin_t copy of nginx; in the packaged httpd_t domain SELinux denies its upstream connections
+test -x /usr/libexec/claude-vm/egress-proxy
+proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
+echo "egress-proxy runs as: $proxy_label"
+if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
 grep -qF '127.0.0.1:8443' <<<"$tcp"
