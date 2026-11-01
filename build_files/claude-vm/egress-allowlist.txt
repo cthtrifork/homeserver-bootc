@@ -4,7 +4,6 @@
 #   - sandbox.network.allowedDomains in /etc/claude-code/managed-settings.json (Claude Code's own proxy)
 #   - the nginx and dnsmasq allowlists of the egress gateway (see docs/claude-vm/README.md)
 
-
 # Claude Code / Remote Control
 anthropic.com
 claude.ai
