@@ -42,12 +42,19 @@ on:
           - config-interactive.toml
         default: config.toml
 
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.image_name }}-${{ inputs.type }}
+  cancel-in-progress: false
+
 jobs:
   create-image:
     name: Build ${{ inputs.type }} image
     # Pinned: ubuntu-latest (26.04) breaks osbuild's /dev mount (permission denied)
     runs-on: ${{ inputs.image_name == 'homeserver-gui-bootc' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     environment: dev
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: write
