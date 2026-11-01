@@ -8,7 +8,7 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat ssh; do
+for c in bash python3 pip3 node npm go podman skopeo crane gh git jq yq shellcheck shfmt yamllint make hadolint actionlint bwrap socat ssh; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
 

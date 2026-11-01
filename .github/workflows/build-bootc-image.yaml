@@ -143,16 +143,15 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
-      # claude-vm does not use /runner/cache; hosted runners only (self-hosted keep the directory);
-      # only main saves, so PR runs do not fill the 10 GB repo cache quota.
+      # All images use /runner/cache for downloaded release binaries; hosted runners only (self-hosted keep
+      # the directory); only main saves, so PR runs do not fill the 10 GB repo cache quota.
       - name: Runner cache config
         id: cache-cfg
         env:
-          IMAGE: ${{ inputs.image }}
           SELF_HOSTED: ${{ runner.environment == 'self-hosted' }}
         run: |
           enabled=false; save=false
-          if [[ "${IMAGE}" != "claude-vm" && "${SELF_HOSTED}" != "true" ]]; then
+          if [[ "${SELF_HOSTED}" != "true" ]]; then
             enabled=true
             [[ "${GITHUB_REF}" == "refs/heads/main" ]] && save=true
           fi
