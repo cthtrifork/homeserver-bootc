@@ -7,6 +7,8 @@ Description=Pinggy free SSH tunnel
 Documentation=https://pinggy.io/docs/
 After=network-online.target sshd.service
 Wants=network-online.target
+# CI (e2e test) boots with claude-vm.no-tunnel on the kernel command line: no public tunnel from a test VM
+ConditionKernelCommandLine=!claude-vm.no-tunnel
 
 [Service]
 Type=simple

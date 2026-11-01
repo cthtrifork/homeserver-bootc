@@ -50,7 +50,8 @@ service as a systemd credential. The Claude login lives in `/var/home/claude/.cl
 `claude-pinggy.service` opens a free [Pinggy](https://pinggy.io/docs/run_tunnel_on_startup/linux/) TCP tunnel to the
 local sshd (`ssh -p 443 -R0:localhost:22 tcp@free.pinggy.io`), like `pinggy.service` on the home server, so you can
 log in without knowing the VM's IP. It needs **no account or token**, which keeps the image secret-free. It runs as a
-throwaway `DynamicUser` and is enabled by default.
+throwaway `DynamicUser` and is enabled by default. It does not start when the kernel command line contains
+`claude-vm.no-tunnel`, which the CI e2e test sets.
 
 ```sh
 # on the VM (console, or via claude.ai/code): print the current address
