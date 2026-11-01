@@ -13,6 +13,9 @@ inputs:
   SSH_OPTIONS:
     description: "SSH_OPTIONS"
     required: true
+  IMAGE:
+    description: "Image under test (selects tests/<image>/); the matrix context is not available in composite actions"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -96,11 +99,12 @@ runs:
         SSH_KEY: ${{ inputs.SSH_KEY }}
         SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
         SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
+        IMAGE: ${{ inputs.IMAGE }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
-        cat ./tests/${{ matrix.image }}/system-test.sh | ssh "${SSH_OPTS[@]}" \
+        cat "./tests/${IMAGE}/system-test.sh" | ssh "${SSH_OPTS[@]}" \
           -i "${SSH_KEY}" \
           -p 2222 \
           ${SSH_USERNAME}@localhost
@@ -111,12 +115,13 @@ runs:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
         SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
+        IMAGE: ${{ inputs.IMAGE }}
       run: | #sh
         # turn the env string into a Bash array
         read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
 
-        if [ -e ./tests/${{ matrix.image }}/user-test.sh ]; then
-          cat ./tests/${{ matrix.image }}/user-test.sh | ssh "${SSH_OPTS[@]}" \
+        if [ -e "./tests/${IMAGE}/user-test.sh" ]; then
+          cat "./tests/${IMAGE}/user-test.sh" | ssh "${SSH_OPTS[@]}" \
             -i "${SSH_KEY}" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
@@ -125,7 +130,7 @@ runs:
 
     - name: Verify ghcr.io auth
       shell: bash
-      if: ${{ startsWith(matrix.image, 'homeserver') }}
+      if: ${{ startsWith(inputs.IMAGE, 'homeserver') }}
       env:
         SSH_USERNAME: caspertdk
         SSH_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
