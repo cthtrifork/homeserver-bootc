@@ -2,3 +2,5 @@ vmdk/
 manifest-*.json
 *.vmdk
 *.key
+__pycache__/
+*.pyc
