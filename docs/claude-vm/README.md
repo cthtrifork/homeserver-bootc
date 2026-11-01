@@ -189,6 +189,26 @@ domains can carry data.
   `~caspertdk/.ssh/authorized_keys` on each VM. A hand-edited `/etc` file stops following the image; keep local
   policy changes in `/etc/claude-code/managed-settings.d/*.json` and list drift with `ostree admin config-diff`.
 
+## Resource limits and sizing
+
+`claude-remote-control.service` caps what parallel agents and subagents can use, so a runaway build cannot starve sshd
+or the egress gateway:
+
+| Setting | Value | Effect |
+| --- | --- | --- |
+| `MemoryHigh` / `MemoryMax` | `80%` / `90%` of VM RAM | throttle first, then OOM-kill inside the unit only |
+| `TasksMax` | `4096` | stops fork bombs and runaway test runners |
+| `LimitNOFILE` | `65536` | enough for large parallel builds |
+| `CPUWeight` | `50` (default 100) | sshd and the gateway win under CPU contention |
+
+Caveat: rootless podman containers started by `claude` are run by conmon, which may land in the `user@1100` slice
+instead of this unit's cgroup, so they are not covered by these limits. Cap them with `podman run --memory/--cpus`, or
+set limits on `user-1100.slice`.
+
+Override per VM with a drop-in in `/etc/systemd/system/claude-remote-control.service.d/`. The VM's CPU/RAM/disk are set by
+the hypervisor, not the image. Rough sizing: 2 vCPU / 4 GB for light use, 4-8 vCPU / 8-16 GB for parallel builds and
+tests, plus 30 GB+ disk if you use podman. Give parallel agents separate git worktrees.
+
 ## Build a disk image
 
 `create-vmdk-image.yaml` accepts `claude-vm-bootc`. Locally:
