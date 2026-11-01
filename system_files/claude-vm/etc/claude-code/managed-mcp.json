@@ -4,10 +4,6 @@
       "command": "context7-mcp",
       "args": []
     },
-    "podman": {
-      "command": "podman-mcp-server",
-      "args": []
-    },
     "flux": {
       "command": "flux-operator-mcp",
       "args": ["serve", "--read-only"],

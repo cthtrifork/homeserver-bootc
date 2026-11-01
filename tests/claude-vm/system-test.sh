@@ -8,7 +8,7 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat context7-mcp podman-mcp-server flux-operator-mcp; do
+for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat context7-mcp flux-operator-mcp; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
 
@@ -42,7 +42,7 @@ jq -e '.permissions.disableBypassPermissionsMode == "disable"
     /etc/claude-code/managed-settings.json >/dev/null
 jq -e '.sandbox.filesystem.denyRead | index("~/.kube")' /etc/claude-code/managed-settings.json >/dev/null
 # the only MCP servers come from the managed config (exclusive control)
-jq -e '.mcpServers | keys == ["context7", "flux", "podman"]
+jq -e '.mcpServers | keys == ["context7", "flux"]
        and (.mcpServers.flux.args | index("--read-only"))' /etc/claude-code/managed-mcp.json >/dev/null
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \
