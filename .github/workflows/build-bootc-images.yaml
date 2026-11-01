@@ -1,7 +1,7 @@
 name: Build homeserver bootable container image
 on:
   schedule:
-    - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
+    - cron: "0 3 * * 0" # Sunday 03:00: patch every image whose base is newer or that is ~2 weeks old (see "Detect changed areas")
   workflow_dispatch:
     inputs:
       force:
@@ -74,6 +74,7 @@ jobs:
     permissions:
       pull-requests: read
       contents: read
+      packages: read # to read the build date of the published images (scheduled runs)
     outputs:
       image: ${{ steps.ensure-matrix.outputs.image }}
     steps:
@@ -110,17 +111,50 @@ jobs:
           FILTER_CHANGES: ${{ steps.filter.outputs.changes }}
           OVERRIDE_IMAGE: ${{ github.event.inputs.override_image }}
           FORCE: ${{ github.event.inputs.force }}
+          EVENT_NAME: ${{ github.event_name }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ github.token }}
+          IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+          BASE_IMAGE: quay.io/fedora/fedora-bootc:44 # keep in step with the FROM line of the containerfiles
+          MAX_AGE_DAYS: "13" # a published image older than this is rebuilt even if the base is unchanged
         run: | #sh
           set -x
           IMAGES="$FILTER_CHANGES"
+
+          # The weekly run is for patching, so it covers every image instead of the path filter's
+          # fallback (homeserver only). An image is skipped when it is both newer than the base image
+          # (so it already carries its updates) and younger than MAX_AGE_DAYS (so it has the distro's
+          # recent package updates). If the dates cannot be read, the image is rebuilt.
+          if [ "$EVENT_NAME" == "schedule" ]; then
+            created() { # <ref> [creds]: build date as epoch seconds, empty when unknown
+              local t
+              t=$(skopeo inspect ${2:+--creds "$2"} "docker://$1" 2>/dev/null \
+                | jq -r '.Labels["org.opencontainers.image.created"] // .Created // empty') || return 0
+              [ -n "$t" ] && date -d "$t" +%s 2>/dev/null || true
+            }
+            base_ts=$(created "$BASE_IMAGE")
+            now=$(date +%s)
+            IMAGES='[]'
+            for img in homeserver:homeserver-centos-bootc homeserver-gui:homeserver-gui-bootc claude-vm:claude-vm-bootc; do
+              ts=$(created "$IMAGE_PREFIX/${img#*:}:latest" "$REGISTRY_USER:$REGISTRY_TOKEN")
+              if [ -n "$ts" ] && [ -n "$base_ts" ] && [ "$ts" -ge "$base_ts" ] \
+                && [ $(( (now - ts) / 86400 )) -lt "$MAX_AGE_DAYS" ]; then
+                echo "Skipping ${img%%:*}: newer than $BASE_IMAGE and under $MAX_AGE_DAYS days old"
+              else
+                IMAGES=$(jq -c --arg i "${img%%:*}" '. + [$i]' <<< "$IMAGES")
+              fi
+            done
+            echo "Scheduled rebuild of: $IMAGES"
+          fi
           if [ -n "$OVERRIDE_IMAGE" ]; then
             IMAGES=$(jq -cn --arg i "$OVERRIDE_IMAGE" '[$i]')
           fi
           if [ "$FORCE" == "true" ]; then
             IMAGES='["homeserver","homeserver-gui","claude-vm"]'
           fi
-          # If no images were changed, default to building the homeserver image
-          if [ "$IMAGES" == "[]" ]; then
+          # If no images were changed, default to building the homeserver image (not on a scheduled
+          # run: there an empty list means everything is up to date)
+          if [ "$IMAGES" == "[]" ] && [ "$EVENT_NAME" != "schedule" ]; then
             IMAGES='["homeserver"]'
           fi
           echo "image=$IMAGES" >> "$GITHUB_OUTPUT"
@@ -133,7 +167,8 @@ jobs:
     #runs-on: ubuntu-latest
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-    if: ${{ github.event_name != 'pull_request' || (github.event.pull_request.draft == false && github.event.pull_request.head.repo.fork == false) }}
+    # an empty list (a scheduled run with everything up to date) is not a valid matrix
+    if: ${{ needs.changes.outputs.image != '[]' && (github.event_name != 'pull_request' || (github.event.pull_request.draft == false && github.event.pull_request.head.repo.fork == false)) }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -748,7 +783,7 @@ jobs:
 
   push-latest:
     name: "Push and sign latest tag for: ${{ matrix.image }}"
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.event_name != 'pull_request' && needs.changes.outputs.image != '[]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs:
