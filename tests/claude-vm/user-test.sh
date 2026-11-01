@@ -33,6 +33,12 @@ sudo -u claude -H bash -lc '
   go version
   npm --version && test "$(npm config get prefix)" = "$HOME/.npm-global"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
+  echo "-- run a real rootless container"
+  podman run --rm quay.io/podman/hello
+  echo "-- build and run a Go program"
+  d=$(mktemp -d) && cd "$d" && go mod init example.com/hello >/dev/null 2>&1
+  printf "package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"go ok\") }\n" > main.go
+  go run . | grep -x "go ok"
 '
 echo "✅ claude user can run python, bash, npm, go and rootless podman"
 

@@ -61,6 +61,15 @@ fi
 id -nG caspertdk | tr ' ' '\n' | grep -qx wheel
 echo "✅ claude (1100) is unprivileged, caspertdk is in wheel"
 
+echo "--- tmpfiles: home dirs and lingering for rootless podman ---"
+[ "$(stat -c '%U:%a' /var/home/claude)" = "claude:700" ]
+[ "$(stat -c %U /var/home/claude/workspace)" = "claude" ]
+[ "$(stat -c '%U:%a' /var/home/caspertdk/.ssh)" = "caspertdk:700" ]
+[ "$(stat -c '%U:%a' /var/home/caspertdk/.ssh/authorized_keys)" = "caspertdk:600" ]
+test -e /var/lib/systemd/linger/claude
+timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
+echo "✅ home dirs, authorized_keys permissions and lingering are in place"
+
 echo "--- ssh ---"
 sshd -T | grep -qx 'passwordauthentication no'
 grep -q '^ssh-ed25519 ' /var/home/caspertdk/.ssh/authorized_keys
