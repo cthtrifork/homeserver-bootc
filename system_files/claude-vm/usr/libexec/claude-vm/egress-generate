@@ -1,54 +1,45 @@
 #!/usr/bin/bash
-# Builds the proxy and DNS filter configs in /run/claude-vm/egress from one allowlist:
-#   sandbox.network.allowedDomains (managed settings) + /usr/share/claude-vm/egress-extra.txt
-#   + /etc/claude-vm/egress-extra.d/*.txt. A domain also covers its subdomains ("*." prefixes are dropped).
+# Builds the agent's egress allowlist and the two small files the static proxy/DNS configs include:
+#   $out/allow.txt          normalized domains, one per line (a domain also covers its subdomains)
+#   $out/nginx-allow.map    ".domain 1;" lines, included by /usr/share/claude-vm/egress-nginx.conf
+#   $out/dnsmasq-servers    "server=/domain/resolver" lines, included by /usr/share/claude-vm/egress-dnsmasq.conf
+# Sources: sandbox.network.allowedDomains from the managed settings, plus plain-text lists (one domain per line,
+# "#" comments, optional "*." prefix). An invalid entry is reported and skipped; an empty result is an error.
+#
+# EGRESS_ROOT (default: none) prefixes every path, so the script can be run against a scratch tree.
 set -euo pipefail
 shopt -s nullglob
 
-out=/run/claude-vm/egress
+root="${EGRESS_ROOT:-}"
+resolver=127.0.0.53   # systemd-resolved stub; the proxy and dnsmasq are not subject to the agent's firewall rules
+out="$root/run/claude-vm/egress"
+settings=("$root"/etc/claude-code/managed-settings.json "$root"/etc/claude-code/managed-settings.d/*.json)
+lists=("$root"/usr/share/claude-vm/egress-extra.txt "$root"/etc/claude-vm/egress-extra.d/*.txt)
+
+# dot-separated DNS labels, at least two; purely numeric names (IPv4 literals) are not hostnames
+label='[a-z0-9]([a-z0-9-]*[a-z0-9])?'
+domain_re="^${label}(\\.${label})+\$"
+numeric_re='^[0-9.]+$'
+
+candidates() {
+    jq -r '.sandbox.network.allowedDomains[]?' "${settings[@]}"
+    cat "${lists[@]}"
+}
+
+normalize() {
+    sed -e 's/#.*//' -e 's/[[:space:]]//g' -e 's/^\*\.//' -e '/^$/d' | tr '[:upper:]' '[:lower:]' | sort -u
+}
+
+all="$(candidates | normalize)"
+valid="$(grep -E "$domain_re" <<<"$all" | grep -Ev "$numeric_re" || true)"
+grep -vxFf <(echo "$valid") <<<"$all" | sed 's/^/egress-generate: ignoring invalid entry: /' >&2 || true
+[[ -n "$valid" ]] || { echo "egress-generate: empty allowlist" >&2; exit 1; }
+
 install -d -m 0755 "$out"
+# write each file whole, then rename, so a reader never sees a partial file
+emit() { local f="$out/$1"; shift; "$@" >"$f.tmp"; mv -f "$f.tmp" "$f"; }
+emit allow.txt        cat <<<"$valid"
+emit nginx-allow.map  sed 's/.*/.&  1;/' <<<"$valid"
+emit dnsmasq-servers  sed "s#.*#server=/&/${resolver}#" <<<"$valid"
 
-raw="$(
-    jq -r '.sandbox.network.allowedDomains[]?' /etc/claude-code/managed-settings.json /etc/claude-code/managed-settings.d/*.json
-    cat /usr/share/claude-vm/egress-extra.txt /etc/claude-vm/egress-extra.d/*.txt
-)"
-
-: >"$out/allow.txt"
-while IFS= read -r line; do
-    d="${line%%#*}"
-    d="${d//[[:space:]]/}"
-    d="${d#\*.}"
-    d="${d,,}"
-    [[ -n "$d" ]] || continue
-    if [[ "$d" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]]; then
-        echo "$d" >>"$out/allow.txt"
-    else
-        echo "egress-generate: ignoring invalid entry '$line'" >&2
-    fi
-done <<<"$raw"
-sort -u -o "$out/allow.txt" "$out/allow.txt"
-[[ -s "$out/allow.txt" ]] || { echo "egress-generate: empty allowlist" >&2; exit 1; }
-
-# nginx maps: anything not listed goes to a dead end (discard port on loopback / 403)
-{
-    echo 'default 127.0.0.1:9;'
-    while read -r d; do echo "~*^(.+\\.)?${d//./\\.}\$ \$ssl_preread_server_name:443;"; done <"$out/allow.txt"
-} >"$out/sni.map"
-{
-    echo 'default 0;'
-    while read -r d; do echo "~*^(.+\\.)?${d//./\\.}\$ 1;"; done <"$out/allow.txt"
-} >"$out/host.map"
-
-# dnsmasq: only listed domains are forwarded (to the system resolver stub); everything else is REFUSED
-{
-    echo 'port=5353'
-    echo 'listen-address=127.0.0.1'
-    echo 'bind-interfaces'
-    echo 'no-resolv'
-    echo 'no-hosts'
-    echo 'cache-size=1000'
-    while read -r d; do echo "server=/$d/127.0.0.53"; done <"$out/allow.txt"
-} >"$out/dnsmasq.conf"
-
-cp /usr/share/claude-vm/egress-nginx.conf "$out/nginx.conf"
-echo "egress-generate: $(wc -l <"$out/allow.txt") domains"
+echo "egress-generate: $(wc -l <<<"$valid") domains"

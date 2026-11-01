@@ -85,7 +85,9 @@ enforced in the kernel for the user's UID, so it does not depend on the sandbox 
 - **One allowlist:** `sandbox.network.allowedDomains` in the managed settings, plus
   `/usr/share/claude-vm/egress-extra.txt` (the Anthropic endpoints Remote Control needs) and local additions in
   `/etc/claude-vm/egress-extra.d/*.txt` (one domain per line; a domain also covers its subdomains, and `*.` is optional).
-  `claude-vm-egress-generate` builds the configs into `/run/claude-vm/egress` on each start.
+  `claude-vm-egress-generate` normalizes and validates them on each start (invalid entries are reported and skipped, an
+  empty list is an error) and writes `/run/claude-vm/egress/{allow.txt,nginx-allow.map,dnsmasq-servers}`, which the static
+  nginx and dnsmasq configs in `/usr/share/claude-vm/` include.
 - `claude-remote-control` requires all three units. Without them it does not start, and the user has no network anyway.
 
 To allow another host (also needed after approving a sandbox prompt for it, because the gateway is stricter than the
