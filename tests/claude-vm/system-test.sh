@@ -41,7 +41,16 @@ if sudo -u claude test -w "$f"; then
     echo "claude can modify its own managed settings"
     exit 1
 fi
-echo "✅ bypass permissions mode disabled; claude cannot edit the policy"
+jq -e '.sandbox.enabled == true and .sandbox.failIfUnavailable == true and .sandbox.allowUnsandboxedCommands == false' "$f" >/dev/null
+jq -e '.sandbox.excludedCommands | index("podman *")' "$f" >/dev/null
+echo "✅ bypass permissions mode disabled, strict Bash sandbox required; claude cannot edit the policy"
+
+echo "--- Bash sandbox can start under the service's own hardening ---"
+command -v bwrap >/dev/null && command -v socat >/dev/null
+sudo systemd-run --wait --pipe --collect -q -p User=claude \
+    -p PrivateTmp=yes -p ProtectSystem=strict -p ProtectControlGroups=yes -p ProtectKernelModules=yes \
+    bwrap --unshare-all --ro-bind / / --dev /dev --proc /proc true
+echo "✅ bubblewrap can create a sandbox as claude"
 
 echo "--- users ---"
 [ "$(id -u claude)" = "1100" ]

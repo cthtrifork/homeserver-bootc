@@ -28,7 +28,7 @@ RestartSec=15
 PrivateTmp=yes
 ProtectSystem=strict
 ReadWritePaths=/var/home/claude /var/tmp
-ProtectKernelTunables=yes
+# No ProtectKernelTunables: it read-only-mounts parts of /proc, which stops bubblewrap (the Bash sandbox) mounting its own /proc.
 ProtectKernelModules=yes
 ProtectControlGroups=yes
 

@@ -2,6 +2,26 @@
   "permissions": {
     "disableBypassPermissionsMode": "disable"
   },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "excludedCommands": ["podman *"],
+    "filesystem": {
+      "allowWrite": ["~/.npm-global", "~/.npm", "~/.local", "~/.cache"],
+      "denyRead": ["~/.claude/.credentials.json"]
+    },
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "*.github.com",
+        "*.githubusercontent.com",
+        "*.npmjs.org",
+        "pypi.org",
+        "files.pythonhosted.org"
+      ]
+    }
+  },
   "env": {
     "DISABLE_AUTOUPDATER": "1"
   }
