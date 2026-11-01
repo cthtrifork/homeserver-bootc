@@ -29,6 +29,8 @@ astral.sh
 proxy.golang.org
 sum.golang.org
 storage.googleapis.com
+blob.core.windows.net
+s3.amazonaws.com
 crates.io
 rustup.rs
 static.rust-lang.org
