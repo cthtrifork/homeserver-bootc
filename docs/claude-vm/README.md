@@ -108,7 +108,7 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
 ## Security model
 
 - **Policy:** `/etc/claude-code/managed-settings.json` is root-owned and has the highest precedence, so `claude`
-  cannot change it. It rejects `--dangerously-skip-permissions` and runs only managed hooks (`allowManagedHooksOnly`),
+  cannot change it. It starts sessions in bypass-permissions mode (the sandbox, deny rules and egress gateway are the limits) and runs only managed hooks (`allowManagedHooksOnly`),
   so hooks in repositories Claude clones are ignored ([managed settings](https://code.claude.com/docs/en/managed-settings.md)).
 - **Bash sandbox:** Claude Code's built-in sandbox is required and cannot be bypassed by the model
   ([sandboxing](https://code.claude.com/docs/en/sandboxing.md)). Shell commands run in `bubblewrap`, can write only to
@@ -227,10 +227,9 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 
 | Key | Value | Why |
 | --- | --- | --- |
-| `permissions.defaultMode` | `"auto"` | sessions start in auto mode so unattended Remote Control sessions do not stall on prompts; deny rules and the sandbox still apply |
+| `permissions.defaultMode` | `"bypassPermissions"` | sessions start with permission prompts skipped so unattended Remote Control sessions do not stall; `permissions.deny` and the sandbox still apply |
 | `permissions.allow` | all Bash, file tools (Write, Edit, Read, Glob, Grep, NotebookEdit), WebFetch, WebSearch, context7 and Google Calendar MCP tools, and selected plugin skills | no prompts for these tools; `permissions.deny` and the sandbox still apply |
 | `permissions.additionalDirectories` | `["~"]` | the home directory counts as a working directory, so `cd` into it does not prompt; `permissions.deny` and the sandbox still apply |
-| `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
