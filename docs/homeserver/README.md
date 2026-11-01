@@ -7,6 +7,29 @@
 > token (`/etc/profile.d/62-registry-auth-private.sh`) and the pinggy token (`/etc/homeserver/metadata/pinggy`).
 > Keep the package private. The [claude-vm](../claude-vm/README.md) image is the one built without secrets.
 
+## Overview
+
+```mermaid
+flowchart TD
+    BASE["fedora-bootc:44"] --> IMG
+    subgraph IMG["homeserver image (PRIVATE: baked secrets)"]
+        SEC["Secrets<br/>age key, SSH key (sops),<br/>registry creds + token, pinggy token"]
+        TOOLS["Tools<br/>kubectl, flux, helm, k9s, talosctl, kind,<br/>sops, age, cosign, gh, docker CE, podman,<br/>qemu-kvm, libvirt, tmux, azure-cli"]
+        SVC["Services<br/>sshd, docker + podman sockets,<br/>qemu-guest-agent, libvirt-workaround,<br/>firewalld"]
+        PING["pinggy.service<br/>SSH tunnel (token baked in)"]
+        COSIGN["cosign policy<br/>/etc/containers/policy.json"]
+    end
+    IMG --> BOOT
+    subgraph BOOT["First boot"]
+        SYS["bootc-system-setup.service<br/>hostname, user caspertdk (UID 1010),<br/>subuid/subgid, docker/kvm/libvirt groups"]
+        USR["bootc-user-setup@caspertdk<br/>dotfiles, oh-my-bash, Zed"]
+        SYS --> USR
+    end
+    PINGGY["Pinggy"] <--> PING
+    ME["You (ssh -J via pinggy)"] --> PINGGY
+    ME -->|LAN SSH| SVC
+```
+
 ## What is in it
 
 - **Packages:** `system_files/homeserver/usr/local/share/bootc/packages-added` and `packages-removed` (tmux, direnv,
