@@ -13,6 +13,8 @@ frame.staging.claudeusercontent.com
 
 # Source hosting and package registries
 github.com
+githubassets.com
+githubcopilot.com
 githubusercontent.com
 npmjs.org
 pypi.org
