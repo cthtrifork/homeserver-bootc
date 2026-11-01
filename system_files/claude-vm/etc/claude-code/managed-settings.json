@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "disableBypassPermissionsMode": "disable"
+  },
+  "env": {
+    "DISABLE_AUTOUPDATER": "1"
+  }
+}

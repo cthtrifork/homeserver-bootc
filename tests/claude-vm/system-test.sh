@@ -33,6 +33,16 @@ systemctl cat bootc-fetch-apply-updates.timer | grep -qx 'OnCalendar=\*-\*-\* 00
 systemctl cat bootc-fetch-apply-updates.service | grep -qx 'ExecStart=/usr/bin/bootc upgrade --quiet'
 echo "✅ nightly bootc upgrade is scheduled (staged, no auto-reboot)"
 
+echo "--- managed settings (highest precedence, root-owned) ---"
+f=/etc/claude-code/managed-settings.json
+jq -e '.permissions.disableBypassPermissionsMode == "disable"' "$f" >/dev/null
+[ "$(stat -c %U "$f")" = "root" ]
+if sudo -u claude test -w "$f"; then
+    echo "claude can modify its own managed settings"
+    exit 1
+fi
+echo "✅ bypass permissions mode disabled; claude cannot edit the policy"
+
 echo "--- users ---"
 [ "$(id -u claude)" = "1100" ]
 if id -nG claude | tr ' ' '\n' | grep -qx wheel; then
