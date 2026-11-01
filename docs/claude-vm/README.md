@@ -7,6 +7,33 @@ Back to the [main README](../../README.md).
 drive it from claude.ai/code or the Claude app. Layout mirrors the home server: `system_files/claude-vm/`, numbered
 `/etc/tmpfiles.d/` files and `tests/claude-vm/`.
 
+## Overview
+
+```mermaid
+flowchart LR
+    REG[("ghcr.io image")]
+    YOU["You<br/>claude.ai / app"]
+    ANTH["claude.ai"]
+    GH["GitHub"]
+
+    subgraph VM["Claude VM"]
+        SETUP["Manual setup:<br/>GitHub token + Claude login"]
+        RC["claude remote-control<br/>(user: claude)"]
+        SB["Sandboxed shell<br/>limited paths + domains"]
+        UPD["Daily: stage update<br/>(applies on reboot)"]
+        SSH["SSH<br/>(caspertdk, keys only)"]
+    end
+
+    REG -->|install / pull| VM
+    SETUP --> RC
+    RC --> SB
+    SB --> GH
+    RC <--> ANTH <--> YOU
+    REG --> UPD
+    UPD -.->|notice at session start| RC
+    YOU -.->|"optional Pinggy tunnel"| SSH
+```
+
 ## What is in it
 
 - **No secrets.** The build takes none: no registry, age or SSH keys. You seed a GitHub token by hand and sign in to
