@@ -37,7 +37,9 @@ jq -e '.permissions.disableBypassPermissionsMode == "disable"
        and .sandbox.enabled and .sandbox.failIfUnavailable
        and (.sandbox.allowUnsandboxedCommands | not)
        and (.sandbox.excludedCommands | index("podman *"))
-       and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)' \
+       and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)
+       and .allowManagedMcpServersOnly and (.enableAllProjectMcpServers | not)
+       and (.allowedMcpServers == [])' \
     /etc/claude-code/managed-settings.json >/dev/null
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \

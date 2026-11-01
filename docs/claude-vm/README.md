@@ -59,6 +59,8 @@ service as a systemd credential. The Claude login lives in `/var/home/claude/.cl
     approved it and its containers are unconfined, with no network filter.
   - It is a guardrail, not a hard boundary: the proxy filters by hostname without inspecting TLS, broad hosts such as
     `github.com` can carry data out, and MCP servers and hooks are not covered.
+  - **MCP is off by default.** Because the sandbox does not cover MCP servers, the managed policy allows none. To add
+    one, install it in the image, define it in a managed MCP config and list it in `allowedMcpServers`.
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
 - **A Remote Control session is a shell as `claude`.** Whoever controls your claude.ai session controls the VM. Turn on
   **Require trusted devices** in your account settings (beta) ([docs](https://code.claude.com/docs/en/remote-control.md#trusted-devices)).
@@ -103,6 +105,9 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
+| `allowManagedMcpServersOnly` | `true` | only MCP servers allowed by this policy run; a repository's `.mcp.json` is ignored |
+| `allowedMcpServers` | `[]` | no MCP server is allowed yet: MCP servers are outside the Bash sandbox, so each one is added here on purpose |
+| `enableAllProjectMcpServers` | `false` | project MCP servers are never auto-approved |
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
 | `sandbox.allowUnsandboxedCommands` | `false` | the model cannot retry a command outside the sandbox |
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
