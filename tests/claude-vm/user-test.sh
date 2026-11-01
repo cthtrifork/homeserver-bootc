@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
+# on failure, also dump what the egress gateway did (the VM journal only reaches the run summary)
+diagnose() {
+    echo "--- egress diagnostics ---"
+    sudo journalctl -b --no-pager -n 60 -u claude-vm-egress-proxy -u claude-vm-egress-dns || true
+    sudo journalctl -b --no-pager -g 'avc:' | tail -n 20 || true
+    sudo nft list table inet claude_egress || true
+}
+trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"; diagnose' ERR
 
 echo "== User testing (claude-vm) =="
 id

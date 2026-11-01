@@ -20,11 +20,11 @@ table inet claude_egress {
         type nat hook output priority -100; policy accept;
         meta skuid != @agent_uids return
         # DNS first (the resolver stub lives on 127.0.0.53), then leave other loopback traffic alone
-        meta nfproto ipv4 udp dport 53 dnat ip to 127.0.0.55:53
-        meta nfproto ipv4 tcp dport 53 dnat ip to 127.0.0.55:53
+        meta nfproto ipv4 udp dport 53 counter dnat ip to 127.0.0.55:53
+        meta nfproto ipv4 tcp dport 53 counter dnat ip to 127.0.0.55:53
         ip daddr 127.0.0.0/8 return
-        meta nfproto ipv4 tcp dport 443 redirect to :8443
-        meta nfproto ipv4 tcp dport 80 redirect to :8008
+        meta nfproto ipv4 tcp dport 443 counter redirect to :8443
+        meta nfproto ipv4 tcp dport 80 counter redirect to :8008
     }
 
     chain filter_out {
@@ -35,6 +35,6 @@ table inet claude_egress {
         # later chains of the same hook still see the original output interface.
         ip daddr 127.0.0.0/8 accept
         ip6 daddr ::1 accept
-        reject with icmpx admin-prohibited
+        counter reject with icmpx admin-prohibited
     }
 }
