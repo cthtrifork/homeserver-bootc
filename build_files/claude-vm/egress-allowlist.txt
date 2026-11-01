@@ -1,0 +1,37 @@
+# Hosts the claude user may reach: its sandboxed commands, rootless podman containers and Claude Code itself.
+# One domain per line. A domain covers itself and all its subdomains (no "*." prefix). Lowercase, no ports or paths.
+# Validated and expanded at image build time by egress_allowlist.py, which writes:
+#   - sandbox.network.allowedDomains in /etc/claude-code/managed-settings.json (Claude Code's own proxy)
+#   - the nginx and dnsmasq allowlists of the egress gateway (see docs/claude-vm/README.md)
+
+# Claude Code / Remote Control
+anthropic.com
+claude.ai
+claude.com
+frame.claudeusercontent.com
+frame.staging.claudeusercontent.com
+
+# Source hosting and package registries
+github.com
+githubusercontent.com
+npmjs.org
+pypi.org
+files.pythonhosted.org
+proxy.golang.org
+sum.golang.org
+debian.org
+wails.io
+
+# Container registries
+ghcr.io
+quay.io
+mcr.microsoft.com
+mirror.gcr.io
+cgr.dev
+registry.access.redhat.com
+
+# Docs and vulnerability data
+docs.docker.com
+developers.redhat.com
+api.first.org
+www.cisa.gov

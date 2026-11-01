@@ -20,6 +20,8 @@ flowchart LR
         SETUP["Manual setup:<br/>GitHub token + Claude login"]
         RC["claude remote-control<br/>(user: claude)"]
         SB["Sandboxed shell<br/>limited paths + domains"]
+        POD["Rootless podman<br/>(approved commands)"]
+        GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
         UPD["Daily: stage update<br/>(applies on reboot)"]
         SSH["SSH<br/>(caspertdk, keys only)"]
     end
@@ -27,8 +29,13 @@ flowchart LR
     REG -->|install / pull| VM
     SETUP --> RC
     RC --> SB
-    SB --> GH
-    RC <--> ANTH <--> YOU
+    RC --> POD
+    SB --> GW
+    POD --> GW
+    RC <--> GW
+    GW --> GH
+    GW <--> ANTH
+    ANTH <--> YOU
     REG --> UPD
     UPD -.->|notice at session start| RC
     YOU -.->|"optional Pinggy tunnel"| SSH
@@ -43,6 +50,8 @@ flowchart LR
   `caspertdk` has sudo; `claude` has none. Only public keys are used, so commits on the VM are not SSH-signed.
 - **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint and rootless podman. `/usr` is
   read-only, so `npm -g`, `pip --user` and `go install` use the home directory.
+- **Egress allowlist:** everything the `claude` user runs, rootless podman containers included, can only reach the hosts in
+  `build_files/claude-vm/egress-allowlist.txt`; see [Egress gateway](#egress-gateway).
 - **Versions:** Claude Code is pinned by an `ARG ... # renovate:` line in the containerfile; crane, hadolint and actionlint by
   `# renovate:` lines in `build_files/claude-vm-utilities.sh` (downloaded checksum-verified, cached in the CI runner cache). Everything else is a Fedora package that moves with the `fedora-bootc` base image.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 with the same drop-ins as `homeserver-gui`, but
@@ -104,12 +113,14 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
 - **Bash sandbox:** Claude Code's built-in sandbox is required and cannot be bypassed by the model
   ([sandboxing](https://code.claude.com/docs/en/sandboxing.md)). Shell commands run in `bubblewrap`, can write only to
   `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`, and can reach only the hosts in
-  `allowedDomains`; any other host prompts. `~/.claude/.credentials.json` is hidden from them. Because commands are
+  `allowedDomains` (the same list the [egress gateway](#egress-gateway) enforces, which blocks every other host).
+  `~/.claude/.credentials.json` is hidden from them. Because commands are
   confined they run without a prompt (`autoAllowBashIfSandboxed`); set it to `false` to be asked every time.
   - **`podman *` is excluded:** rootless podman cannot run inside the sandbox. Podman still asks for approval, but once
-    approved it and its containers are unconfined, with no network filter.
-  - It is a guardrail, not a hard boundary: the proxy filters by hostname without inspecting TLS, broad hosts such as
-    `github.com` can carry data out, and MCP servers and hooks are not covered.
+    approved it and its containers are outside the sandbox. Their network is still confined by the
+    [egress gateway](#egress-gateway) below.
+  - It is a guardrail, not a hard boundary: the sandbox proxy filters by hostname without inspecting TLS, broad hosts
+    such as `github.com` can carry data out, and MCP servers and hooks are not covered.
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
 - **A Remote Control session is a shell as `claude`.** Whoever controls your claude.ai session controls the VM. Turn on
   **Require trusted devices** in your account settings (beta) ([docs](https://code.claude.com/docs/en/remote-control.md#trusted-devices)).
@@ -119,6 +130,49 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
   ([connection and security](https://code.claude.com/docs/en/remote-control.md#connection-and-security)). Use your own
   login and do not share it ([legal](https://code.claude.com/docs/en/legal-and-compliance.md)). Do not set
   `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`: it also disables Remote Control.
+
+## Egress gateway
+
+Everything the `claude` user starts, including rootless podman containers, can only reach hosts on one allowlist. It is
+enforced in the kernel for the user's UID, so it does not depend on the sandbox or on podman cooperating.
+
+| Unit | What it does |
+| --- | --- |
+| `claude-vm-egress-nft` | nftables (`/usr/share/claude-vm/egress.nft`). For UID 1100 and the podman subuid range (100000-165535, which host-network containers run as): redirects DNS to dnsmasq (`127.0.0.55:53`), HTTPS to nginx (`127.0.0.1:8443`) and HTTP to nginx (`127.0.0.1:8008`), and rejects everything else (QUIC/UDP, SSH, other ports, IPv6). rootless podman's `pasta` opens its sockets as `claude`, so container traffic is matched too. |
+| `claude-vm-egress-proxy` | nginx (a copy at `/usr/libexec/claude-vm/egress-proxy`, no TLS interception). Reads the SNI of a TLS handshake (or the HTTP `Host`) and connects to that name itself; unlisted names are dropped (403 for HTTP), and so is an IP address with no SNI. |
+| `claude-vm-egress-dns` | dnsmasq. Forwards only allowlisted domains to the system resolver and refuses the rest. Starts as root to bind port 53 and drops to `dnsmasq`. |
+
+SELinux is enforcing: the ports are ones dnsmasq (`dns_port_t`) may bind in its confined domain, and the proxy runs from a
+copy of the nginx binary under `/usr/libexec/claude-vm/` (`bin_t`, so `unconfined_service_t` like the other `claude-vm`
+helpers) because the packaged binary's `httpd_t` domain may not connect to upstream servers without
+`httpd_can_network_connect`, which would allow all ports anyway. It still runs as the unprivileged `nginx` user with
+systemd sandboxing.
+systemd-resolved's varlink socket (`/run/systemd/resolve/io.systemd.Resolve`, used by glibc's `nss-resolve`) is root-only: otherwise `getent`,
+curl and python would resolve any name through it and bypass the DNS filter. Other users fall back to the `dns` NSS module and
+the filtered `127.0.0.53` stub. (The resolved D-Bus API is still open to `claude`, so a program that calls it deliberately can
+resolve arbitrary names.)
+Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel (a `DynamicUser`) are **not** restricted.
+`claude-remote-control` requires all three units: without them it does not start, and the user has no network anyway.
+
+**One allowlist.** `build_files/claude-vm/egress-allowlist.txt` has one domain per line, and a domain also covers its
+subdomains. `build_files/claude-vm/egress_allowlist.py` runs during the image build and **fails the build** on an
+invalid, duplicate or redundant entry (wildcards, uppercase, IPs, ports, `api.github.com` next to `github.com`), reporting
+every problem with its line number. From the list it derives:
+
+- `sandbox.network.allowedDomains` in the managed settings (`d` and `*.d` per entry);
+- `nginx-allow.map` and `dnsmasq-servers` in `/usr/share/claude-vm/egress/`, which the static configs
+  `/usr/share/claude-vm/egress-nginx.conf` and `egress-dnsmasq.conf` include.
+
+Nothing is generated at boot. To allow another host, add it to `egress-allowlist.txt` and rebuild the image. That also
+allows it in the Claude sandbox, so approving a sandbox prompt for a host is not enough: the gateway is stricter.
+
+**What a block looks like.** Usually a DNS failure ("could not resolve host"), because the name is refused before any
+connection is made. A listed name that resolves but is blocked at the proxy shows as a connection reset (HTTPS) or a 403
+(HTTP). `ssh` and git-over-SSH are blocked; use HTTPS remotes.
+
+**Limits.** Filtering is by name, not content. A listed host that is a shared CDN or a broad service (`github.com`,
+`ghcr.io`, `pypi.org`) can still carry data out, domain fronting to a listed CDN is possible, and DNS queries for listed
+domains can carry data.
 
 ## Operating notes
 
@@ -161,16 +215,23 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
 | `sandbox.filesystem.denyRead` | `~/.claude/.credentials.json` | the login token is hidden from commands |
-| `sandbox.network.allowedDomains` | GitHub and ghcr.io, container registries, npm, PyPI, Go, Debian, a few docs and vulnerability-data hosts | everything else prompts |
+| `sandbox.network.allowedDomains` | generated at build time from `egress-allowlist.txt` | the same list the [egress gateway](#egress-gateway) enforces |
 
 ## Tests
 
-`tests/claude-vm/` runs in QEMU when a pull request has the `e2e` label. The system test checks the tools, that the
-service is enabled but idle, that the Pinggy tunnel unit is present but not enabled, the staged-update notice, the policy, that `bubblewrap` starts under the service's
-hardening, users and SSH, home directories and lingering, and that no key or token file is on the VM. The user test
-checks that the seed helper refuses a private key, then, as `claude`, runs Python, builds a Go program and runs a real
-rootless podman container.
+`tests/claude-vm/` runs in QEMU when a (non-draft) pull request has the `e2e` label. The system test checks the tools,
+that the service is enabled but idle, that the Pinggy tunnel unit is present but not enabled, the staged-update notice,
+the policy, that `bubblewrap` starts under the service's hardening, users and SSH, home directories and lingering, that
+no key or token file is on the VM, and the egress gateway (the three units are active, the nftables table is loaded, the
+generated allowlist files exist and the sandbox's `allowedDomains` match the allowlist).
 
-Not covered by CI, because it needs a logged-in Claude: the sign-in and the Remote Control session, the sandbox's
-network allowlist and the `SessionStart` hook inside a live session. The nightly upgrade also needs the image to be
+The user test checks that the seed helper refuses a private key, then, as `claude`, runs Python, builds a Go program and
+runs a real rootless podman container. It also exercises the gateway: an allowed host and its DNS work; a non-listed host,
+an IP literal, port 22 and the podman subuid range are blocked; plain HTTP to a non-listed `Host` gets a 403; and root is
+unaffected. The same is checked from inside `podman run` containers (a curl image from quay.io): an allowed host works,
+and a non-listed host or IP literal is blocked on the default network, on `--network=host`, and as a non-root user in a
+host-network container.
+
+Not covered by CI, because it needs a logged-in Claude: the sign-in and the Remote Control session (and that it still
+reaches Anthropic through the gateway), the sandbox's network allowlist and the `SessionStart` hook inside a live session. The nightly upgrade also needs the image to be
 pullable without credentials, which this VM does not have.

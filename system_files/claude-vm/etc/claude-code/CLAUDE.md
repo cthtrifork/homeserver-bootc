@@ -8,8 +8,11 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
   around it. Tools you need beyond the image go in your home directory: `npm -g` (prefix `~/.npm-global`),
   `pip install --user`, `go install` (`~/go/bin`) are already on `PATH`.
 - Work in `~/workspace`. The Bash sandbox lets commands write only there and to `~/.npm-global`, `~/.npm`, `~/.local`,
-  `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries);
-  other hosts prompt the user. If a command fails with a permission or network error, say so instead of retrying.
+  `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries).
+  Everything you start, including podman containers, goes through an egress gateway that blocks all other hosts
+  (DNS lookups are refused, connections reset). Approving a prompt does not change that; the user adds a host by
+  editing `build_files/claude-vm/egress-allowlist.txt` and rebuilding the image. If a command fails with a permission
+  or network error, say so and name the host instead of retrying.
 - `podman` is excluded from the sandbox and always asks for approval. It is rootless; there is no Docker.
 - Git over HTTPS uses `gh` with the seeded `GH_TOKEN`. There are no SSH keys on this VM, so use `https://` remotes.
 - The OS updates nightly but only takes effect after a reboot, which you cannot do. If a new image is staged, tell

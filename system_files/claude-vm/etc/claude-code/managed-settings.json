@@ -20,33 +20,6 @@
       "denyRead": [
         "~/.claude/.credentials.json"
       ]
-    },
-    "network": {
-      "allowedDomains": [
-        "github.com",
-        "*.github.com",
-        "*.githubusercontent.com",
-        "*.npmjs.org",
-        "pypi.org",
-        "files.pythonhosted.org",
-        "ghcr.io",
-        "proxy.golang.org",
-        "sum.golang.org",
-        "*.wails.io",
-        "*.frame.claudeusercontent.com",
-        "*.frame.staging.claudeusercontent.com",
-        "quay.io",
-        "*.debian.org",
-        "*.quay.io",
-        "api.first.org",
-        "www.cisa.gov",
-        "mcr.microsoft.com",
-        "mirror.gcr.io",
-        "docs.docker.com",
-        "cgr.dev",
-        "developers.redhat.com",
-        "registry.access.redhat.com"
-      ]
     }
   },
   "allowManagedHooksOnly": true,

@@ -87,6 +87,7 @@ jobs:
               - '**/homeserver/**'
               - 'build_files/**'
               - '!build_files/gui/**'
+              - '!build_files/claude-vm/**'
               - '!**/*.md' # docs never change an image
             homeserver-gui:
               - 'system_files/homeserver-gui/**'

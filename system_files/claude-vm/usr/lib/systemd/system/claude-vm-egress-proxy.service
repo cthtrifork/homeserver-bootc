@@ -1,0 +1,19 @@
+[Unit]
+Description=Claude VM egress gateway: allowlist proxy (SNI/Host)
+After=systemd-resolved.service
+Wants=systemd-resolved.service
+
+[Service]
+User=nginx
+Group=nginx
+# a copy of nginx (see claude-vm.containerfile): the packaged binary's httpd_t domain may not connect to upstreams
+ExecStart=/usr/libexec/claude-vm/egress-proxy -e stderr -c /usr/share/claude-vm/egress-nginx.conf
+Restart=always
+RestartSec=2
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

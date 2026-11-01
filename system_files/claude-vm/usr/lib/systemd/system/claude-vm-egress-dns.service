@@ -1,0 +1,17 @@
+[Unit]
+Description=Claude VM egress gateway: allowlist DNS filter
+After=systemd-resolved.service
+Wants=systemd-resolved.service
+
+[Service]
+# starts as root to bind port 53 and drops to dnsmasq itself, like Fedora's own dnsmasq.service
+ExecStart=/usr/sbin/dnsmasq --keep-in-foreground --pid-file= --user=dnsmasq --group=dnsmasq --conf-file=/usr/share/claude-vm/egress-dnsmasq.conf
+Restart=always
+RestartSec=2
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -18,11 +18,13 @@ ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman, plus linters/formatters
 # (ShellCheck, shfmt, yamllint, jq/yq; hadolint and actionlint are installed below).
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
-# (weak dependencies are off); tree is used by tests/diagnostics.sh.
+# (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
+# egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree qemu-guest-agent \
+        nftables nginx nginx-mod-stream dnsmasq \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
@@ -53,8 +55,20 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.pub /usr/share/claude-vm/authorized_keys.pub
 
 COPY system_files/claude-vm/ /
+# Egress allowlist: validate it (fails the build on a bad entry) and derive the sandbox's allowedDomains and the
+# gateway's nginx/dnsmasq lists from the one source file.
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
+    python3 /ctx/build_files/claude-vm/egress_allowlist.py /ctx/build_files/claude-vm/egress-allowlist.txt \
+        /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
+
+# The egress proxy runs from a copy of nginx under /usr/libexec (bin_t -> unconfined_service_t, like the other
+# claude-vm helpers). The packaged binary runs in httpd_t, which SELinux does not let connect to upstream servers
+# (avc: denied { name_connect } ... tcontext=http_port_t) unless httpd_can_network_connect is on, which allows all ports.
+RUN install -m 0755 /usr/sbin/nginx /usr/libexec/claude-vm/egress-proxy
+
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \
-    && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
+    && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
+        claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
 # runner UID, which does not exist in the image), which that lint reports as an unknown user.

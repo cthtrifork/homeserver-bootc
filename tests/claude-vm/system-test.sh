@@ -32,6 +32,42 @@ grep -q claude-vm-ssh-address /etc/claude-code/CLAUDE.md
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'
 
+echo "--- egress gateway ---"
+for u in nft proxy dns; do
+    unit="claude-vm-egress-$u.service"
+    if ! timeout 30 bash -c "until systemctl is-active --quiet $unit; do sleep 1; done"; then
+        echo "$unit is not active"
+        systemctl status --no-pager "$unit" || true
+        journalctl -u "$unit" -b --no-pager -n 40 || true
+        journalctl -b --no-pager -g 'avc:' | tail -n 20 || true
+        exit 1
+    fi
+done
+# the proxy runs from a bin_t copy of nginx; in the packaged httpd_t domain SELinux denies its upstream connections
+test -x /usr/libexec/claude-vm/egress-proxy
+proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
+echo "egress-proxy runs as: $proxy_label"
+if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
+# resolved's varlink socket (glibc nss-resolve) bypasses the DNS redirect for everyone but root
+[ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
+tcp="$(ss -ltnH)"
+udp="$(ss -lunH)"
+grep -qF '127.0.0.1:8443' <<<"$tcp"
+grep -qF '127.0.0.1:8008' <<<"$tcp"
+grep -qF '127.0.0.55:53' <<<"$udp"
+# capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
+rules="$(sudo nft list table inet claude_egress)"
+grep -qF 'meta skuid != @agent_uids' <<<"$rules"
+# one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
+for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
+grep -qx 'github.com' /usr/share/claude-vm/egress/allowlist.txt
+grep -qx 'anthropic.com' /usr/share/claude-vm/egress/allowlist.txt
+if grep -qx 'example.com' /usr/share/claude-vm/egress/allowlist.txt; then echo 'example.com must not be allowlisted'; exit 1; fi
+[ "$(jq '.sandbox.network.allowedDomains | length' /etc/claude-code/managed-settings.json)" = "$(( 2 * $(wc -l </usr/share/claude-vm/egress/allowlist.txt) ))" ]
+jq -e '.sandbox.network.allowedDomains | index("github.com") and index("*.github.com")' /etc/claude-code/managed-settings.json >/dev/null
+requires="$(systemctl show -p Requires --value claude-remote-control.service)"
+grep -qF claude-vm-egress-proxy <<<"$requires"
+
 echo "--- staged-update notice ---"
 sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null
 sudo /usr/libexec/claude-vm/note-staged-update
