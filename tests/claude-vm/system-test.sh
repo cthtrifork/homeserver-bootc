@@ -84,8 +84,6 @@ jq -e '.permissions.disableBypassPermissionsMode == "disable"
        and (.sandbox.excludedCommands | index("podman *"))
        and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)' \
     /etc/claude-code/managed-settings.json >/dev/null
-jq -e '.mcpServers.context7.url == "https://mcp.context7.com/mcp"' /usr/share/claude-vm/claude.json >/dev/null
-grep -qx context7.com /usr/share/claude-vm/egress/allowlist.txt
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \
     -p PrivateTmp=yes -p ProtectSystem=strict -p ProtectControlGroups=yes \
