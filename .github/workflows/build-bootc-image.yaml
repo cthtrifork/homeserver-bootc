@@ -42,6 +42,7 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       attestations: write
       pull-requests: write # for PR comments
+      actions: write # to prune old runner caches
 
     steps:
       - name: Clone the repository
@@ -142,16 +143,18 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
+      # Rolling cache: restore the newest entry for this image (the key is unique per run, so it is
+      # always a prefix match and cache-hit is never 'true'); the save happens at the end of the job.
       - name: Restore runner cache
         id: runner-cache
         if: ${{ runner.environment != 'self-hosted' }}
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             /home/runner/.cache/tmp
-          key: cache-runners-${{ github.run_id }} # ${{ hashFiles('/build_files/core/09-utilities.sh') }}
+          key: cache-runners-${{ inputs.image }}-${{ github.run_id }}
           restore-keys: |
-            cache-runners
+            cache-runners-${{ inputs.image }}-
 
       - name: Remove old runner cache
         #if: steps.runner-cache.outputs.cache-hit == 'true'
@@ -271,6 +274,32 @@ jobs:
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
           auth_file_path: ${{ runner.temp }}/auth.json
+
+      # Only main saves, so PR runs do not fill the 10 GB repo cache quota. always() so a failed
+      # build still keeps what it downloaded. The build runs as root via sudo, so hand the files
+      # back to the runner user for the cache tar.
+      - name: Fix runner cache ownership
+        if: ${{ always() && runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
+        run: sudo chown -R "$(id -u):$(id -g)" /home/runner/.cache/tmp || true
+
+      - name: Save runner cache
+        if: ${{ always() && runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            /home/runner/.cache/tmp
+          key: cache-runners-${{ inputs.image }}-${{ github.run_id }}
+
+      - name: Prune old runner caches
+        if: ${{ always() && runner.environment != 'self-hosted' && github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: | #sh
+          # keep only the newest entry for this image (the one just saved)
+          gh cache list --key "cache-runners-${{ inputs.image }}-" --ref refs/heads/main \
+            --sort created_at --order desc --limit 100 --json id --jq '.[1:][].id' \
+            | xargs -r -n1 gh cache delete || true
 
       - name: Build cleanup
         if: always()
