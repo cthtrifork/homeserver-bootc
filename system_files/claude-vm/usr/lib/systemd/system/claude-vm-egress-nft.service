@@ -1,0 +1,17 @@
+[Unit]
+Description=Claude VM egress gateway: firewall rules for the agent user
+Documentation=file:///usr/share/claude-vm/egress.nft
+DefaultDependencies=no
+Wants=network-pre.target
+Before=network-pre.target
+After=local-fs.target systemd-sysusers.service
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /usr/share/claude-vm/egress.nft
+ExecStop=/usr/sbin/nft delete table inet claude_egress
+
+[Install]
+WantedBy=sysinit.target

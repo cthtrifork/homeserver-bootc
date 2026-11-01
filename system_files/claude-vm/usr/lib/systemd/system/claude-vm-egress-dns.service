@@ -1,0 +1,19 @@
+[Unit]
+Description=Claude VM egress gateway: allowlist DNS filter
+Requires=claude-vm-egress-generate.service
+After=claude-vm-egress-generate.service systemd-resolved.service
+Wants=systemd-resolved.service
+
+[Service]
+User=dnsmasq
+Group=dnsmasq
+ExecStart=/usr/sbin/dnsmasq --keep-in-foreground --pid-file= --conf-file=/run/claude-vm/egress/dnsmasq.conf
+Restart=always
+RestartSec=2
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

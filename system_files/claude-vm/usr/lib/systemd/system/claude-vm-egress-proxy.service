@@ -1,0 +1,19 @@
+[Unit]
+Description=Claude VM egress gateway: allowlist proxy (SNI/Host)
+Requires=claude-vm-egress-generate.service
+After=claude-vm-egress-generate.service systemd-resolved.service
+Wants=systemd-resolved.service
+
+[Service]
+User=nginx
+Group=nginx
+ExecStart=/usr/sbin/nginx -e stderr -c /run/claude-vm/egress/nginx.conf
+Restart=always
+RestartSec=2
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

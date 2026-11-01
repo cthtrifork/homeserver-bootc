@@ -14,11 +14,13 @@ ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=goo
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, rootless podman.
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
-# (weak dependencies are off); tree is used by tests/diagnostics.sh.
+# (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
+# egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
         bubblewrap socat skopeo passt git-core gh jq ripgrep tmux tree qemu-guest-agent \
+        nftables nginx nginx-mod-stream dnsmasq \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
@@ -53,7 +55,8 @@ COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.p
 
 COPY system_files/claude-vm/ /
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/* \
-    && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
+    && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
+        claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
 # runner UID, which does not exist in the image), which that lint reports as an unknown user.

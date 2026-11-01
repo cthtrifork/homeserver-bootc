@@ -23,6 +23,14 @@ fi
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 systemctl cat bootc-fetch-apply-updates.service | grep -q 'bootc upgrade --quiet'
 
+echo "--- egress gateway ---"
+for u in nft proxy dns; do systemctl is-active --quiet "claude-vm-egress-$u.service"; done
+sudo nft list table inet claude_egress | grep -q 'meta skuid != @agent_uids'
+grep -qx 'github.com' /run/claude-vm/egress/allow.txt
+grep -qx 'anthropic.com' /run/claude-vm/egress/allow.txt
+if grep -qx 'example.com' /run/claude-vm/egress/allow.txt; then echo 'example.com must not be allowlisted'; exit 1; fi
+systemctl show -p Requires claude-remote-control.service | grep -q claude-vm-egress-proxy
+
 echo "--- staged-update notice ---"
 sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null
 sudo /usr/libexec/claude-vm/note-staged-update

@@ -1,0 +1,54 @@
+#!/usr/bin/bash
+# Builds the proxy and DNS filter configs in /run/claude-vm/egress from one allowlist:
+#   sandbox.network.allowedDomains (managed settings) + /usr/share/claude-vm/egress-extra.txt
+#   + /etc/claude-vm/egress-extra.d/*.txt. A domain also covers its subdomains ("*." prefixes are dropped).
+set -euo pipefail
+shopt -s nullglob
+
+out=/run/claude-vm/egress
+install -d -m 0755 "$out"
+
+raw="$(
+    jq -r '.sandbox.network.allowedDomains[]?' /etc/claude-code/managed-settings.json /etc/claude-code/managed-settings.d/*.json
+    cat /usr/share/claude-vm/egress-extra.txt /etc/claude-vm/egress-extra.d/*.txt
+)"
+
+: >"$out/allow.txt"
+while IFS= read -r line; do
+    d="${line%%#*}"
+    d="${d//[[:space:]]/}"
+    d="${d#\*.}"
+    d="${d,,}"
+    [[ -n "$d" ]] || continue
+    if [[ "$d" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]]; then
+        echo "$d" >>"$out/allow.txt"
+    else
+        echo "egress-generate: ignoring invalid entry '$line'" >&2
+    fi
+done <<<"$raw"
+sort -u -o "$out/allow.txt" "$out/allow.txt"
+[[ -s "$out/allow.txt" ]] || { echo "egress-generate: empty allowlist" >&2; exit 1; }
+
+# nginx maps: anything not listed goes to a dead end (discard port on loopback / 403)
+{
+    echo 'default 127.0.0.1:9;'
+    while read -r d; do echo "~*^(.+\\.)?${d//./\\.}\$ \$ssl_preread_server_name:443;"; done <"$out/allow.txt"
+} >"$out/sni.map"
+{
+    echo 'default 0;'
+    while read -r d; do echo "~*^(.+\\.)?${d//./\\.}\$ 1;"; done <"$out/allow.txt"
+} >"$out/host.map"
+
+# dnsmasq: only listed domains are forwarded (to the system resolver stub); everything else is REFUSED
+{
+    echo 'port=5353'
+    echo 'listen-address=127.0.0.1'
+    echo 'bind-interfaces'
+    echo 'no-resolv'
+    echo 'no-hosts'
+    echo 'cache-size=1000'
+    while read -r d; do echo "server=/$d/127.0.0.53"; done <"$out/allow.txt"
+} >"$out/dnsmasq.conf"
+
+cp /usr/share/claude-vm/egress-nginx.conf "$out/nginx.conf"
+echo "egress-generate: $(wc -l <"$out/allow.txt") domains"
