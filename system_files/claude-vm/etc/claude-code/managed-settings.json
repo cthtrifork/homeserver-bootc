@@ -1,6 +1,18 @@
 {
   "permissions": {
-    "disableBypassPermissionsMode": "disable"
+    "disableBypassPermissionsMode": "disable",
+    "deny": [
+      "Edit(~/.bashrc)",
+      "Edit(~/.bash_profile)",
+      "Edit(~/.bash_logout)",
+      "Edit(~/.profile)",
+      "Edit(~/.config/systemd/**)",
+      "Edit(~/.config/autostart/**)",
+      "Edit(~/.config/containers/systemd/**)",
+      "Edit(~/.ssh/**)",
+      "Edit(~/.gitconfig)",
+      "Edit(~/.config/git/**)"
+    ]
   },
   "sandbox": {
     "enabled": true,
@@ -19,6 +31,18 @@
       ],
       "denyRead": [
         "~/.claude/.credentials.json"
+      ],
+      "denyWrite": [
+        "~/.bashrc",
+        "~/.bash_profile",
+        "~/.bash_logout",
+        "~/.profile",
+        "~/.config/systemd",
+        "~/.config/autostart",
+        "~/.config/containers/systemd",
+        "~/.ssh",
+        "~/.gitconfig",
+        "~/.config/git"
       ]
     }
   },
