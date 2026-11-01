@@ -143,12 +143,27 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
 
+      # claude-vm does not use /runner/cache; hosted runners only (self-hosted keep the directory);
+      # only main saves, so PR runs do not fill the 10 GB repo cache quota.
+      - name: Runner cache config
+        id: cache-cfg
+        env:
+          IMAGE: ${{ inputs.image }}
+          SELF_HOSTED: ${{ runner.environment == 'self-hosted' }}
+        run: |
+          enabled=false; save=false
+          if [[ "${IMAGE}" != "claude-vm" && "${SELF_HOSTED}" != "true" ]]; then
+            enabled=true
+            [[ "${GITHUB_REF}" == "refs/heads/main" ]] && save=true
+          fi
+          echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
+          echo "save=${save}" >> "$GITHUB_OUTPUT"
+
       # Rolling cache: restore the newest entry for this image (the key is unique per run, so it is
       # always a prefix match and cache-hit is never 'true'); the save happens at the end of the job.
-      # claude-vm does not use /runner/cache, so it skips the whole cache lifecycle.
       - name: Restore runner cache
         id: runner-cache
-        if: ${{ runner.environment != 'self-hosted' && inputs.image != 'claude-vm' }}
+        if: ${{ steps.cache-cfg.outputs.enabled == 'true' }}
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -169,7 +184,7 @@ jobs:
 
       - name: Fingerprint runner cache
         id: cache-before
-        if: ${{ runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' }}
+        if: ${{ steps.cache-cfg.outputs.save == 'true' }}
         run: echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Buildah build
@@ -284,16 +299,20 @@ jobs:
       # Only main saves, so PR runs do not fill the 10 GB repo cache quota. always() so a failed
       # build still keeps what it downloaded. The build runs as root via sudo, so hand the files
       # back to the runner user for the cache tar.
-      - name: Fix runner cache ownership
+      # The build runs as root via sudo; hand the files back to the runner user for the cache tar,
+      # then flag whether the file list changed so an identical ~800 MB cache is not uploaded again.
+      - name: Check runner cache changes
         id: cache-after
-        if: ${{ always() && runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' }}
+        if: ${{ always() && steps.cache-cfg.outputs.save == 'true' }}
+        env:
+          BEFORE: ${{ steps.cache-before.outputs.sum }}
         run: |
           sudo chown -R "$(id -u):$(id -g)" /home/runner/.cache/tmp || true
-          echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          after=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)
+          echo "changed=$([[ "${after}" != "${BEFORE}" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      # Skip the ~800 MB upload when the file list did not change during this run.
       - name: Save runner cache
-        if: ${{ always() && runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' && steps.cache-after.outputs.sum != steps.cache-before.outputs.sum }}
+        if: ${{ always() && steps.cache-after.outputs.changed == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -301,7 +320,7 @@ jobs:
           key: cache-runners-${{ inputs.image }}-${{ github.run_id }}
 
       - name: Prune old runner caches
-        if: ${{ always() && runner.environment != 'self-hosted' && inputs.image != 'claude-vm' && github.ref == 'refs/heads/main' && steps.cache-after.outputs.sum != steps.cache-before.outputs.sum }}
+        if: ${{ always() && steps.cache-after.outputs.changed == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
