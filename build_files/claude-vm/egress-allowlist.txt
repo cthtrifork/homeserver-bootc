@@ -69,3 +69,6 @@ osv.dev
 security.snyk.io
 api.first.org
 www.cisa.gov
+
+# CDNs and docs for skills
+cloudflare.com
