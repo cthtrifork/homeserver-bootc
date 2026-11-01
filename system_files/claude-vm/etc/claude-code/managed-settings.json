@@ -18,7 +18,8 @@
         "~/go"
       ],
       "denyRead": [
-        "~/.claude/.credentials.json"
+        "~/.claude/.credentials.json",
+        "~/.kube"
       ]
     },
     "network": {

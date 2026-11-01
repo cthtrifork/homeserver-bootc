@@ -60,11 +60,19 @@ service as a systemd credential. The Claude login lives in `/var/home/claude/.cl
   - It is a guardrail, not a hard boundary: the proxy filters by hostname without inspecting TLS, broad hosts such as
     `github.com` can carry data out, and MCP servers and hooks are not covered.
   - **MCP servers run outside the sandbox**, with the `claude` user's full access and no network filter;
-    `allowedDomains` does not apply to them. The only one is [Context7](https://github.com/upstash/context7)
-    (library docs, no credentials), installed in the image and defined in `/etc/claude-code/managed-mcp.json`. That
-    file takes exclusive control, so users and repositories cannot add servers. Add another by installing it in the
-    image and listing it there; `deniedMcpServers` is what blocks a managed server. A host firewall rule for the
-    `claude` user is the only way to restrict an MCP server's network access.
+    `allowedDomains` does not apply to them. The managed config, `/etc/claude-code/managed-mcp.json`, takes
+    exclusive control, so users and repositories cannot add servers. It defines three, all installed in the image:
+    [Context7](https://github.com/upstash/context7) (library docs, no credentials),
+    [podman-mcp-server](https://github.com/manusa/podman-mcp-server) (rootless podman as `claude`, so it can run
+    containers) and `flux-operator-mcp` (started with `--read-only`). Add another by installing it in the image and
+    listing it there; `deniedMcpServers` blocks a managed server. A host firewall rule for the `claude` user is the
+    only way to restrict an MCP server's network access.
+  - **Flux needs a kubeconfig, seeded by hand.** Put a kubeconfig for a read-only service account at
+    `/var/home/claude/.kube/config` (owner `claude`, 0600). Until then the `flux` server fails to start and the others
+    still work. `~/.kube` is in `sandbox.filesystem.denyRead`, so Bash commands cannot read it, but the MCP server can.
+    `--read-only` is the server's own switch, so the service account's RBAC is what really limits it.
+  - **Not added:** a GitHub MCP server (`gh` and the seeded token already cover it) and a systemd/journald one (no
+    maintained server exists on npm).
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
 - **A Remote Control session is a shell as `claude`.** Whoever controls your claude.ai session controls the VM. Turn on
   **Require trusted devices** in your account settings (beta) ([docs](https://code.claude.com/docs/en/remote-control.md#trusted-devices)).

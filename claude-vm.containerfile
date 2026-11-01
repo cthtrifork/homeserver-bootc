@@ -11,6 +11,8 @@ FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG CONTEXT7_MCP_VERSION=4.4.4 # renovate: datasource=npm depName=@upstash/context7-mcp
+ARG PODMAN_MCP_VERSION=0.0.15 # renovate: datasource=npm depName=podman-mcp-server
+ARG FLUX_MCP_VERSION=v0.62.1 # renovate: datasource=github-releases packageName=controlplaneio-fluxcd/flux-operator
 ARG CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, rootless podman.
@@ -25,16 +27,16 @@ RUN dnf -y install --setopt=install_weak_deps=False \
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
 RUN echo "claude:100000:65536" >> /etc/subuid && echo "claude:100000:65536" >> /etc/subgid
 
-# Claude Code and the Context7 MCP server (library docs, no credentials) live under /usr so they are part of the
+# Claude Code and the Context7 and Podman MCP servers live under /usr so they are part of the
 # immutable image and are upgraded by bootc, not by an in-place auto-updater.
 # /root is a dangling symlink to /var/roothome while building, so npm's default cache/log dir
 # (~/.npm) cannot be created; keep both in /tmp and remove them again.
 RUN npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
         npm install --global --prefix /usr "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
-            "@upstash/context7-mcp@${CONTEXT7_MCP_VERSION}" \
+            "@upstash/context7-mcp@${CONTEXT7_MCP_VERSION}" "podman-mcp-server@${PODMAN_MCP_VERSION}" \
     && rm -rf /tmp/npm-cache \
     && claude --version \
-    && command -v context7-mcp
+    && command -v context7-mcp podman-mcp-server
 
 # crane (not packaged in Fedora): pinned release, checksum-verified against the release's checksums.txt (amd64)
 RUN set -eux; cd /tmp; \
@@ -44,6 +46,16 @@ RUN set -eux; cd /tmp; \
     tar -xzf go-containerregistry_Linux_x86_64.tar.gz -C /usr/bin crane; \
     rm -f go-containerregistry_Linux_x86_64.tar.gz checksums.txt; \
     crane version
+
+# flux-operator-mcp (read-only cluster inspection): pinned release, checksum-verified (amd64)
+RUN set -eux; cd /tmp; \
+    base="https://github.com/controlplaneio-fluxcd/flux-operator/releases/download/${FLUX_MCP_VERSION}"; \
+    tgz="flux-operator-mcp_${FLUX_MCP_VERSION#v}_linux_amd64.tar.gz"; \
+    curl -fsSL -O "${base}/${tgz}" -O "${base}/flux-operator_${FLUX_MCP_VERSION#v}_checksums.txt"; \
+    grep " ${tgz}$" "flux-operator_${FLUX_MCP_VERSION#v}_checksums.txt" | sha256sum -c -; \
+    tar -xzf "${tgz}" -C /usr/bin flux-operator-mcp; \
+    rm -f "${tgz}" "flux-operator_${FLUX_MCP_VERSION#v}_checksums.txt"; \
+    command -v flux-operator-mcp
 
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
