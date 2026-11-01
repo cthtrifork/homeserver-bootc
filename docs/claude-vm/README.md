@@ -82,21 +82,16 @@ enforced in the kernel for the user's UID, so it does not depend on the sandbox 
 - **`claude-vm-egress-proxy`** (nginx, no TLS interception): reads the SNI of a TLS handshake (or the HTTP `Host`) and
   connects to that name itself; unlisted names are dropped (403 for HTTP). An IP address with no SNI is dropped.
 - **`claude-vm-egress-dns`** (dnsmasq): forwards only allowlisted domains to the system resolver and refuses the rest.
-- **One allowlist:** `sandbox.network.allowedDomains` in the managed settings, plus
-  `/usr/share/claude-vm/egress-extra.txt` (the Anthropic endpoints Remote Control needs) and local additions in
-  `/etc/claude-vm/egress-extra.d/*.txt` (one domain per line; a domain also covers its subdomains, and `*.` is optional).
-  `claude-vm-egress-generate` normalizes and validates them on each start (invalid entries are reported and skipped, an
-  empty list is an error) and writes `/run/claude-vm/egress/{allow.txt,nginx-allow.map,dnsmasq-servers}`, which the static
-  nginx and dnsmasq configs in `/usr/share/claude-vm/` include.
+- **One allowlist:** `build_files/claude-vm/egress-allowlist.txt` (one domain per line; a domain also covers its
+  subdomains). `build_files/claude-vm/egress-allowlist.sh` runs during the image build, **fails the build** on an invalid,
+  duplicate or redundant entry (wildcards, uppercase, IPs, ports, `api.github.com` next to `github.com`), and derives
+  from it `sandbox.network.allowedDomains` in the managed settings (`d` and `*.d` per entry) and the gateway's
+  `nginx-allow.map` and `dnsmasq-servers` in `/usr/share/claude-vm/egress/`, which the static configs
+  `/usr/share/claude-vm/egress-nginx.conf` and `egress-dnsmasq.conf` include. Nothing is generated at boot.
 - `claude-remote-control` requires all three units. Without them it does not start, and the user has no network anyway.
 
-To allow another host (also needed after approving a sandbox prompt for it, because the gateway is stricter than the
-prompt):
-
-```sh
-echo example.org | sudo tee -a /etc/claude-vm/egress-extra.d/local.txt
-sudo systemctl restart claude-vm-egress-generate claude-vm-egress-proxy claude-vm-egress-dns
-```
+To allow another host, add it to `egress-allowlist.txt` and rebuild the image (it also allows it in the Claude sandbox, so
+approving a sandbox prompt for it is not enough; the gateway is stricter than the prompt).
 
 Limits: filtering is by name, not content. A listed host that is a shared CDN or a broad service (`github.com`, `ghcr.io`,
 `pypi.org`) can still carry data out, domain fronting to a listed CDN is possible, and DNS queries for listed domains
@@ -142,7 +137,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
 | `sandbox.filesystem.denyRead` | `~/.claude/.credentials.json` | the login token is hidden from commands |
-| `sandbox.network.allowedDomains` | GitHub and ghcr.io, container registries, npm, PyPI, Go, Debian, a few docs and vulnerability-data hosts | the sandbox prompts for anything else; the [egress gateway](#egress-gateway) uses the same list |
+| `sandbox.network.allowedDomains` | generated at build time from `egress-allowlist.txt` | the sandbox prompts for anything else; the [egress gateway](#egress-gateway) uses the same list |
 
 ## Tests
 

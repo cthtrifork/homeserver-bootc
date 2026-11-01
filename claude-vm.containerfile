@@ -7,6 +7,9 @@
 # (see "Claude VM" in README.md), and Claude itself is signed in interactively.
 FROM quay.io/fedora/fedora-bootc:44 AS base
 
+FROM scratch AS ctx_build
+COPY build_files/claude-vm/ /build_files/claude-vm/
+
 FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
@@ -54,6 +57,12 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.pub /usr/share/claude-vm/authorized_keys.pub
 
 COPY system_files/claude-vm/ /
+# Egress allowlist: validate it (fails the build on a bad entry) and derive the sandbox's allowedDomains and the
+# gateway's nginx/dnsmasq lists from the one source file.
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
+    /ctx/build_files/claude-vm/egress-allowlist.sh /ctx/build_files/claude-vm/egress-allowlist.txt \
+        /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
+
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
         claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service

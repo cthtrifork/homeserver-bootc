@@ -1,5 +1,0 @@
-# Hosts the agent needs on top of sandbox.network.allowedDomains in /etc/claude-code/managed-settings.json.
-# One domain per line; a domain also covers its subdomains. Local additions go in /etc/claude-vm/egress-extra.d/*.txt.
-anthropic.com
-claude.ai
-claude.com

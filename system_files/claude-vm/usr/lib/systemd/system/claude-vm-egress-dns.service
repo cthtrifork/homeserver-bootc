@@ -1,7 +1,6 @@
 [Unit]
 Description=Claude VM egress gateway: allowlist DNS filter
-Requires=claude-vm-egress-generate.service
-After=claude-vm-egress-generate.service systemd-resolved.service
+After=systemd-resolved.service
 Wants=systemd-resolved.service
 
 [Service]

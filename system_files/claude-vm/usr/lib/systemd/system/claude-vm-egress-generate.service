@@ -1,8 +1,0 @@
-[Unit]
-Description=Claude VM egress gateway: build allowlist configs
-After=local-fs.target systemd-tmpfiles-setup.service
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/usr/libexec/claude-vm/egress-generate
