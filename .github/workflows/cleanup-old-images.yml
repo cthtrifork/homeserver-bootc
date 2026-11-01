@@ -42,20 +42,20 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           delete-untagged: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
       - name: Delete old PR Images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           delete-tags: pr-*
           older-than: 7 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
       - name: Delete ghost images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           delete-ghost-images: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -63,4 +63,4 @@ jobs:
           keep-n-tagged: 10
           exclude-tags: latest
           older-than: 14 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc
+          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc

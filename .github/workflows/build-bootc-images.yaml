@@ -17,6 +17,7 @@ on:
         options:
           - homeserver
           - homeserver-gui
+          - claude-vm
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
@@ -95,6 +96,12 @@ jobs:
               - 'system_files/homeserver-gui/**'
               - 'homeserver-gui.containerfile'
               - '**/homeserver-gui/**'
+            claude-vm:
+              - 'system_files/claude-vm/**'
+              - 'claude-vm.containerfile'
+              - '**/claude-vm/**'
+              # the VM reuses the homeserver SSH public keys
+              - 'system_files/homeserver/usr/share/homeserver/authorized_keys.pub'
               - 'build_files/gui/**'
 
       - name: Ensure a matrix has a fallback
@@ -110,7 +117,7 @@ jobs:
             IMAGES=$(jq -cn --arg i "$OVERRIDE_IMAGE" '[$i]')
           fi
           if [ "$FORCE" == "true" ]; then
-            IMAGES='["homeserver","homeserver-gui"]'
+            IMAGES='["homeserver","homeserver-gui","claude-vm"]'
           fi
           # If no images were changed, default to building the homeserver image
           if [ "$IMAGES" == "[]" ]; then
@@ -304,7 +311,8 @@ jobs:
       - name: Extract previous manifest
         run: |
           # Work around Rechunker not being able to use private registry auth details
-          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json
+          skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json \
+            || { echo "No previous manifest (first build of this image?)"; echo '{}' > previous.manifest.json; }
 
       - name: Clean stale rechunk cache
         run: sudo podman volume rm -f cache_ostree || true
@@ -426,8 +434,11 @@ jobs:
         with:
           trivy_version: ${{ env.TRIVY_VERSION }}
 
+      # only the PR image is scanned here, so the :latest baseline is not needed
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
+        with:
+          pull_latest: "false"
 
       - name: Trivy REPORT table - current
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -522,8 +533,23 @@ jobs:
         with:
           trivy_version: ${{ env.TRIVY_VERSION }}
 
+      # A new image has no published :latest yet, so there is nothing to diff against until its first release.
+      - name: Check for a published baseline (:latest)
+        id: baseline
+        env:
+          IMAGE_FULL: ${{ env.IMAGE_FULL }}
+        run: | #sh
+          if skopeo inspect --raw "docker://${IMAGE_FULL}:latest" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No ${IMAGE_FULL}:latest yet, skipping the baseline comparison"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         uses: ./.github/actions/load-image
+        with:
+          pull_latest: ${{ steps.baseline.outputs.exists }}
 
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -542,6 +568,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Trivy vuln scan (JSON) - latest
+        if: ${{ steps.baseline.outputs.exists == 'true' }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE_FULL }}:latest
@@ -557,6 +584,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Generate a report for the PR
+        if: ${{ steps.baseline.outputs.exists == 'true' }}
         uses: ./.github/actions/pr-report
 
       - name: Build cleanup

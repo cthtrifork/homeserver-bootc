@@ -1,0 +1,36 @@
+[Unit]
+Description=Claude Code Remote Control
+Documentation=https://code.claude.com/docs/en/remote-control
+After=network-online.target systemd-tmpfiles-setup.service user@1100.service
+Wants=network-online.target user@1100.service
+# Stays inert until both manual steps are done: token seeded + `claude` signed in/trusted.
+ConditionPathExists=/etc/claude-vm/github-token
+ConditionPathExists=/var/home/claude/.claude/.credentials.json
+
+[Service]
+Type=simple
+User=claude
+Group=claude
+WorkingDirectory=/var/home/claude/workspace
+Environment=HOME=/var/home/claude
+Environment=DISABLE_AUTOUPDATER=1
+# rootless podman needs a runtime dir (user@1100 is started by lingering, see 14-claude-podman-linger.conf)
+Environment=XDG_RUNTIME_DIR=/run/user/1100
+# /usr is read-only: global npm installs, pip --user and go install go to the home directory
+Environment=NPM_CONFIG_PREFIX=/var/home/claude/.npm-global
+Environment=PATH=/var/home/claude/.npm-global/bin:/var/home/claude/.local/bin:/var/home/claude/go/bin:/usr/local/bin:/usr/bin:/usr/sbin
+LoadCredential=github-token:/etc/claude-vm/github-token
+ExecStart=/usr/libexec/claude-vm/run-remote-control
+Restart=always
+RestartSec=15
+
+# No NoNewPrivileges/RestrictSUIDSGID: rootless podman needs the setuid newuidmap/newgidmap helpers.
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/home/claude /var/tmp
+# No ProtectKernelTunables: it read-only-mounts parts of /proc, which stops bubblewrap (the Bash sandbox) mounting its own /proc.
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

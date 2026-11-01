@@ -4,16 +4,20 @@ Fedora bootc (`fedora-bootc:44`) images for a home server, built and published b
 
 ## Images
 
-| Containerfile | Description |
-| --- | --- |
-| `homeserver.containerfile` | Headless home server |
-| `homeserver-gui.containerfile` | Home server with GUI |
+| Containerfile | Description | Details |
+| --- | --- | --- |
+| `homeserver.containerfile` | Headless home server | [docs/homeserver](docs/homeserver/README.md) |
+| `homeserver-gui.containerfile` | Home server with GUI | [docs/homeserver-gui](docs/homeserver-gui/README.md) |
+| `claude-vm.containerfile` | VM that runs Claude Code Remote Control | [docs/claude-vm](docs/claude-vm/README.md) |
+
+The first two bake secrets into the image and must stay private. `claude-vm` is built without any.
 
 ## Layout
 
 - `build_files/` – build scripts (base, core, gui, post, ...)
 - `system_files/` – files copied into the images
-- `tests/` – image verification scripts
+- `tests/` – image verification scripts, one folder per image
+- `docs/` – per-image documentation (not in `system_files/`, which is copied into the images)
 - `.github/workflows/` – build, lint, cleanup and Renovate pipelines
 
 ## Filesystem notes
@@ -21,51 +25,5 @@ Fedora bootc (`fedora-bootc:44`) images for a home server, built and published b
 - `/usr` is read-only and managed by the image; prefer it for config.
 - `/etc` is editable. Locally modified files drift and stop receiving updates. List them with `ostree admin config-diff`, and revert one by copying it from `/usr/etc`.
 - `/var` is only populated on first boot.
-
-## Remote access
-
-```sh
-# ~/.ssh/config
-Host portableinfo.pinggy
-  HostName portableinfo.a.pinggy.link
-  User cthtrifork
-  Port 21412
-  SetEnv TERM=xterm-256color
-```
-
-```sh
-ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
-```
-
-## Secrets (sops + age)
-
-```sh
-sops --encrypt --age "$AGE_PUB" plain > encrypted.sops
-SOPS_AGE_KEY_FILE=/var/lib/sops/age/keys.txt sops -d encrypted.sops > plain
-```
-
-## Local build test
-
-```sh
-echo "" > /tmp/PINGGY_TOKEN
-echo "${GITHUB_TOKEN}" > /tmp/REGISTRY_TOKEN
-cp "${HOME}/.docker/config.json" /tmp/creds
-echo "${SOPS_AGE_KEY}" > /tmp/AGE_KEY
-mkdir -p /tmp/runner/.cache/dnf /tmp/runner/.cache/tmp
-
-podman build \
-  --network=slirp4netns:enable_ipv6=false \
-  -f homeserver-gui.containerfile \
-  --build-arg REGISTRY_USERNAME="caspertdk" \
-  --build-arg REGISTRY_URL=ghcr.io \
-  --build-arg PINGGY_HOST="test.com" \
-  --build-arg REPOSITORY="https://github.com/cthtrifork/homeserver-bootc" \
-  --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
-  --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
-  --secret id=creds,src=/tmp/creds \
-  --secret id=agekey,src=/tmp/AGE_KEY \
-  -v /tmp/runner/.cache/dnf:/var/cache/libdnf5:z \
-  -v /tmp/runner/.cache/tmp:/runner/cache:z
-```
 
 See also: [Using toolbox to inspect bootc containers](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/managing-rhel-bootc-images#using-toolbx-to-inspect-bootc-containers_managing-rhel-bootc-images)
