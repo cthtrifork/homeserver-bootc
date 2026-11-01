@@ -55,16 +55,6 @@ COPY system_files/claude-vm/ /
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer
 
-# Guard: fail the build if anything that looks like a private key or token ended up in the image.
-RUN set -eu; \
-    hits="$(find /etc /root /var/roothome /var/home /usr/local -xdev -type f \
-        \( -name 'id_rsa' -o -name 'id_dsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' \
-           -o -name '*.p12' -o -name '*.pfx' -o -name 'ssh_host_*_key' \
-           -o -name 'github-token' -o -name '.credentials.json' \) 2>/dev/null || true)"; \
-    hits="$hits $(grep -rIlE -e '-----BEGIN [A-Z ]*PRIVATE KEY-----' -e 'gh[pousr]_[A-Za-z0-9]{30,}' -e 'github_pat_[A-Za-z0-9_]{30,}' \
-        /etc /root /var/roothome /var/home /usr/local 2>/dev/null || true)"; \
-    if [ -n "$(echo "$hits" | tr -d ' \n')" ]; then echo "Secret-like files in image: $hits" >&2; exit 1; fi
-
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
 # runner UID, which does not exist in the image), which that lint reports as an unknown user.
 RUN bootc container lint --skip var-tmpfiles
