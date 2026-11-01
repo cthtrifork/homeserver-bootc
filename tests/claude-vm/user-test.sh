@@ -54,7 +54,7 @@ must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.
 sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
 echo "--- egress allowlist: podman containers ---"
-img=quay.io/fedora/fedora:44   # has curl; quay.io is allowlisted
+img=quay.io/curl/curl:latest   # the curl project's image (~11 MB, one layer); quay.io is allowlisted
 agent_podman() { sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"; }
 # the container must start and curl must fail: podman's own errors (125-127) do not count as "blocked"
 container_blocked() {
