@@ -1,0 +1,29 @@
+name: "Set up a BootC image job"
+description: "Resolve the image variables and log in to ghcr.io (run after actions/checkout, which a local action needs)"
+inputs:
+  image:
+    description: "Image selector (homeserver|homeserver-gui|claude-vm)"
+    required: true
+  registry-token:
+    description: "Token used to log in to ghcr.io"
+    required: false
+    default: ${{ github.token }}
+  auth-file-path:
+    description: "Write the login to this auth file instead of the default location"
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - name: Set image vars
+      uses: ./.github/actions/set-image-vars
+      with:
+        image: ${{ inputs.image }}
+
+    - name: Log in to the Container registry
+      uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.registry-token }}
+        auth_file_path: ${{ inputs.auth-file-path }}
