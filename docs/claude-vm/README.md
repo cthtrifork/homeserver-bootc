@@ -45,6 +45,29 @@ journalctl -u claude-remote-control -f     # shows the session URL
 Rotate the token by re-running step 1. It lives only in `/etc/claude-vm/github-token` (root, 0600) and reaches the
 service as a systemd credential. The Claude login lives in `/var/home/claude/.claude/` and survives upgrades.
 
+## Reaching the VM over SSH (free Pinggy tunnel)
+
+`claude-pinggy.service` opens a free [Pinggy](https://pinggy.io/docs/run_tunnel_on_startup/linux/) TCP tunnel to the
+local sshd (`ssh -p 443 -R0:localhost:22 tcp@free.pinggy.io`), like `pinggy.service` on the home server, so you can
+log in without knowing the VM's IP. It needs **no account or token**, which keeps the image secret-free. It runs as a
+throwaway `DynamicUser` and is enabled by default.
+
+```sh
+# on the VM (console, or via claude.ai/code): print the current address
+claude-vm-ssh-address        # ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
+# or: journalctl -u claude-pinggy | grep 'tunnel up'
+
+# from your machine
+ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
+```
+
+- **The address is random and changes** each time the tunnel starts. Free tunnels are closed after about 60 minutes,
+  and systemd then restarts the tunnel with a new address, so re-run `claude-vm-ssh-address` if a login stops working.
+  For a fixed address use a paid Pinggy token as on the home server (not wired up here, to keep the image secret-free).
+- **Anyone can reach the port, so only the key matters.** Password login is off and only the keys in
+  `authorized_keys.pub` work, but the sshd is on the internet and will see scan traffic. Disable it with
+  `sudo systemctl disable --now claude-pinggy` when you do not need it.
+
 ## Security model
 
 - **Policy:** `/etc/claude-code/managed-settings.json` is root-owned and has the highest precedence, so `claude`
@@ -113,7 +136,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 ## Tests
 
 `tests/claude-vm/` runs in QEMU when a pull request has the `e2e` label. The system test checks the tools, that the
-service is enabled but idle, the staged-update notice, the policy, that `bubblewrap` starts under the service's
+service is enabled but idle, that the Pinggy tunnel unit is enabled, the staged-update notice, the policy, that `bubblewrap` starts under the service's
 hardening, users and SSH, home directories and lingering, and that no key or token file is on the VM. The user test
 checks that the seed helper refuses a private key, then, as `claude`, runs Python, builds a Go program and runs a real
 rootless podman container.
