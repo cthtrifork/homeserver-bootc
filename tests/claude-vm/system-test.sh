@@ -8,7 +8,7 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat; do
+for c in bash python3 pip3 node npm go podman skopeo crane gh git bwrap socat context7-mcp; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
 
@@ -38,9 +38,10 @@ jq -e '.permissions.disableBypassPermissionsMode == "disable"
        and (.sandbox.allowUnsandboxedCommands | not)
        and (.sandbox.excludedCommands | index("podman *"))
        and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)
-       and .allowManagedMcpServersOnly and (.enableAllProjectMcpServers | not)
-       and (.allowedMcpServers == [])' \
+       and .allowManagedMcpServersOnly and (.allowedMcpServers == [])' \
     /etc/claude-code/managed-settings.json >/dev/null
+# the only MCP server is Context7, from the managed config (exclusive control)
+jq -e '.mcpServers | keys == ["context7"]' /etc/claude-code/managed-mcp.json >/dev/null
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \
     -p PrivateTmp=yes -p ProtectSystem=strict -p ProtectControlGroups=yes \

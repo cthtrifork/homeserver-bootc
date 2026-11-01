@@ -51,7 +51,6 @@
   },
   "allowManagedHooksOnly": true,
   "allowManagedMcpServersOnly": true,
-  "enableAllProjectMcpServers": false,
   "allowedMcpServers": [],
   "hooks": {
     "SessionStart": [

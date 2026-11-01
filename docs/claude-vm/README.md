@@ -59,8 +59,12 @@ service as a systemd credential. The Claude login lives in `/var/home/claude/.cl
     approved it and its containers are unconfined, with no network filter.
   - It is a guardrail, not a hard boundary: the proxy filters by hostname without inspecting TLS, broad hosts such as
     `github.com` can carry data out, and MCP servers and hooks are not covered.
-  - **MCP is off by default.** Because the sandbox does not cover MCP servers, the managed policy allows none. To add
-    one, install it in the image, define it in a managed MCP config and list it in `allowedMcpServers`.
+  - **MCP servers run outside the sandbox**, with the `claude` user's full access and no network filter;
+    `allowedDomains` does not apply to them. The only one is [Context7](https://github.com/upstash/context7)
+    (library docs, no credentials), installed in the image and defined in `/etc/claude-code/managed-mcp.json`. That
+    file takes exclusive control, so users and repositories cannot add servers. Add another by installing it in the
+    image and listing it there; `deniedMcpServers` is what blocks a managed server. A host firewall rule for the
+    `claude` user is the only way to restrict an MCP server's network access.
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
 - **A Remote Control session is a shell as `claude`.** Whoever controls your claude.ai session controls the VM. Turn on
   **Require trusted devices** in your account settings (beta) ([docs](https://code.claude.com/docs/en/remote-control.md#trusted-devices)).
@@ -105,9 +109,8 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
-| `allowManagedMcpServersOnly` | `true` | only MCP servers allowed by this policy run; a repository's `.mcp.json` is ignored |
-| `allowedMcpServers` | `[]` | no MCP server is allowed yet: MCP servers are outside the Bash sandbox, so each one is added here on purpose |
-| `enableAllProjectMcpServers` | `false` | project MCP servers are never auto-approved |
+| `allowManagedMcpServersOnly` | `true` | allowlists from user, project and local settings are ignored |
+| `allowedMcpServers` | `[]` | no user or project MCP server is allowed; servers in `managed-mcp.json` skip this check |
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
 | `sandbox.allowUnsandboxedCommands` | `false` | the model cannot retry a command outside the sandbox |
 | `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
