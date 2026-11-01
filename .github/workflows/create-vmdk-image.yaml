@@ -45,8 +45,8 @@ on:
 jobs:
   create-image:
     name: Build ${{ inputs.type }} image
-    #runs-on: ubuntu-latest
-    runs-on: ${{ inputs.image_name == 'homeserver-gui-bootc' && 'arc-ubuntu' || 'ubuntu-latest' }}
+    # Pinned: ubuntu-latest (26.04) breaks osbuild's /dev mount (permission denied)
+    runs-on: ${{ inputs.image_name == 'homeserver-gui-bootc' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     environment: dev
     permissions:
       contents: read
