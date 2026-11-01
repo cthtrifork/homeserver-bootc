@@ -13,6 +13,23 @@
       "Edit(~/.ssh/**)",
       "Edit(~/.gitconfig)",
       "Edit(~/.config/git/**)"
+    ],
+    "allow": [
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(shellcheck *)",
+      "Bash(shfmt *)",
+      "Bash(yamllint *)",
+      "Bash(hadolint *)",
+      "Bash(actionlint *)",
+      "Bash(jq *)",
+      "Bash(yq *)",
+      "Bash(curl *)",
+      "Bash(ls *)",
+      "Bash(grep *)",
+      "Bash(wc *)",
+      "Bash(od *)",
+      "Bash(printenv *)"
     ]
   },
   "sandbox": {
@@ -45,7 +62,8 @@
         "~/.gitconfig",
         "~/.config/git"
       ]
-    }
+    },
+    "autoAllowBashIfSandboxed": true
   },
   "allowManagedHooksOnly": true,
   "hooks": {
