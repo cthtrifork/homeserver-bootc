@@ -207,6 +207,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 
 | Key | Value | Why |
 | --- | --- | --- |
+| `permissions.defaultMode` | `"auto"` | sessions start in auto mode so unattended Remote Control sessions do not stall on prompts; deny rules and the sandbox still apply |
 | `permissions.disableBypassPermissionsMode` | `"disable"` | `--dangerously-skip-permissions` is rejected |
 | `allowManagedHooksOnly` | `true` | only the hooks in this file run |
 | `hooks.SessionStart` | `session-start-note` | reports a staged OS update |
