@@ -115,8 +115,6 @@ enforced in the kernel for the user's UID, so it does not depend on the sandbox 
   `/usr/share/claude-vm/egress-nginx.conf` and `egress-dnsmasq.conf` include. Nothing is generated at boot.
 - `claude-remote-control` requires all three units. Without them it does not start, and the user has no network anyway.
 
-The script has unit tests (`python3 -m unittest discover -s build_files/claude-vm`, run by the lint workflow).
-
 To allow another host, add it to `egress-allowlist.txt` and rebuild the image (it also allows it in the Claude sandbox, so
 approving a sandbox prompt for it is not enough; the gateway is stricter than the prompt).
 

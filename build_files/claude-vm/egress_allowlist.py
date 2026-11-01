@@ -1,17 +1,7 @@
 #!/usr/bin/python3
-"""Image build step: validate the egress allowlist and derive everything that consumes it.
+"""Validate the egress allowlist and derive the sandbox, nginx and dnsmasq lists from it.
 
 usage: egress_allowlist.py ALLOWLIST MANAGED_SETTINGS_JSON OUTDIR
-
-ALLOWLIST is one domain per line ("#" comments). A domain covers itself and all its subdomains. The build fails
-(exit 1, every problem reported with its line number) on a wildcard, uppercase, IP literal, port, bare name, bad
-label, duplicate, or an entry already covered by a parent (e.g. api.github.com next to github.com).
-
-Writes:
-  MANAGED_SETTINGS_JSON  .sandbox.network.allowedDomains = ["d", "*.d", ...] for every entry (other keys kept)
-  OUTDIR/allowlist.txt   the sorted list
-  OUTDIR/nginx-allow.map ".d  1;" lines, included by /usr/share/claude-vm/egress-nginx.conf ("hostnames" map)
-  OUTDIR/dnsmasq-servers "server=/d/RESOLVER" lines, included by /usr/share/claude-vm/egress-dnsmasq.conf
 """
 
 import argparse
@@ -20,21 +10,15 @@ import re
 import sys
 from pathlib import Path
 
-# systemd-resolved stub; the proxy and dnsmasq are not subject to the agent's firewall rules (see egress.nft)
-RESOLVER = "127.0.0.53"
+RESOLVER = "127.0.0.53"  # systemd-resolved stub
 
 LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
 DOMAIN_RE = re.compile(rf"^{LABEL}(?:\.{LABEL})+$")
-NUMERIC_RE = re.compile(r"^[0-9.]+$")  # IPv4 literals are not hostnames
+NUMERIC_RE = re.compile(r"^[0-9.]+$")
 MAX_NAME = 253
 
 
-class AllowlistError(Exception):
-    """The allowlist is not valid; args[0] is the list of messages."""
-
-
-def parse(text: str) -> list[tuple[int, str]]:
-    """(line number, entry) for every non-empty, non-comment line."""
+def parse(text):
     entries = []
     for number, line in enumerate(text.splitlines(), start=1):
         entry = line.split("#", 1)[0].strip()
@@ -43,18 +27,14 @@ def parse(text: str) -> list[tuple[int, str]]:
     return entries
 
 
-def validate(entries: list[tuple[int, str]]) -> list[str]:
-    """All problems with the entries, as messages; empty when the list is valid."""
+def validate(entries):
     if not entries:
         return ["empty allowlist"]
     problems = []
-    first_seen: dict[str, int] = {}
+    first_seen = {}
     for number, domain in entries:
         if len(domain) > MAX_NAME or not DOMAIN_RE.match(domain) or NUMERIC_RE.match(domain):
-            problems.append(
-                f"line {number}: invalid entry '{domain}' "
-                "(lowercase hostname with at least two labels; no wildcard, port, path or IP)"
-            )
+            problems.append(f"line {number}: invalid entry '{domain}'")
         elif domain in first_seen:
             problems.append(f"line {number}: duplicate of line {first_seen[domain]} ('{domain}')")
         else:
@@ -64,29 +44,22 @@ def validate(entries: list[tuple[int, str]]) -> list[str]:
         for i in range(1, len(labels) - 1):
             parent = ".".join(labels[i:])
             if parent in first_seen:
-                problems.append(
-                    f"line {number}: '{domain}' is already covered by '{parent}' (line {first_seen[parent]})"
-                )
+                problems.append(f"line {number}: '{domain}' is already covered by '{parent}'")
                 break
     return problems
 
 
-def merge_settings(settings: dict, domains: list[str]) -> dict:
-    """Set sandbox.network.allowedDomains ("d" and "*.d" per entry), keeping every other key."""
-    allowed = [name for domain in domains for name in (domain, f"*.{domain}")]
-    settings.setdefault("sandbox", {}).setdefault("network", {})["allowedDomains"] = allowed
-    return settings
-
-
-def build(allowlist: Path, settings_path: Path, outdir: Path) -> list[str]:
-    """Validate and write everything; returns the sorted domains. Raises AllowlistError."""
+def build(allowlist, settings_path, outdir):
     entries = parse(allowlist.read_text())
     problems = validate(entries)
     if problems:
-        raise AllowlistError(problems)
+        raise SystemExit("\n".join(f"{allowlist}: {p}" for p in problems))
     domains = sorted(domain for _, domain in entries)
 
-    settings = merge_settings(json.loads(settings_path.read_text()), domains)
+    settings = json.loads(settings_path.read_text())
+    settings.setdefault("sandbox", {}).setdefault("network", {})["allowedDomains"] = [
+        name for d in domains for name in (d, f"*.{d}")
+    ]
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
     outdir.mkdir(parents=True, exist_ok=True)
@@ -96,21 +69,15 @@ def build(allowlist: Path, settings_path: Path, outdir: Path) -> list[str]:
     return domains
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+def main():
+    parser = argparse.ArgumentParser()
     parser.add_argument("allowlist", type=Path)
-    parser.add_argument("managed_settings", type=Path, metavar="managed-settings.json")
+    parser.add_argument("managed_settings", type=Path)
     parser.add_argument("outdir", type=Path)
-    args = parser.parse_args(argv)
-    try:
-        domains = build(args.allowlist, args.managed_settings, args.outdir)
-    except AllowlistError as error:
-        for problem in error.args[0]:
-            print(f"{args.allowlist}: {problem}", file=sys.stderr)
-        return 1
+    args = parser.parse_args()
+    domains = build(args.allowlist, args.managed_settings, args.outdir)
     print(f"egress-allowlist: {len(domains)} domains")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
