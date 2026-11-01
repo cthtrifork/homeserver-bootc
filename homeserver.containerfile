@@ -64,4 +64,6 @@ RUN systemctl set-default graphical.target
 # NetworkManager-wait-online can slow down boot time significantly
 RUN systemctl disable NetworkManager-wait-online.service
 
-# RUN bootc container lint
+# var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
+# runner UID, which does not exist in the image), which that lint reports as an unknown user.
+RUN bootc container lint --skip var-tmpfiles

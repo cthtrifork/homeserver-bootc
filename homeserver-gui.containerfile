@@ -69,4 +69,6 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 ADD --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
 ADD --chmod=0644 policy.json /etc/containers/policy.json
 
-# RUN bootc container lint
+# var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
+# runner UID, which does not exist in the image), which that lint reports as an unknown user.
+RUN bootc container lint --skip var-tmpfiles
