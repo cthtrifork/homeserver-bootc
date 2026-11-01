@@ -30,8 +30,11 @@ table inet claude_egress {
     chain filter_out {
         type filter hook output priority 0; policy accept;
         meta skuid != @agent_uids return
-        # after the redirect above, allowed traffic is local; everything else (UDP/QUIC, SSH, IPv6, other ports) is refused
-        oif "lo" accept
+        # After the redirect above, allowed traffic is local; everything else (UDP/QUIC, SSH, other ports, IPv6) is
+        # refused. Match the destination, not "oif lo": the packet is re-routed to loopback after the nat hook, but
+        # later chains of the same hook still see the original output interface.
+        ip daddr 127.0.0.0/8 accept
+        ip6 daddr ::1 accept
         reject with icmpx admin-prohibited
     }
 }
