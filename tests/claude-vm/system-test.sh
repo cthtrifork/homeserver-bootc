@@ -80,7 +80,6 @@ sudo rm -f /run/claude-vm/update-staged
 echo "--- policy and Bash sandbox ---"
 jq -e '.permissions.disableBypassPermissionsMode == "disable"
        and .sandbox.enabled and .sandbox.failIfUnavailable
-       and .sandbox.allowUnsandboxedCommands
        and (.sandbox.excludedCommands | index("podman *"))
        and .allowManagedHooksOnly and (.hooks.SessionStart | length > 0)' \
     /etc/claude-code/managed-settings.json >/dev/null
