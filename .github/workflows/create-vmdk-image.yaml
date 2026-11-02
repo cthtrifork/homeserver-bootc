@@ -19,10 +19,10 @@ on:
         type: choice
         required: true
         options:
-          - homeserver-centos-bootc
+          - homeserver-bootc
           - homeserver-gui-bootc
           - claude-vm-bootc
-        default: homeserver-centos-bootc
+        default: homeserver-bootc
       context:
         description: "Build context (path)"
         type: string

@@ -112,7 +112,7 @@ jobs:
             base_ts=$(created "$BASE_IMAGE")
             now=$(date +%s)
             IMAGES='[]'
-            for img in homeserver:homeserver-centos-bootc homeserver-gui:homeserver-gui-bootc claude-vm:claude-vm-bootc; do
+            for img in homeserver:homeserver-bootc homeserver-gui:homeserver-gui-bootc claude-vm:claude-vm-bootc; do
               ts=$(created "$IMAGE_PREFIX/${img#*:}:latest" "$REGISTRY_USER:$REGISTRY_TOKEN")
               if [ -n "$ts" ] && [ -n "$base_ts" ] && [ "$ts" -ge "$base_ts" ] \
                 && [ $(( (now - ts) / 86400 )) -lt "$MAX_AGE_DAYS" ]; then
