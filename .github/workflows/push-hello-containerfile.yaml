@@ -4,13 +4,13 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "hello.containerfile"
+      - "utils/hello.containerfile"
       - ".github/workflows/push-hello-containerfile.yaml"
   pull_request:
     branches:
       - main
     paths:
-      - "hello.containerfile"
+      - "utils/hello.containerfile"
       - ".github/workflows/push-hello-containerfile.yaml"
   workflow_dispatch:
 
@@ -62,7 +62,7 @@ jobs:
         id: push-latest
         with:
           context: .
-          file: ./hello.containerfile
+          file: ./utils/hello.containerfile
           push: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
