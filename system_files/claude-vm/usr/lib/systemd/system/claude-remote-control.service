@@ -41,7 +41,12 @@ ProtectSystem=strict
 ReadWritePaths=/var/home/claude /var/tmp
 # No ProtectKernelTunables: it read-only-mounts parts of /proc, which stops bubblewrap (the Bash sandbox) mounting its own /proc.
 ProtectKernelModules=yes
-ProtectControlGroups=yes
+# Not ProtectControlGroups=yes: it makes /sys/fs/cgroup read-only, and rootless podman then cannot create the scope it
+# asks the user manager for (user@1100.service, delegated to claude), so every `podman build` RUN step fails with
+# "create directory /sys/fs/cgroup/...: Read-only file system". Unix permissions still confine claude to its own
+# delegated subtree; the unit's cgroup and the rest of the hierarchy stay root-owned. (=private would hide
+# user@1100.service from the unit's cgroup namespace, so it does not help here.)
+ProtectControlGroups=no
 
 [Install]
 WantedBy=multi-user.target

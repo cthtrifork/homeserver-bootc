@@ -72,7 +72,7 @@ sudo rm -f /run/claude-vm/update-staged
 echo "--- policy and Bash sandbox ---"
 # bubblewrap must start under the service's own hardening
 sudo systemd-run --wait --pipe --collect -q -p User=claude \
-    -p PrivateTmp=yes -p ProtectSystem=strict -p ProtectControlGroups=yes \
+    -p PrivateTmp=yes -p ProtectSystem=strict \
     bwrap --unshare-all --ro-bind / / --dev /dev --proc /proc true
 
 echo "--- users, ssh, home directories ---"
