@@ -1,4 +1,4 @@
-name: Build and Push Hello Image
+name: Push hello image
 
 on:
   push:
