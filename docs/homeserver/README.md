@@ -1,6 +1,6 @@
 # homeserver
 
-`homeserver.containerfile` builds `homeserver-centos-bootc`, the home server image. Back to the [main README](../../README.md).
+`homeserver.containerfile` builds `homeserver-bootc`, the home server image. Back to the [main README](../../README.md).
 
 > **Private image.** The build bakes secrets in: the age key (`/usr/lib/sops/age/keys.txt`), the SSH key decrypted
 > from sops (`/usr/share/secrets/ssh/id_ed25519`), registry credentials (`/usr/lib/container-auth.json`), a registry

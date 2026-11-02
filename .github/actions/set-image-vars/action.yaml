@@ -15,7 +15,7 @@ runs:
 
         case "${{ inputs.image }}" in
           homeserver)
-            IMAGE_NAME="homeserver-centos-bootc"
+            IMAGE_NAME="homeserver-bootc"
             CONTAINERFILE="homeserver.containerfile"
             ;;
           homeserver-gui)
