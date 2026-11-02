@@ -1,4 +1,4 @@
-name: Build homeserver bootable container image
+name: Build bootc image
 on:
   schedule:
     - cron: "0 3 * * 0" # Sunday 03:00: patch every image whose base is newer or that is ~2 weeks old (see "Detect changed areas")
