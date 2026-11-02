@@ -201,6 +201,10 @@ or the egress gateway:
 | `LimitNOFILE` | `65536` | enough for large parallel builds |
 | `CPUWeight` | `50` (default 100) | sshd and the gateway win under CPU contention |
 
+The unit does not set `ProtectControlGroups=`: a read-only `/sys/fs/cgroup` stops rootless podman creating the scope it
+requests from `user@1100.service`, which breaks every `podman build` step. `claude` can still only write to the cgroup
+subtree delegated to it (`user@1100.service`); the unit's own cgroup and the rest of the hierarchy stay root-owned.
+
 Caveat: rootless podman containers started by `claude` are run by conmon, which may land in the `user@1100` slice
 instead of this unit's cgroup, so they are not covered by these limits. Cap them with `podman run --memory/--cpus`, or
 set limits on `user-1100.slice`.
