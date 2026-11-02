@@ -41,6 +41,23 @@ sudo -u claude -H bash -lc '
   podman run --rm quay.io/podman/hello
 '
 
+echo "--- playwright drives headless chromium ---"
+# the tests are piped over ssh, so write the script to a temp file the claude user can read
+pw_script="$(mktemp --suffix=.js)"
+chmod 0644 "$pw_script"
+cat >"$pw_script" <<'JS'
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
+  const page = await browser.newPage();
+  await page.goto('data:text/html,<h1 id=x>playwright ok</h1>');
+  console.log(await page.textContent('#x'));
+  await browser.close();
+})().catch((e) => { console.error(e); process.exit(1); });
+JS
+sudo -u claude -H bash -lc "cd / && node $pw_script" | grep -x "playwright ok"
+rm -f "$pw_script"
+
 echo "--- podman API socket answers (outside the sandbox) ---"
 sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 curl -sf --unix-socket /run/user/1100/podman/podman.sock http://d/_ping | grep -x OK
 

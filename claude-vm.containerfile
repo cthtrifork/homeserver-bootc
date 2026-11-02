@@ -9,6 +9,7 @@ COPY build_files/ /build_files/
 FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
+ARG PLAYWRIGHT_VERSION=1.64.1 # renovate: datasource=npm depName=playwright
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman, plus linters/formatters
 # (ShellCheck, shfmt, yamllint, jq/yq; hadolint and actionlint are installed below).
@@ -20,6 +21,7 @@ RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
+        chromium \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
@@ -39,6 +41,14 @@ RUN npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
         npm install --global --prefix /usr "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
     && rm -rf /tmp/npm-cache \
     && claude --version
+
+# Playwright (browser automation / screenshots). The library lives under /usr like Claude Code; the browser is Fedora's
+# chromium RPM (Playwright's own download is not supported on Fedora), so no browser download happens at build or run
+# time. Scripts must launch it with executablePath /usr/bin/chromium-browser and --no-sandbox (Chromium's own sandbox
+# cannot nest inside bubblewrap); /etc/profile.d/81-claude-playwright.sh exports the matching env vars.
+RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
+        npm install --global --prefix /usr "playwright@${PLAYWRIGHT_VERSION}" \
+    && rm -rf /tmp/npm-cache
 
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 

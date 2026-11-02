@@ -92,3 +92,5 @@ session. If the main checkout is on someone else's branch or has uncommitted cha
 - Only hosts in `build_files/claude-vm/egress-allowlist.txt` are reachable. If a command fails with a network error,
   report the host instead of retrying; adding a host means editing that file and rebuilding the image.
 - `podman` is excluded from the sandbox and always asks for approval.
+- Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
+  instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.
