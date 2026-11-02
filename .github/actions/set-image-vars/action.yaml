@@ -5,7 +5,7 @@ inputs:
     description: "Image selector (homeserver|homeserver-gui|claude-vm)"
     required: true
   allocate_version:
-    description: "On main, allocate the next <yyyyMMdd>-<rev> UNIQUE_VERSION. Only the job that publishes should set this, so the revision is allocated once per run."
+    description: "On main, allocate the next main-<yyyyMMdd>-<rev> UNIQUE_VERSION. Only the job that publishes should set this, so the revision is allocated once per run."
     required: false
     default: "false"
 runs:
@@ -46,15 +46,15 @@ runs:
           DOCKER_TAG="pr-${PR_NUMBER}-${VERSION}"
         fi
         if [ "${{ inputs.allocate_version }}" = "true" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          # <yyyyMMdd>-<rev>: rev is a per-day, per-image counter derived from the release tags
-          # (<image>_<yyyyMMdd>-<rev>) already on the remote. main builds of one image are
+          # main-<yyyyMMdd>-<rev>: rev is a per-day, per-image counter derived from the release tags
+          # (<image>_main-<yyyyMMdd>-<rev>) already on the remote. main builds of one image are
           # serialized by the concurrency group, so the counter does not race.
           TODAY="$(date -u +%Y%m%d)"
-          PREFIX="refs/tags/${IMAGE_NAME}_${TODAY}-"
+          PREFIX="refs/tags/${IMAGE_NAME}_main-${TODAY}-"
           # highest numeric rev already tagged today (0 if none); non-numeric suffixes are ignored
           LAST_REV="$(git ls-remote --tags --refs origin "${PREFIX}*" \
             | awk -v p="${PREFIX}" 'index($2, p) == 1 { r = substr($2, length(p) + 1); if (r ~ /^[0-9]+$/ && r + 0 > m) m = r + 0 } END { print m + 0 }')"
-          UNIQUE_VERSION="${TODAY}-$(( LAST_REV + 1 ))"
+          UNIQUE_VERSION="main-${TODAY}-$(( LAST_REV + 1 ))"
         else
           UNIQUE_VERSION="${DOCKER_TAG}.${{ github.run_number }}"
         fi

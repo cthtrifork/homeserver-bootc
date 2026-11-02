@@ -23,7 +23,7 @@ runs:
       id: push-to-ghcr
       shell: bash
       run: | #sh
-        # main is published only under its unique <yyyyMMdd>-<rev> tag (and latest, see push-latest),
+        # main is published only under its unique main-<yyyyMMdd>-<rev> tag (and latest, see push-latest),
         # every other ref under its working tag
         if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
           DEST="${IMAGE_FULL}:${UNIQUE_VERSION}"
