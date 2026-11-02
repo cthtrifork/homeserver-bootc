@@ -1,0 +1,44 @@
+#!/usr/bin/bash
+# Create (or rotate) the SSH key that signs the commits and tags made as user `claude`.
+#   sudo claude-vm-signing-key             # create it if missing, print the public key
+#   sudo claude-vm-signing-key --rotate    # replace it with a new one
+# The key never leaves the VM and is not in the image. It has no passphrase (Claude cannot type one), so treat it as
+# disposable: add the public key to GitHub as a *Signing Key*, and delete it there if the VM is ever in doubt.
+set -euo pipefail
+
+[[ $EUID -eq 0 ]] || { echo "Run as root: sudo $0" >&2; exit 1; }
+
+user=claude
+home=/var/home/claude
+dir="$home/.ssh"
+key="$dir/claude_signing"
+
+if [[ ${1:-} == --rotate ]]; then
+    rm -f "$key" "$key.pub"
+elif [[ -n ${1:-} ]]; then
+    echo "Usage: $0 [--rotate]" >&2
+    exit 1
+fi
+
+install -d -m 0700 -o "$user" -g "$user" "$dir"
+
+if [[ ! -e $key ]]; then
+    email="$(git config --file "$home/.gitconfig" user.email || true)"
+    [[ -n $email ]] || email=claude-vm@users.noreply.github.com
+    ssh-keygen -q -t ed25519 -N "" -C "$email" -f "$key"
+    chown "$user:$user" "$key" "$key.pub"
+    chmod 0600 "$key"
+    chmod 0644 "$key.pub"
+    echo "Created $key"
+fi
+
+# Lets `git log --show-signature` verify locally
+email="$(git config --file "$home/.gitconfig" user.email || true)"
+[[ -n $email ]] || email=claude-vm@users.noreply.github.com
+printf '%s %s\n' "$email" "$(cut -d' ' -f1,2 "$key.pub")" >"$dir/allowed_signers"
+chown "$user:$user" "$dir/allowed_signers"
+chmod 0644 "$dir/allowed_signers"
+
+echo
+echo "Add this public key to GitHub as a Signing Key (Settings > SSH and GPG keys > New SSH key > Key type: Signing Key):"
+cat "$key.pub"

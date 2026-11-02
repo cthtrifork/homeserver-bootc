@@ -8,3 +8,16 @@
 [url "https://github.com/"]
 	insteadOf = git@github.com:
 	insteadOf = ssh://git@github.com/
+
+# Every commit and tag is SSH-signed with the VM's own key, created by `sudo claude-vm-signing-key` (docs/claude-vm/README.md).
+# Until that key exists, commits fail instead of silently going out unsigned.
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = /var/home/claude/.ssh/allowed_signers
+[user]
+	signingkey = /var/home/claude/.ssh/claude_signing.pub
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
