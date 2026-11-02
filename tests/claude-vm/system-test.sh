@@ -29,7 +29,7 @@ if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --q
 fi
 test -x /usr/bin/claude-vm-ssh-address
 test -x /usr/bin/claude-vm-signing-key
-# nightly bootc upgrade is staged only (no --apply, so no reboot)
+# nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 
 echo "--- egress gateway ---"

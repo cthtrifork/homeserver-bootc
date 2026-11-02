@@ -15,8 +15,8 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
   or network error, say so and name the host instead of retrying.
 - `podman` is excluded from the sandbox and always asks for approval. It is rootless; there is no Docker.
 - Git over HTTPS uses `gh` with the seeded `GH_TOKEN`. There are no SSH keys on this VM, so use `https://` remotes.
-- The OS updates nightly but only takes effect after a reboot, which you cannot do. If a new image is staged, tell
-  the user once; do not try to apply it.
+- The OS updates nightly at 03:00 (`bootc upgrade --apply`) and the VM reboots into a new image, which ends running
+  sessions. You cannot reboot it yourself; do not try to apply updates.
 - `/etc/claude-code/` (managed settings and this file) is root-owned. You cannot and should not change your own policy.
 
 ## SSH access from outside
