@@ -58,8 +58,10 @@ jobs:
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           dry-run: ${{ github.event_name == 'pull_request' }}
-          delete-tags: pr-*
-          log-level: debug
+          # Match every tag on PR images (pr-*, sha-*) so whole images are deleted.
+          # Unlinking a single tag from a multi-tag image makes GHCR return HTTP 400.
+          delete-tags: pr-*,sha-*
+          exclude-tags: main-*,latest
           older-than: 7 days
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
