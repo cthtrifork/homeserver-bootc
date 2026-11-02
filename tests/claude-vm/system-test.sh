@@ -8,9 +8,11 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go podman skopeo crane gh git jq yq shellcheck shfmt yamllint make hadolint actionlint bwrap socat ssh; do
+for c in bash python3 pip3 node npm go chromium-browser podman skopeo crane gh git jq yq shellcheck shfmt yamllint make hadolint actionlint bwrap socat ssh; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
+
+test -d /usr/lib/node_modules/playwright
 
 echo "--- services ---"
 # enabled, but idle until the GitHub token is seeded and claude is signed in

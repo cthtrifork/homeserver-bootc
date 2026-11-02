@@ -48,11 +48,11 @@ flowchart LR
 - **SSH uses the same public keys as the home server.** `authorized_keys.pub` is copied from
   `system_files/homeserver/` at build time and installed for `caspertdk` by `11-caspertdk-ssh.conf`. Login is key-only.
   `caspertdk` has sudo; `claude` has none. The image holds no private key, so commit signing uses a separate key generated on the VM (below).
-- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint and rootless podman. `/usr` is
+- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint, rootless podman and Playwright (library under `/usr`, browser is Fedora's `chromium`; launch with `executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `--no-sandbox`, no browser download needed). `/usr` is
   read-only, so `npm -g`, `pip --user` and `go install` use the home directory.
 - **Egress allowlist:** everything the `claude` user runs, rootless podman containers included, can only reach the hosts in
   `build_files/claude-vm/egress-allowlist.txt`; see [Egress gateway](#egress-gateway).
-- **Versions:** Claude Code is pinned by an `ARG ... # renovate:` line in the containerfile; crane, hadolint and actionlint by
+- **Versions:** Claude Code is pinned by an `ARG ... # renovate:` line in the containerfile; Playwright by an `ARG ... # renovate:` line too; crane, hadolint and actionlint by
   `# renovate:` lines in `build_files/claude-vm-utilities.sh` (downloaded checksum-verified, cached in the CI runner cache). Everything else is a Fedora package that moves with the `fedora-bootc` base image.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 with the same drop-ins as `homeserver-gui`, but
   `bootc upgrade` only stages the image. It takes effect at your next reboot, since a reboot would end a running
