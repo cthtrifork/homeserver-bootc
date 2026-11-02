@@ -1,8 +1,9 @@
 # Notes for coding agents
 
-Learnings about running Claude Code on the `claude-vm` image built from this repo. The VM-level policy itself lives in
-`system_files/claude-vm/etc/claude-code/` (`CLAUDE.md` and `managed-settings.json`); this file explains the practical
-consequences.
+Learnings about running Claude Code on the `claude-vm` image. This file is installed at `/etc/claude-code/AGENTS.md`
+(source: `system_files/claude-vm/etc/claude-code/` in the homeserver-bootc repo) and is imported by the managed
+`/etc/claude-code/CLAUDE.md`, so every session on the VM loads it. The VM-level policy lives next to it in
+`CLAUDE.md` and `managed-settings.json`; this file explains the practical consequences.
 
 ## Why you may still be prompted
 

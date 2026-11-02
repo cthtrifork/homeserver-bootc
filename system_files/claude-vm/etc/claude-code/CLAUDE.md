@@ -28,3 +28,7 @@ is random and changes whenever the tunnel restarts (about hourly), so never rely
 - If it prints "No tunnel address yet", the tunnel is not running. The user enables it with
   `sudo systemctl enable --now claude-pinggy` (you cannot: no sudo). Check with `systemctl status claude-pinggy`.
 - Login is key-only as `caspertdk`; you have no access to those keys and do not need them.
+
+## Agent guidelines
+
+@AGENTS.md
