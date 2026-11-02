@@ -275,17 +275,25 @@ jobs:
           skip_unchanged: true
           header: "🧾 Changelog for ${{ env.IMAGE_FULL }}"
 
+      # gh instead of a release action: it prints GitHub's actual error (the old action only said
+      # "Resource not accessible by integration") and does not depend on a deprecated Node runtime.
       - name: Create Release
         if: github.ref == 'refs/heads/main'
-        uses: comnoco/create-release-action@7dea6dc82ac9d97ced7a764aa82811451bba80e0 # v2.0.5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{env.IMAGE_NAME}}_${{ env.UNIQUE_VERSION }}
-          release_name: Release ${{env.IMAGE_NAME}} - ${{ env.UNIQUE_VERSION }}
-          body_path: ${{ steps.rechunk.outputs.changelog }}
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ env.IMAGE_NAME }}_${{ env.UNIQUE_VERSION }}
+          TITLE: Release ${{ env.IMAGE_NAME }} - ${{ env.UNIQUE_VERSION }}
+          NOTES_FILE: ${{ steps.rechunk.outputs.changelog }}
+        run: |
+          if ! gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "$TITLE" --notes-file "$NOTES_FILE"; then
+            echo "::group::Release creation failed: API diagnostics"
+            # -i prints the response headers, including x-accepted-github-permissions
+            gh api -i "repos/$GITHUB_REPOSITORY/releases?per_page=1" || true
+            gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" || true
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         id: push-to-ghcr
