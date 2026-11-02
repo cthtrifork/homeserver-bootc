@@ -56,11 +56,14 @@ Prefer the Read/Grep/Glob tools over Bash for reading and searching files when t
 
 ### Worktrees
 
-Do each task in its own git worktree instead of switching branches in the main checkout, so parallel sessions and
-unfinished work never collide.
+**Every session uses its own git worktree, one per session.** Several sessions often run against this VM at once, and
+they all share the one checkout at `/var/home/claude/workspace/homeserver-bootc`. Switching branches or editing files
+there from two sessions makes them overwrite each other's `HEAD` and working tree. So never run `git checkout`,
+`git switch` or edits in the main checkout; create your worktree before the first change and stay in it for the whole
+session. If the main checkout is on someone else's branch or has uncommitted changes, leave it alone.
 
-- Create one per task from the latest default branch, as a sibling directory inside `~/workspace` (the only writable
-  area), named after the branch:
+- Create the worktree at session start from the latest default branch, as a sibling directory inside `~/workspace`
+  (the only writable area), named after the branch:
   `git -C ~/workspace/homeserver-bootc worktree add ~/workspace/homeserver-bootc-<branch> -b <branch> origin/main`
   (fetch first with `git fetch origin main`; use literal absolute paths, as `~` and `$(...)` can prompt).
 - Work, commit and push from the worktree with `git -C <worktree path>`; don't `cd` into it.
