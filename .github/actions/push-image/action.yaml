@@ -23,7 +23,13 @@ runs:
       id: push-to-ghcr
       shell: bash
       run: | #sh
-        DEST="${IMAGE_FULL}:${DOCKER_TAG}"
+        # main is published only under its unique <yyyyMMdd>-<rev> tag (and latest, see push-latest),
+        # every other ref under its working tag
+        if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+          DEST="${IMAGE_FULL}:${UNIQUE_VERSION}"
+        else
+          DEST="${IMAGE_FULL}:${DOCKER_TAG}"
+        fi
           
         # Push OCI layout directly to GHCR
         sudo skopeo copy \
@@ -42,7 +48,9 @@ runs:
             "docker://${{ env.IMAGE_FULL }}@${IMAGE_DIGEST}" \
             "docker://${{ env.IMAGE_FULL }}:${tag}"
         done
-        crane tag "${DEST}" "${UNIQUE_VERSION}"
+        if [ "${DEST}" != "${IMAGE_FULL}:${UNIQUE_VERSION}" ]; then
+          crane tag "${DEST}" "${UNIQUE_VERSION}"
+        fi
         
       env:
         TAGS: ${{ inputs.additional_tags }}
