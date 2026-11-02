@@ -92,21 +92,26 @@ service as a systemd credential. The Claude login lives in `/var/home/claude/.cl
 
 ## Signed commits
 
-`/etc/gitconfig` turns on `commit.gpgsign` and `tag.gpgsign` with an SSH key, so commits Claude makes are signed.
-The key is generated on the VM by `sudo claude-vm-signing-key` (`--rotate` replaces it); it lives in
-`/var/home/claude/.ssh/` (`claude_signing`, 0600) and has no passphrase. Until it exists, commits fail rather than going
-out unsigned.
+`/etc/gitconfig` signs every commit and tag with an SSH key made on the VM by `sudo claude-vm-signing-key`
+(`--rotate` replaces it). The key is `/var/home/claude/.ssh/claude_signing`, has no passphrase, and until it exists
+commits fail rather than going out unsigned.
 
-To get the "Verified" badge on GitHub:
+GitHub shows "Verified" only if the commit email is a verified email on the account that holds the key.
 
-1. Add the printed public key at <https://github.com/settings/keys> as **New SSH key > Key type: Signing Key**. This is
-   separate from an Authentication Key, and the key is not used for login.
-2. The commit email (`user.email` in `~claude/.gitconfig`, default `claude-vm@users.noreply.github.com`) must be a verified
-   email of the account that holds the key. Use a dedicated bot account, or change the email to one of your own.
-3. Optional: enable **Require signed commits** in branch protection to reject unsigned pushes.
+1. **Create the key:** run `sudo claude-vm-signing-key` and add the printed key to your GitHub account as a
+   **Signing Key** (Settings > SSH and GPG keys > New SSH key). It is separate from an authentication key.
+2. **Set the commit email** to one verified on your account. Your noreply address
+   (`<id>+<username>@users.noreply.github.com`) keeps your real address out of the history. `claude` cannot edit
+   `~/.gitconfig`, so run as `caspertdk`:
 
-Check with `git log --show-signature -1` on the VM (the helper writes `~/.ssh/allowed_signers`). If the VM is ever
-compromised, delete the key on GitHub and run `--rotate`.
+   ```sh
+   sudo -u claude git config --file /var/home/claude/.gitconfig user.email "<your-verified-email>"
+   sudo claude-vm-signing-key    # refreshes ~/.ssh/allowed_signers
+   ```
+
+Commits are attributed to you, and the key signs as you, so a leaked key can impersonate you. Check with
+`git log --show-signature -1` on the VM and the **Verified** badge on GitHub. If the key leaks, delete it on GitHub
+and run `--rotate`.
 
 ## Reaching the VM over SSH (free Pinggy tunnel)
 
