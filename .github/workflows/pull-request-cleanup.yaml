@@ -10,7 +10,7 @@ jobs:
     # for up to an hour. The merge triggers its own push build on main, which is not touched here:
     # only runs of the pull_request event are cancelled. A fork's token is read-only.
     if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions:
       actions: write # cancel workflow runs
@@ -32,7 +32,7 @@ jobs:
 
   ghcr-cleanup-image:
     name: ghcr cleanup action
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     concurrency:
       group: cleanup-images

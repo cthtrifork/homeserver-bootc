@@ -22,7 +22,7 @@ permissions: {}
 jobs:
   cleanup-images:
     name: Cleanup ${{ matrix.image }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     strategy:
       fail-fast: false
