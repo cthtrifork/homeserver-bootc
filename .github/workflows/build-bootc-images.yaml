@@ -68,7 +68,6 @@ jobs:
               - 'config.toml'
               - 'tests/*.sh'
               - '.github/workflows/build-bootc-image*.yaml'
-              - '.github/actions/**'
               - '!**/*.md' # docs never change an image
             homeserver-gui:
               - 'system_files/homeserver-gui/**'
