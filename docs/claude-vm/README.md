@@ -240,8 +240,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
 | `sandbox.allowUnsandboxedCommands` | `true` | the model may retry a command outside the sandbox (`dangerouslyDisableSandbox`); with `Bash` in `permissions.allow` this needs no approval |
 | `sandbox.autoAllowBashIfSandboxed` | `true` | Bash commands that run inside the sandbox are approved without a prompt |
-| `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox |
-| `sandbox.network.allowUnixSockets` | `/run/user/1100/podman/podman.sock` | sandboxed commands (e.g. apps using the podman API, such as Wails/Trivy tools) can connect to rootless podman's API socket; `podman.socket` is enabled for all user managers and socket-activated thanks to lingering |
+| `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox. Its API socket (`/run/user/1100/podman/podman.sock`, enabled for the user manager) is deliberately not exposed to the sandbox: through it a sandboxed command could start containers with host mounts and bypass the file rules and the approval prompt. Commands that need the socket run unsandboxed and need approval |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
 | `permissions.deny` / `sandbox.filesystem.denyWrite` | shell rc files, `~/.ssh`, `~/.gitconfig`, `~/.config/{systemd,autostart,containers/systemd,git}` | persistence and code-execution paths: the file tools (Edit/Write) run outside the sandbox, and podman lingering would start user units at boot |
 | `sandbox.filesystem.denyRead` | `~/.claude/.credentials.json` | the login token is hidden from commands |

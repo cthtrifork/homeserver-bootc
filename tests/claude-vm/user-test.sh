@@ -39,8 +39,10 @@ sudo -u claude -H bash -lc '
   go run . | grep -x "go ok"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
   podman run --rm quay.io/podman/hello
-  curl -sf --unix-socket "$XDG_RUNTIME_DIR/podman/podman.sock" http://d/_ping | grep -x OK
 '
+
+echo "--- podman API socket answers (outside the sandbox) ---"
+sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 curl -sf --unix-socket /run/user/1100/podman/podman.sock http://d/_ping | grep -x OK
 
 echo "--- claude doctor reports no invalid settings ---"
 # doctor exits 0 even when a settings file is invalid, so look for its "Invalid settings" section

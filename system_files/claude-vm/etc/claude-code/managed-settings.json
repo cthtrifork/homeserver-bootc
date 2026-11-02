@@ -66,11 +66,6 @@
         "~/.config/git"
       ]
     },
-    "network": {
-      "allowUnixSockets": [
-        "/run/user/1100/podman/podman.sock"
-      ]
-    },
     "autoAllowBashIfSandboxed": true
   },
   "allowManagedHooksOnly": true,

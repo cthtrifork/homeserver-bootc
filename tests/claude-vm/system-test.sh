@@ -89,7 +89,11 @@ timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
 # podman API socket: enabled for every user manager and socket-activated for claude
 systemctl --global is-enabled podman.socket
 timeout 60 bash -c 'until [ -S /run/user/1100/podman/podman.sock ]; do sleep 1; done'
-jq -e '.sandbox.network.allowUnixSockets | index("/run/user/1100/podman/podman.sock")' /etc/claude-code/managed-settings.json >/dev/null
+# ...but it must not be exposed to the sandbox (it would bypass the file rules and podman's approval prompt)
+if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.json >/dev/null; then
+    echo "the podman socket must not be exposed to the sandbox"
+    exit 1
+fi
 
 echo "--- nothing secret baked in ---"
 hits="$(find /etc /root /var/home /usr/local -xdev -type f \
