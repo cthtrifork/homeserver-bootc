@@ -119,6 +119,9 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
   - **`podman *` is excluded:** rootless podman cannot run inside the sandbox. Podman still asks for approval, but once
     approved it and its containers are outside the sandbox. Their network is still confined by the
     [egress gateway](#egress-gateway) below.
+  - **cgroup manager:** the image ships `/etc/containers/containers.conf.d/50-claude-vm-cgroupfs.conf`, which sets
+    `cgroup_manager = "cgroupfs"`. Without it `podman build` (and `devcontainer up --docker-path podman`) fails with
+    `create directory /sys/fs/cgroup/...: Read-only file system`, because the session's cgroup tree is read-only.
   - It is a guardrail, not a hard boundary: the sandbox proxy filters by hostname without inspecting TLS, broad hosts
     such as `github.com` can carry data out, and MCP servers and hooks are not covered.
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
