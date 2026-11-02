@@ -50,9 +50,11 @@ runs:
           # (<image>_<yyyyMMdd>-<rev>) already on the remote. main builds of one image are
           # serialized by the concurrency group, so the counter does not race.
           TODAY="$(date -u +%Y%m%d)"
-          LAST_REV="$(git ls-remote --tags --refs origin "refs/tags/${IMAGE_NAME}_${TODAY}-*" \
-            | sed -E 's|.*-([0-9]+)$|\1|' | sort -n | tail -n1)"
-          UNIQUE_VERSION="${TODAY}-$(( ${LAST_REV:-0} + 1 ))"
+          PREFIX="refs/tags/${IMAGE_NAME}_${TODAY}-"
+          # highest numeric rev already tagged today (0 if none); non-numeric suffixes are ignored
+          LAST_REV="$(git ls-remote --tags --refs origin "${PREFIX}*" \
+            | awk -v p="${PREFIX}" 'index($2, p) == 1 { r = substr($2, length(p) + 1); if (r ~ /^[0-9]+$/ && r + 0 > m) m = r + 0 } END { print m + 0 }')"
+          UNIQUE_VERSION="${TODAY}-$(( LAST_REV + 1 ))"
         else
           UNIQUE_VERSION="${DOCKER_TAG}.${{ github.run_number }}"
         fi
