@@ -1,4 +1,4 @@
-name: Build and publish one bootable container image
+name: Build and publish bootc image
 
 # Called once per image by build-bootc-images.yaml. Every image runs this whole pipeline on its own
 # (build, then scan/test on a PR or push and sign on main), so a slow image never holds back another

@@ -1,4 +1,4 @@
-name: Cleanup Pull Request Images
+name: Clean up pull request images
 on:
   pull_request:
     types:

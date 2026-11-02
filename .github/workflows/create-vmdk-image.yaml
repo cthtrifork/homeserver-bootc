@@ -1,4 +1,4 @@
-name: Create homeserver bootable container image
+name: Create VMDK image
 
 on:
   workflow_dispatch:

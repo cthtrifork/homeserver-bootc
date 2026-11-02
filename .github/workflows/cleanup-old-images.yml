@@ -1,5 +1,5 @@
 ---
-name: Cleanup Old Images
+name: Clean up old images
 on: # yamllint disable-line rule:truthy
   schedule:
     - cron: "05 7 * * *" # 7:05 UTC everyday
