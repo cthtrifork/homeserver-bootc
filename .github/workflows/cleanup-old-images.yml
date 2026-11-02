@@ -20,17 +20,22 @@ concurrency:
 permissions: {}
 
 jobs:
-  cleanup-homeserver-images:
-    name: Cleanup Homeserver Images
+  cleanup-images:
+    name: Cleanup ${{ matrix.image }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Images built by this repo (see .github/actions/set-image-vars)
+        image:
+          - homeserver-centos-bootc
+          - homeserver-gui-bootc
+          - claude-vm-bootc
     concurrency:
-      group: cleanup-images
+      group: cleanup-images-${{ matrix.image }}
     permissions:
       packages: write
-    env:
-      # Packages built by this repo (see .github/actions/set-image-vars)
-      PACKAGES: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
     steps:
       - name: Delete Images Older Than 90 Days
         if: false
@@ -40,7 +45,7 @@ jobs:
           older-than: 90 days
           #delete-orphaned-images: true
           #delete-untagged: true
-          packages: ${{ env.PACKAGES }}
+          packages: homeserver-bootc/${{ matrix.image }}
           exclude-tags: main-*,latest
           keep-n-tagged: 7
           #keep-n-untagged: 7
@@ -51,7 +56,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-untagged: true
-          packages: ${{ env.PACKAGES }}
+          packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Delete old PR Images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -63,7 +68,7 @@ jobs:
           keep-n-tagged: 0
           exclude-tags: main-*,latest
           older-than: 7 days
-          packages: ${{ env.PACKAGES }}
+          packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Delete ghost images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -71,7 +76,7 @@ jobs:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-ghost-images: true
           exclude-tags: main-*,latest
-          packages: ${{ env.PACKAGES }}
+          packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -83,4 +88,4 @@ jobs:
           keep-n-tagged: 5
           exclude-tags: latest
           older-than: 30 days
-          packages: ${{ env.PACKAGES }}
+          packages: homeserver-bootc/${{ matrix.image }}
