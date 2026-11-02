@@ -9,7 +9,7 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - ".github/workflows/cleanup-old-images.yml"
-  pull_request: # dry run only, when this workflow changes
+  pull_request: # runs for real when this workflow changes
     paths:
       - ".github/workflows/cleanup-old-images.yml"
 
@@ -20,12 +20,20 @@ concurrency:
 permissions: {}
 
 jobs:
-  cleanup-homeserver-images:
-    name: Cleanup Homeserver Images
+  cleanup-images:
+    name: Cleanup ${{ matrix.image }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Images built by this repo (see .github/actions/set-image-vars)
+        image:
+          - homeserver-centos-bootc
+          - homeserver-gui-bootc
+          - claude-vm-bootc
     concurrency:
-      group: cleanup-images
+      group: cleanup-images-${{ matrix.image }}
     permissions:
       packages: write
     steps:
@@ -37,10 +45,8 @@ jobs:
           older-than: 90 days
           #delete-orphaned-images: true
           #delete-untagged: true
-          owner: ${{ github.repository_owner }}
-          #repository: ${{ github.event.repository.name }}
-          packages: homeserver-centos-bootc/**/*,homeserver-centos-bootc/*,homeserver-*,homeserver-**
-          expand-packages: true
+          packages: homeserver-bootc/${{ matrix.image }}
+          exclude-tags: main-*,latest
           keep-n-tagged: 7
           #keep-n-untagged: 7
           # dry-run: true
@@ -49,36 +55,37 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-untagged: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Delete old PR Images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
-          # Match every tag on PR images (pr-*, sha-*) so whole images are deleted.
-          # Unlinking a single tag from a multi-tag image makes GHCR return HTTP 400.
-          delete-tags: pr-*,sha-*
+          # Not delete-tags: for multi-tag images (pr-*, sha-*) the action unlinks
+          # tags one by one, which GHCR rejects with HTTP 400. keep-n-tagged: 0
+          # deletes whole images; exclude-tags protects main and latest images.
+          keep-n-tagged: 0
           exclude-tags: main-*,latest
           older-than: 7 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Delete ghost images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-ghost-images: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          exclude-tags: main-*,latest
+          packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
-          keep-n-tagged: 10
+          # Prune old main images: everything younger than 30 days is kept, plus the
+          # 5 newest older ones. No delete-tags, so whole images are deleted. latest is
+          # never deleted.
+          keep-n-tagged: 5
           exclude-tags: latest
-          older-than: 14 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          older-than: 30 days
+          packages: homeserver-bootc/${{ matrix.image }}
