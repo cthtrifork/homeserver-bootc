@@ -47,7 +47,7 @@ flowchart LR
   Claude interactively (first-boot steps below). SSH host keys are generated on the VM at first boot.
 - **SSH uses the same public keys as the home server.** `authorized_keys.pub` is copied from
   `system_files/homeserver/` at build time and installed for `caspertdk` by `11-caspertdk-ssh.conf`. Login is key-only.
-  `caspertdk` has sudo; `claude` has none. Only public keys are used, so commits on the VM are not SSH-signed.
+  `caspertdk` has sudo; `claude` has none. The image holds no private key, so commit signing uses a separate key generated on the VM (below).
 - **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint and rootless podman. `/usr` is
   read-only, so `npm -g`, `pip --user` and `go install` use the home directory.
 - **Egress allowlist:** everything the `claude` user runs, rootless podman containers included, can only reach the hosts in
@@ -67,6 +67,9 @@ ssh caspertdk@<vm>
 # 1. Seed the GitHub token (hidden prompt or stdin; never an argument). Private keys are refused.
 sudo claude-vm-seed-github-token
 
+# 1b. Create the commit-signing key and print its public key (see "Signed commits" below)
+sudo claude-vm-signing-key
+
 # 2. Sign in as the service user. Remote Control needs a claude.ai login (API keys are not supported).
 sudo -iu claude
 cd ~/workspace && claude          # /login, trust the folder, then exit
@@ -80,6 +83,24 @@ journalctl -u claude-remote-control -f     # shows the session URL
 
 Rotate the token by re-running step 1. It lives only in `/etc/claude-vm/github-token` (root, 0600) and reaches the
 service as a systemd credential. The Claude login lives in `/var/home/claude/.claude/` and survives upgrades.
+
+## Signed commits
+
+`/etc/gitconfig` turns on `commit.gpgsign` and `tag.gpgsign` with an SSH key, so commits Claude makes are signed.
+The key is generated on the VM by `sudo claude-vm-signing-key` (`--rotate` replaces it); it lives in
+`/var/home/claude/.ssh/` (`claude_signing`, 0600) and has no passphrase. Until it exists, commits fail rather than going
+out unsigned.
+
+To get the "Verified" badge on GitHub:
+
+1. Add the printed public key at <https://github.com/settings/keys> as **New SSH key > Key type: Signing Key**. This is
+   separate from an Authentication Key, and the key is not used for login.
+2. The commit email (`user.email` in `~claude/.gitconfig`, default `claude-vm@users.noreply.github.com`) must be a verified
+   email of the account that holds the key. Use a dedicated bot account, or change the email to one of your own.
+3. Optional: enable **Require signed commits** in branch protection to reject unsigned pushes.
+
+Check with `git log --show-signature -1` on the VM (the helper writes `~/.ssh/allowed_signers`). If the VM is ever
+compromised, delete the key on GitHub and run `--rotate`.
 
 ## Reaching the VM over SSH (free Pinggy tunnel)
 
