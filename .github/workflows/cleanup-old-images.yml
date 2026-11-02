@@ -9,6 +9,9 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - ".github/workflows/cleanup-old-images.yml"
+  pull_request: # dry run only, when this workflow changes
+    paths:
+      - ".github/workflows/cleanup-old-images.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -45,12 +48,16 @@ jobs:
       - name: Delete Untagged Images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
+          token: ${{ secrets.PAT_RENOVATEBOT }}
+          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-untagged: true
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
       - name: Delete old PR Images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
+          token: ${{ secrets.PAT_RENOVATEBOT }}
+          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-tags: pr-*
           older-than: 7 days
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
@@ -58,12 +65,16 @@ jobs:
       - name: Delete ghost images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
+          token: ${{ secrets.PAT_RENOVATEBOT }}
+          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-ghost-images: true
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
+          token: ${{ secrets.PAT_RENOVATEBOT }}
+          dry-run: ${{ github.event_name == 'pull_request' }}
           keep-n-tagged: 10
           exclude-tags: latest
           older-than: 14 days
