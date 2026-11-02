@@ -35,8 +35,10 @@ jobs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
       digest: ${{ steps.push-to-ghcr.outputs.digest }}
+      release_tag: ${{ steps.release-meta.outputs.tag }}
+      release_title: ${{ steps.release-meta.outputs.title }}
     permissions:
-      contents: write # for releases
+      contents: read # the release is created by the release job
       packages: write
       id-token: write
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
@@ -275,25 +277,20 @@ jobs:
           skip_unchanged: true
           header: "🧾 Changelog for ${{ env.IMAGE_FULL }}"
 
-      # gh instead of a release action: it prints GitHub's actual error (the old action only said
-      # "Resource not accessible by integration") and does not depend on a deprecated Node runtime.
-      - name: Create Release
-        if: github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ env.IMAGE_NAME }}_${{ env.UNIQUE_VERSION }}
-          TITLE: Release ${{ env.IMAGE_NAME }} - ${{ env.UNIQUE_VERSION }}
-          NOTES_FILE: ${{ steps.rechunk.outputs.changelog }}
+      # The release is created by the release job once the image is pushed; it only needs these.
+      - name: Release metadata
+        id: release-meta
         run: |
-          if ! gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-              --title "$TITLE" --notes-file "$NOTES_FILE"; then
-            echo "::group::Release creation failed: API diagnostics"
-            # -i prints the response headers, including x-accepted-github-permissions
-            gh api -i "repos/$GITHUB_REPOSITORY/releases?per_page=1" || true
-            gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" || true
-            echo "::endgroup::"
-            exit 1
-          fi
+          echo "tag=${IMAGE_NAME}_${UNIQUE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "title=Release ${IMAGE_NAME} - ${UNIQUE_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload changelog
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: changelog-${{ inputs.image }}
+          path: ${{ steps.rechunk.outputs.changelog }}
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         id: push-to-ghcr
@@ -817,3 +814,69 @@ jobs:
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           DIGEST: ${{ steps.push-latest.outputs.digest }}
+
+  # Separate from the build so that a failing release cannot stop the image being published, and so that only this
+  # job needs contents: write. On main it publishes a release for the image push-latest just published. On a pull
+  # request it is a dry run: it creates a draft release (which needs the same contents: write permission and API
+  # call, but creates no tag), prints the notes and deletes it again.
+  release:
+    name: "Release for: ${{ inputs.image }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - build-bootc-image
+      - push-latest
+    # push-latest is skipped on pull requests, which would skip this job too without the explicit status checks
+    if: ${{ !cancelled() && needs.build-bootc-image.result == 'success' && (github.event_name == 'pull_request' || needs.push-latest.result == 'success') }}
+    permissions:
+      contents: write # create (and, on a dry run, delete) releases
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ needs.build-bootc-image.outputs.release_tag }}
+      TITLE: ${{ needs.build-bootc-image.outputs.release_title }}
+      DRY_RUN: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Download changelog
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: changelog-${{ inputs.image }}
+          path: changelog
+
+      # gh instead of a release action: it prints GitHub's actual error (the old action only said
+      # "Resource not accessible by integration") and does not depend on a deprecated Node runtime.
+      - name: Create release
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          notes=$(find changelog -type f | head -n1)
+          echo "Notes file: $notes"
+
+          diagnostics() {
+            echo "::group::Release creation failed: API diagnostics"
+            # -i prints the response headers, including x-accepted-github-permissions
+            gh api -i "repos/$GITHUB_REPOSITORY/releases?per_page=1" || true
+            gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$1" || true
+            echo "::endgroup::"
+          }
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "::notice::Dry run: creating and deleting a draft release (no tag). On main this would be $TAG"
+            cat "$notes"
+            dry_tag="dry-run-${GITHUB_RUN_ID}-${IMAGE}"
+            # the API, not gh release delete: that looks releases up by tag, which skips drafts
+            if ! id=$(gh api -X POST "repos/$GITHUB_REPOSITORY/releases" \
+                -f tag_name="$dry_tag" -f target_commitish="$GITHUB_SHA" -f name="$TITLE" \
+                -F body=@"$notes" -F draft=true --jq .id); then
+              diagnostics "$dry_tag"
+              exit 1
+            fi
+            echo "Created draft release $id"
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/releases/$id"
+            echo "Deleted draft release $id"
+          else
+            if ! gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+                --title "$TITLE" --notes-file "$notes"; then
+              diagnostics "$TAG"
+              exit 1
+            fi
+          fi
