@@ -59,6 +59,7 @@ jobs:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           dry-run: ${{ github.event_name == 'pull_request' }}
           delete-tags: pr-*
+          log-level: debug
           older-than: 7 days
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
