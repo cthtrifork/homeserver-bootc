@@ -9,7 +9,7 @@ on: # yamllint disable-line rule:truthy
       - main
     paths:
       - ".github/workflows/cleanup-old-images.yml"
-  pull_request: # dry run only, when this workflow changes
+  pull_request: # runs for real when this workflow changes
     paths:
       - ".github/workflows/cleanup-old-images.yml"
 
@@ -49,7 +49,6 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-untagged: true
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
@@ -57,7 +56,6 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
           # Not delete-tags: for multi-tag images (pr-*, sha-*) the action unlinks
           # tags one by one, which GHCR rejects with HTTP 400. keep-n-tagged: 0
           # deletes whole images; exclude-tags protects main and latest images.
@@ -70,16 +68,15 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
           delete-ghost-images: true
+          exclude-tags: main-*,latest
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
 
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          dry-run: ${{ github.event_name == 'pull_request' }}
           keep-n-tagged: 10
-          exclude-tags: latest
+          exclude-tags: main-*,latest
           older-than: 14 days
           packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
