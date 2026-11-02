@@ -7,6 +7,12 @@ Back to the [main README](../../README.md).
 drive it from claude.ai/code or the Claude app. Layout mirrors the home server: `system_files/claude-vm/`, numbered
 `/etc/tmpfiles.d/` files and `tests/claude-vm/`.
 
+## Key files
+
+- [Claude config (managed settings)](../../system_files/claude-vm/etc/claude-code/managed-settings.json): policy shipped to `/etc/claude-code/`
+- [Egress allowlist](../../build_files/claude-vm/egress-allowlist.txt): the one list of hosts the VM may reach
+- [AGENTS.md](../../system_files/claude-vm/etc/claude-code/AGENTS.md): guidelines for the agent, included by the managed [CLAUDE.md](../../system_files/claude-vm/etc/claude-code/CLAUDE.md)
+
 ## Overview
 
 ```mermaid
