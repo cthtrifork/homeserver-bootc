@@ -49,8 +49,25 @@ Prefer the Read/Grep/Glob tools over Bash for reading and searching files when t
   changes you didn't make. Split unrelated work into separate commits.
 - Keep formatting, lint and whitespace cleanups out of feature or fix commits; commit them separately.
 - Amend only when asked and only if the commit is unpushed; otherwise add a follow-up commit.
+- Write commit messages in [Conventional Commits](https://www.conventionalcommits.org/) format, `type(scope): summary`
+  (types such as `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`), and end with the `Co-Authored-By` trailer.
 - Push or open a PR only when the user asks. Use `gh` for GitHub.
 - Use `git -C <dir>` and absolute paths rather than `cd`.
+
+### Worktrees
+
+Do each task in its own git worktree instead of switching branches in the main checkout, so parallel sessions and
+unfinished work never collide.
+
+- Create one per task from the latest default branch, as a sibling directory inside `~/workspace` (the only writable
+  area), named after the branch:
+  `git -C ~/workspace/homeserver-bootc worktree add ~/workspace/homeserver-bootc-<branch> -b <branch> origin/main`
+  (fetch first with `git fetch origin main`; use literal absolute paths, as `~` and `$(...)` can prompt).
+- Work, commit and push from the worktree with `git -C <worktree path>`; don't `cd` into it.
+- Never leave the main checkout on a feature branch with uncommitted work, and never check out a branch that another
+  worktree already has.
+- When the PR is merged or abandoned, remove the worktree with `git worktree remove <path>` and delete the branch.
+  `git worktree list` shows what exists.
 
 ## Working style
 
