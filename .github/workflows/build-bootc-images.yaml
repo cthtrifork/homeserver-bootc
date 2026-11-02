@@ -22,32 +22,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
       - main
-    paths:
-      - "Containerfile"
-      - "*.containerfile"
-      - "config.toml"
-      - "system_files/**"
-      - "build_files/**"
-      - "tests/**"
-      - ".github/workflows/build-bootc-images.yaml"
-      - ".github/workflows/build-bootc-image.yaml"
-      - ".github/actions/**"
   push:
     branches:
       - main
-    paths-ignore:
-      - "utils/**"
-      - "**/*.md"
-      - ".vscode/**"
-      - ".editorconfig"
-      - ".github/renovate.json5"
-      - ".github/workflows/lint.yaml"
-      - ".github/workflows/renovate*"
-      - ".github/workflows/cleanup-*"
-      - ".github/workflows/pull-request-cleanup.yaml"
-      - ".github/workflows/update-trivy-cache.yaml"
-      - ".github/workflows/push-hello-containerfile.yaml"
-      - ".github/workflows/create-vmdk-image.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ github.event.inputs.override_image }}
@@ -87,6 +64,11 @@ jobs:
               - 'build_files/**'
               - '!build_files/gui/**'
               - '!build_files/claude-vm/**'
+              # shared build inputs: they have always rebuilt the default image only
+              - 'config.toml'
+              - 'tests/*.sh'
+              - '.github/workflows/build-bootc-image*.yaml'
+              - '.github/actions/**'
               - '!**/*.md' # docs never change an image
             homeserver-gui:
               - 'system_files/homeserver-gui/**'
@@ -102,7 +84,7 @@ jobs:
               - 'build_files/gui/**'
               - '!**/*.md' # docs never change an image
 
-      - name: Ensure a matrix has a fallback
+      - name: Pick images to build
         id: ensure-matrix
         env:
           FILTER_CHANGES: ${{ steps.filter.outputs.changes }}
@@ -118,9 +100,8 @@ jobs:
           set -x
           IMAGES="$FILTER_CHANGES"
 
-          # The weekly run is for patching, so it covers every image instead of the path filter's
-          # fallback (homeserver only). An image is skipped when it is both newer than the base image
-          # (so it already carries its updates) and younger than MAX_AGE_DAYS (so it has the distro's
+          # The weekly run is for patching, so it covers every image instead of only the changed paths.
+          # An image is skipped when it is both newer than the base image (so it already carries its updates) and younger than MAX_AGE_DAYS (so it has the distro's
           # recent package updates). If the dates cannot be read, the image is rebuilt.
           if [ "$EVENT_NAME" == "schedule" ]; then
             created() { # <ref> [creds]: build date as epoch seconds, empty when unknown
@@ -149,9 +130,9 @@ jobs:
           if [ "$FORCE" == "true" ]; then
             IMAGES='["homeserver","homeserver-gui","claude-vm"]'
           fi
-          # If no images were changed, default to building the homeserver image (not on a scheduled
-          # run: there an empty list means everything is up to date)
-          if [ "$IMAGES" == "[]" ] && [ "$EVENT_NAME" != "schedule" ]; then
+          # A manual run without inputs builds the default image. Elsewhere an empty list means
+          # nothing relevant changed (or, on a scheduled run, everything is up to date): build nothing.
+          if [ "$IMAGES" == "[]" ] && [ "$EVENT_NAME" == "workflow_dispatch" ]; then
             IMAGES='["homeserver"]'
           fi
           echo "image=$IMAGES" >> "$GITHUB_OUTPUT"
