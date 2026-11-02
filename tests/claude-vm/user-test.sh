@@ -39,6 +39,7 @@ sudo -u claude -H bash -lc '
   go run . | grep -x "go ok"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
   podman run --rm quay.io/podman/hello
+  curl -sf --unix-socket "$XDG_RUNTIME_DIR/podman/podman.sock" http://d/_ping | grep -x OK
 '
 
 echo "--- claude doctor reports no invalid settings ---"

@@ -86,6 +86,10 @@ sshd -T | grep -qx 'passwordauthentication no'
 [ "$(stat -c %U:%a /var/home/claude)" = "claude:700" ]
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
+# podman API socket: enabled for every user manager and socket-activated for claude
+systemctl --global is-enabled podman.socket
+timeout 60 bash -c 'until [ -S /run/user/1100/podman/podman.sock ]; do sleep 1; done'
+jq -e '.sandbox.network.allowUnixSockets | index("/run/user/1100/podman/podman.sock")' /etc/claude-code/managed-settings.json >/dev/null
 
 echo "--- nothing secret baked in ---"
 hits="$(find /etc /root /var/home /usr/local -xdev -type f \
