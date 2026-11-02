@@ -59,6 +59,7 @@ jobs:
         uses: ./.github/actions/set-image-vars
         with:
           image: ${{ inputs.image }}
+          allocate_version: "true"
 
       - name: Get current date
         id: date
@@ -103,7 +104,7 @@ jobs:
           # This generates all the tags for your image, you can add custom tags here too!
           # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
-            type=raw,value=${{ env.DOCKER_TAG }}
+            type=raw,value=${{ env.DOCKER_TAG }},enable=${{ github.ref != 'refs/heads/main' }}
             type=raw,value=${{ env.UNIQUE_VERSION }},enable={{is_default_branch}}
             type=sha,enable=${{ github.event_name == 'pull_request' }},format=long
             type=ref,event=pr
@@ -708,7 +709,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: (re)tag ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }} as latest
+      - name: (re)tag ${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }} as latest
         id: push-latest
         shell: bash
         env:
@@ -717,11 +718,11 @@ jobs:
           printf "%s" "${REGISTRY_PASSWORD}" | skopeo login ghcr.io -u $GITHUB_ACTOR --password-stdin
           skopeo copy --all \
             --digestfile digest.txt \
-            "docker://${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+            "docker://${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}" \
             "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
           #rpm-ostree compose build-chunked-oci --bootc --format-version=1 \
-          #  --from="${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}" \
+          #  --from="${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}" \
           #  --output containers-storage:${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
           #podman push --digestfile digest.txt "${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}"
 
@@ -736,7 +737,7 @@ jobs:
       - name: Trivy vuln scan (JSON) - current
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
+          image-ref: ${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}
           format: json
           output: ${{ github.workspace }}/current_trivy.json
           ignore-unfixed: true

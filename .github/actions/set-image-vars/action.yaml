@@ -4,6 +4,10 @@ inputs:
   image:
     description: "Image selector (homeserver|homeserver-gui|claude-vm)"
     required: true
+  allocate_version:
+    description: "On main, allocate the next main-<yyyyMMdd>-<rev> UNIQUE_VERSION. Only the job that publishes should set this, so the revision is allocated once per run."
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -41,7 +45,18 @@ runs:
         else
           DOCKER_TAG="pr-${PR_NUMBER}-${VERSION}"
         fi
-        UNIQUE_VERSION="${DOCKER_TAG}.${{ github.run_number }}" 
+        if [ "${{ inputs.allocate_version }}" = "true" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          # main-<yyyyMMdd>-<rev>: rev is a per-day, per-image counter derived from the release tags
+          # (<image>_main-<yyyyMMdd>-<rev>) already on the remote. main builds of one image are
+          # serialized by the concurrency group, so the counter does not race.
+          TODAY="$(date -u +%Y%m%d)"
+          LAST_TAG="$(git ls-remote --tags --refs --sort=-v:refname origin \
+            "refs/tags/${IMAGE_NAME}_main-${TODAY}-*" | head -n1)"
+          LAST_REV="${LAST_TAG##*-}" # empty when nothing is tagged yet today
+          UNIQUE_VERSION="main-${TODAY}-$(( ${LAST_REV:-0} + 1 ))"
+        else
+          UNIQUE_VERSION="${DOCKER_TAG}.${{ github.run_number }}"
+        fi
         echo "DOCKER_TAG=${DOCKER_TAG}" >> "$GITHUB_ENV"
         echo "UNIQUE_VERSION=${UNIQUE_VERSION}" >> "$GITHUB_ENV"
         
