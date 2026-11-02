@@ -32,7 +32,7 @@ env:
 jobs:
   actionlint:
     name: actionlint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,7 +58,7 @@ jobs:
 
   shellcheck:
     name: shellcheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -71,7 +71,7 @@ jobs:
 
   hadolint:
     name: hadolint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -97,7 +97,7 @@ jobs:
   # managed-settings.json is the policy Claude Code enforces on the VM: it must parse and match the published settings schema
   managed-settings:
     name: managed-settings
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     env:
       CHECK_JSONSCHEMA_VERSION: 0.39.0 # renovate: datasource=pypi depName=check-jsonschema
@@ -120,7 +120,7 @@ jobs:
   # before this can run on everything (`zizmor --persona pedantic .`).
   zizmor:
     name: zizmor
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
