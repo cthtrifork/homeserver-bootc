@@ -77,7 +77,10 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          keep-n-tagged: 10
-          exclude-tags: main-*,latest
-          older-than: 14 days
+          # Prune old main images: everything younger than 30 days is kept, plus the
+          # 5 newest older ones. No delete-tags, so whole images are deleted. latest is
+          # never deleted.
+          keep-n-tagged: 5
+          exclude-tags: latest
+          older-than: 30 days
           packages: ${{ env.PACKAGES }}
