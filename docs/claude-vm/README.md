@@ -22,7 +22,7 @@ flowchart LR
         SB["Sandboxed shell<br/>limited paths + domains"]
         POD["Rootless podman<br/>(approved commands)"]
         GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
-        UPD["Daily: stage update<br/>(applies on reboot)"]
+        UPD["03:00: bootc upgrade --apply<br/>(reboots if new image)"]
         SSH["SSH<br/>(caspertdk, keys only)"]
     end
 
@@ -37,8 +37,7 @@ flowchart LR
     GW <--> ANTH
     ANTH <--> YOU
     REG --> UPD
-    UPD -.->|notice at session start| RC
-    YOU -.->|"optional Pinggy tunnel"| SSH
+        YOU -.->|"optional Pinggy tunnel"| SSH
 ```
 
 ## What is in it
@@ -54,10 +53,11 @@ flowchart LR
   `build_files/claude-vm/egress-allowlist.txt`; see [Egress gateway](#egress-gateway).
 - **Versions:** Claude Code is pinned by an `ARG ... # renovate:` line in the containerfile; Playwright by an `ARG ... # renovate:` line too; crane, hadolint and actionlint by
   `# renovate:` lines in `build_files/claude-vm-utilities.sh` (downloaded checksum-verified, cached in the CI runner cache). Everything else is a Fedora package that moves with the `fedora-bootc` base image.
-- **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 with the same drop-ins as `homeserver-gui`, but
-  `bootc upgrade` only stages the image. It takes effect at your next reboot, since a reboot would end a running
-  session. A staged update leaves a marker in `/run` (gone after reboot), and a managed `SessionStart` hook tells
-  Claude, and so you, when a session starts or resumes.
+- **Updates:** `bootc-fetch-apply-updates.timer` runs every night at 03:00 and runs `bootc upgrade --apply`, so a
+  newly pulled image is applied by an automatic reboot. That ends a running session; Remote Control restarts with the
+  service and brings its sessions back for about four hours. To only stage updates, drop `--apply` from
+  `bootc-fetch-apply-updates.service.d/override.conf`. If an update is staged but no reboot happened, a marker in `/run`
+  and the managed `SessionStart` hook still tell Claude, and so you.
 
 ## First-boot setup (once per VM)
 
