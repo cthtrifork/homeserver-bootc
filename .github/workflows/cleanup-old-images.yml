@@ -28,6 +28,9 @@ jobs:
       group: cleanup-images
     permissions:
       packages: write
+    env:
+      # Packages built by this repo (see .github/actions/set-image-vars)
+      PACKAGES: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
     steps:
       - name: Delete Images Older Than 90 Days
         if: false
@@ -37,10 +40,8 @@ jobs:
           older-than: 90 days
           #delete-orphaned-images: true
           #delete-untagged: true
-          owner: ${{ github.repository_owner }}
-          #repository: ${{ github.event.repository.name }}
-          packages: homeserver-centos-bootc/**/*,homeserver-centos-bootc/*,homeserver-*,homeserver-**
-          expand-packages: true
+          packages: ${{ env.PACKAGES }}
+          exclude-tags: main-*,latest
           keep-n-tagged: 7
           #keep-n-untagged: 7
           # dry-run: true
@@ -50,7 +51,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-untagged: true
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: ${{ env.PACKAGES }}
 
       - name: Delete old PR Images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -62,7 +63,7 @@ jobs:
           keep-n-tagged: 0
           exclude-tags: main-*,latest
           older-than: 7 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: ${{ env.PACKAGES }}
 
       - name: Delete ghost images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -70,7 +71,7 @@ jobs:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-ghost-images: true
           exclude-tags: main-*,latest
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: ${{ env.PACKAGES }}
 
       - name: Clean up old images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
@@ -79,4 +80,4 @@ jobs:
           keep-n-tagged: 10
           exclude-tags: main-*,latest
           older-than: 14 days
-          packages: homeserver-bootc/homeserver-centos-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: ${{ env.PACKAGES }}
