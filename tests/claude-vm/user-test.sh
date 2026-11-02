@@ -41,6 +41,9 @@ sudo -u claude -H bash -lc '
   podman run --rm quay.io/podman/hello
 '
 
+echo "--- podman API socket answers (outside the sandbox) ---"
+sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 curl -sf --unix-socket /run/user/1100/podman/podman.sock http://d/_ping | grep -x OK
+
 echo "--- claude doctor reports no invalid settings ---"
 # doctor exits 0 even when a settings file is invalid, so look for its "Invalid settings" section
 doctor_out="$(sudo -u claude -H bash -lc 'cd ~ && timeout 60 claude doctor </dev/null' 2>&1)"
