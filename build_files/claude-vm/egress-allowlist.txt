@@ -46,6 +46,7 @@ fedoraproject.org
 
 # Container registries
 docker.io
+cloudfront.docker.com
 gcr.io
 ghcr.io
 quay.io

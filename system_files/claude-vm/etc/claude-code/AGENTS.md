@@ -67,6 +67,10 @@ session. If the main checkout is on someone else's branch or has uncommitted cha
   (the only writable area), named after the branch:
   `git -C ~/workspace/homeserver-bootc worktree add ~/workspace/homeserver-bootc-<branch> -b <branch> origin/main`
   (fetch first with `git fetch origin main`; use literal absolute paths, as `~` and `$(...)` can prompt).
+- Always branch from `origin/main`, never from the current `HEAD` of the main checkout: that checkout is often on
+  another session's branch, and a branch cut from it drags that session's commits into your PR (e.g. an unrelated
+  rename). Before pushing or opening a PR, run `git -C <worktree path> log --oneline origin/main..HEAD` and confirm it
+  lists only your own commits.
 - Work, commit and push from the worktree with `git -C <worktree path>`; don't `cd` into it.
 - Never leave the main checkout on a feature branch with uncommitted work, and never check out a branch that another
   worktree already has.
@@ -92,3 +96,5 @@ session. If the main checkout is on someone else's branch or has uncommitted cha
 - Only hosts in `build_files/claude-vm/egress-allowlist.txt` are reachable. If a command fails with a network error,
   report the host instead of retrying; adding a host means editing that file and rebuilding the image.
 - `podman` is excluded from the sandbox and always asks for approval.
+- Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
+  instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.
