@@ -92,9 +92,10 @@ session. If the main checkout is on someone else's branch or has uncommitted cha
 
 ## Showing files and screenshots
 
-Sessions on this VM are Remote Control sessions (`claude remote-control`), not project threads, so `SendUserFile` fails
-with "this session is not on a project thread". Do not use it. The client turns a complete absolute path in your reply
-into a link that opens the file from the VM in a preview (confirmed for PNG screenshots).
+Sessions on this VM are started by `claude remote-control`. The docs list `SendUserFile` as available when a Remote
+Control client is connected, but in a plain session here it fails with "this session is not on a project thread", so
+do not rely on it (it may work in a session that is a project thread; untested). The client turns a complete absolute
+path in your reply into a link that opens the file from the VM in a preview (confirmed for PNG screenshots).
 
 - To show a screenshot, save it under `~/workspace/shots/` and put its complete absolute path in your reply, e.g.
   `/var/home/claude/workspace/shots/page.png`. Relative paths and `~` do not link.
