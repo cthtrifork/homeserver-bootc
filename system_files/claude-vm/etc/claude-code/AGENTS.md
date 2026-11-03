@@ -90,6 +90,19 @@ session. If the main checkout is on someone else's branch or has uncommitted cha
 - When mentioning a local file in chat, give its complete absolute path.
 - Write requested plans to a Markdown file before asking the user to review them.
 
+## Showing files and screenshots
+
+Sessions on this VM are Remote Control sessions (`claude remote-control`), not project threads, so `SendUserFile` fails
+with "this session is not on a project thread". Do not use it. The client turns a complete absolute path in your reply
+into a link that opens the file from the VM in a preview (confirmed for PNG screenshots).
+
+- To show a screenshot, save it under `~/workspace/shots/` and put its complete absolute path in your reply, e.g.
+  `/var/home/claude/workspace/shots/page.png`. Relative paths and `~` do not link.
+- Take screenshots with the image's `/usr/bin/chromium-browser`:
+  `chromium-browser --headless --no-sandbox --disable-gpu --screenshot=<abs png path> --window-size=1280,800 <url or file:// url>`.
+  The dbus errors it prints are harmless. Only allowlisted hosts and localhost are reachable.
+- The same applies to any other file you want the user to see: give its absolute path (`path:line` for code).
+
 ## Network and filesystem reminders
 
 - Writes are limited to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
