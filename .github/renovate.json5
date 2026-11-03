@@ -80,7 +80,7 @@
       // (minor and major too) automerges. With the cooldown a new release restarted the 2 days every
       // time and, inside the 'tools' group, a pending update is left out of the branch and off the
       // dashboard.
-      matchPackageNames: ['cthtrifork/trivy-dashboard-wail3'],
+      matchPackageNames: ['cthtrifork/trivy-dashboard-wail3', 'cthtrifork/harper-pad'],
       minimumReleaseAge: null,
       groupName: null,
       automerge: true,
