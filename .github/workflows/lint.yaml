@@ -131,7 +131,7 @@ jobs:
       - name: Run zizmor
         env:
           GH_TOKEN: ${{ github.token }}
-          ZIZMOR_VERSION: 1.31.1 # renovate: datasource=pypi depName=zizmor
+          ZIZMOR_VERSION: 1.32.0 # renovate: datasource=pypi depName=zizmor
         run: |
           python3 -m pip install --user "zizmor==${ZIZMOR_VERSION}"
           "$HOME/.local/bin/zizmor" --persona pedantic --format plain .github/workflows/renovate.yaml .github/workflows/renovate-config-validation.yaml
