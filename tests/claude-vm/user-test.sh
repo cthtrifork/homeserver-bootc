@@ -38,7 +38,7 @@ sudo -u claude -H bash -lc '
   printf "package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"go ok\") }\n" > main.go
   go run . | grep -x "go ok"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
-  podman run --rm quay.io/podman/hello
+  podman run --rm docker.io/library/hello-world
 '
 
 echo "--- playwright drives headless chromium ---"
@@ -108,7 +108,7 @@ if blocked_log | grep -qF 'github.com'; then echo "allowed github.com was logged
 sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
 echo "--- egress allowlist: podman containers ---"
-img=quay.io/curl/curl:latest   # the curl project's image (~11 MB, one layer); quay.io is allowlisted
+img=docker.io/curlimages/curl:latest   # the curl project's image on Docker Hub (~12 MB); docker.io and docker.com (its CDN) are allowlisted
 # from /: podman keeps the caller's cwd, which is caspertdk's home and not enterable by claude
 agent_podman() { (cd / && sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"); }
 # the container must start and curl must fail: podman's own errors (125-127) do not count as "blocked"
