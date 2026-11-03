@@ -103,6 +103,10 @@ must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.
 blocked_log() { sudo claude-vm-egress blocked; }
 for _ in $(seq 30); do blocked_log | grep -qF 'http example.com' && break; sleep 1; done
 blocked_log | grep -qF 'https example.com' || { echo "no https entry in the blocked log"; diagnose; exit 1; }
+echo "--- claude-vm-egress blocked ---"
+sudo claude-vm-egress blocked
+echo "--- claude-vm-egress allowed (first 5) ---"
+claude-vm-egress allowed | head -n 5
 # allowed requests are not logged
 if blocked_log | grep -qF 'github.com'; then echo "allowed github.com was logged as blocked"; exit 1; fi
 # not affected: root (bootc, dnf)
