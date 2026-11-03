@@ -26,11 +26,6 @@ on:
     branches:
       - main
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ github.event.inputs.override_image }}
-  # never cancel release/scheduled builds on main, only superseded PR runs
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 # least privilege by default, jobs elevate individually
 permissions:
   contents: read
@@ -158,6 +153,14 @@ jobs:
       fail-fast: false
       matrix:
         image: ${{ fromJSON(needs.changes.outputs.image) }}
+    # One group per image and ref, set here and not on the workflow: a run builds several images, and a
+    # workflow-wide group made a push that touched only claude-vm wait behind (or, as the pending run,
+    # replace) a homeserver-gui build. Builds of one image stay serialized across push, schedule and
+    # manual runs, so the tag counter and the latest tag do not race.
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ matrix.image }}
+      # never cancel release/scheduled builds on main, only superseded PR runs of the same image
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     uses: ./.github/workflows/build-bootc-image.yaml
     with:
       image: ${{ matrix.image }}
