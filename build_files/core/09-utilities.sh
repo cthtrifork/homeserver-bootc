@@ -275,7 +275,8 @@ log "Installing fresh-editor"
 FRESH_VERSION="v0.5.4" # renovate: datasource=github-releases depName=sinelaw/fresh
 FRESH_TXZ="$(tmp_name fresh-editor "$FRESH_VERSION" tar.xz)"
 download_if_missing_cmd "$FRESH_TXZ" /ctx/build_files/github-release-url.sh sinelaw/fresh "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu.tar.xz" "$FRESH_VERSION"
-extract "$FRESH_TXZ" --strip-components=1 --exclude=themes --exclude=plugins
+# Only the binary: the tarball also ships icons, a .desktop file and an install receipt
+extract "$FRESH_TXZ" --strip-components=1 "fresh-editor-${HOST_ARCH}-unknown-${MACHINE}-gnu/fresh"
 
 log "Installing crane"
 CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases depName=google/go-containerregistry
@@ -289,6 +290,22 @@ ACT_TGZ="$(tmp_name act "$ACT_VERSION" tar.gz)"
 download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_${MACHINE}_${HOST_ARCH}.tar.gz" "$ACT_VERSION"
 # The release tarball is flat (LICENSE, README.md, act): stripping a component would drop the binary
 extract "$ACT_TGZ" act
+
+log "Verifying installed binaries"
+# tar skips archive members it cannot find without failing, so check every expected binary exists
+EXPECTED_BINS=(
+    act age copa cosign crane fresh flux flux-operator-mcp gh helm jq k9s kind kubecolor kubectl
+    kubectl-cnpg kubectl-df-pv kubectl-oidc_login kubectl-virt kubelogin kustomize lazydocker
+    lazygit lazyjournal mkcert numr omnictl shfmt sops talosctl tldr virtctl witr yq
+)
+MISSING_BINS=()
+for bin in "${EXPECTED_BINS[@]}"; do
+    [[ -f "$BIN_DIR/$bin" ]] || MISSING_BINS+=("$bin")
+done
+if ((${#MISSING_BINS[@]})); then
+    echo "Missing binaries in $BIN_DIR: ${MISSING_BINS[*]}" >&2
+    exit 1
+fi
 
 chmod -R 755 "$BIN_DIR"/
 chmod -R 755 "$COMPLETION_DIR"/
