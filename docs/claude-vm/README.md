@@ -203,6 +203,10 @@ allows it in the Claude sandbox, so approving a sandbox prompt for a host is not
 connection is made. A listed name that resolves but is blocked at the proxy shows as a connection reset (HTTPS) or a 403
 (HTTP). `ssh` and git-over-SSH are blocked; use HTTPS remotes.
 
+**Blocked-request log.** The proxy logs every blocked HTTPS (SNI) and HTTP (Host) request with the client address to the
+journal: `journalctl -t egress_blocked` (needs the `adm`/`wheel` group; the `claude` user cannot read it). DNS refusals
+are not logged.
+
 **Limits.** Filtering is by name, not content. A listed host that is a shared CDN or a broad service (`github.com`,
 `ghcr.io`, `pypi.org`) can still carry data out, domain fronting to a listed CDN is possible, and DNS queries for listed
 domains can carry data.
