@@ -5,7 +5,7 @@ set -eo pipefail
 diagnose() {
     echo "--- egress diagnostics ---"
     sudo journalctl -b --no-pager -n 60 -u claude-vm-egress-proxy -u claude-vm-egress-dns || true
-    sudo journalctl -b --no-pager -u claude-vm-egress-proxy -g egress_blocked | tail -n 20 || true
+    sudo claude-vm-egress blocked | tail -n 20 || true
     sudo journalctl -b --no-pager -g 'avc:' | tail -n 20 || true
     sudo nft list table inet claude_egress || true
 }
@@ -100,7 +100,7 @@ must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.
 # plain HTTP is matched on the Host header (the address is pinned so DNS does not answer first)
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
 # blocked requests are logged to the journal (both the SNI and the Host paths ran above)
-blocked_log() { sudo journalctl -b --no-pager -u claude-vm-egress-proxy -g egress_blocked; }
+blocked_log() { sudo claude-vm-egress blocked; }
 for _ in $(seq 30); do blocked_log | grep -qF 'http example.com' && break; sleep 1; done
 blocked_log | grep -qF 'https example.com' || { echo "no https entry in the blocked log"; diagnose; exit 1; }
 # allowed requests are not logged

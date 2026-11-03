@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+# Show what the egress gateway allows and what it blocked.
+#   claude-vm-egress allowed             # the allowlist (a domain also covers its subdomains)
+#   claude-vm-egress blocked [-n 50]     # blocked HTTPS/HTTP requests from the proxy log; extra args go to journalctl
+#                                        # (reading the journal needs root or the adm/wheel group: use sudo)
+# DNS refusals are not logged, so a name that never resolves does not show up under "blocked".
+set -euo pipefail
+
+case "${1:-}" in
+allowed)
+    exec cat /usr/share/claude-vm/egress/allowlist.txt
+    ;;
+blocked)
+    shift
+    exec journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@"
+    ;;
+*)
+    echo "usage: claude-vm-egress allowed | blocked [journalctl args]" >&2
+    exit 2
+    ;;
+esac
