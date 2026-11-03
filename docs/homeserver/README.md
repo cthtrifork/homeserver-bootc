@@ -63,6 +63,23 @@ Host portableinfo.pinggy
 ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
 ```
 
+### Ghostty
+
+With [Ghostty 1.4+](https://ghostty.org/docs/install/release-notes/1-4-0#ssh-integration-with-ghostty-+ssh), use the
+`ghostty +ssh` wrapper instead of plain `ssh`. It installs Ghostty's terminfo on the host on first connect (so
+`TERM=xterm-ghostty` works) and forwards `COLORTERM`, `TERM_PROGRAM` and `TERM_PROGRAM_VERSION`, which sshd accepts
+(`sshd_config.d/01-local.conf`). If the terminfo install fails it falls back to `TERM=xterm-256color`.
+
+```sh
+ghostty +ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
+
+# or route every ssh call through it
+alias ssh='ghostty +ssh --'
+```
+
+Keep `SetEnv TERM=xterm-256color` in `~/.ssh/config` for clients that are not Ghostty; the wrapper overrides it when it
+can. Manage the install cache with `ghostty +ssh-cache` (for example `--prune=30d`).
+
 ## Secrets (sops + age)
 
 ```sh
