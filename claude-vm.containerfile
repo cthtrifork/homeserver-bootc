@@ -8,7 +8,7 @@ COPY build_files/ /build_files/
 
 FROM base AS final
 
-ARG CLAUDE_CODE_VERSION=2.1.316 # renovate: datasource=npm depName=@anthropic-ai/claude-code
+ARG CLAUDE_CODE_VERSION=2.1.317 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG PLAYWRIGHT_VERSION=1.64.1 # renovate: datasource=npm depName=playwright
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman, plus linters/formatters
