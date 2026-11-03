@@ -99,16 +99,21 @@ must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
 must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.com
 # plain HTTP is matched on the Host header (the address is pinned so DNS does not answer first)
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
-# blocked requests are logged to the journal (both the SNI and the Host paths ran above)
-blocked_log() { sudo claude-vm-egress blocked; }
-for _ in $(seq 30); do blocked_log | grep -qF 'http example.com' && break; sleep 1; done
-blocked_log | grep -qF 'https example.com' || { echo "no https entry in the blocked log"; diagnose; exit 1; }
+# blocked requests are logged to the journal; check the claude-vm-egress summary (one "count time scheme host" line per host)
+for _ in $(seq 30); do blocked="$(sudo claude-vm-egress blocked)"; grep -qE ' http example\.com$' <<<"$blocked" && break; sleep 1; done
 echo "--- claude-vm-egress blocked ---"
-sudo claude-vm-egress blocked
+echo "$blocked"
+grep -qE '^[0-9]+ [^ ]+ https example\.com$' <<<"$blocked" || { echo "no https entry in the blocked summary"; diagnose; exit 1; }
+grep -qE '^[0-9]+ [^ ]+ http example\.com$' <<<"$blocked" || { echo "no http entry in the blocked summary"; diagnose; exit 1; }
+# one line per host, and allowed requests are not logged
+[ -z "$(sort <<<"$blocked" | cut -d' ' -f3- | uniq -d)" ]
+if grep -qF 'github.com' <<<"$blocked"; then echo "allowed github.com was logged as blocked"; exit 1; fi
+# the allowlist listing agrees with what was just allowed and blocked
 echo "--- claude-vm-egress allowed (first 5) ---"
-claude-vm-egress allowed | head -n 5
-# allowed requests are not logged
-if blocked_log | grep -qF 'github.com'; then echo "allowed github.com was logged as blocked"; exit 1; fi
+allowed="$(claude-vm-egress allowed)"
+echo "$allowed" | head -n 5
+grep -qx github.com <<<"$allowed"
+if grep -qx example.com <<<"$allowed"; then echo "example.com must not be allowed"; exit 1; fi
 # not affected: root (bootc, dnf)
 sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
