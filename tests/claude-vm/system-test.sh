@@ -28,6 +28,7 @@ if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --q
     exit 1
 fi
 test -x /usr/bin/claude-vm-ssh-address
+test -x /usr/bin/claude-vm-egress
 test -x /usr/bin/claude-vm-signing-key
 # nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
@@ -60,6 +61,7 @@ rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
+claude-vm-egress allowed | grep -qx github.com
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"
 

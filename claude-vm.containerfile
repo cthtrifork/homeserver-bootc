@@ -75,7 +75,7 @@ RUN install -m 0755 /usr/sbin/nginx /usr/libexec/claude-vm/egress-proxy
 # managers (`--global` writes /etc/systemd/user/sockets.target.wants): ~/.config/systemd is write-protected for claude.
 RUN systemctl --global enable podman.socket
 
-RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/libexec/claude-vm/* \
+RUN chmod 0755 /usr/bin/claude-vm-seed-github-token /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
         claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
 
