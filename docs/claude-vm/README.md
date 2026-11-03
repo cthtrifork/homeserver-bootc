@@ -102,10 +102,11 @@ GitHub shows "Verified" only if the commit email is a verified email on the acco
    **Signing Key** (Settings > SSH and GPG keys > New SSH key). It is separate from an authentication key.
 2. **Set the commit email** to one verified on your account. Your noreply address
    (`<id>+<username>@users.noreply.github.com`) keeps your real address out of the history. `claude` cannot edit
-   `~/.gitconfig`, so run as `caspertdk`:
+   `~/.gitconfig`, so run as `caspertdk`, from a directory `claude` can read (from your own home git fails with
+   `error reading '.../.git'`):
 
    ```sh
-   sudo -u claude git config --file /var/home/claude/.gitconfig user.email "<your-verified-email>"
+   cd /var/home/claude && sudo -u claude git config --file /var/home/claude/.gitconfig user.email "<your-verified-email>"
    sudo claude-vm-signing-key    # refreshes ~/.ssh/allowed_signers
    ```
 
