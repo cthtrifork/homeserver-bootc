@@ -48,7 +48,7 @@ runs:
         if [ "${{ inputs.allocate_version }}" = "true" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
           # main-<yyyyMMdd>-<rev>: rev is a per-day, per-image counter derived from the release tags
           # (<image>_main-<yyyyMMdd>-<rev>) already on the remote. main builds of one image are
-          # serialized by the concurrency group, so the counter does not race.
+          # serialized by the per-image concurrency group, so the counter does not race.
           TODAY="$(date -u +%Y%m%d)"
           LAST_TAG="$(git ls-remote --tags --refs --sort=-v:refname origin \
             "refs/tags/${IMAGE_NAME}_main-${TODAY}-*" | head -n1)"
