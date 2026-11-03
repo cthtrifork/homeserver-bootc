@@ -64,16 +64,26 @@ jobs:
               - 'build_files/**'
               - '!build_files/gui/**'
               - '!build_files/claude-vm/**'
+              - '!build_files/claude-vm-utilities.sh' # only the VM runs it
+              - 'cosign.pub'
+              - 'policy.json'
               # shared build inputs: they have always rebuilt the default image only
-              - 'config.toml'
               - 'tests/*.sh'
+              - '.github/actions/**'
               - '.github/workflows/build-bootc-image*.yaml'
               - '!**/*.md' # docs never change an image
             homeserver-gui:
               - 'system_files/homeserver-gui/**'
               - 'homeserver-gui.containerfile'
               - '**/homeserver-gui/**'
-              - 'build_files/gui/**'
+              # the GUI image is the homeserver image plus the GUI layer: it copies system_files/homeserver
+              # and runs the shared base, core and post build steps too
+              - 'system_files/homeserver/**'
+              - 'build_files/**'
+              - '!build_files/claude-vm/**'
+              - '!build_files/claude-vm-utilities.sh'
+              - 'cosign.pub'
+              - 'policy.json'
               - '!**/*.md' # docs never change an image
             claude-vm:
               - 'system_files/claude-vm/**'
@@ -81,6 +91,8 @@ jobs:
               - '**/claude-vm/**'
               # the VM reuses the homeserver SSH public keys
               - 'system_files/homeserver/usr/share/homeserver/authorized_keys.pub'
+              - 'build_files/claude-vm-utilities.sh'
+              - 'build_files/download-lib.sh' # sourced by claude-vm-utilities.sh
               - '!**/*.md' # docs never change an image
 
       - name: Pick images to build
