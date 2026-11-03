@@ -39,7 +39,7 @@ sudo -u claude -H bash -lc '
   printf "package main\nimport \"fmt\"\nfunc main() { fmt.Println(\"go ok\") }\n" > main.go
   go run . | grep -x "go ok"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
-  podman run --rm docker.io/library/hello-world
+  podman run --rm mirror.gcr.io/library/hello-world
 '
 
 echo "--- playwright drives headless chromium ---"
@@ -118,7 +118,7 @@ if grep -qx example.com <<<"$allowed"; then echo "example.com must not be allowe
 sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
 echo "--- egress allowlist: podman containers ---"
-img=docker.io/curlimages/curl:latest   # the curl project's image on Docker Hub (~12 MB); docker.io and docker.com (its CDN) are allowlisted
+img=mirror.gcr.io/curlimages/curl:latest   # the curl project's image via Google's Docker Hub mirror (~12 MB); gcr.io is allowlisted
 # from /: podman keeps the caller's cwd, which is caspertdk's home and not enterable by claude
 agent_podman() { (cd / && sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"); }
 # the container must start and curl must fail: podman's own errors (125-127) do not count as "blocked"
