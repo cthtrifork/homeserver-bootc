@@ -46,7 +46,7 @@ fedoraproject.org
 
 # Container registries
 docker.io
-cloudfront.docker.com
+docker.com
 gcr.io
 ghcr.io
 quay.io
@@ -56,7 +56,6 @@ cgr.dev
 registry.access.redhat.com
 
 # Documentation (WebFetch)
-docs.docker.com
 developers.redhat.com
 developer.mozilla.org
 docs.python.org
