@@ -98,6 +98,12 @@ must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
 must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.com
 # plain HTTP is matched on the Host header (the address is pinned so DNS does not answer first)
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
+# blocked requests are logged to the journal (both the SNI and the Host paths ran above)
+blocked_log() { sudo journalctl -b --no-pager -t egress_blocked; }
+for _ in $(seq 30); do blocked_log | grep -qF 'http example.com' && break; sleep 1; done
+blocked_log | grep -qF 'https example.com'
+# allowed requests are not logged
+if blocked_log | grep -qF 'github.com'; then echo "allowed github.com was logged as blocked"; exit 1; fi
 # not affected: root (bootc, dnf)
 sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
