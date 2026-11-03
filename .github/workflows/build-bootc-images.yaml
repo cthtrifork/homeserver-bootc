@@ -73,6 +73,7 @@ jobs:
               - 'system_files/homeserver-gui/**'
               - 'homeserver-gui.containerfile'
               - '**/homeserver-gui/**'
+              - 'build_files/gui/**'
               - '!**/*.md' # docs never change an image
             claude-vm:
               - 'system_files/claude-vm/**'
@@ -80,7 +81,6 @@ jobs:
               - '**/claude-vm/**'
               # the VM reuses the homeserver SSH public keys
               - 'system_files/homeserver/usr/share/homeserver/authorized_keys.pub'
-              - 'build_files/gui/**'
               - '!**/*.md' # docs never change an image
 
       - name: Pick images to build
