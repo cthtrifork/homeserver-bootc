@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 # Show what the egress gateway allows and what it blocked.
 #   claude-vm-egress allowed             # the allowlist (a domain also covers its subdomains)
-#   claude-vm-egress blocked [-n 50]     # blocked HTTPS/HTTP requests from the proxy log; extra args go to journalctl
-#                                        # (reading the journal needs root or the adm/wheel group: use sudo)
+#   claude-vm-egress blocked [--raw] [journalctl args]
+#                                        # blocked HTTPS/HTTP requests since boot, one line per host: count, last seen,
+#                                        # scheme, host (--raw: every request; other args go to journalctl, e.g. --since -1h).
+#                                        # Reading the journal needs root or the adm/wheel group: use sudo.
 # DNS refusals are not logged, so a name that never resolves does not show up under "blocked".
 set -euo pipefail
 
@@ -12,7 +14,28 @@ allowed)
     ;;
 blocked)
     shift
-    exec journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@"
+    raw=0
+    if [[ "${1:-}" == --raw ]]; then
+        raw=1
+        shift
+    fi
+    if ((raw)); then
+        exec journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@"
+    fi
+    # lines look like: <time> <host> egress-proxy[pid]: <host> egress_blocked: https example.com client=10.0.0.1
+    # (no SNI, e.g. an IP address, leaves the host empty)
+    journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@" |
+        awk '
+            /egress_blocked: / {
+                rest = substr($0, index($0, "egress_blocked: ") + 16)
+                split(rest, f, " ")
+                host = (f[2] ~ /^client=/ || f[2] == "") ? "(no SNI)" : f[2]
+                key = f[1] " " host
+                count[key]++
+                last[key] = $1
+            }
+            END { for (k in count) print count[k], last[k], k }
+        ' | sort -k1,1nr -k4,4
     ;;
 *)
     echo "usage: claude-vm-egress allowed | blocked [journalctl args]" >&2

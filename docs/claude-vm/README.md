@@ -203,8 +203,9 @@ connection is made. A listed name that resolves but is blocked at the proxy show
 (HTTP). `ssh` and git-over-SSH are blocked; use HTTPS remotes.
 
 **Blocked-request log.** The proxy logs every blocked HTTPS (SNI) and HTTP (Host) request with the client address to the
-journal: `sudo claude-vm-egress blocked` (needs root or the `adm`/`wheel` group; the `claude` user cannot read the journal); `claude-vm-egress allowed` prints the allowlist. DNS refusals
-are not logged.
+journal. `sudo claude-vm-egress blocked` summarises it since boot, one line per scheme and host (count, last seen); add
+`--raw` for every request and any `journalctl` argument (`--since -1h`). It needs root or the `adm`/`wheel` group, as the
+`claude` user cannot read the journal. `claude-vm-egress allowed` prints the allowlist. DNS refusals are not logged.
 
 **Limits.** Filtering is by name, not content. A listed host that is a shared CDN or a broad service (`github.com`,
 `ghcr.io`, `pypi.org`) can still carry data out, domain fronting to a listed CDN is possible, and DNS queries for listed
