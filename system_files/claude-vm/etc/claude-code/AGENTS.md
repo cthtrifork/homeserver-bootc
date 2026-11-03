@@ -52,7 +52,11 @@ Prefer the Read/Grep/Glob tools over Bash for reading and searching files when t
 - Amend only when asked and only if the commit is unpushed; otherwise add a follow-up commit.
 - Write commit messages in [Conventional Commits](https://www.conventionalcommits.org/) format, `type(scope): summary`
   (types such as `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`), and end with the `Co-Authored-By` trailer.
-- Push or open a PR only when the user asks. Use `gh` for GitHub.
+- After committing a finished, verified change in your worktree, push the branch (`git push -u origin <branch>`) and
+  open a PR with `gh pr create` without asking first. Don't push or open a PR for unfinished, unverified or exploratory
+  work, or when the user says not to. Use `gh` for GitHub.
+- Never push to `main` directly, and `--force`/`--force-with-lease` still need explicit approval (see Safety rules).
+- Mirror the repo's PR template if it has one, and report the PR URL when done.
 - Use `git -C <dir>` and absolute paths rather than `cd`.
 
 ### Worktrees
