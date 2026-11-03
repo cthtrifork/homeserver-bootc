@@ -14,7 +14,7 @@ flowchart TD
     BASE["fedora-bootc:44"] --> IMG
     subgraph IMG["homeserver-gui image (PRIVATE: same baked secrets)"]
         KDE["KDE Plasma + SDDM + KDE apps<br/>PipeWire, NetworkManager Wi-Fi, TLP"]
-        APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>yaml-schema-router, multimedia codecs"]
+        APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>harper-pad, yaml-schema-router, multimedia codecs"]
         BOOTX["Boot<br/>Plymouth bgrt-better-luks, Clevis LUKS,<br/>dracut initramfs, graphical.target"]
         DEF["Defaults<br/>hostname kde-homeserver,<br/>Danish keymap, SDDM hides runner"]
         NOPING["pinggy.service DISABLED"]
@@ -32,7 +32,7 @@ flowchart TD
   SDDM, KDE apps, fonts, zen-browser, ghostty, the libvirt/virt-manager stack, NetworkManager with Wi-Fi, PipeWire,
   TLP and Clevis for LUKS. Multimedia codecs come from the `multimedia` group with ffmpeg swapped in.
 - **Extra software** (`build_files/gui/`): VS Code from Microsoft's repo, Zed, yaml-schema-router and the
-  trivy-scanner RPM (`cthtrifork/trivy-dashboard-wail3`). Versions use `# renovate:` comments.
+  trivy-scanner (`cthtrifork/trivy-dashboard-wail3`) and harper-pad (`cthtrifork/harper-pad`) RPMs. Versions use `# renovate:` comments.
 - **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed by the first user setup, SDDM
   hides the `runner` user, and the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.
