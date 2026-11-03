@@ -57,6 +57,7 @@ registry.access.redhat.com
 
 # Documentation (WebFetch)
 docs.docker.com
+www.docker.com
 developers.redhat.com
 developer.mozilla.org
 docs.python.org
