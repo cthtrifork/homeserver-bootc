@@ -287,7 +287,8 @@ log "Installing nektos act"
 ACT_VERSION="v0.2.92" # renovate: datasource=github-releases depName=nektos/act
 ACT_TGZ="$(tmp_name act "$ACT_VERSION" tar.gz)"
 download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_${MACHINE}_${HOST_ARCH}.tar.gz" "$ACT_VERSION"
-extract "$ACT_TGZ" --strip-components=1 --exclude=themes --exclude=plugins
+# The release tarball is flat (LICENSE, README.md, act): stripping a component would drop the binary
+extract "$ACT_TGZ" act
 
 chmod -R 755 "$BIN_DIR"/
 chmod -R 755 "$COMPLETION_DIR"/
