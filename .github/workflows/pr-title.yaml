@@ -1,0 +1,45 @@
+name: PR title
+
+# Enforces Conventional Commits on the PR title: `type(scope)!: summary`, e.g. `ci(cleanup): run each package as a matrix job`.
+# Squash merges use the title as the commit subject, and the rechunker changelog of every image release lists
+# those subjects, so a good title is what makes the release notes readable.
+# Make "check title" a required status check in the branch rules to enforce it on merge.
+# synchronize matters: a required status check is attached to the head commit, so every new head needs its own run
+# or the check stays "Expected".
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  title:
+    name: check title
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read # read the PR title
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          # Keep in step with the README "Commit and PR titles" section and AGENTS.md.
+          types: |
+            feat
+            fix
+            security
+            perf
+            refactor
+            docs
+            test
+            chore
+            revert
+            ci
+            build
+            deps
