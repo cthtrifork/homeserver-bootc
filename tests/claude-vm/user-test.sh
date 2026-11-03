@@ -5,6 +5,7 @@ set -eo pipefail
 diagnose() {
     echo "--- egress diagnostics ---"
     sudo journalctl -b --no-pager -n 60 -u claude-vm-egress-proxy -u claude-vm-egress-dns || true
+    sudo journalctl -b --no-pager -t egress_blocked | tail -n 20 || true
     sudo journalctl -b --no-pager -g 'avc:' | tail -n 20 || true
     sudo nft list table inet claude_egress || true
 }
@@ -101,7 +102,7 @@ must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.
 # blocked requests are logged to the journal (both the SNI and the Host paths ran above)
 blocked_log() { sudo journalctl -b --no-pager -t egress_blocked; }
 for _ in $(seq 30); do blocked_log | grep -qF 'http example.com' && break; sleep 1; done
-blocked_log | grep -qF 'https example.com'
+blocked_log | grep -qF 'https example.com' || { echo "no https entry in the blocked log"; diagnose; exit 1; }
 # allowed requests are not logged
 if blocked_log | grep -qF 'github.com'; then echo "allowed github.com was logged as blocked"; exit 1; fi
 # not affected: root (bootc, dnf)
