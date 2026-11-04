@@ -33,6 +33,11 @@ flowchart TD
   TLP and Clevis for LUKS. Multimedia codecs come from the `multimedia` group with ffmpeg swapped in.
 - **Extra software** (`build_files/gui/`): VS Code from Microsoft's repo, Zed, yaml-schema-router and the
   trivy-scanner (`cthtrifork/trivy-dashboard-wail3`) and harper-pad (`cthtrifork/harper-pad`) RPMs. Versions use `# renovate:` comments.
+- **trivy-scanner can self-update.** The RPM's `/usr/bin` binary is read-only, so the image also ships a seed at
+  `/usr/share/trivy-scanner/` and `user-setup.hooks.d/13-trivy-scanner.sh` copies it to `~/.local/bin/trivy-scanner`
+  and points a user-level `.desktop` entry at it. The hook runs every boot and never overwrites a copy the app has
+  updated: it only refreshes a copy that is still byte-identical to what it seeded earlier. Delete
+  `~/.local/bin/trivy-scanner` to go back to the image's version.
 - **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed by the first user setup, SDDM
   hides the `runner` user, and the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.

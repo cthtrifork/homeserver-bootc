@@ -19,4 +19,9 @@ rpm --import "$tmp/key.asc"
 rpmkeys --checksig "$tmp/trivy-scanner.rpm"
 dnf -y install "$tmp/trivy-scanner.rpm"
 
+# Seed for a per-user, writable copy: /usr/bin is read-only on bootc, so the app's in-app
+# updater cannot replace the packaged binary. user-setup.hooks.d/13-trivy-scanner.sh copies
+# this into ~/.local/bin and leaves a self-updated copy alone.
+install -D -m 0755 /usr/bin/trivy-scanner /usr/share/trivy-scanner/trivy-scanner
+
 echo "::endgroup::"
