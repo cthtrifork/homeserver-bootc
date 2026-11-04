@@ -163,8 +163,10 @@ jobs:
     # manual runs, so the tag counter and the latest tag do not race.
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ matrix.image }}
-      # never cancel release/scheduled builds on main, only superseded PR runs of the same image
-      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+      # a newer push to main or PR update supersedes a running build of the same image, so only the
+      # latest commit is built per image. The deciding setting is the incoming run's, so a push can
+      # also cancel a running scheduled/manual build; those never cancel a running build themselves.
+      cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     uses: ./.github/workflows/build-bootc-image.yaml
     with:
       image: ${{ matrix.image }}
