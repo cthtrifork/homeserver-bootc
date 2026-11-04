@@ -113,6 +113,6 @@ path in your reply into a link that opens the file from the VM in a preview (con
 - Writes are limited to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
 - Only hosts in `build_files/claude-vm/egress-allowlist.txt` are reachable. If a command fails with a network error,
   report the host instead of retrying; adding a host means editing that file and rebuilding the image.
-- `podman` is excluded from the sandbox and always asks for approval.
+- `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt.
 - Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
   instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.

@@ -13,7 +13,9 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
   (DNS lookups are refused, connections reset). Approving a prompt does not change that; the user adds a host by
   editing `build_files/claude-vm/egress-allowlist.txt` and rebuilding the image. If a command fails with a permission
   or network error, say so and name the host instead of retrying.
-- `podman` is excluded from the sandbox and always asks for approval. It is rootless; there is no Docker.
+- `podman` and `podman-compose` (the provider behind `podman compose`) are excluded from the sandbox and allowed without an
+  approval prompt; use them freely, including `podman compose up --build`. They are rootless and their containers are
+  confined by the same egress gateway. There is no Docker.
 - Git over HTTPS uses `gh` with the seeded `GH_TOKEN`. There are no SSH keys on this VM, so use `https://` remotes.
 - The OS updates nightly at 03:00 (`bootc upgrade --apply`) and the VM reboots into a new image, which ends running
   sessions. You cannot reboot it yourself; do not try to apply updates.
