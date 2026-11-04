@@ -33,9 +33,10 @@ flowchart TD
   TLP and Clevis for LUKS. Multimedia codecs come from the `multimedia` group with ffmpeg swapped in.
 - **Extra software** (`build_files/gui/`): VS Code from Microsoft's repo, Zed, yaml-schema-router and the
   trivy-scanner (`cthtrifork/trivy-dashboard-wail3`) and harper-pad (`cthtrifork/harper-pad`) RPMs. Versions use `# renovate:` comments.
-- **Zed does not self-update.** The image pins Zed and the user-setup dotfiles sync restores that copy on every boot, so
-  `12-zed.sh` sets `"auto_update": false` in `~/.config/zed/settings.json` (only when the key is absent). Zed updates
-  arrive with the image, via Renovate and `bootc upgrade`.
+- **Zed does not self-update.** The image pins Zed and the user-setup dotfiles sync restores that copy on every boot,
+  so a self-update would be undone. `etc/environment.d/50-zed.conf` sets `ZED_UPDATE_EXPLANATION`, which is Zed's own
+  switch for packaged installs: it stops update polling and makes "Check for Updates" show the message instead.
+  Zed updates arrive with the image, via Renovate and `bootc upgrade`.
 - **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed by the first user setup, SDDM
   hides the `runner` user, and the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.
