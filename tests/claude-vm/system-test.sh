@@ -27,6 +27,7 @@ if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --q
     echo "claude-pinggy must be opt-in"
     exit 1
 fi
+[ "$(hostname)" = "claude-vm-bootc" ]
 test -x /usr/bin/claude-vm-ssh-address
 test -x /usr/bin/claude-vm-egress
 test -x /usr/bin/claude-vm-signing-key
