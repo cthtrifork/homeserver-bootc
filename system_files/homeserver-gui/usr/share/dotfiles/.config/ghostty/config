@@ -1,4 +1,4 @@
 # Ghostty 1.4+: route ssh through `ghostty +ssh` (installs xterm-ghostty terminfo on the remote on first
 # connect, forwards COLORTERM/TERM_PROGRAM*, falls back to TERM=xterm-256color). Opt-in shell integration
-# features; no `ssh` alias needed. Ignored by older Ghostty versions.
+# features; no `ssh` alias needed. Present in 1.3.x too, but it only calls `+ssh` from 1.4.
 shell-integration-features = ssh-env,ssh-terminfo

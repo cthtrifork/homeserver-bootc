@@ -81,8 +81,9 @@ The GUI image does this for you: its dotfiles ship `~/.config/ghostty/config` wi
 `shell-integration-features = ssh-env,ssh-terminfo`, so no alias is needed there. Don't alias it on the headless
 image, which has no `ghostty` binary.
 
-Keep `SetEnv TERM=xterm-256color` in `~/.ssh/config` for clients that are not Ghostty; the wrapper overrides it when it
-can. Manage the install cache with `ghostty +ssh-cache` (for example `--prune=30d`).
+`SetEnv TERM=xterm-256color` in `~/.ssh/config` (as in the `pinggy` host above) forces that `TERM` and downgrades it even
+after the terminfo is installed. Keep it only for hosts or clients without the `xterm-ghostty` terminfo.
+Manage the install cache with `ghostty +ssh-cache` (for example `--prune=30d`).
 
 ## Secrets (sops + age)
 
