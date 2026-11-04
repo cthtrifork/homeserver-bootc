@@ -17,6 +17,7 @@ githubassets.com
 githubcopilot.com
 githubusercontent.com
 context7.com
+portableinfo.cloud
 
 # Language package registries and toolchains
 npmjs.com
