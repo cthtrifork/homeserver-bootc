@@ -68,6 +68,7 @@ fluxcd.io
 readthedocs.io
 wikipedia.org
 stackoverflow.com
+oneuptime.com
 
 # JSON schemas (settings validation)
 json.schemastore.org
