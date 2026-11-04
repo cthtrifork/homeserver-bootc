@@ -63,6 +63,10 @@ Host portableinfo.pinggy
 ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
 ```
 
+Password login works only from private LAN addresses (`Match Address` in `sshd_config.d/01-local.conf`). Through
+Pinggy, sshd sees loopback, so the first hop needs an SSH key. The `-J` second hop starts from the server's own LAN
+address, so it can use a password.
+
 ### Ghostty
 
 With [Ghostty 1.4+](https://ghostty.org/docs/install/release-notes/1-4-0#ssh-integration-with-ghostty-+ssh), use the
