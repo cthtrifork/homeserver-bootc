@@ -53,7 +53,7 @@ flowchart LR
 - **SSH uses the same public keys as the home server.** `authorized_keys.pub` is copied from
   `system_files/homeserver/` at build time and installed for `caspertdk` by `11-caspertdk-ssh.conf`. Login is key-only.
   `caspertdk` has sudo; `claude` has none. The image holds no private key, so commit signing uses a separate key generated on the VM (below).
-- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint, rootless podman and Playwright (library under `/usr`, browser is Fedora's `chromium`; launch with `executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `--no-sandbox`, no browser download needed). `/usr` is
+- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, hadolint, actionlint, rootless podman with podman-compose (the provider behind `podman compose`) and Playwright (library under `/usr`, browser is Fedora's `chromium`; launch with `executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `--no-sandbox`, no browser download needed). `/usr` is
   read-only, so `npm -g`, `pip --user` and `go install` use the home directory.
 - **Egress allowlist:** everything the `claude` user runs, rootless podman containers included, can only reach the hosts in
   `build_files/claude-vm/egress-allowlist.txt`; see [Egress gateway](#egress-gateway).
@@ -149,9 +149,11 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
   `allowedDomains` (the same list the [egress gateway](#egress-gateway) enforces, which blocks every other host).
   `~/.claude/.credentials.json` is hidden from them. Because commands are
   confined they run without a prompt (`autoAllowBashIfSandboxed`); set it to `false` to be asked every time.
-  - **`podman *` is excluded:** rootless podman cannot run inside the sandbox. Podman still asks for approval, but once
-    approved it and its containers are outside the sandbox. Their network is still confined by the
-    [egress gateway](#egress-gateway) below.
+  - **`podman *` and `podman-compose *` are excluded:** rootless podman cannot run inside the sandbox, and
+    `podman-compose` drives podman, so both run outside it. They are allowed by explicit `Bash(podman *)` and
+    `Bash(podman-compose *)` rules in `permissions.allow` (on top of the blanket `Bash` rule), so they never prompt, even if
+    the blanket rule is later narrowed. Outside the sandbox, podman and its containers keep only the network confinement of
+    the [egress gateway](#egress-gateway) below.
   - It is a guardrail, not a hard boundary: the sandbox proxy filters by hostname without inspecting TLS, broad hosts
     such as `github.com` can carry data out, and MCP servers and hooks are not covered.
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
@@ -278,7 +280,7 @@ CI builds it like the other images (`claude-vm` in the build matrix).
 | `sandbox.enabled` / `failIfUnavailable` | `true` | a missing sandbox stops the service instead of running unsandboxed |
 | `sandbox.allowUnsandboxedCommands` | `true` | the model may retry a command outside the sandbox (`dangerouslyDisableSandbox`); with `Bash` in `permissions.allow` this needs no approval |
 | `sandbox.autoAllowBashIfSandboxed` | `true` | Bash commands that run inside the sandbox are approved without a prompt |
-| `sandbox.excludedCommands` | `["podman *"]` | rootless podman cannot run inside the sandbox. Its API socket (`/run/user/1100/podman/podman.sock`, enabled for the user manager) is deliberately not exposed to the sandbox: through it a sandboxed command could start containers with host mounts and bypass the file rules and the approval prompt. Commands that need the socket run unsandboxed and need approval |
+| `sandbox.excludedCommands` | `["podman *", "podman-compose *"]` | rootless podman cannot run inside the sandbox, and `podman-compose` (also reached as `podman compose`) starts podman itself. Its API socket (`/run/user/1100/podman/podman.sock`, enabled for the user manager) is deliberately not exposed to the sandbox: through it a sandboxed command could start containers with host mounts and bypass the file rules and the approval prompt. Commands that need the socket run unsandboxed |
 | `sandbox.filesystem.allowWrite` | `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`, `~/go` | user-space installs and caches |
 | `permissions.deny` / `sandbox.filesystem.denyWrite` | shell rc files, `~/.ssh`, `~/.gitconfig`, `~/.config/{systemd,autostart,containers/systemd,git}` | persistence and code-execution paths: the file tools (Edit/Write) run outside the sandbox, and podman lingering would start user units at boot |
 | `sandbox.filesystem.denyRead` | `~/.claude/.credentials.json` | the login token is hidden from commands |

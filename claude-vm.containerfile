@@ -11,14 +11,15 @@ FROM base AS final
 ARG CLAUDE_CODE_VERSION=2.1.318 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG PLAYWRIGHT_VERSION=1.64.1 # renovate: datasource=npm depName=playwright
 
-# Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman, plus linters/formatters
+# Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman (+ podman-compose, the provider behind
+# `podman compose`), plus linters/formatters
 # (ShellCheck, shfmt, yamllint, jq/yq; hadolint and actionlint are installed below).
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
 # (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
 # egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
-        bash python3 python3-pip nodejs npm golang podman shadow-utils fuse-overlayfs \
+        bash python3 python3-pip nodejs npm golang podman podman-compose shadow-utils fuse-overlayfs \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium \

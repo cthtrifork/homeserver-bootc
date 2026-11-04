@@ -40,6 +40,9 @@ sudo -u claude -H bash -lc '
   go run . | grep -x "go ok"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
   podman run --rm mirror.gcr.io/library/hello-world
+  # `podman compose` needs a provider; podman-compose is the one the image ships
+  podman-compose --version
+  podman compose version
 '
 
 echo "--- playwright drives headless chromium ---"
