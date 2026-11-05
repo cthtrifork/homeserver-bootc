@@ -9,11 +9,11 @@ runs:
       run: |
         sudo podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         sudo podman rmi -i ${{ env.LOCAL_PR_IMAGE }}
-        sudo podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        sudo podman rmi -i ${ZOT_REGISTRY}/pr/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
         podman rmi -i ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
         podman rmi -i ${{ env.LOCAL_PR_IMAGE }}
-        podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        podman rmi -i ${ZOT_REGISTRY}/pr/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
         # Leftover working containers from failed or cancelled builds keep their layers alive
         buildah rm --all || true
