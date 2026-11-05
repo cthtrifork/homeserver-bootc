@@ -43,15 +43,15 @@ runs:
           $PODMAN pull -q ${{ env.IMAGE_FULL }}:latest
         fi
 
-        $PODMAN pull --tls-verify=false -q \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        $PODMAN pull -q \
+          ${ZOT_REGISTRY}/pr/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
         $PODMAN tag \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+          ${ZOT_REGISTRY}/pr/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
           ${{ env.LOCAL_PR_IMAGE }}
 
         $PODMAN tag \
-          localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
+          ${ZOT_REGISTRY}/pr/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
           ${{ env.IMAGE_FULL }}:${{ env.DOCKER_TAG }}
 
     - name: List images

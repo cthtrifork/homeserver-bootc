@@ -63,6 +63,8 @@ runs:
         echo "IMAGE_NAME=${IMAGE_NAME}" >> "$GITHUB_ENV"
         echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> "$GITHUB_ENV"
         echo "LOCAL_PR_IMAGE=localhost/${IMAGE_NAME}:${DOCKER_TAG}" >> "$GITHUB_ENV"
+        # In-cluster zot: PR images live under pr/ (expired by its retention policy) and ghcr.io is cached under ghcr-cache/
+        echo "ZOT_REGISTRY=zot.registry-system.svc.cluster.local:5000" >> "$GITHUB_ENV"
         echo "CONTAINERFILE=${CONTAINERFILE}" >> "$GITHUB_ENV"
 
 

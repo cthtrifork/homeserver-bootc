@@ -60,14 +60,13 @@ runs:
       if: ${{ runner.environment == 'self-hosted' && github.event_name == 'pull_request' }}
       shell: bash
       run: | #sh
-        DEST="localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
+        DEST="${ZOT_REGISTRY}/pr/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}"
           
         # Push OCI layout directly to GHCR
         sudo skopeo copy \
           --digestfile digest.txt \
           --authfile ${{ inputs.auth_file_path }} \
           --all \
-          --dest-tls-verify=false \
           "${SOURCE}" \
           "docker://${DEST}"
       env:
