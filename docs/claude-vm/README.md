@@ -23,7 +23,7 @@ flowchart LR
     GH["GitHub"]
 
     subgraph VM["Claude VM"]
-        SETUP["Manual setup:<br/>GitHub token + Claude login"]
+        SETUP["Manual setup:<br/>GitHub App + Claude login"]
         RC["claude remote-control<br/>(user: claude)"]
         SB["Sandboxed shell<br/>limited paths + domains"]
         POD["Rootless podman<br/>(approved commands)"]
