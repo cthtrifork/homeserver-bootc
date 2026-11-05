@@ -15,8 +15,15 @@ runs:
         podman rmi -i ${{ env.LOCAL_PR_IMAGE }}
         podman rmi -i localhost:5000/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
+        # Leftover working containers from failed or cancelled builds keep their layers alive
+        buildah rm --all || true
+        sudo buildah rm --all || true
+
         podman system prune -f
         sudo podman system prune -f
+
+        # The dnf cache lives on a persistent runner volume; drop what has not been used for 14 days
+        find /home/runner/.cache/dnf -type f -atime +14 -delete || true
         
         # remove all PR images
         #podman images --format '{{.Repository}}:{{.Tag}}' \
