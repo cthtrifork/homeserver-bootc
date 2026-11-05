@@ -22,26 +22,16 @@
   platformCommit: 'enabled',
   // Security advisories from OSV.dev as well as GitHub's own alerts (the App's Dependabot alerts permission).
   osvVulnerabilityAlerts: true,
-  timezone: 'Europe/Copenhagen',
-  schedule: [
-    'after 12am and before 7am every weekday',
-    'on sunday',
-  ],
-  automergeSchedule: ['at any time'],
+  // No Renovate `schedule` here: the cron in renovate.yaml is the only timing. A schedule makes Renovate
+  // skip branch creation and updates in every run outside its window, which looked like the workflow
+  // schedule being ignored (the cron fires every 2 hours, but only runs between 00:00 and 07:00 did anything).
+  // Every update type automerges once the checks pass; Renovate merges the PR itself.
+  automerge: true,
   vulnerabilityAlerts: {
     addLabels: [
       'vulnerability',
     ],
     additionalBranchPrefix: '',
-  },
-  major: {
-    automerge: false,
-  },
-  minor: {
-    automerge: false,
-  },
-  patch: {
-    automerge: true,
   },
   // Renovate merges the PR itself once the status checks pass, so no branch protection / GitHub auto-merge is required.
   automergeType: 'pr',
