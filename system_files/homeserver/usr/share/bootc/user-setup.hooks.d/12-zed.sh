@@ -19,3 +19,11 @@ fi
 if [ -f "$HOME/.local/zed.app/bin/zed" ]; then
     ln -sf "$HOME/.local/zed.app/bin/zed" "$HOME/.local/bin/zed"
 fi
+
+# Auto-install the Harper grammar checker extension (https://writewithharper.com/docs/integrations/zed).
+# Only seeds a fresh config so an existing Zed settings.json is never overwritten.
+zed_settings="$HOME/.config/zed/settings.json"
+if [ ! -e "$zed_settings" ]; then
+    mkdir -p "$(dirname "$zed_settings")"
+    printf '{\n  "auto_install_extensions": {\n    "harper": true\n  }\n}\n' >"$zed_settings"
+fi
