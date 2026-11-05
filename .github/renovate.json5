@@ -25,13 +25,21 @@
   // No Renovate `schedule` here: the cron in renovate.yaml is the only timing. A schedule makes Renovate
   // skip branch creation and updates in every run outside its window, which looked like the workflow
   // schedule being ignored (the cron fires every 2 hours, but only runs between 00:00 and 07:00 did anything).
-  // Every update type automerges once the checks pass; Renovate merges the PR itself.
-  automerge: true,
+  // Renovate itself is the exception: it automerges for every update type (last packageRule).
   vulnerabilityAlerts: {
     addLabels: [
       'vulnerability',
     ],
     additionalBranchPrefix: '',
+  },
+  major: {
+    automerge: false,
+  },
+  minor: {
+    automerge: false,
+  },
+  patch: {
+    automerge: true,
   },
   // Renovate merges the PR itself once the status checks pass, so no branch protection / GitHub auto-merge is required.
   automergeType: 'pr',
@@ -82,7 +90,14 @@
       "extractVersion": "^(?<version>v?\\d+\\.\\d+\\.\\d+)$",
       "versioning": "regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$",
       "recreateWhen": "always",
-    }
+    },
+    {
+      // Renovate itself (the pinned renovate version and the renovatebot/github-action) automerges for every
+      // update type, in its own PR. Last, so it wins over the groups and the manual-review rules above.
+      matchPackageNames: ['renovate', 'renovatebot/github-action'],
+      automerge: true,
+      groupName: null,
+    },
   ],
   customManagers: [
     {
