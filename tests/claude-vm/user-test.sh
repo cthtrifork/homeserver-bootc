@@ -21,12 +21,18 @@ if compgen -G "$HOME/.ssh/id_*" >/dev/null; then
     exit 1
 fi
 
-echo "--- seed helper refuses a private key ---"
-if printf -- '-----BEGIN OPENSSH PRIVATE KEY-----' | sudo claude-vm-seed-github-token >/dev/null 2>&1; then
-    echo "seed helper accepted a private key"
+echo "--- seed helper refuses a non-PEM key and writes nothing ---"
+if printf 'not a key' | sudo claude-vm-seed-github-app 1 2 >/dev/null 2>&1; then
+    echo "seed helper accepted a non-PEM key"
     exit 1
 fi
-sudo test ! -e /etc/claude-vm/github-token
+sudo test ! -e /etc/claude-vm/github-app/private-key.pem
+
+echo "--- claude cannot read the App private key ---"
+if cat /etc/claude-vm/github-app/private-key.pem >/dev/null 2>&1; then
+    echo "claude can read the App private key"
+    exit 1
+fi
 
 echo "--- claude user: python, go, npm, rootless podman ---"
 sudo -u claude -H bash -lc '

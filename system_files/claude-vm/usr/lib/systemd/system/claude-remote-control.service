@@ -1,12 +1,12 @@
 [Unit]
 Description=Claude Code Remote Control
 Documentation=https://code.claude.com/docs/en/remote-control
-After=network-online.target systemd-tmpfiles-setup.service user@1100.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
+After=network-online.target systemd-tmpfiles-setup.service user@1100.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service claude-vm-github-token.service
 # egress allowlist gateway: without it the agent user has no network anyway, so do not start
 Requires=claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
-Wants=network-online.target user@1100.service
-# Stays inert until both manual steps are done: token seeded + `claude` signed in/trusted.
-ConditionPathExists=/etc/claude-vm/github-token
+Wants=network-online.target user@1100.service claude-vm-github-token.service
+# Stays inert until both manual steps are done: GitHub App seeded + `claude` signed in/trusted.
+ConditionPathExists=/etc/claude-vm/github-app/private-key.pem
 ConditionPathExists=/var/home/claude/.claude/.credentials.json
 
 [Service]
@@ -20,8 +20,7 @@ Environment=DISABLE_AUTOUPDATER=1
 Environment=XDG_RUNTIME_DIR=/run/user/1100
 # /usr is read-only: global npm installs, pip --user and go install go to the home directory
 Environment=NPM_CONFIG_PREFIX=/var/home/claude/.npm-global
-Environment=PATH=/var/home/claude/.npm-global/bin:/var/home/claude/.local/bin:/var/home/claude/go/bin:/usr/local/bin:/usr/bin:/usr/sbin
-LoadCredential=github-token:/etc/claude-vm/github-token
+Environment=PATH=/usr/libexec/claude-vm/bin:/var/home/claude/.npm-global/bin:/var/home/claude/.local/bin:/var/home/claude/go/bin:/usr/local/bin:/usr/bin:/usr/sbin
 ExecStart=/usr/libexec/claude-vm/run-remote-control
 Restart=always
 RestartSec=15

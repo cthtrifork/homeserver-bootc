@@ -1,11 +1,6 @@
 #!/usr/bin/bash
-# Started by claude-remote-control.service. The GitHub token arrives as a systemd
-# credential (tmpfs, readable only by this service) and is exported to gh/git only.
+# Started by claude-remote-control.service. GitHub access comes from the `gh` wrapper next to this script, which
+# reads the App installation token that claude-vm-github-token.timer keeps fresh in /run/claude-vm/github-token.
 set -euo pipefail
-
-cred="${CREDENTIALS_DIRECTORY:?not started by systemd}/github-token"
-GH_TOKEN="$(<"$cred")"
-[[ -n "$GH_TOKEN" ]] || { echo "empty GitHub token" >&2; exit 1; }
-export GH_TOKEN
 
 exec claude remote-control --name "${CLAUDE_VM_NAME:-$(hostname -s)}" "$@"

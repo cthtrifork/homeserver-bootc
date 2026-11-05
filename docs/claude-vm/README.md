@@ -48,7 +48,7 @@ flowchart LR
 
 ## What is in it
 
-- **No secrets.** The build takes none: no registry, age or SSH keys. You seed a GitHub token by hand and sign in to
+- **No secrets.** The build takes none: no registry, age or SSH keys. You seed a GitHub App's credentials by hand and sign in to
   Claude interactively (first-boot steps below). SSH host keys are generated on the VM at first boot.
 - **SSH uses the same public keys as the home server.** `authorized_keys.pub` is copied from
   `system_files/homeserver/` at build time and installed for `caspertdk` by `11-caspertdk-ssh.conf`. Login is key-only.
@@ -70,8 +70,8 @@ flowchart LR
 ```sh
 ssh caspertdk@<vm>
 
-# 1. Seed the GitHub token (hidden prompt or stdin; never an argument). Private keys are refused.
-sudo claude-vm-seed-github-token
+# 1. Seed the GitHub App credentials (see "GitHub access" below). The key is read from a file or stdin, never an argument.
+sudo claude-vm-seed-github-app <app-id> <installation-id> ./app-private-key.pem
 
 # 1b. Create the commit-signing key and print its public key (see "Signed commits" below)
 sudo claude-vm-signing-key
@@ -87,8 +87,28 @@ sudo systemctl restart claude-remote-control
 journalctl -u claude-remote-control -f     # shows the session URL
 ```
 
-Rotate the token by re-running step 1. It lives only in `/etc/claude-vm/github-token` (root, 0600) and reaches the
-service as a systemd credential. The Claude login lives in `/var/home/claude/.claude/` and survives upgrades.
+Rotate the App's private key by re-running step 1. The Claude login lives in `/var/home/claude/.claude/` and survives upgrades.
+
+## GitHub access
+
+The VM acts as a GitHub App (a bot), not as a person with a personal token. The App's private key lives only in
+`/etc/claude-vm/github-app/` (root, 0600), which `claude` cannot read. `claude-vm-github-token.timer` runs
+`refresh-github-token` as root every 30 minutes (and at boot): it signs a JWT, trades it for a one-hour installation
+token and writes it to `/run/claude-vm/github-token` (0640 root:claude, tmpfs). Because the token expires, nothing holds
+it in an environment variable: the `gh` wrapper in `/usr/libexec/claude-vm/bin` (first on the service's `PATH`, and the
+git credential helper in `/etc/gitconfig`) reads the file on every call.
+
+Create the App once:
+
+1. GitHub > Settings > Developer settings > GitHub Apps > New. Repository permissions: **Contents** and **Pull requests**
+   read/write, **Metadata** read; add **Actions** read if Claude should read workflow runs. Leave the rest off (without
+   **Workflows** it cannot change `.github/workflows/`). Untick "Webhook active". Never make it a bypass actor in a ruleset.
+2. Generate a private key (`.pem`), install the App only on the repositories Claude should touch, and note the **App ID**
+   and the **installation ID** (the number at the end of `https://github.com/settings/installations/<id>`).
+3. On the VM: `sudo claude-vm-seed-github-app <app-id> <installation-id> ./app-private-key.pem`, then delete the `.pem`.
+
+The token carries the App's permissions on every repository it is installed on, so choose those in the App's settings.
+Check it with `journalctl -u claude-vm-github-token` and `sudo -u claude gh api /installation/repositories`.
 
 ## Signed commits
 
@@ -159,8 +179,8 @@ ssh -p 41234 caspertdk@abcde-1-2-3-4.a.free.pinggy.link
   - The service omits `ProtectKernelTunables`, because it stops bubblewrap mounting its own `/proc`.
 - **A Remote Control session is a shell as `claude`.** Whoever controls your claude.ai session controls the VM. Turn on
   **Require trusted devices** in your account settings (beta) ([docs](https://code.claude.com/docs/en/remote-control.md#trusted-devices)).
-- **GitHub token:** use a fine-grained token limited to the repositories Claude should touch, with only the
-  permissions it needs (typically Contents and Pull requests read/write) and a short expiry.
+- **GitHub App:** install it only on the repositories Claude should touch, with only the permissions it needs
+  ([GitHub access](#github-access)). `claude` holds a one-hour token, never the private key.
 - **Data and terms:** while connected, the session transcript is stored on Anthropic's servers
   ([connection and security](https://code.claude.com/docs/en/remote-control.md#connection-and-security)). Use your own
   login and do not share it ([legal](https://code.claude.com/docs/en/legal-and-compliance.md)). Do not set
