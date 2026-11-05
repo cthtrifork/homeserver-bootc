@@ -1,10 +1,10 @@
-# HTTPS-only auth through gh, which reads GH_TOKEN. No SSH keys on this VM.
+# HTTPS-only auth through the gh wrapper, which supplies the current GitHub App token as GH_TOKEN. No SSH keys on this VM.
 [credential "https://github.com"]
 	helper =
-	helper = !/usr/bin/gh auth git-credential
+	helper = !/usr/libexec/claude-vm/bin/gh auth git-credential
 [credential "https://gist.github.com"]
 	helper =
-	helper = !/usr/bin/gh auth git-credential
+	helper = !/usr/libexec/claude-vm/bin/gh auth git-credential
 [url "https://github.com/"]
 	insteadOf = git@github.com:
 	insteadOf = ssh://git@github.com/

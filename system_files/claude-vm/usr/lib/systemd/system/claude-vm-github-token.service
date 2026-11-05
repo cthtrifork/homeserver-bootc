@@ -1,0 +1,15 @@
+[Unit]
+Description=Refresh the GitHub App installation token for the Claude VM
+Documentation=https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/claude-vm/github-app/private-key.pem
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/claude-vm/refresh-github-token
+TimeoutStartSec=60
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run/claude-vm

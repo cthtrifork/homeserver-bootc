@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+# Store the credentials of the GitHub App the Claude VM acts as, then mint the first token.
+#   sudo claude-vm-seed-github-app <app-id> <installation-id> <private-key.pem>
+#   sudo claude-vm-seed-github-app <app-id> <installation-id> < private-key.pem
+# The key is read from a file or stdin, never from an argument, so it stays out of shell history and `ps`.
+set -euo pipefail
+
+dir=/etc/claude-vm/github-app
+
+[[ $EUID -eq 0 ]] || { echo "Run as root: sudo $0 ..." >&2; exit 1; }
+[[ $# -ge 2 && $# -le 3 ]] || { echo "Usage: $0 <app-id> <installation-id> [private-key.pem]" >&2; exit 1; }
+
+app_id="$1"
+installation_id="$2"
+[[ "$app_id" =~ ^[0-9]+$ ]] || { echo "App ID must be a number." >&2; exit 1; }
+[[ "$installation_id" =~ ^[0-9]+$ ]] || { echo "Installation ID must be a number." >&2; exit 1; }
+
+key="$(cat "${3:-/dev/stdin}")"
+openssl pkey -noout <<<"$key" 2>/dev/null || { echo "That is not a valid PEM private key." >&2; exit 1; }
+
+install -d -m 0700 -o root -g root /etc/claude-vm "$dir"
+for f in app-id installation-id private-key.pem; do
+    tmp="$(mktemp "$dir/.$f.XXXXXX")"
+    chmod 0600 "$tmp"
+    case "$f" in
+    app-id) printf '%s\n' "$app_id" >"$tmp" ;;
+    installation-id) printf '%s\n' "$installation_id" >"$tmp" ;;
+    *) printf '%s\n' "$key" >"$tmp" ;;
+    esac
+    mv -f "$tmp" "$dir/$f"
+done
+echo "App credentials stored in $dir (root-only, 0600)."
+
+systemctl start claude-vm-github-token.service
+echo "Token minted. It is refreshed every 30 minutes by claude-vm-github-token.timer."
+systemctl restart --no-block claude-remote-control.service || true

@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh the GitHub App installation token every 30 minutes
+
+[Timer]
+OnBootSec=0
+OnUnitActiveSec=30min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
