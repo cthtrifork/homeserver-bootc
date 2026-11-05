@@ -99,13 +99,13 @@ runs:
         # persistent runner volume. Drop tags not pushed for 3 days, then collect the unreferenced blobs. Runs
         # before the registry starts so nothing writes during the collection. Best effort: never fail the build.
         repos=/var/lib/registry/local/docker/registry/v2/repositories
-        if [[ -d "${repos}" ]]; then
-          while IFS= read -r tag; do
-            if [[ -z "$(find "${tag}" -type f -mtime -3 -print -quit)" ]]; then
-              echo "Removing stale local registry tag ${tag#"${repos}"/}"
-              rm -rf "${tag}"
-            fi
-          done < <(find "${repos}" -mindepth 3 -type d -regex '.*/_manifests/tags/[^/]+$')
+        stale=$(find "${repos}" -path '*/_manifests/tags/*/current/link' -mtime +3 2>/dev/null || true)
+        if [[ -n "${stale}" ]]; then
+          while IFS= read -r link; do
+            tag="${link%/current/link}"
+            echo "Removing stale local registry tag ${tag#"${repos}"/}"
+            rm -rf "${tag}"
+          done <<< "${stale}"
           podman run --rm \
             -v /var/lib/registry/local/:/var/lib/registry \
             docker.io/library/registry:3 \
