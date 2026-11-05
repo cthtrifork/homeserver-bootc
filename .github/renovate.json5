@@ -22,6 +22,11 @@
   platformCommit: 'enabled',
   // Security advisories from OSV.dev as well as GitHub's own alerts (the App's Dependabot alerts permission).
   osvVulnerabilityAlerts: true,
+
+  // Rate limits, explicit instead of Renovate's defaults (2 PRs an hour, 10 open): a burst of releases opens
+  // a handful of PRs per run without flooding CI, and the open-PR cap stops a stale backlog from growing.
+  prHourlyLimit: 5,
+  prConcurrentLimit: 10,
   // No Renovate `schedule` here: the cron in renovate.yaml is the only timing. A schedule makes Renovate
   // skip branch creation and updates in every run outside its window, which looked like the workflow
   // schedule being ignored (the cron fires every 2 hours, but only runs between 00:00 and 07:00 did anything).
