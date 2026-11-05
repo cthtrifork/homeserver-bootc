@@ -2,8 +2,11 @@
 Description=Refresh the GitHub App installation token every 30 minutes
 
 [Timer]
+# Wall-clock schedule, not OnUnitActiveSec: monotonic time stops while the VM is suspended or paused, which would
+# leave an expired token for up to 30 minutes after a resume.
 OnBootSec=0
-OnUnitActiveSec=30min
+OnCalendar=*:0/30
+Persistent=true
 AccuracySec=1min
 
 [Install]
