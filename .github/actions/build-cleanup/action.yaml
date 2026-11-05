@@ -23,7 +23,7 @@ runs:
         sudo podman system prune -f
 
         # The dnf cache lives on a persistent runner volume; drop what has not been used for 14 days
-        find /home/runner/.cache/dnf -type f -atime +14 -delete || true
+        find /home/runner/.cache/dnf -type f -mtime +14 -delete || true
         
         # remove all PR images
         #podman images --format '{{.Repository}}:{{.Tag}}' \
