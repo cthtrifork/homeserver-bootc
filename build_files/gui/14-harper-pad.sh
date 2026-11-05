@@ -5,7 +5,7 @@ echo "::group:: ===$(basename "$0")==="
 set -ouex pipefail
 
 # Harper Pad desktop app, installed from the PGP-signed RPM of a GitHub release.
-HARPER_PAD_VERSION="v2.2.0" # renovate: datasource=github-releases depName=cthtrifork/harper-pad
+HARPER_PAD_VERSION="v2.6.0" # renovate: datasource=github-releases depName=cthtrifork/harper-pad
 
 base="https://github.com/cthtrifork/harper-pad/releases/download/${HARPER_PAD_VERSION}"
 tmp="$(mktemp -d)"
