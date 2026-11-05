@@ -87,44 +87,111 @@ runs:
     - name: Start a local registry with proxy to ghcr.io
       shell: bash
       if: ${{ runner.environment == 'self-hosted' }}
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: | #sh
-        # Start a local registry
-        podman pull -q docker.io/library/registry:3
-        sudo mkdir -p /var/lib/registry/local /var/lib/registry/cache
+        # zot serves both registries on the persistent runner volume. Its garbage collection and retention
+        # expire old content (they run when zot starts and then every gcInterval), so it cannot grow without bound.
+        zot=ghcr.io/project-zot/zot:v2.1.23@sha256:9d3de83ac2099e6f4843045b4c9b65b7e8baf40f92d28f54906dee9d4d390fd7
+        podman pull -q "${zot}"
+
+        # Data left by the previous registry:3 containers is in another layout and is not reused
+        sudo rm -rf /var/lib/registry/local /var/lib/registry/cache
+        sudo mkdir -p /var/lib/registry/zot-local /var/lib/registry/zot-cache
         sudo chown -R $(whoami):$(whoami) /var/lib/registry/
+
+        conf="${RUNNER_TEMP}/zot"
+        mkdir -p "${conf}"
+
+        # PR images pushed by push-image: drop tags not pushed for 3 days
+        cat > "${conf}/local.json" <<'EOF'
+        {
+          "distSpecVersion": "1.1.1",
+          "http": { "address": "0.0.0.0", "port": "5000" },
+          "log": { "level": "info" },
+          "storage": {
+            "rootDirectory": "/var/lib/registry",
+            "gc": true,
+            "retention": {
+              "policies": [
+                {
+                  "repositories": ["**"],
+                  "deleteReferrers": true,
+                  "deleteUntagged": true,
+                  "keepTags": [{ "pushedWithin": "72h" }]
+                }
+              ]
+            }
+          }
+        }
+        EOF
+
+        # Pull-through cache of ghcr.io: drop tags neither pulled nor pushed for 7 days
+        cat > "${conf}/cache.json" <<'EOF'
+        {
+          "distSpecVersion": "1.1.1",
+          "http": { "address": "0.0.0.0", "port": "5000" },
+          "log": { "level": "info" },
+          "storage": {
+            "rootDirectory": "/var/lib/registry",
+            "gc": true,
+            "retention": {
+              "policies": [
+                {
+                  "repositories": ["**"],
+                  "deleteReferrers": true,
+                  "deleteUntagged": true,
+                  "keepTags": [{ "pulledWithin": "168h" }]
+                }
+              ]
+            }
+          },
+          "extensions": {
+            "sync": {
+              "enable": true,
+              "credentialsFile": "/etc/zot/creds.json",
+              "registries": [
+                {
+                  "urls": ["https://ghcr.io"],
+                  "onDemand": true,
+                  "tlsVerify": true,
+                  "maxRetries": 3,
+                  "retryDelay": "5m",
+                  "content": [{ "prefix": "**" }]
+                }
+              ]
+            }
+          }
+        }
+        EOF
+
+        (umask 077 && cat > "${conf}/creds.json" <<EOF
+        { "ghcr.io": { "username": "${GITHUB_ACTOR}", "password": "${GH_TOKEN}" } }
+        EOF
+        )
 
         podman rm -f cache-registry local-registry || true
 
-        # The local registry holds PR images and is never garbage collected, so it grows without bound on the
-        # persistent runner volume. Drop tags not pushed for 3 days, then collect the unreferenced blobs. Runs
-        # before the registry starts so nothing writes during the collection. Best effort: never fail the build.
-        repos=/var/lib/registry/local/docker/registry/v2/repositories
-        stale=$(find "${repos}" -path '*/_manifests/tags/*/current/link' -mtime +3 2>/dev/null || true)
-        if [[ -n "${stale}" ]]; then
-          while IFS= read -r link; do
-            tag="${link%/current/link}"
-            echo "Removing stale local registry tag ${tag#"${repos}"/}"
-            rm -rf "${tag}"
-          done <<< "${stale}"
-          podman run --rm \
-            -v /var/lib/registry/local/:/var/lib/registry \
-            docker.io/library/registry:3 \
-            garbage-collect --delete-untagged /etc/distribution/config.yml || true
-        fi
-
         podman run -d --name cache-registry \
           -p 5005:5000 \
-          -v /var/lib/registry/cache/:/var/lib/registry \
-          -e REGISTRY_PROXY_REMOTEURL=https://ghcr.io \
-          -e REGISTRY_PROXY_USERNAME="${GITHUB_ACTOR}" \
-          -e REGISTRY_PROXY_PASSWORD="${{ inputs.github_token }}" \
-          -e REGISTRY_PROXY_TTL=168h \
-          docker.io/library/registry:3
+          -v /var/lib/registry/zot-cache/:/var/lib/registry \
+          -v "${conf}/cache.json:/etc/zot/config.json:ro" \
+          -v "${conf}/creds.json:/etc/zot/creds.json:ro" \
+          "${zot}"
 
         podman run -d --name local-registry \
           -p 5000:5000 \
-          -v /var/lib/registry/local/:/var/lib/registry \
-          docker.io/library/registry:3
+          -v /var/lib/registry/zot-local/:/var/lib/registry \
+          -v "${conf}/local.json:/etc/zot/config.json:ro" \
+          "${zot}"
+
+        # zot takes a moment longer to start than registry:3 did
+        for port in 5000 5005; do
+          for _ in $(seq 30); do
+            curl -fsS -o /dev/null "http://localhost:${port}/v2/" && break
+            sleep 1
+          done
+        done
 
     - name: Configure rootless Podman mirror for GHCR
       shell: bash
