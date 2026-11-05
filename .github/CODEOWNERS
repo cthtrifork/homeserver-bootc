@@ -1,0 +1,3 @@
+# Every change needs review from the owner. The require-pr-main ruleset sets "Require review from Code Owners", so a PR
+# cannot merge without an approval from this account, and the GitHub App the claude-vm acts as cannot give one.
+* @cthtrifork
