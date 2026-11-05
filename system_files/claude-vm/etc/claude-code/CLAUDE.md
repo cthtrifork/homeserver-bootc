@@ -33,4 +33,7 @@ is random and changes whenever the tunnel restarts (about hourly), so never rely
 
 ## Agent guidelines
 
+- Commit messages and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): summary`
+  (`feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`). The `pr-title` workflow rejects other PR titles.
+
 @AGENTS.md
