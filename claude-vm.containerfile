@@ -17,9 +17,12 @@ ARG PLAYWRIGHT_VERSION=1.64.1 # renovate: datasource=npm depName=playwright
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
 # (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
 # egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
+# nodejs-full-i18n (an alias of nodejs22-full-i18n, pinned to the same nodejs22 build): Fedora builds Node with small ICU, which has no
+# break-iterator data, so without this package any `new Intl.Segmenter()` segfaults (Lighthouse's "Minify CSS" audit hit it); it puts
+# icudt78l.dat in /usr/share/node-22/icudata, where Node looks. tests/claude-vm/system-test.sh checks it.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
-        bash python3 python3-pip nodejs npm golang podman podman-compose shadow-utils fuse-overlayfs \
+        bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-compose shadow-utils fuse-overlayfs \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium \

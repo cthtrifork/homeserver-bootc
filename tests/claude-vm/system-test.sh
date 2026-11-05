@@ -14,6 +14,10 @@ done
 
 test -d /usr/lib/node_modules/playwright
 
+# Node needs the full ICU data (nodejs-full-i18n): without it Intl.Segmenter segfaults instead of throwing.
+graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "grapheme" }).segment("héllo 👍🏽")].length)' || true)"
+[ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs-full-i18n installed?"; exit 1; }
+
 echo "--- services ---"
 # enabled, but idle until the GitHub token is seeded and claude is signed in
 systemctl is-enabled --quiet claude-remote-control.service
