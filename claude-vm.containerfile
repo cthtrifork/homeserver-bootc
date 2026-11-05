@@ -20,7 +20,7 @@ ARG PLAYWRIGHT_VERSION=1.64.1 # renovate: datasource=npm depName=playwright
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs npm golang podman podman-compose shadow-utils fuse-overlayfs \
-        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium \
     && dnf clean all

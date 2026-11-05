@@ -119,6 +119,21 @@ directory is missing, the user named this repo explicitly, so re-clone it with
 `git clone --depth 1 https://github.com/oneuptime/blog /var/home/claude/workspace/oneuptime-blog` in the background
 (it is slow).
 
+## Installed software
+
+The image ships these, so use them instead of installing or reimplementing them (`/usr` is read-only; anything else goes
+in your home directory, see below):
+
+- **Languages:** `python3` with `pip`, `node` with `npm`, `go`. `pip --user`, `npm -g` and `go install` write to the home
+  directory and are already on `PATH`.
+- **Git and GitHub:** `git`, `gh` (wrapped to use the GitHub App token, see `CLAUDE.md`).
+- **Search and counting:** `rg` (ripgrep), `cloc` (lines of code per language), `tree`, `jq`, `yq`.
+- **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
+- **Containers:** rootless `podman` and `podman compose`, `skopeo`, `crane`. There is no Docker.
+- **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).
+- **Other:** `make`, `tmux`, `socat`, `bubblewrap` (the Bash sandbox), `ssh` client (no keys on this VM).
+- Not installed: `sudo`, `dnf`, Docker. Check with `command -v <tool>` before assuming something else is there.
+
 ## Network and filesystem reminders
 
 - Writes are limited to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
