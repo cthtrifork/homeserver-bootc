@@ -10,7 +10,6 @@
 plasma-desktop
 # session startup
 plasma-workspace
-plasma-workspace-wallpapers
 # Display/login manager
 sddm-wayland-plasma
 sddm
