@@ -114,7 +114,7 @@ path in your reply into a link that opens the file from the VM in a preview (con
   with the `executablePath`/`--no-sandbox` launch above). It writes VP8 `.webm` through Playwright's own ffmpeg, which the image
   bakes in under `PLAYWRIGHT_BROWSERS_PATH`. Do not run `playwright install` (the CDN is blocked here).
 - The `.webm` is only complete after `await context.close()`; the file name is random, so read it from `page.video().path()`.
-- The user's client previews a `.webm` path like a PNG. Don't re-encode to MP4/H.264 unless asked.
+- Give the `.webm` path in your reply like a screenshot path (untested whether the client previews video). Don't re-encode to MP4/H.264 unless asked.
 
 ## Reference material for CI and Kubernetes
 
