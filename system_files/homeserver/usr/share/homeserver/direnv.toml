@@ -1,0 +1,7 @@
+# Seeded into ~/.config/direnv/direnv.toml by tmpfiles (never overwritten once present).
+# https://direnv.net/man/direnv.toml.1.html#whitelist
+[global]
+load_dotenv = true
+
+[whitelist]
+prefix = ["~/projects"]
