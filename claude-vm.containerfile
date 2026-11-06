@@ -54,6 +54,9 @@ RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_config_cache=/tmp/npm-cache npm_confi
         npm install --global --prefix /usr "playwright@${PLAYWRIGHT_VERSION}" \
     && rm -rf /tmp/npm-cache
 
+# Ensure ffmpeg is available
+RUN playwright install ffmpeg
+
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
 # key-only SSH admin user (caspertdk, see sysusers.d) gets sudo, like the homeserver image
