@@ -57,15 +57,31 @@ pw_script="$(mktemp --suffix=.js)"
 chmod 0644 "$pw_script"
 cat >"$pw_script" <<'JS'
 const { chromium } = require('playwright');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.goto('data:text/html,<h1 id=x>playwright ok</h1>');
   console.log(await page.textContent('#x'));
   await browser.close();
+  // recordVideo needs Playwright's bundled ffmpeg (installed at build time); the context must close to flush the .webm
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-video-'));
+  const rec = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
+  const ctx = await rec.newContext({ recordVideo: { dir, size: { width: 320, height: 200 } } });
+  const vpage = await ctx.newPage();
+  await vpage.goto('data:text/html,<h1>video</h1>');
+  await vpage.waitForTimeout(500);
+  await ctx.close();
+  await rec.close();
+  const webm = fs.readdirSync(dir).filter((f) => f.endsWith('.webm'));
+  if (webm.length !== 1 || fs.statSync(path.join(dir, webm[0])).size === 0) throw new Error('no .webm recorded in ' + dir);
+  fs.rmSync(dir, { recursive: true });
+  console.log('video ok');
 })().catch((e) => { console.error(e); process.exit(1); });
 JS
-sudo -u claude -H bash -lc "cd / && node $pw_script" | grep -x "playwright ok"
+sudo -u claude -H bash -lc "cd / && node $pw_script" | grep -c -x -e "playwright ok" -e "video ok" | grep -x 2
 rm -f "$pw_script"
 
 echo "--- podman API socket answers (outside the sandbox) ---"

@@ -56,6 +56,12 @@ RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_config_cache=/tmp/npm-cache npm_confi
         npm install --global --prefix /usr "playwright@${PLAYWRIGHT_VERSION}" \
     && rm -rf /tmp/npm-cache
 
+# Playwright's own ffmpeg (a small VP8-only build, not a browser): `recordVideo` writes .webm through it and fails without it
+# ("Video rendering requires ffmpeg binary"). Downloaded at build time only (the VM's egress gateway blocks Playwright's CDN) into
+# a path under /usr that /etc/profile.d/81-claude-playwright.sh exports as PLAYWRIGHT_BROWSERS_PATH.
+RUN PLAYWRIGHT_BROWSERS_PATH=/usr/share/claude-vm/ms-playwright playwright install ffmpeg \
+    && chmod -R a+rX /usr/share/claude-vm/ms-playwright
+
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
 # key-only SSH admin user (caspertdk, see sysusers.d) gets sudo, like the homeserver image
