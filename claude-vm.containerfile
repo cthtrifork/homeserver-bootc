@@ -20,12 +20,14 @@ ARG PLAYWRIGHT_VERSION=1.64.1 # renovate: datasource=npm depName=playwright
 # nodejs-full-i18n (an alias of nodejs22-full-i18n, pinned to the same nodejs22 build): Fedora builds Node with small ICU, which has no
 # break-iterator data, so without this package any `new Intl.Segmenter()` segfaults (Lighthouse's "Minify CSS" audit hit it); it puts
 # icudt78l.dat in /usr/share/node-22/icudata, where Node looks. tests/claude-vm/system-test.sh checks it.
+# ffmpeg-free: Fedora's ffmpeg (VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265 encoders). The full RPM Fusion ffmpeg of the GUI
+# image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-compose shadow-utils fuse-overlayfs \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
-        chromium \
+        chromium ffmpeg-free \
     && dnf clean all
 
 # Rootless podman for the service user (claude, UID 1100; see sysusers.d)
