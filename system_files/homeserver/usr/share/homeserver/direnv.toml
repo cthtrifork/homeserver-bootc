@@ -8,4 +8,6 @@ hide_env_diff = true
 
 # https://direnv.net/man/direnv.toml.1.html#whitelist
 [whitelist]
-prefix = ["~/projects"]
+# Absolute paths: direnv sees the resolved /var/home/... path (/home is a symlink on
+# bootc), so "~" (which expands to /home/...) would never match.
+prefix = ["/var/home/caspertdk/projects", "/home/caspertdk/projects"]
