@@ -139,7 +139,7 @@ in your home directory, see below):
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
 - **Containers:** rootless `podman` and `podman compose`, `skopeo`, `crane`. There is no Docker.
 - **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).
-- **Video:** Playwright's bundled ffmpeg for `recordVideo` (`.webm`, see above). The system `ffmpeg` is not part of this image.
+- **Video:** `ffmpeg`/`ffprobe` (Fedora's `ffmpeg-free`: VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265) for converting or trimming; Playwright's own bundled ffmpeg does `recordVideo` (`.webm`, see above).
 - **Other:** `make`, `tmux`, `socat`, `bubblewrap` (the Bash sandbox), `ssh` client (no keys on this VM).
 - Not installed: `sudo`, `dnf`, Docker. Check with `command -v <tool>` before assuming something else is there.
 
