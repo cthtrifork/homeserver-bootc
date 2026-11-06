@@ -285,7 +285,7 @@ download_if_missing_cmd "$CRANE_TGZ" /ctx/build_files/github-release-url.sh goog
 extract "$CRANE_TGZ"
 
 log "Installing nektos act"
-ACT_VERSION="v0.2.96" # renovate: datasource=github-releases depName=nektos/act
+ACT_VERSION="v0.2.97" # renovate: datasource=github-releases depName=nektos/act
 ACT_TGZ="$(tmp_name act "$ACT_VERSION" tar.gz)"
 download_if_missing_cmd "$ACT_TGZ" /ctx/build_files/github-release-url.sh nektos/act "act_${MACHINE}_${HOST_ARCH}.tar.gz" "$ACT_VERSION"
 # The release tarball is flat (LICENSE, README.md, act): stripping a component would drop the binary
