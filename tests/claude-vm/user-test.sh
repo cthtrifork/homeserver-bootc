@@ -77,14 +77,16 @@ const path = require('path');
   await rec.close();
   const webm = fs.readdirSync(dir).filter((f) => f.endsWith('.webm'));
   if (webm.length !== 1 || fs.statSync(path.join(dir, webm[0])).size === 0) throw new Error('no .webm recorded in ' + dir);
+  const codec = require('child_process').execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', path.join(dir, webm[0])]).toString().trim();
   fs.rmSync(dir, { recursive: true });
-  console.log('video ok');
+  if (codec !== 'vp8') throw new Error('expected a vp8 .webm, got ' + codec);
+  console.log('video ok (' + codec + ')');
 })().catch((e) => { console.error(e); process.exit(1); });
 JS
 pw_out="$(sudo -u claude -H bash -lc "cd / && node $pw_script")"
 echo "$pw_out"
 grep -x "playwright ok" <<<"$pw_out"
-grep -x "video ok" <<<"$pw_out"
+grep -x "video ok (vp8)" <<<"$pw_out"
 rm -f "$pw_script"
 
 echo "--- podman API socket answers (outside the sandbox) ---"
