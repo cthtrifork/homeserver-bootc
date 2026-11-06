@@ -23,9 +23,17 @@ runs:
         sudo podman system prune -f
 
         # The container storage lives on persistent runner volumes and only grew (the rootless one held ~180 GiB).
-        # Drop unused images, not just dangling ones, that have not been created for 7 days
-        podman image prune -a -f --filter "until=168h" || true
-        sudo podman image prune -a -f --filter "until=168h" || true
+        # Deleting layers is slow (101s + 40s on the first run), so only prune when the node volume is getting full,
+        # and run the rootless and rootful prunes in parallel. They drop unused images, not just dangling ones,
+        # that were created more than 7 days ago.
+        avail_gb=$(df --output=avail -BG /var/lib/containers/storage | tail -1 | tr -dc '0-9')
+        if (( avail_gb < 150 )); then
+          podman image prune -a -f --filter "until=168h" &
+          sudo podman image prune -a -f --filter "until=168h" &
+          wait || true
+        else
+          echo "${avail_gb}G free on the container storage, skipping the image prune"
+        fi
 
         # The dnf cache lives on a persistent runner volume; drop what has not been used for 14 days
         find /home/runner/.cache/dnf -type f -mtime +14 -delete || true
