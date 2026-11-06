@@ -252,6 +252,7 @@ jobs:
           # would overwrite that file with an unauthenticated (failing) skopeo inspect of the private image.
           prev-ref: ""
           max-layers: ${{ inputs.image == 'homeserver-gui' && '36' || '32' }}
+          # Saves 3-5 min of rechunk time; skopeo compresses the layers while pushing instead.
           skip_compression: true
           #clear-plan: true
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
