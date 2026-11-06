@@ -81,7 +81,10 @@ const path = require('path');
   console.log('video ok');
 })().catch((e) => { console.error(e); process.exit(1); });
 JS
-sudo -u claude -H bash -lc "cd / && node $pw_script" | grep -c -x -e "playwright ok" -e "video ok" | grep -x 2
+pw_out="$(sudo -u claude -H bash -lc "cd / && node $pw_script")"
+echo "$pw_out"
+grep -x "playwright ok" <<<"$pw_out"
+grep -x "video ok" <<<"$pw_out"
 rm -f "$pw_script"
 
 echo "--- podman API socket answers (outside the sandbox) ---"
