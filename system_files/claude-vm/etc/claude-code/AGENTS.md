@@ -57,6 +57,10 @@ Prefer the Read/Grep/Glob tools over Bash for reading and searching files when t
   work, or when the user says not to. Use `gh` for GitHub.
 - Never push to `main` directly, and `--force`/`--force-with-lease` still need explicit approval (see Safety rules).
 - Mirror the repo's PR template if it has one, and report the PR URL when done.
+- To watch a PR (`subscribe_pr_activity`) the repo must be attached to the session. If it fails with "repository ... is not
+  configured for this session", call `add_repo` with the owner and repo, then subscribe again. You can skip the clone it
+  asks for when a local checkout or worktree already exists. If `add_repo` is refused, tell the user; an org owner has to
+  allow the repo (claude.ai Settings, Connectors). Without a subscription, poll with `gh pr checks <n>`.
 - Use `git -C <dir>` and absolute paths rather than `cd`.
 
 ### Worktrees

@@ -53,8 +53,9 @@ flowchart LR
 - **SSH uses the same public keys as the home server.** `authorized_keys.pub` is copied from
   `system_files/homeserver/` at build time and installed for `caspertdk` by `11-caspertdk-ssh.conf`. Login is key-only.
   `caspertdk` has sudo; `claude` has none. The image holds no private key, so commit signing uses a separate key generated on the VM (below).
-- **Tools for Claude:** bash, python3/pip, node/npm, go, skopeo, crane, git/gh, make, jq, yq, shellcheck, shfmt, yamllint, cloc, ffmpeg (Fedora's `ffmpeg-free`: no x264/x265), hadolint, actionlint, rootless podman with podman-compose (the provider behind `podman compose`) and Playwright (library under `/usr`, browser is Fedora's `chromium`; launch with `executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` and `--no-sandbox`, no browser download needed; `recordVideo` writes VP8 `.webm` through Playwright's own ffmpeg, baked in at build time under `PLAYWRIGHT_BROWSERS_PATH=/usr/share/claude-vm/ms-playwright`). `/usr` is
-  read-only, so `npm -g`, `pip --user` and `go install` use the home directory.
+- **Tools for Claude:** the list of installed tools and how to use them (Playwright, screenshots and videos, ffmpeg, podman, linters) lives in
+  [AGENTS.md](../../system_files/claude-vm/etc/claude-code/AGENTS.md#installed-software), which every session loads. Build side: Playwright's own
+  ffmpeg (for `recordVideo`) is downloaded by `playwright install ffmpeg` in the containerfile into `/usr/share/claude-vm/ms-playwright`, because the VM's egress gateway blocks Playwright's CDN.
 - **Egress allowlist:** everything the `claude` user runs, rootless podman containers included, can only reach the hosts in
   `build_files/claude-vm/egress-allowlist.txt`; see [Egress gateway](#egress-gateway).
 - **Versions:** Claude Code is pinned by an `ARG ... # renovate:` line in the containerfile; Playwright by an `ARG ... # renovate:` line too; crane, hadolint and actionlint by
