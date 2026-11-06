@@ -16,6 +16,12 @@ dnf -y remove \
     dracut-config-rescue \
     at
 
+# Nothing requires these on the installed image (rpm -q --whatrequires), but they are pulled in as weak
+# dependencies, and the removal in packages-removed runs before later installs bring them back: a compiler
+# toolchain for kernel-devel (gcc and cpp go with it) and clang, plus nvidia firmware (~0.8 GB installed with gcc, cpp and llvm21-libs).
+# Matched by name so a missing package does not fail the build and a clang/llvm major bump still matches.
+{ rpm -qa --qf '%{NAME}\n' | grep -E '^(kernel-devel|clang[0-9]*-libs|compiler-rt[0-9]*|nvidia-gpu-firmware)$' || true; } | xargs -r dnf -y remove
+
 # Clean package manager cache
 dnf -y autoremove
 #dnf -y clean all
