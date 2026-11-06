@@ -248,9 +248,11 @@ jobs:
         with:
           rechunk: ghcr.io/hhd-dev/rechunk:v1.2.4
           ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          # Keep empty: rechunk reads ./previous.manifest.json from the step above, but with prev-ref set it
+          # would overwrite that file with an unauthenticated (failing) skopeo inspect of the private image.
           prev-ref: ""
           max-layers: ${{ inputs.image == 'homeserver-gui' && '36' || '32' }}
-          #prev-ref: ${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}
+          # Saves 3-5 min of rechunk time; skopeo compresses the layers while pushing instead.
           skip_compression: true
           #clear-plan: true
           labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
