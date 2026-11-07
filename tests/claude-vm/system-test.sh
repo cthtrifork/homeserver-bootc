@@ -32,6 +32,12 @@ if systemctl is-enabled --quiet claude-remote-control@work.service || systemctl 
     exit 1
 fi
 test -d /var/home/claude/.claude-work
+# isolated second account (own Unix user): opt-in as well
+systemctl cat claude-remote-control-isolated.service >/dev/null
+if systemctl is-enabled --quiet claude-remote-control-isolated.service || systemctl is-active --quiet claude-remote-control-isolated.service; then
+    echo "claude-remote-control-isolated must be opt-in"
+    exit 1
+fi
 # free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
 systemctl cat claude-pinggy.service >/dev/null
 if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --quiet claude-pinggy.service; then
@@ -71,6 +77,7 @@ grep -qF '127.0.0.55:53' <<<"$udp"
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
 rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
+grep -qF '1100-1101' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
@@ -96,6 +103,18 @@ echo "--- users, ssh, home directories ---"
 [ "$(id -u claude)" = "1100" ]
 if id -nG claude | grep -qw wheel; then
     echo "claude must not be in wheel"
+    exit 1
+fi
+[ "$(id -u claude-work-isolated)" = "1101" ]
+if id -nG claude-work-isolated | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
+    echo "claude-work-isolated must not be in wheel or share claude's group"
+    exit 1
+fi
+[ "$(stat -c %U:%a /var/home/claude-work-isolated)" = "claude-work-isolated:700" ]
+test -e /var/lib/systemd/linger/claude-work-isolated
+# no access to claude's token or home
+if sudo -u claude-work-isolated test -r /run/claude-vm/github-token || sudo -u claude-work-isolated test -r /var/home/claude/.claude.json; then
+    echo "claude-work-isolated can read claude's files"
     exit 1
 fi
 id -nG caspertdk | grep -qw wheel

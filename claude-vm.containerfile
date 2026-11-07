@@ -30,8 +30,9 @@ RUN dnf -y install --setopt=install_weak_deps=False \
         chromium ffmpeg-free \
     && dnf clean all
 
-# Rootless podman for the service user (claude, UID 1100; see sysusers.d)
+# Rootless podman for the service users (claude, UID 1100; claude-work-isolated, UID 1101; see sysusers.d)
 RUN echo "claude:100000:65536" >> /etc/subuid && echo "claude:100000:65536" >> /etc/subgid
+RUN echo "claude-work-isolated:165536:65536" >> /etc/subuid && echo "claude-work-isolated:165536:65536" >> /etc/subgid
 
 # crane, hadolint, actionlint (not packaged in Fedora): pinned release binaries, checksum-verified. Versions live in
 # build_files/claude-vm-utilities.sh (Renovate `# renovate:` comments); downloads are kept in the CI runner cache.

@@ -1,0 +1,52 @@
+[Unit]
+Description=Claude Code Remote Control (isolated work account)
+Documentation=https://code.claude.com/docs/en/remote-control
+After=network-online.target systemd-tmpfiles-setup.service user@1101.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
+# egress allowlist gateway: without it the agent user has no network anyway, so do not start
+Requires=claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
+Wants=network-online.target user@1101.service
+# Opt-in and isolated: runs as its own Unix user (own home, login, podman storage). It gets no GitHub App token and no
+# signing key (root:claude files it cannot read). Inert until that user is signed in, see docs/claude-vm/README.md.
+ConditionPathExists=/var/home/claude-work-isolated/.claude/.credentials.json
+
+[Service]
+Type=simple
+User=claude-work-isolated
+Group=claude-work-isolated
+WorkingDirectory=/var/home/claude-work-isolated/workspace
+Environment=HOME=/var/home/claude-work-isolated
+Environment=DISABLE_AUTOUPDATER=1
+Environment=CLAUDE_VM_NAME=%H-isolated
+# rootless podman needs a runtime dir (user@1101 is started by lingering, see 16-claude-work-isolated.conf)
+Environment=XDG_RUNTIME_DIR=/run/user/1101
+# /usr is read-only: global npm installs, pip --user and go install go to the home directory
+Environment=NPM_CONFIG_PREFIX=/var/home/claude-work-isolated/.npm-global
+Environment=PATH=/usr/libexec/claude-vm/bin:/var/home/claude-work-isolated/.npm-global/bin:/var/home/claude-work-isolated/.local/bin:/var/home/claude-work-isolated/go/bin:/usr/local/bin:/usr/bin:/usr/sbin
+ExecStart=/usr/libexec/claude-vm/run-remote-control
+Restart=always
+RestartSec=15
+
+# Resource limits, so parallel agents/subagents (builds, tests) cannot starve sshd or the egress gateway. Percentages are
+# of the VM's RAM, so they hold at any VM size. MemoryHigh throttles first; MemoryMax is the hard cap (OOM-kills inside
+# this unit only). Override per VM in /etc/systemd/system/claude-remote-control-isolated.service.d/*.conf.
+MemoryHigh=80%
+MemoryMax=90%
+TasksMax=4096
+LimitNOFILE=65536
+CPUWeight=50
+
+# No NoNewPrivileges/RestrictSUIDSGID: rootless podman needs the setuid newuidmap/newgidmap helpers.
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/home/claude-work-isolated /var/tmp
+# No ProtectKernelTunables: it read-only-mounts parts of /proc, which stops bubblewrap (the Bash sandbox) mounting its own /proc.
+ProtectKernelModules=yes
+# Not ProtectControlGroups=yes: it makes /sys/fs/cgroup read-only, and rootless podman then cannot create the scope it
+# asks the user manager for (user@1101.service, delegated to claude-work-isolated), so every `podman build` RUN step fails with
+# "create directory /sys/fs/cgroup/...: Read-only file system". Unix permissions still confine claude to its own
+# delegated subtree; the unit's cgroup and the rest of the hierarchy stay root-owned. (=private would hide
+# user@1101.service from the unit's cgroup namespace, so it does not help here.)
+ProtectControlGroups=no
+
+[Install]
+WantedBy=multi-user.target

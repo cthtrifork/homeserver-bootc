@@ -113,6 +113,30 @@ The instance is inert until `~/.claude-work/.credentials.json` exists. Sessions 
 The name `work` is fixed in `15-claude-work-profile.conf` and in `managed-settings.json` (credentials are unreadable
 from the sandbox); another profile name needs the same two entries.
 
+### Isolated second account (separate Unix user, optional)
+
+When the second account must not be able to read the first one's files (for example employer code and credentials next
+to a personal login), use `claude-remote-control-isolated.service` instead of the profile above. It runs as its own
+user `claude-work-isolated` (UID 1101, home `/var/home/claude-work-isolated`, mode 0700), so nothing is shared with
+`claude`: not the login, workspace, rootless podman images, shell history or `~/.cache`. The two can run side by side, and the
+egress allowlist covers both users and their podman subuid ranges.
+
+What it does **not** get: the GitHub App token (`/run/claude-vm/github-token` is `root:claude`) and the VM signing key.
+Its `~/.gitconfig` turns commit signing off. Give it its own GitHub identity, for example `gh auth login` over SSH as
+that user (outside the sandbox), and set `user.name`/`user.email` (and a signing key if you want signed commits).
+
+```sh
+sudo -iu claude-work-isolated
+cd ~/workspace && claude          # /login with the second account, trust the folder, then exit
+claude remote-control             # answer 'y' to "Enable Remote Control?", then Ctrl-C
+exit
+sudo systemctl enable --now claude-remote-control-isolated
+journalctl -u claude-remote-control-isolated -f
+```
+
+It is opt-in and inert until `~/.claude/.credentials.json` exists for that user. Sessions appear as `<hostname>-isolated`.
+Each service has its own memory/CPU caps (percent of VM RAM), so with both running, size the VM for the sum.
+
 ## GitHub access
 
 The VM acts as a GitHub App (a bot), not as a person with a personal token. The App's private key lives only in
@@ -217,7 +241,7 @@ enforced in the kernel for the user's UID, so it does not depend on the sandbox 
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | nftables (`/usr/share/claude-vm/egress.nft`). For UID 1100 and the podman subuid range (100000-165535, which host-network containers run as): redirects DNS to dnsmasq (`127.0.0.55:53`), HTTPS to nginx (`127.0.0.1:8443`) and HTTP to nginx (`127.0.0.1:8008`), and rejects everything else (QUIC/UDP, SSH, other ports, IPv6). rootless podman's `pasta` opens its sockets as `claude`, so container traffic is matched too. |
+| `claude-vm-egress-nft` | nftables (`/usr/share/claude-vm/egress.nft`). For UIDs 1100 and 1101 (`claude`, `claude-work-isolated`) and the podman subuid ranges (100000-231071, which host-network containers run as): redirects DNS to dnsmasq (`127.0.0.55:53`), HTTPS to nginx (`127.0.0.1:8443`) and HTTP to nginx (`127.0.0.1:8008`), and rejects everything else (QUIC/UDP, SSH, other ports, IPv6). rootless podman's `pasta` opens its sockets as `claude`, so container traffic is matched too. |
 | `claude-vm-egress-proxy` | nginx (a copy at `/usr/libexec/claude-vm/egress-proxy`, no TLS interception). Reads the SNI of a TLS handshake (or the HTTP `Host`) and connects to that name itself; unlisted names are dropped (403 for HTTP), and so is an IP address with no SNI. |
 | `claude-vm-egress-dns` | dnsmasq. Forwards only allowlisted domains to the system resolver and refuses the rest. Starts as root to bind port 53 and drops to `dnsmasq`. |
 

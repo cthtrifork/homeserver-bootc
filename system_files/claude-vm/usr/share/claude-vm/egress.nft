@@ -6,7 +6,7 @@ table inet claude_egress {
     set agent_uids {
         type uid
         flags interval
-        elements = { 1100, 100000-165535 }
+        elements = { 1100-1101, 100000-231071 }
     }
 
     chain nat_out {
