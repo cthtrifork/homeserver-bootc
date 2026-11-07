@@ -25,17 +25,10 @@ if systemctl is-active --quiet claude-remote-control.service; then
     echo "claude-remote-control is running but nothing was seeded"
     exit 1
 fi
-# second Claude account is an opt-in template instance: present, but neither enabled nor running
-systemctl cat claude-remote-control@work.service >/dev/null
-if systemctl is-enabled --quiet claude-remote-control@work.service || systemctl is-active --quiet claude-remote-control@work.service; then
-    echo "claude-remote-control@work must be opt-in"
-    exit 1
-fi
-test -d /var/home/claude/.claude-work
-# isolated second account (own Unix user): opt-in as well
-systemctl cat claude-remote-control-isolated.service >/dev/null
-if systemctl is-enabled --quiet claude-remote-control-isolated.service || systemctl is-active --quiet claude-remote-control-isolated.service; then
-    echo "claude-remote-control-isolated must be opt-in"
+# work Claude login (own Unix user claude-rc-work): opt-in, independent of the rc service
+systemctl cat claude-remote-control-rc-work.service >/dev/null
+if systemctl is-enabled --quiet claude-remote-control-rc-work.service || systemctl is-active --quiet claude-remote-control-rc-work.service; then
+    echo "claude-remote-control-rc-work must be opt-in"
     exit 1
 fi
 # free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
@@ -105,16 +98,16 @@ if id -nG claude | grep -qw wheel; then
     echo "claude must not be in wheel"
     exit 1
 fi
-[ "$(id -u claude-work-isolated)" = "1101" ]
-if id -nG claude-work-isolated | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
-    echo "claude-work-isolated must not be in wheel or share claude's group"
+[ "$(id -u claude-rc-work)" = "1101" ]
+if id -nG claude-rc-work | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
+    echo "claude-rc-work must not be in wheel or share claude's group"
     exit 1
 fi
-[ "$(stat -c %U:%a /var/home/claude-work-isolated)" = "claude-work-isolated:700" ]
-test -e /var/lib/systemd/linger/claude-work-isolated
+[ "$(stat -c %U:%a /var/home/claude-rc-work)" = "claude-rc-work:700" ]
+test -e /var/lib/systemd/linger/claude-rc-work
 # no access to claude's token or home
-if sudo -u claude-work-isolated test -r /run/claude-vm/github-token || sudo -u claude-work-isolated test -r /var/home/claude/.claude.json; then
-    echo "claude-work-isolated can read claude's files"
+if sudo -u claude-rc-work test -r /run/claude-vm/github-token || sudo -u claude-rc-work test -r /var/home/claude/.claude.json; then
+    echo "claude-rc-work can read claude's files"
     exit 1
 fi
 id -nG caspertdk | grep -qw wheel
