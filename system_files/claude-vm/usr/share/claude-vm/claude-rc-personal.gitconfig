@@ -1,0 +1,11 @@
+# Seeded into ~/.gitconfig of claude-rc-personal. This account has no GitHub App token and no VM signing key, so the
+# signing that /etc/gitconfig forces for `claude` is switched off here. Set your own identity (and signing key) below.
+[user]
+  name = Claude VM (personal)
+  email = claude-vm-personal@users.noreply.github.com
+[init]
+  defaultBranch = main
+[commit]
+  gpgsign = false
+[tag]
+  gpgsign = false

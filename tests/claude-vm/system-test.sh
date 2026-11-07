@@ -25,6 +25,12 @@ if systemctl is-active --quiet claude-remote-control.service; then
     echo "claude-remote-control is running but nothing was seeded"
     exit 1
 fi
+# personal Claude login (own Unix user claude-rc-personal): opt-in, independent of the claude service
+systemctl cat claude-remote-control-rc-personal.service >/dev/null
+if systemctl is-enabled --quiet claude-remote-control-rc-personal.service || systemctl is-active --quiet claude-remote-control-rc-personal.service; then
+    echo "claude-remote-control-rc-personal must be opt-in"
+    exit 1
+fi
 # free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
 systemctl cat claude-pinggy.service >/dev/null
 if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --quiet claude-pinggy.service; then
@@ -64,6 +70,7 @@ grep -qF '127.0.0.55:53' <<<"$udp"
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
 rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
+grep -qF '1100-1101' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
@@ -89,6 +96,18 @@ echo "--- users, ssh, home directories ---"
 [ "$(id -u claude)" = "1100" ]
 if id -nG claude | grep -qw wheel; then
     echo "claude must not be in wheel"
+    exit 1
+fi
+[ "$(id -u claude-rc-personal)" = "1101" ]
+if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
+    echo "claude-rc-personal must not be in wheel or share claude's group"
+    exit 1
+fi
+[ "$(stat -c %U:%a /var/home/claude-rc-personal)" = "claude-rc-personal:700" ]
+test -e /var/lib/systemd/linger/claude-rc-personal
+# no access to claude's token or home
+if sudo -u claude-rc-personal test -r /run/claude-vm/github-token || sudo -u claude-rc-personal test -r /var/home/claude/.claude.json; then
+    echo "claude-rc-personal can read claude's files"
     exit 1
 fi
 id -nG caspertdk | grep -qw wheel
