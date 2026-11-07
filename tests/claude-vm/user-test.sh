@@ -57,15 +57,36 @@ pw_script="$(mktemp --suffix=.js)"
 chmod 0644 "$pw_script"
 cat >"$pw_script" <<'JS'
 const { chromium } = require('playwright');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.goto('data:text/html,<h1 id=x>playwright ok</h1>');
   console.log(await page.textContent('#x'));
   await browser.close();
+  // recordVideo needs Playwright's bundled ffmpeg (installed at build time); the context must close to flush the .webm
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-video-'));
+  const rec = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
+  const ctx = await rec.newContext({ recordVideo: { dir, size: { width: 320, height: 200 } } });
+  const vpage = await ctx.newPage();
+  await vpage.goto('data:text/html,<h1>video</h1>');
+  await vpage.waitForTimeout(500);
+  await ctx.close();
+  await rec.close();
+  const webm = fs.readdirSync(dir).filter((f) => f.endsWith('.webm'));
+  if (webm.length !== 1 || fs.statSync(path.join(dir, webm[0])).size === 0) throw new Error('no .webm recorded in ' + dir);
+  const codec = require('child_process').execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', path.join(dir, webm[0])]).toString().trim();
+  fs.rmSync(dir, { recursive: true });
+  if (codec !== 'vp9') throw new Error('expected a vp9 .webm, got ' + codec);
+  console.log('video ok (' + codec + ')');
 })().catch((e) => { console.error(e); process.exit(1); });
 JS
-sudo -u claude -H bash -lc "cd / && node $pw_script" | grep -x "playwright ok"
+pw_out="$(sudo -u claude -H bash -lc "cd / && node $pw_script")"
+echo "$pw_out"
+grep -x "playwright ok" <<<"$pw_out"
+grep -x "video ok (vp9)" <<<"$pw_out"
 rm -f "$pw_script"
 
 echo "--- podman API socket answers (outside the sandbox) ---"

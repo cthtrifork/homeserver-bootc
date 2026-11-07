@@ -57,6 +57,10 @@ Prefer the Read/Grep/Glob tools over Bash for reading and searching files when t
   work, or when the user says not to. Use `gh` for GitHub.
 - Never push to `main` directly, and `--force`/`--force-with-lease` still need explicit approval (see Safety rules).
 - Mirror the repo's PR template if it has one, and report the PR URL when done.
+- To watch a PR (`subscribe_pr_activity`) the repo must be attached to the session. If it fails with "repository ... is not
+  configured for this session", call `add_repo` with the owner and repo, then subscribe again. You can skip the clone it
+  asks for when a local checkout or worktree already exists. If `add_repo` is refused, tell the user; an org owner has to
+  allow the repo (claude.ai Settings, Connectors). Without a subscription, poll with `gh pr checks <n>`.
 - Use `git -C <dir>` and absolute paths rather than `cd`.
 
 ### Worktrees
@@ -108,6 +112,14 @@ path in your reply into a link that opens the file from the VM in a preview (con
   The dbus errors it prints are harmless. Only allowlisted hosts and localhost are reachable.
 - The same applies to any other file you want the user to see: give its absolute path (`path:line` for code).
 
+### Screenshot videos
+
+- Use Playwright's `recordVideo` (`browser.newContext({ recordVideo: { dir: '<abs dir under ~/workspace/shots>', size: { width: 1280, height: 720 } } })`
+  with the `executablePath`/`--no-sandbox` launch above). It writes a VP9 `.webm` through Playwright's own ffmpeg, which the image
+  bakes in under `PLAYWRIGHT_BROWSERS_PATH`. Do not run `playwright install` (the CDN is blocked here).
+- The `.webm` is only complete after `await context.close()`; the file name is random, so read it from `page.video().path()`.
+- Give the `.webm` path in your reply like a screenshot path (untested whether the client previews video). Don't re-encode to MP4/H.264 unless asked.
+
 ## Reference material for CI and Kubernetes
 
 The user keeps a shallow clone of <https://github.com/oneuptime/blog> at `/var/home/claude/workspace/oneuptime-blog`
@@ -131,6 +143,7 @@ in your home directory, see below):
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
 - **Containers:** rootless `podman` and `podman compose`, `skopeo`, `crane`. There is no Docker.
 - **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).
+- **Video:** `ffmpeg`/`ffprobe` (Fedora's `ffmpeg-free`: VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265) for converting or trimming; Playwright's own bundled ffmpeg does `recordVideo` (`.webm`, see above).
 - **Other:** `make`, `tmux`, `socat`, `bubblewrap` (the Bash sandbox), `ssh` client (no keys on this VM).
 - Not installed: `sudo`, `dnf`, Docker. Check with `command -v <tool>` before assuming something else is there.
 
