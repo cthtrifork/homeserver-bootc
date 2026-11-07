@@ -25,10 +25,10 @@ if systemctl is-active --quiet claude-remote-control.service; then
     echo "claude-remote-control is running but nothing was seeded"
     exit 1
 fi
-# work Claude login (own Unix user claude-rc-work): opt-in, independent of the rc service
-systemctl cat claude-remote-control-rc-work.service >/dev/null
-if systemctl is-enabled --quiet claude-remote-control-rc-work.service || systemctl is-active --quiet claude-remote-control-rc-work.service; then
-    echo "claude-remote-control-rc-work must be opt-in"
+# personal Claude login (own Unix user claude-rc-personal): opt-in, independent of the claude service
+systemctl cat claude-remote-control-rc-personal.service >/dev/null
+if systemctl is-enabled --quiet claude-remote-control-rc-personal.service || systemctl is-active --quiet claude-remote-control-rc-personal.service; then
+    echo "claude-remote-control-rc-personal must be opt-in"
     exit 1
 fi
 # free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
@@ -98,16 +98,16 @@ if id -nG claude | grep -qw wheel; then
     echo "claude must not be in wheel"
     exit 1
 fi
-[ "$(id -u claude-rc-work)" = "1101" ]
-if id -nG claude-rc-work | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
-    echo "claude-rc-work must not be in wheel or share claude's group"
+[ "$(id -u claude-rc-personal)" = "1101" ]
+if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
+    echo "claude-rc-personal must not be in wheel or share claude's group"
     exit 1
 fi
-[ "$(stat -c %U:%a /var/home/claude-rc-work)" = "claude-rc-work:700" ]
-test -e /var/lib/systemd/linger/claude-rc-work
+[ "$(stat -c %U:%a /var/home/claude-rc-personal)" = "claude-rc-personal:700" ]
+test -e /var/lib/systemd/linger/claude-rc-personal
 # no access to claude's token or home
-if sudo -u claude-rc-work test -r /run/claude-vm/github-token || sudo -u claude-rc-work test -r /var/home/claude/.claude.json; then
-    echo "claude-rc-work can read claude's files"
+if sudo -u claude-rc-personal test -r /run/claude-vm/github-token || sudo -u claude-rc-personal test -r /var/home/claude/.claude.json; then
+    echo "claude-rc-personal can read claude's files"
     exit 1
 fi
 id -nG caspertdk | grep -qw wheel

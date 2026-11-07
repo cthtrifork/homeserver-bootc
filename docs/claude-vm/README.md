@@ -90,36 +90,36 @@ journalctl -u claude-remote-control -f     # shows the session URL
 
 Rotate the App's private key by re-running step 1. The Claude login lives in `/var/home/claude/.claude/` and survives upgrades.
 
-### Two Claude logins: rc and work (optional)
+### Two Claude logins (optional)
 
 The VM can run Remote Control for two claude.ai accounts at the same time, each as its own Unix user, so nothing is
 shared between them: not the login, workspace, rootless podman images, shell history or `~/.cache`.
 
 | Account | Unix user | Service | App session name |
 |---|---|---|---|
-| rc | `claude` (UID 1100, `/var/home/claude`) | `claude-remote-control.service` | `<hostname>` |
-| work | `claude-rc-work` (UID 1101, `/var/home/claude-rc-work`, mode 0700) | `claude-remote-control-rc-work.service` | `<hostname>-rc-work` |
+| existing | `claude` (UID 1100, `/var/home/claude`) | `claude-remote-control.service` | `<hostname>` |
+| personal | `claude-rc-personal` (UID 1101, `/var/home/claude-rc-personal`, mode 0700) | `claude-remote-control-rc-personal.service` | `<hostname>-rc-personal` |
 
 The services are independent: start, stop, restart or disable either without touching the other
-(`sudo systemctl stop claude-remote-control-rc-work`). Both share only the egress gateway units, which cover both users
-and their podman subuid ranges. The work service is opt-in and inert until `~/.claude/.credentials.json` exists for that
+(`sudo systemctl stop claude-remote-control-rc-personal`). Both share only the egress gateway units, which cover both users
+and their podman subuid ranges. The personal service is opt-in and inert until `~/.claude/.credentials.json` exists for that
 user.
 
-`claude-rc-work` gets **no** GitHub App token (`/run/claude-vm/github-token` is `root:claude`) and no VM signing key; its
+`claude-rc-personal` gets **no** GitHub App token (`/run/claude-vm/github-token` is `root:claude`) and no VM signing key; its
 `~/.gitconfig` turns commit signing off. Give it its own GitHub identity, for example `gh auth login` over SSH as that
 user (outside the sandbox), and set `user.name`/`user.email` (and a signing key if you want signed commits).
 
 ```sh
-sudo -iu claude-rc-work
-cd ~/workspace && claude          # /login with the work account, trust the folder, then exit
+sudo -iu claude-rc-personal
+cd ~/workspace && claude          # /login with the personal account, trust the folder, then exit
 claude remote-control             # answer 'y' to "Enable Remote Control?", then Ctrl-C
 exit
-sudo systemctl enable --now claude-remote-control-rc-work
-journalctl -u claude-remote-control-rc-work -f
+sudo systemctl enable --now claude-remote-control-rc-personal
+journalctl -u claude-remote-control-rc-personal -f
 ```
 
 Each service has its own memory/CPU caps (percent of VM RAM), so with both running, size the VM for the sum. Override
-per service with a drop-in in `/etc/systemd/system/claude-remote-control-rc-work.service.d/`.
+per service with a drop-in in `/etc/systemd/system/claude-remote-control-rc-personal.service.d/`.
 
 ## GitHub access
 
@@ -225,7 +225,7 @@ enforced in the kernel for the user's UID, so it does not depend on the sandbox 
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | nftables (`/usr/share/claude-vm/egress.nft`). For UIDs 1100 and 1101 (`claude`, `claude-rc-work`) and the podman subuid ranges (100000-231071, which host-network containers run as): redirects DNS to dnsmasq (`127.0.0.55:53`), HTTPS to nginx (`127.0.0.1:8443`) and HTTP to nginx (`127.0.0.1:8008`), and rejects everything else (QUIC/UDP, SSH, other ports, IPv6). rootless podman's `pasta` opens its sockets as `claude`, so container traffic is matched too. |
+| `claude-vm-egress-nft` | nftables (`/usr/share/claude-vm/egress.nft`). For UIDs 1100 and 1101 (`claude`, `claude-rc-personal`) and the podman subuid ranges (100000-231071, which host-network containers run as): redirects DNS to dnsmasq (`127.0.0.55:53`), HTTPS to nginx (`127.0.0.1:8443`) and HTTP to nginx (`127.0.0.1:8008`), and rejects everything else (QUIC/UDP, SSH, other ports, IPv6). rootless podman's `pasta` opens its sockets as `claude`, so container traffic is matched too. |
 | `claude-vm-egress-proxy` | nginx (a copy at `/usr/libexec/claude-vm/egress-proxy`, no TLS interception). Reads the SNI of a TLS handshake (or the HTTP `Host`) and connects to that name itself; unlisted names are dropped (403 for HTTP), and so is an IP address with no SNI. |
 | `claude-vm-egress-dns` | dnsmasq. Forwards only allowlisted domains to the system resolver and refuses the rest. Starts as root to bind port 53 and drops to `dnsmasq`. |
 
