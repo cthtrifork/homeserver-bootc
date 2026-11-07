@@ -54,7 +54,8 @@
         "~/go"
       ],
       "denyRead": [
-        "~/.claude/.credentials.json"
+        "~/.claude/.credentials.json",
+        "~/.claude-work/.credentials.json"
       ],
       "denyWrite": [
         "~/.bashrc",

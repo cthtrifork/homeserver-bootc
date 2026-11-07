@@ -90,6 +90,29 @@ journalctl -u claude-remote-control -f     # shows the session URL
 
 Rotate the App's private key by re-running step 1. The Claude login lives in `/var/home/claude/.claude/` and survives upgrades.
 
+### Second Claude account (optional)
+
+To run Remote Control for two claude.ai accounts at once (for example personal and work), the default account keeps
+`claude-remote-control.service` and `~/.claude`; a second one runs as the template instance
+`claude-remote-control@work.service` with its own `CLAUDE_CONFIG_DIR=/var/home/claude/.claude-work`. Both run as the
+same `claude` user, so they share `~/workspace`, the GitHub App token and the egress allowlist; only the Claude login,
+settings, memory and session history are separate. Use a separate Unix user instead if the work account needs real
+isolation from the other one's files.
+
+```sh
+sudo -iu claude
+export CLAUDE_CONFIG_DIR=$HOME/.claude-work
+cd ~/workspace && claude          # /login with the second account, trust the folder, then exit
+claude remote-control             # answer 'y' to "Enable Remote Control?", then Ctrl-C
+exit
+sudo systemctl enable --now claude-remote-control@work
+journalctl -u claude-remote-control@work -f
+```
+
+The instance is inert until `~/.claude-work/.credentials.json` exists. Sessions appear as `<hostname>-work` in the app.
+The name `work` is fixed in `15-claude-work-profile.conf` and in `managed-settings.json` (credentials are unreadable
+from the sandbox); another profile name needs the same two entries.
+
 ## GitHub access
 
 The VM acts as a GitHub App (a bot), not as a person with a personal token. The App's private key lives only in

@@ -25,6 +25,13 @@ if systemctl is-active --quiet claude-remote-control.service; then
     echo "claude-remote-control is running but nothing was seeded"
     exit 1
 fi
+# second Claude account is an opt-in template instance: present, but neither enabled nor running
+systemctl cat claude-remote-control@work.service >/dev/null
+if systemctl is-enabled --quiet claude-remote-control@work.service || systemctl is-active --quiet claude-remote-control@work.service; then
+    echo "claude-remote-control@work must be opt-in"
+    exit 1
+fi
+test -d /var/home/claude/.claude-work
 # free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
 systemctl cat claude-pinggy.service >/dev/null
 if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --quiet claude-pinggy.service; then
