@@ -282,6 +282,9 @@ jobs:
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
           
+      - name: Limit changelog commits to this image
+        run: .github/scripts/image-changelog.sh "${{ inputs.image }}" "${{ steps.rechunk.outputs.changelog }}" previous.manifest.json "${{ github.server_url }}/${{ github.repository }}"
+
       - name: Changelog PR comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
