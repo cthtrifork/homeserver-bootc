@@ -68,7 +68,12 @@ jobs:
               - 'policy.json'
               # shared build inputs: they have always rebuilt the default image only
               - 'tests/*.sh'
-              - '.github/actions/**'
+              # only the actions the image build runs; the scan/test ones (trivy, qemu, screenshot, ...) must not
+              # rebuild and release an unchanged image
+              - '.github/actions/set-image-vars/**'
+              - '.github/actions/prepare-podman/**'
+              - '.github/actions/push-image/**'
+              - '.github/actions/build-cleanup/**'
               - '.github/workflows/build-bootc-image*.yaml'
               - '!**/*.md' # docs never change an image
             homeserver-gui:
