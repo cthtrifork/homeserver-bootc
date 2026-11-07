@@ -115,7 +115,7 @@ path in your reply into a link that opens the file from the VM in a preview (con
 ### Screenshot videos
 
 - Use Playwright's `recordVideo` (`browser.newContext({ recordVideo: { dir: '<abs dir under ~/workspace/shots>', size: { width: 1280, height: 720 } } })`
-  with the `executablePath`/`--no-sandbox` launch above). It writes VP8 `.webm` through Playwright's own ffmpeg, which the image
+  with the `executablePath`/`--no-sandbox` launch above). It writes a VP9 `.webm` through Playwright's own ffmpeg, which the image
   bakes in under `PLAYWRIGHT_BROWSERS_PATH`. Do not run `playwright install` (the CDN is blocked here).
 - The `.webm` is only complete after `await context.close()`; the file name is random, so read it from `page.video().path()`.
 - Give the `.webm` path in your reply like a screenshot path (untested whether the client previews video). Don't re-encode to MP4/H.264 unless asked.
