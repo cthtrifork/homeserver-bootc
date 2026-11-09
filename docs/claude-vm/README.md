@@ -248,7 +248,6 @@ labels and the retention are described once, in
 change both places together.
 
 - **Endpoint:** `http://otel.portableinfo.cloud/api/v1/otlp`, port 80: a Cloudflare A record to a private LAN address of the cluster.
-  No new egress rule: `portableinfo.cloud` is already on the allowlist and the gateway forwards plain HTTP by `Host`.
 - **DNS:** the name must resolve to the private address through the VM's resolver. If that resolver filters private answers for public
   names (DNS rebinding protection), exports fail with a DNS error in the Claude Code log.
 - **Auth:** none; the endpoint is LAN-only and the cluster's network policy limits who can reach it.
