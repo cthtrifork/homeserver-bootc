@@ -261,7 +261,7 @@ jobs:
           git: "${{ github.workspace }}"
           revision: ${{ github.sha }}
           changelog: |
-            # Homeserver <pretty>
+            # ${{ env.IMAGE_NAME }} <pretty>
             ## Version: <version>
 
             Major Components:
@@ -270,7 +270,7 @@ jobs:
 
             ## Changes since last version (<previous>):
             ### Commits
-            <commits>
+            <!--COMMITS-->
             ### Package Changes:
             <pkgupd>
 
@@ -282,6 +282,17 @@ jobs:
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
           
+      # rechunk lists every commit in the repo; group them by image so each changelog leads with its own.
+      # The changelog file is written by the root rechunk container, so take ownership before editing it.
+      - name: Group changelog commits
+        env:
+          CHANGELOG: ${{ steps.rechunk.outputs.changelog }}
+          IMAGE: ${{ inputs.image }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          sudo chown "$(id -u):$(id -g)" "${CHANGELOG}"
+          python3 -I .github/scripts/group-changelog.py "${CHANGELOG}"
+
       - name: Changelog PR comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
