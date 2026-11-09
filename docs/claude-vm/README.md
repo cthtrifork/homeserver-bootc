@@ -16,70 +16,62 @@ files and `tests/claude-vm/`.
 ## Overview
 
 ```mermaid
-flowchart LR
+flowchart TB
     YOU["You<br/>claude.ai / app"]
     ANTH["claude.ai"]
-    GH["GitHub<br/>(only repos the App is installed on)"]
-    OK["Allowlisted hosts only"]
+    GH["GitHub<br/>only repos the App is installed on"]
 
     subgraph VM["Claude VM"]
-        direction LR
+        direction TB
 
-        subgraph AGENT["AGENT CONTROLS (agent user, no sudo)"]
-            direction TB
-            RC["claude remote-control<br/>= a shell as the agent user"]
-            FILES["Writable: ~/workspace, ~/.npm-global,<br/>~/.npm, ~/.local, ~/.cache, ~/go"]
-            GIT["git + gh<br/>PRs and branches via 1h App token"]
-            WRAP["podman wrapper<br/>talks only to its own socket"]
+        subgraph AGENT["AGENT USER: what the agent controls"]
+            direction LR
+            RC["claude remote-control<br/>a shell as the agent user"]
+            SB["Bash sandbox (bubblewrap)<br/>writes only ~/workspace, ~/.npm*,<br/>~/.local, ~/.cache, ~/go<br/>cannot read .credentials.json"]
+            GIT["git + gh<br/>1h App token, never the key"]
+            WRAP["podman wrapper<br/>own socket only"]
         end
 
-        subgraph LIMITED["USABLE, BUT CONFINED"]
-            direction TB
-            SB["Bash sandbox (bubblewrap)<br/>no writes outside the paths on the left<br/>cannot read .credentials.json"]
-            POD["Rootless podman as a separate UID<br/>(claude-podman, one per agent)<br/>sees only ~/workspace via ACL<br/>containers egress-filtered"]
+        subgraph CONT["SEPARATE UID: claude-podman, one per agent"]
+            direction LR
+            POD["Rootless podman containers<br/>no subuid or exec for the agent"]
+            WS["~/workspace<br/>shared by ACL, read + write"]
         end
 
-        subgraph LOCKED["LOCKED DOWN (root-owned, agent cannot change)"]
-            direction TB
-            POLICY["managed-settings.json + AGENTS.md<br/>highest precedence, managed hooks only"]
-            SECRETS["Agent secrets, mode 0700<br/>~/.claude, ~/.ssh, token dir<br/>unreadable by the podman UID"]
-            GW["Egress gateway, enforced by UID<br/>nftables + nginx + dnsmasq<br/>covers agent AND podman UIDs"]
-            LIST["egress-allowlist.txt<br/>changed only by rebuilding the image"]
-            KEYS["GitHub App private key<br/>root 0600; token refresher runs as root"]
-            OS["/usr read-only image<br/>real /usr/bin/podman not executable by agent<br/>no sudo, no dnf; 03:00 bootc upgrade"]
-            SSH["SSH: caspertdk only, public keys<br/>optional Pinggy tunnel"]
+        subgraph LOCKED["LOCKED DOWN: root-owned, the agent cannot change it"]
+            direction LR
+            GW["Egress gateway, by UID<br/>nftables + nginx + dnsmasq<br/>agent and podman UIDs"]
+            POLICY["Policy<br/>managed-settings.json<br/>AGENTS.md, allowlist"]
+            SECRETS["Secrets, mode 0700<br/>~/.claude, ~/.ssh, token dir<br/>App private key (root 0600)"]
+            OS["Read-only /usr image<br/>no sudo, 03:00 bootc upgrade<br/>SSH: caspertdk only"]
         end
     end
 
     RC --> SB
-    RC --- FILES
-    RC --- GIT
+    RC --> GIT
     RC --> WRAP
     WRAP -->|"unix socket"| POD
-    FILES -. "ACL: rw on workspace only" .-> POD
-    SB --> GW
-    POD --> GW
-    GIT --> GW
-    POLICY -. "constrains" .-> RC
-    SECRETS -. "no access" .-x POD
-    LIST -. "feeds" .-> GW
-    KEYS -. "1h token only" .-> GIT
-    GW --> OK
-    OK --- GH
-    OK --- ANTH
+    POD --- WS
+
+    AGENT ==>|"all outbound traffic"| GW
+    CONT ==>|"all outbound traffic"| GW
+    GW <-->|"allowlisted hosts only"| ANTH
+    GW -->|"allowlisted hosts only"| GH
     ANTH <--> YOU
-    YOU -. "optional" .-> SSH
+
+    POLICY -.->|"constrains"| AGENT
+    SECRETS -.-x|"unreadable"| CONT
 
     classDef agent fill:#d8f5d8,stroke:#2e7d32,color:#000
-    classDef limited fill:#fff3cd,stroke:#b8860b,color:#000
+    classDef cont fill:#fff3cd,stroke:#b8860b,color:#000
     classDef locked fill:#fadbd8,stroke:#c0392b,color:#000
     classDef ext fill:#eef,stroke:#667,color:#000
-    class RC,FILES,GIT,WRAP agent
-    class SB,POD limited
-    class POLICY,SECRETS,GW,LIST,KEYS,OS,SSH locked
-    class YOU,ANTH,GH,OK ext
+    class RC,SB,GIT,WRAP agent
+    class POD,WS cont
+    class GW,POLICY,SECRETS,OS locked
+    class YOU,ANTH,GH ext
     style AGENT fill:#f2fbf2,stroke:#2e7d32
-    style LIMITED fill:#fffaea,stroke:#b8860b
+    style CONT fill:#fffaea,stroke:#b8860b
     style LOCKED fill:#fdf0ee,stroke:#c0392b
 ```
 
