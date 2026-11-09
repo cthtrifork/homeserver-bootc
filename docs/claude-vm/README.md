@@ -73,35 +73,35 @@ flowchart TB
     style ROOT fill:#fdf0ee,stroke:#c0392b,color:#000
 ```
 
-The same VM by behaviour: what the agent can and cannot do, and which limits are only guardrails:
+The same VM by behaviour: what the agent can and cannot do, and what is accepted exposure:
 
 ```mermaid
 flowchart LR
-    AG(("AGENT<br/>shell as the<br/>agent user"))
+    AG(("AGENT"))
 
     subgraph CAN["CAN DO"]
         direction TB
-        C1["Write ~/workspace, ~/.npm, ~/.local,<br/>~/.cache, ~/go"]
-        C2["Clone repos, push branches, open PRs<br/>(App repos, 1h token)"]
-        C3["Run containers as claude-podman<br/>(sees ~/workspace only)"]
-        C4["Reach allowlisted hosts<br/>(GitHub, npm, PyPI, Go, registries)"]
+        C1["Write ~/workspace and its caches"]
+        C2["Clone, push and open PRs<br/>(1h token)"]
+        C3["Run containers<br/>(they see only what is mounted)"]
+        C4["Reach allowlisted hosts"]
     end
 
-    subgraph CANT["CANNOT DO (enforced by the kernel / root)"]
+    subgraph CANT["CANNOT DO (kernel or root enforces it)"]
         direction TB
-        N1["Read the GitHub App private key"]
-        N2["Mount ~/.claude, ~/.ssh or the token<br/>in a container: any flag, any symlink"]
-        N3["Run /usr/bin/podman directly<br/>or start its own user namespace"]
-        N4["Reach any other host, SSH, QUIC,<br/>IP literals, other ports"]
-        N5["Change managed settings, hooks,<br/>the allowlist, or /usr; no sudo"]
-        N6["Read the other agent's files<br/>or podman socket"]
+        N1["Read the App key"]
+        N2["Mount ~/.claude, ~/.ssh or the token<br/>in a container, with any flag"]
+        N3["Run /usr/bin/podman directly"]
+        N4["Reach any other host"]
+        N5["Change policy, /usr or the allowlist"]
+        N6["Touch the other agent's files"]
     end
 
-    subgraph SOFT["GUARDRAIL ONLY (not a hard boundary)"]
+    subgraph SOFT["ACCEPTED EXPOSURE (not a hard limit)"]
         direction TB
-        S1["Bash sandbox: unsandboxed tools<br/>can read the agent's own secrets"]
-        S2["Allowed hosts can still carry<br/>data out (name-based filter)"]
-        S3["Containers can read and write<br/>the whole ~/workspace"]
+        S1["Bash sandbox is a guardrail"]
+        S2["Allowed hosts can leak data"]
+        S3["Containers can change what you mount<br/>and the agent may run it later"]
     end
 
     AG --> CAN
