@@ -133,7 +133,7 @@ flowchart LR
   Each service has its own memory/CPU caps (percent of VM RAM; see the unit files), so size the VM for the sum
   (2 vCPU / 4 GB light use, 4-8 vCPU / 8-16 GB for parallel builds, 30 GB+ disk for podman). Override with a drop-in in
   `/etc/systemd/system/<service>.d/`.
-- **SSH:** key-only for `caspertdk` (sudo), using the same public keys as the home server. The agent users have no sudo.
+- **SSH:** key-only for `caspertdk` (sudo), with the same public keys as the home server. The agents have no sudo.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so a new image reboots the VM and ends
   running sessions (Remote Control brings them back for about four hours). Drop `--apply` in
   `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
@@ -227,14 +227,14 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
   in bypass-permissions mode; the sandbox, deny rules and egress gateway are the limits. Only managed hooks run
   (`allowManagedHooksOnly`), so hooks in cloned repositories are ignored. Keys and values are documented by
   [managed settings](https://code.claude.com/docs/en/managed-settings.md); changes to this file are in git.
-- **Bash sandbox:** required (`bubblewrap`), writes only to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`
-  and `~/go`, reaches only the allowlisted hosts, and cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose`
-  are excluded (rootless podman cannot run inside it) and keep only the egress gateway's network confinement; they run
-  containers as a separate UID (see below). The podman API socket is deliberately not exposed to the sandbox. It is a guardrail, not a hard boundary: the proxy filters by hostname,
-  broad hosts such as `github.com` can carry data out, and MCP servers and hooks are not covered.
+- **Bash sandbox:** required (`bubblewrap`). It limits writes to the paths in the diagram above, reaches only allowlisted hosts and
+  cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose` are excluded because rootless podman cannot run inside
+  it; they run containers as a separate UID (see below) and the podman socket is not exposed to the sandbox. It is a guardrail,
+  not a hard boundary: the proxy filters by hostname, so broad hosts such as `github.com` can carry data out, and MCP servers and
+  hooks are not covered.
 - **A Remote Control session is a shell as the agent user.** Whoever controls your claude.ai session controls the VM. Turn on
   [Require trusted devices](https://code.claude.com/docs/en/remote-control.md#trusted-devices).
-- **GitHub Apps:** install each only on the repositories its user should touch. The agent holds a one-hour token, never the key.
+- **GitHub Apps:** install each only on the repositories its user should touch (see "GitHub access").
 - **Data and terms:** the session transcript is stored on Anthropic's servers while connected. Use your own login and do
   not share it. Do not set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`: it also disables Remote Control.
 
@@ -244,15 +244,16 @@ Claude Code sends OpenTelemetry metrics (tokens, cost, sessions, lines of code, 
 receiver of the cluster's Prometheus ([talos-gitops `k8s/apps/claude-system`](https://github.com/cthtrifork/talos-gitops/tree/main/k8s/apps/claude-system#usage-telemetry)),
 tagged `environment=claude-vm`. Both agent users send; the managed settings carry the whole configuration.
 
-- **Endpoint:** `http://otel.portableinfo.cloud/api/v1/otlp` (port 80, `http/protobuf`), a Cloudflare A record to a private LAN
-  address of the cluster. Claude Code appends `/v1/metrics`. No ingress and no new egress rule: `portableinfo.cloud` is already on the
-  allowlist and the gateway forwards plain HTTP by `Host`. The name must resolve to the private address through the VM's resolver:
-  if that resolver filters private answers for public names (DNS rebinding protection), exports fail with a DNS error in the Claude Code log.
-- **Auth:** none. The endpoint is LAN-only and the cluster's network policy limits who can reach it.
-- **Temporality:** delta, set explicitly; Prometheus turns it into cumulative counters.
-- **Labels:** Prometheus keeps every datapoint attribute as a label. `OTEL_METRICS_INCLUDE_SESSION_ID` and `_ACCOUNT_UUID` are off: a session id would start a new set of series per session. `user_email`, `user_id` and `organization_id` cannot be switched off.
+- **Endpoint:** `http://otel.portableinfo.cloud/api/v1/otlp` (port 80, `http/protobuf`; Claude Code appends `/v1/metrics`), a
+  Cloudflare A record to a private LAN address. No ingress and no new egress rule: `portableinfo.cloud` is already allowlisted and
+  the gateway forwards plain HTTP by `Host`. The VM's resolver must return the private address; if it filters private answers for
+  public names (DNS rebinding protection), exports fail with a DNS error in the Claude Code log.
+- **Auth:** none; the endpoint is LAN-only and the cluster's network policy limits who can reach it.
+- **Temporality:** delta (set explicitly); Prometheus turns it into cumulative counters.
+- **Labels:** every datapoint attribute becomes a label. `OTEL_METRICS_INCLUDE_SESSION_ID` and `_ACCOUNT_UUID` are off, because a
+  session id would start new series per session. `user_email`, `user_id` and `organization_id` cannot be switched off.
 
-Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or on the usage page of the cluster.
+Query `claude_code_*{environment="claude-vm"}` in Prometheus, or use the usage page of the cluster.
 
 ## Containers run as a separate UID
 
@@ -326,8 +327,6 @@ varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
 (HTTPS) or a 403 (HTTP). SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises
 blocked requests since boot (`--raw` plus any `journalctl` argument for each one), `claude-vm-egress allowed` prints the list.
 
-Filtering is by name, not content: a listed shared CDN or broad service can still carry data out.
-
 ## Operating notes
 
 - systemd restarts the services (`Restart=always`); an unreachable VM shows as an offline session at claude.ai/code. For push
@@ -335,8 +334,8 @@ Filtering is by name, not content: a listed shared CDN or broad service can stil
 - `/var` and `/etc` are not re-applied on upgrade (tmpfiles `C` never overwrites). Revoking a key in a later image does not
   reach VMs that already booted: edit `~caspertdk/.ssh/authorized_keys` there. Keep local policy changes in
   `/etc/claude-code/managed-settings.d/*.json`; list drift with `ostree admin config-diff`.
-- Give parallel agents separate git worktrees. Rootless podman containers may escape the unit's cgroup limits; cap them with
-  `podman run --memory/--cpus`.
+- Give parallel agents separate git worktrees. Containers share the `claude-vm-podman@<agent>.service` limits (60% / 80% of RAM);
+  cap a single one with `podman run --memory/--cpus`.
 
 ## Build a disk image
 
@@ -351,6 +350,6 @@ sudo podman run --rm -it --privileged -v ./out:/output -v ./config.toml:/config.
 ## Tests
 
 `tests/claude-vm/` runs in QEMU when a non-draft pull request has the `e2e` label: tools, idle services, policy, users, home
-and token directory permissions, no baked-in keys, the seed helper, rootless podman, and the egress gateway (also from inside
-podman containers). Not covered, because it needs a logged-in Claude: sign-in, the Remote Control session, and the sandbox
+and token directory permissions, no baked-in keys, the seed helper, rootless podman (secret mounts with every flag blocked, workspace
+read/write, socket permissions), and the egress gateway (also from inside podman containers). Not covered, because it needs a logged-in Claude: sign-in, the Remote Control session, and the sandbox
 and `SessionStart` hook in a live session.
