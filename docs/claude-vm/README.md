@@ -16,71 +16,109 @@ files and `tests/claude-vm/`.
 ## Overview
 
 ```mermaid
-flowchart LR
+flowchart TB
     YOU["You<br/>claude.ai / app"]
     ANTH["claude.ai"]
-    GH["GitHub<br/>(only repos the App is installed on)"]
-    OK["Allowlisted hosts only"]
+    GH["GitHub"]
 
     subgraph VM["Claude VM"]
-        direction LR
+        direction TB
 
-        subgraph AGENT["AGENT CONTROLS (agent user, no sudo)"]
-            direction TB
-            RC["claude remote-control<br/>= a shell as the agent user"]
-            FILES["Writable: ~/workspace, ~/.npm-global,<br/>~/.npm, ~/.local, ~/.cache, ~/go"]
-            GIT["git + gh<br/>PRs and branches via 1h App token"]
-            WRAP["podman wrapper<br/>talks only to its own socket"]
+        subgraph AGENT["AGENT USER"]
+            direction LR
+            RC["claude remote-control"]
+            SB["Bash sandbox"]
+            GIT["git + gh"]
+            WRAP["podman wrapper"]
         end
 
-        subgraph LIMITED["USABLE, BUT CONFINED"]
-            direction TB
-            SB["Bash sandbox (bubblewrap)<br/>no writes outside the paths on the left<br/>cannot read .credentials.json"]
-            POD["Rootless podman as a separate UID<br/>(claude-podman, one per agent)<br/>sees only ~/workspace via ACL<br/>containers egress-filtered"]
+        subgraph CONT["PODMAN USER (separate UID, one per agent)"]
+            direction LR
+            POD["Rootless podman<br/>API + containers"]
+            WS["~/workspace<br/>shared by ACL"]
         end
 
-        subgraph LOCKED["LOCKED DOWN (root-owned, agent cannot change)"]
-            direction TB
-            POLICY["managed-settings.json + AGENTS.md<br/>highest precedence, managed hooks only"]
-            SECRETS["Agent secrets, mode 0700<br/>~/.claude, ~/.ssh, token dir<br/>unreadable by the podman UID"]
-            GW["Egress gateway, enforced by UID<br/>nftables + nginx + dnsmasq<br/>covers agent AND podman UIDs"]
-            LIST["egress-allowlist.txt<br/>changed only by rebuilding the image"]
-            KEYS["GitHub App private key<br/>root 0600; token refresher runs as root"]
-            OS["/usr read-only image<br/>real /usr/bin/podman not executable by agent<br/>no sudo, no dnf; 03:00 bootc upgrade"]
-            SSH["SSH: caspertdk only, public keys<br/>optional Pinggy tunnel"]
+        subgraph ROOT["ROOT-OWNED"]
+            direction LR
+            TOK["GitHub App key<br/>+ token refresher"]
+            GW["Egress gateway<br/>nftables, nginx, dnsmasq"]
+            CFG["Managed policy<br/>allowlist, read-only /usr,<br/>updates, SSH"]
         end
     end
 
     RC --> SB
-    RC --- FILES
-    RC --- GIT
+    RC --> GIT
     RC --> WRAP
     WRAP -->|"unix socket"| POD
-    FILES -. "ACL: rw on workspace only" .-> POD
-    SB --> GW
-    POD --> GW
-    GIT --> GW
-    POLICY -. "constrains" .-> RC
-    SECRETS -. "no access" .-x POD
-    LIST -. "feeds" .-> GW
-    KEYS -. "1h token only" .-> GIT
-    GW --> OK
-    OK --- GH
-    OK --- ANTH
-    ANTH <--> YOU
-    YOU -. "optional" .-> SSH
+    POD --- WS
+    TOK -->|"1h token"| GIT
 
+    AGENT ==> GW
+    CONT ==> GW
+    GW <--> ANTH
+    GW --> GH
+    ANTH <--> YOU
+
+    linkStyle default stroke:#888,stroke-width:2px
     classDef agent fill:#d8f5d8,stroke:#2e7d32,color:#000
-    classDef limited fill:#fff3cd,stroke:#b8860b,color:#000
+    classDef cont fill:#fff3cd,stroke:#b8860b,color:#000
     classDef locked fill:#fadbd8,stroke:#c0392b,color:#000
     classDef ext fill:#eef,stroke:#667,color:#000
-    class RC,FILES,GIT,WRAP agent
-    class SB,POD limited
-    class POLICY,SECRETS,GW,LIST,KEYS,OS,SSH locked
-    class YOU,ANTH,GH,OK ext
-    style AGENT fill:#f2fbf2,stroke:#2e7d32
-    style LIMITED fill:#fffaea,stroke:#b8860b
-    style LOCKED fill:#fdf0ee,stroke:#c0392b
+    class RC,SB,GIT,WRAP agent
+    class POD,WS cont
+    class TOK,GW,CFG locked
+    class YOU,ANTH,GH ext
+    style AGENT fill:#f2fbf2,stroke:#2e7d32,color:#000
+    style CONT fill:#fffaea,stroke:#b8860b,color:#000
+    style ROOT fill:#fdf0ee,stroke:#c0392b,color:#000
+```
+
+The same VM by behaviour: what the agent can and cannot do, and what is accepted exposure:
+
+```mermaid
+flowchart LR
+    AG(("AGENT"))
+
+    subgraph CAN["CAN DO"]
+        direction TB
+        C1["Write ~/workspace and its caches"]
+        C2["Clone, push and open PRs<br/>(1h token)"]
+        C3["Run containers<br/>(they see only what is mounted)"]
+        C4["Reach allowlisted hosts"]
+    end
+
+    subgraph CANT["CANNOT DO (kernel or root enforces it)"]
+        direction TB
+        N1["Read the App key"]
+        N2["Mount ~/.claude, ~/.ssh or the token<br/>in a container, with any flag"]
+        N3["Run /usr/bin/podman directly"]
+        N4["Reach any other host"]
+        N5["Change policy, /usr or the allowlist"]
+        N6["Touch the other agent's files"]
+    end
+
+    subgraph SOFT["ACCEPTED EXPOSURE (not a hard limit)"]
+        direction TB
+        S1["Bash sandbox is a guardrail"]
+        S2["Allowed hosts can leak data"]
+        S3["Code the agent runs is untrusted:<br/>downloads, repos, container output"]
+    end
+
+    AG --> CAN
+    AG -.-x CANT
+    AG -.-> SOFT
+
+    linkStyle default stroke:#888,stroke-width:2px
+    classDef ok fill:#d8f5d8,stroke:#2e7d32,color:#000
+    classDef no fill:#fadbd8,stroke:#c0392b,color:#000
+    classDef soft fill:#fff3cd,stroke:#b8860b,color:#000
+    class C1,C2,C3,C4 ok
+    class N1,N2,N3,N4,N5,N6 no
+    class S1,S2,S3 soft
+    style CAN fill:#f2fbf2,stroke:#2e7d32,color:#000
+    style CANT fill:#fdf0ee,stroke:#c0392b,color:#000
+    style SOFT fill:#fffaea,stroke:#b8860b,color:#000
+    style AG fill:#eef,stroke:#667,color:#000
 ```
 
 - **No secrets in the image.** GitHub App keys and Claude logins are seeded by hand on the VM. SSH host keys are generated at first boot.
@@ -218,22 +256,52 @@ Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or o
 
 ## Containers run as a separate UID
 
-`podman` for the agent users is a wrapper (`/usr/libexec/claude-vm/bin/podman`) that talks to the API socket of a different
-user, `claude-podman` (UID 1200) or `claude-rc-personal-podman` (1201), run by `claude-vm-podman@<agent>.service`. Containers
-therefore run as that UID, which the kernel keeps out of the agent's home: `~/.claude`, `~/.ssh` and the token stay `0700`, so
-no mount flag (`:Z`, `label=disable`, `--privileged`, `--userns=host`, a symlink) can expose them. That is the point: a podman
-that ran as the agent could mount anything the agent can read, and podman is outside the Bash sandbox.
+`podman` for the agent users is a wrapper that talks to the API of another user, `claude-podman` (1200) or
+`claude-rc-personal-podman` (1201), run by `claude-vm-podman@<agent>.service`. Containers therefore run as that UID, which the
+kernel keeps out of the agent's home: `~/.claude`, `~/.ssh` and the token stay `0700`, so no mount flag can expose them. Podman
+is outside the Bash sandbox, so a podman running as the agent could mount anything the agent can read.
 
-- The agent users have no subuid range and cannot execute `/usr/bin/podman` (mode 0750, group `claude-podman-exec`).
-- The socket is in `/run/claude-vm-podman/<agent>/` (setgid, agent's group, 0660): each agent reaches only its own podman.
-- `podman-prepare` (root, before the service starts) gives `<agent>-podman` an ACL on `~/workspace` only (default ACL for new
-  files, so what containers write stays writable for the agent) and traverse-only on the home directory.
-- The podman UIDs are in the egress gateway's UID set, so containers stay behind the allowlist. SELinux label separation is
-  off for these containers (`label = false`): the file permissions are the boundary.
-- Tools that create files with an explicit restrictive mode (`install -d -m 0755`, `cp -p`, `tar` extracting 0755 dirs) shrink the
-  ACL mask, so `<agent>-podman` gets read-only access to those paths; `chmod g+w` (or `setfacl -m m::rwx`) fixes one.
-- Residual risk: containers can read and write everything under that agent's `~/workspace` and anything world-readable, and a
-  container escape lands as `<agent>-podman`, not as the agent or root.
+What that looks like for a mount that is allowed, one that is not, and an outbound request:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Agent shell<br/>(agent user)
+    participant W as podman wrapper
+    participant S as Socket<br/>/run/claude-vm-podman/agent/
+    participant P as claude-podman<br/>(separate UID)
+    participant F as ~/.claude, ~/.ssh,<br/>token (0700 agent)
+    participant G as Egress gateway
+
+    Note over A,P: Allowed: a repo from the workspace
+    A->>W: podman run -v ~/workspace/repo:/src ...
+    W->>S: podman-remote over the unix socket
+    S->>P: create container as claude-podman
+    P-->>A: reads and writes /src (ACL on ~/workspace)
+
+    Note over A,F: Blocked: the agent's secrets, with any flag
+    A->>W: podman run --privileged -v ~/.claude:/x:Z ...
+    W->>S: same socket, same UID
+    S->>P: create container as claude-podman
+    P-xF: open /x/.credentials.json
+    F-->>P: Permission denied (kernel, file mode 0700, other UID)
+
+    Note over A,G: Blocked: any other host
+    A->>G: curl https://example.com (also from containers)
+    G--xA: DNS refused / connection reset (nftables by UID)
+```
+
+- The agent users have no subuid range and cannot execute `/usr/bin/podman` (0750, group `claude-podman-exec`).
+- The socket (`/run/claude-vm-podman/<agent>/`, 0660, agent's group) is reachable only by its own agent.
+- `podman-prepare` gives `<agent>-podman` an ACL on `~/workspace` only (default ACL, so what containers write stays writable for
+  the agent) and traverse-only on the home.
+- The podman UIDs are in the egress gateway's UID set. SELinux label separation is off for these containers (`label = false`):
+  file permissions are the boundary.
+- Files created with an explicit restrictive mode (`install -d -m 0755`, `cp -p`) shrink the ACL mask and leave `<agent>-podman`
+  read-only there; `chmod g+w` fixes a path.
+- Residual risk: containers can read and write whatever they mount from `~/workspace`, and a container escape lands as
+  `<agent>-podman`. Files they plant are as untrusted as any download, so mount the narrowest folder (read-only if possible) and
+  use trusted images.
 
 ## Egress gateway
 
