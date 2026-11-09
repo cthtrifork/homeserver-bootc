@@ -54,8 +54,7 @@
         "~/go"
       ],
       "denyRead": [
-        "~/.claude/.credentials.json",
-        "/etc/claude-otel"
+        "~/.claude/.credentials.json"
       ],
       "denyWrite": [
         "~/.bashrc",
@@ -220,6 +219,5 @@
     "OTEL_EXPORTER_OTLP_ENDPOINT": "https://otel.portableinfo.cloud",
     "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE": "delta",
     "OTEL_RESOURCE_ATTRIBUTES": "environment=claude-vm"
-  },
-  "otelHeadersHelper": "/usr/libexec/claude-vm/otel-headers"
+  }
 }

@@ -128,15 +128,8 @@ if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.j
 fi
 
 echo "--- usage telemetry ---"
-# OpenTelemetry metrics go to the collector with a bearer token seeded by claude-vm-seed-otel; the image holds none
-jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/json" and .otelHeadersHelper == "/usr/libexec/claude-vm/otel-headers"' /etc/claude-code/managed-settings.json >/dev/null
-jq -e '.sandbox.filesystem.denyRead | index("/etc/claude-otel")' /etc/claude-code/managed-settings.json >/dev/null
-[ "$(stat -c %U:%G:%a /etc/claude-otel)" = "root:claude-otel:750" ]
-id -nG claude | grep -qw claude-otel
-id -nG claude-rc-personal | grep -qw claude-otel
-test ! -e /etc/claude-otel/token
-[ "$(sudo -u claude /usr/libexec/claude-vm/otel-headers)" = "{}" ]
-# the collector name is covered by the egress allowlist (portableinfo.cloud and its subdomains)
+# OpenTelemetry metrics go to the collector in the cluster (no token); the name is covered by the egress allowlist
+jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/json"' /etc/claude-code/managed-settings.json >/dev/null
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
 echo "--- nothing secret baked in ---"

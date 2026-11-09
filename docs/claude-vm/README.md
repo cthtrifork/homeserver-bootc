@@ -177,19 +177,9 @@ tagged `environment=claude-vm`. Both agent users send; the managed settings carr
   protection), exports fail with a DNS error in the Claude Code log.
 - **Protocol:** `http/json`, not `http/protobuf`: the open-source inputs of Redpanda Connect cannot decode protobuf. Delta
   temporality is set explicitly because the collector adds every datapoint to a counter.
-- **Token:** `claude-vm-seed-otel` stores the collector's bearer token in `/etc/claude-otel/token` (root:`claude-otel` 0640; both
-  agent users are in that group; the image holds no token). `/usr/libexec/claude-vm/otel-headers` (`otelHeadersHelper` in the
-  managed settings) reads it on every export, so re-seeding needs no restart; until it is seeded the exports get a 401. The
-  Bash sandbox cannot read `/etc/claude-otel` (`denyRead`). The token only allows sending metrics.
+- **Auth:** none. The collector is LAN-only and only accepts metrics; its network policy limits who can reach it.
 
-```sh
-# from a machine with kubectl access to the cluster
-kubectl -n claude-system get secret claude-otel-token -o jsonpath='{.data.token}' | base64 -d | ssh caspertdk@<vm> sudo claude-vm-seed-otel
-```
-
-The first export after an image upgrade starts with the new group membership only after `claude-remote-control` restarted
-(the nightly update reboots the VM anyway). Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or the
-collector's usage table (`kubectl -n claude-system port-forward svc/claude-otel 8080:80`).
+Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or on the usage page of the cluster.
 
 ## Egress gateway
 
