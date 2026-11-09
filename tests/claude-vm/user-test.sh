@@ -120,7 +120,8 @@ if agent_podman run --rm --pull=never --privileged -v /run/claude-vm/claude:/x "
 
 echo "--- containers read and write the workspace; the agent can use what they write ---"
 ws=/var/home/claude/workspace/podman-acl-test
-sudo -u claude install -d "$ws"
+# mkdir, not install -d: an explicit mode (0755) would shrink the default ACL mask to r-x; mkdir/git clone ask for 0777
+sudo -u claude mkdir "$ws"
 sudo -u claude sh -c "echo from-agent > $ws/in.txt"
 agent_podman run --rm --pull=never -v "$ws":/w "$img_s" sh -c 'grep -x from-agent /w/in.txt && echo from-container > /w/out.txt'
 sudo -u claude grep -x from-container "$ws/out.txt"

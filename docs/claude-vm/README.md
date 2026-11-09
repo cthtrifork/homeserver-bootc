@@ -214,6 +214,8 @@ that ran as the agent could mount anything the agent can read, and podman is out
   files, so what containers write stays writable for the agent) and traverse-only on the home directory.
 - The podman UIDs are in the egress gateway's UID set, so containers stay behind the allowlist. SELinux label separation is
   off for these containers (`label = false`): the file permissions are the boundary.
+- Tools that create files with an explicit restrictive mode (`install -d -m 0755`, `cp -p`, `tar` extracting 0755 dirs) shrink the
+  ACL mask, so `<agent>-podman` gets read-only access to those paths; `chmod g+w` (or `setfacl -m m::rwx`) fixes one.
 - Residual risk: containers can read and write everything under that agent's `~/workspace` and anything world-readable, and a
   container escape lands as `<agent>-podman`, not as the agent or root.
 
