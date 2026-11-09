@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+# Runs as root before claude-vm-podman@<agent>.service: lets <agent>-podman reach the agent's workspace, and nothing else
+# in the agent's home. The agent keeps ownership; files containers create there stay writable for the agent through the
+# default ACL. Idempotent.
+set -euo pipefail
+
+agent="${1:?usage: podman-prepare <agent user>}"
+case "$agent" in
+    claude | claude-rc-personal) ;;
+    *) echo "unknown agent user: $agent" >&2; exit 1 ;;
+esac
+pod="${agent}-podman"
+home="/var/home/$agent"
+workspace="$home/workspace"
+marker="/var/lib/claude-vm/podman-acl-$agent"
+
+# traverse only: lets the path resolve, lists and reads nothing else in the home directory (which stays 0700)
+setfacl -m "u:$pod:--x" "$home"
+# new files and directories in the workspace inherit rwX for both users (the agent reads what containers write)
+setfacl -m "u:$pod:rwX,u:$agent:rwX" -d -m "u:$pod:rwX,u:$agent:rwX" "$workspace"
+# repositories cloned before this existed: walk the tree once (it can be large), not on every start
+if [[ ! -e "$marker" ]]; then
+    setfacl -R -m "u:$pod:rwX,u:$agent:rwX" "$workspace"
+    setfacl -R -d -m "u:$pod:rwX,u:$agent:rwX" "$workspace"
+    install -d -m 0755 /var/lib/claude-vm
+    : >"$marker"
+fi

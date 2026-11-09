@@ -1,10 +1,10 @@
 [Unit]
 Description=Claude Code Remote Control
 Documentation=https://code.claude.com/docs/en/remote-control
-After=network-online.target systemd-tmpfiles-setup.service user@1100.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service claude-vm-github-token@claude.service
+After=network-online.target systemd-tmpfiles-setup.service user@1100.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service claude-vm-github-token@claude.service claude-vm-podman@claude.service
 # egress allowlist gateway: without it the agent user has no network anyway, so do not start
 Requires=claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
-Wants=network-online.target user@1100.service claude-vm-github-token@claude.service
+Wants=network-online.target user@1100.service claude-vm-github-token@claude.service claude-vm-podman@claude.service
 # Stays inert until both manual steps are done: GitHub App seeded + `claude` signed in/trusted.
 ConditionPathExists=/etc/claude-vm/github-app/claude/private-key.pem
 ConditionPathExists=/var/home/claude/.claude/.credentials.json
