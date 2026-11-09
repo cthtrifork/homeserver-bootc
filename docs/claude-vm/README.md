@@ -165,6 +165,32 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
 - **Data and terms:** the session transcript is stored on Anthropic's servers while connected. Use your own login and do
   not share it. Do not set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`: it also disables Remote Control.
 
+## Usage telemetry
+
+Claude Code sends OpenTelemetry metrics (tokens, cost, sessions, lines of code, commits, pull requests, active time) to the
+Redpanda Connect collector of the cluster ([talos-gitops `k8s/apps/claude-system`](https://github.com/cthtrifork/talos-gitops/tree/main/k8s/apps/claude-system#usage-telemetry)),
+tagged `environment=claude-vm`. Both agent users send; the managed settings carry the whole configuration except the token.
+
+- **Endpoint:** `https://otel.portableinfo.cloud` (443), a Cloudflare A record to a private LAN address of the cluster. No ingress
+  and no new egress rule: `portableinfo.cloud` is already on the allowlist, and the gateway forwards by name. The name must
+  resolve to the private address through the VM's resolver: if that resolver filters private answers for public names (DNS rebinding
+  protection), exports fail with a DNS error in the Claude Code log.
+- **Protocol:** `http/json`, not `http/protobuf`: the open-source inputs of Redpanda Connect cannot decode protobuf. Delta
+  temporality is set explicitly because the collector adds every datapoint to a counter.
+- **Token:** `claude-vm-seed-otel` stores the collector's bearer token in `/etc/claude-otel/token` (root:`claude-otel` 0640; both
+  agent users are in that group; the image holds no token). `/usr/libexec/claude-vm/otel-headers` (`otelHeadersHelper` in the
+  managed settings) reads it on every export, so re-seeding needs no restart; until it is seeded the exports get a 401. The
+  Bash sandbox cannot read `/etc/claude-otel` (`denyRead`). The token only allows sending metrics.
+
+```sh
+# from a machine with kubectl access to the cluster
+kubectl -n claude-system get secret claude-otel-token -o jsonpath='{.data.token}' | base64 -d | ssh caspertdk@<vm> sudo claude-vm-seed-otel
+```
+
+The first export after an image upgrade starts with the new group membership only after `claude-remote-control` restarted
+(the nightly update reboots the VM anyway). Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or the
+collector's usage table (`kubectl -n claude-system port-forward svc/claude-otel 8080:80`).
+
 ## Egress gateway
 
 Everything the agent users start, including rootless podman containers, reaches only hosts on one allowlist, enforced in the
