@@ -19,31 +19,30 @@ files and `tests/claude-vm/`.
 flowchart TB
     YOU["You<br/>claude.ai / app"]
     ANTH["claude.ai"]
-    GH["GitHub<br/>only repos the App is installed on"]
+    GH["GitHub"]
 
     subgraph VM["Claude VM"]
         direction TB
 
-        subgraph AGENT["AGENT USER: what the agent controls"]
+        subgraph AGENT["AGENT USER"]
             direction LR
-            RC["claude remote-control<br/>a shell as the agent user"]
-            SB["Bash sandbox (bubblewrap)<br/>writes only ~/workspace, ~/.npm*,<br/>~/.local, ~/.cache, ~/go<br/>cannot read .credentials.json"]
-            GIT["git + gh<br/>1h App token, never the key"]
-            WRAP["podman wrapper<br/>own socket only"]
+            RC["claude remote-control"]
+            SB["Bash sandbox"]
+            GIT["git + gh"]
+            WRAP["podman wrapper"]
         end
 
-        subgraph CONT["SEPARATE UID: claude-podman, one per agent"]
+        subgraph CONT["PODMAN USER (separate UID, one per agent)"]
             direction LR
-            POD["Rootless podman containers<br/>no subuid or exec for the agent"]
-            WS["~/workspace<br/>shared by ACL, read + write"]
+            POD["Rootless podman<br/>API + containers"]
+            WS["~/workspace<br/>shared by ACL"]
         end
 
-        subgraph LOCKED["LOCKED DOWN: root-owned, the agent cannot change it"]
+        subgraph ROOT["ROOT-OWNED"]
             direction LR
-            GW["Egress gateway, by UID<br/>nftables + nginx + dnsmasq<br/>agent and podman UIDs"]
-            POLICY["Policy<br/>managed-settings.json<br/>AGENTS.md, allowlist"]
-            SECRETS["Secrets, mode 0700<br/>~/.claude, ~/.ssh, token dir<br/>App private key (root 0600)"]
-            OS["Read-only /usr image<br/>no sudo, 03:00 bootc upgrade<br/>SSH: caspertdk only"]
+            TOK["GitHub App key<br/>+ token refresher"]
+            GW["Egress gateway<br/>nftables, nginx, dnsmasq"]
+            CFG["Managed policy<br/>allowlist, read-only /usr,<br/>updates, SSH"]
         end
     end
 
@@ -52,15 +51,13 @@ flowchart TB
     RC --> WRAP
     WRAP -->|"unix socket"| POD
     POD --- WS
+    TOK -->|"1h token"| GIT
 
-    AGENT ==>|"all outbound traffic"| GW
-    CONT ==>|"all outbound traffic"| GW
-    GW <-->|"allowlisted hosts only"| ANTH
-    GW -->|"allowlisted hosts only"| GH
+    AGENT ==> GW
+    CONT ==> GW
+    GW <--> ANTH
+    GW --> GH
     ANTH <--> YOU
-
-    POLICY -.->|"constrains"| AGENT
-    SECRETS -.-x|"unreadable"| CONT
 
     classDef agent fill:#d8f5d8,stroke:#2e7d32,color:#000
     classDef cont fill:#fff3cd,stroke:#b8860b,color:#000
@@ -68,14 +65,14 @@ flowchart TB
     classDef ext fill:#eef,stroke:#667,color:#000
     class RC,SB,GIT,WRAP agent
     class POD,WS cont
-    class GW,POLICY,SECRETS,OS locked
+    class TOK,GW,CFG locked
     class YOU,ANTH,GH ext
     style AGENT fill:#f2fbf2,stroke:#2e7d32
     style CONT fill:#fffaea,stroke:#b8860b
-    style LOCKED fill:#fdf0ee,stroke:#c0392b
+    style ROOT fill:#fdf0ee,stroke:#c0392b
 ```
 
-What the agent can and cannot do, and which limits are only guardrails:
+The same VM by behaviour: what the agent can and cannot do, and which limits are only guardrails:
 
 ```mermaid
 flowchart LR
