@@ -1,0 +1,17 @@
+#!/usr/bin/bash
+# Runs as root after `podman system service` started (claude-vm-podman@<agent>.service, ExecStartPost): podman creates its API
+# socket as 0600 whatever the unit's UMask, so widen it to 0660. The directory is setgid with the agent's group, so the socket
+# already has that group and only the agent (and its podman user) can connect.
+set -euo pipefail
+
+agent="${1:?usage: podman-socket-perms <agent user>}"
+sock="/run/claude-vm-podman/$agent/podman.sock"
+for _ in $(seq 100); do
+    if [[ -S "$sock" ]]; then
+        chmod 0660 "$sock"
+        exit 0
+    fi
+    sleep 0.1
+done
+echo "podman-socket-perms: $sock did not appear" >&2
+exit 1
