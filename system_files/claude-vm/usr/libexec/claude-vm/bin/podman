@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+# `podman` for the agent users. Containers do not run as the agent: this talks to the podman API of that agent's own
+# <agent>-podman user (claude-vm-podman@<agent>.service), a different UID that cannot read the agent's ~/.claude, ~/.ssh,
+# token or anything else outside ~/workspace. /usr/bin/podman itself is not executable by the agent users.
+# Comes first on the agent services' PATH, so `podman` and `podman compose` (podman-compose) both end up here.
+set -euo pipefail
+
+sock="/run/claude-vm-podman/$(id -un)/podman.sock"
+if [[ ! -S "$sock" ]]; then
+    echo "podman: $sock is missing; is claude-vm-podman@$(id -un).service running?" >&2
+    exit 125
+fi
+exec /usr/bin/podman-remote --url "unix://$sock" "$@"

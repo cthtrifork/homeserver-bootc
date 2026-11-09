@@ -146,7 +146,8 @@ in your home directory, see below):
 - **Git and GitHub:** `git`, `gh` (wrapped to use the GitHub App token, see `CLAUDE.md`).
 - **Search and counting:** `rg` (ripgrep), `cloc` (lines of code per language), `tree`, `jq`, `yq`.
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
-- **Containers:** rootless `podman` and `podman compose`, `skopeo`, `crane`. There is no Docker.
+- **Containers:** rootless `podman` and `podman compose` (a wrapper to your own podman user's API, so containers see only
+  `~/workspace`, not the rest of your home), `skopeo`, `crane`. There is no Docker.
 - **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).
 - **Video:** `ffmpeg`/`ffprobe` (Fedora's `ffmpeg-free`: VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265) for converting or trimming; Playwright's own bundled ffmpeg does `recordVideo` (`.webm`, see above).
 - **Other:** `make`, `tmux`, `socat`, `bubblewrap` (the Bash sandbox), `ssh` client (no keys on this VM).
@@ -157,6 +158,8 @@ in your home directory, see below):
 - Writes are limited to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
 - Only hosts in `build_files/claude-vm/egress-allowlist.txt` are reachable. If a command fails with a network error,
   report the host instead of retrying; adding a host means editing that file and rebuilding the image.
-- `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt.
+- `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt. Containers run as
+  `<user>-podman`: mount repos with `-v ~/workspace/<repo>:/src` (no `:Z` needed); `/usr/bin/podman` is not executable for you.
+  Files a container writes into `~/workspace` are owned by `<user>-podman` but stay writable for you (default ACL).
 - Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
   instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.

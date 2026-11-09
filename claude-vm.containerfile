@@ -8,7 +8,7 @@ COPY build_files/ /build_files/
 
 FROM base AS final
 
-ARG CLAUDE_CODE_VERSION=2.1.318 # renovate: datasource=npm depName=@anthropic-ai/claude-code
+ARG CLAUDE_CODE_VERSION=2.1.319 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG PLAYWRIGHT_VERSION=1.65.0 # renovate: datasource=npm depName=playwright
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman (+ podman-compose, the provider behind
@@ -24,15 +24,19 @@ ARG PLAYWRIGHT_VERSION=1.65.0 # renovate: datasource=npm depName=playwright
 # image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 RUN dnf -y install --setopt=install_weak_deps=False \
-        bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-compose shadow-utils fuse-overlayfs \
+        bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium ffmpeg-free \
     && dnf clean all
 
-# Rootless podman for the service users (claude, UID 1100; claude-rc-personal, UID 1101; see sysusers.d)
-RUN echo "claude:100000:65536" >> /etc/subuid && echo "claude:100000:65536" >> /etc/subgid
-RUN echo "claude-rc-personal:165536:65536" >> /etc/subuid && echo "claude-rc-personal:165536:65536" >> /etc/subgid
+# Rootless podman runs as separate UIDs, not as the agents: claude-podman (1200) and claude-rc-personal-podman (1201, see
+# sysusers.d). The agents get no subuid range, so they cannot start a user namespace of their own, and /usr/bin/podman is
+# only executable for group claude-podman-exec (GID 1210, by number because sysusers has not run yet); they use the wrapper in
+# /usr/libexec/claude-vm/bin, which talks to their podman user's API socket through podman-remote.
+RUN echo "claude-podman:100000:65536" >> /etc/subuid && echo "claude-podman:100000:65536" >> /etc/subgid
+RUN echo "claude-rc-personal-podman:165536:65536" >> /etc/subuid && echo "claude-rc-personal-podman:165536:65536" >> /etc/subgid
+RUN chgrp 1210 /usr/bin/podman && chmod 0750 /usr/bin/podman
 
 # crane, hadolint, actionlint (not packaged in Fedora): pinned release binaries, checksum-verified. Versions live in
 # build_files/claude-vm-utilities.sh (Renovate `# renovate:` comments); downloads are kept in the CI runner cache.
@@ -84,13 +88,10 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 # (avc: denied { name_connect } ... tcontext=http_port_t) unless httpd_can_network_connect is on, which allows all ports.
 RUN install -m 0755 /usr/sbin/nginx /usr/libexec/claude-vm/egress-proxy
 
-# Podman API socket for the claude user (socket-activated, /run/user/1100/podman/podman.sock). Enabled for all user
-# managers (`--global` writes /etc/systemd/user/sockets.target.wants): ~/.config/systemd is write-protected for claude.
-RUN systemctl --global enable podman.socket
-
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-app /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
-        claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
+        claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service \
+        claude-vm-podman@claude.service
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
 # runner UID, which does not exist in the image), which that lint reports as an unknown user.

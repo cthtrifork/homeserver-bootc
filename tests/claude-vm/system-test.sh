@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
+# on failure, also dump the podman units and the socket directories (the VM journal only reaches the run summary)
+diagnose() {
+    echo "--- podman diagnostics ---"
+    systemctl status 'claude-vm-podman@*' --no-pager -l 2>&1 | tail -n 40 || true
+    journalctl -b --no-pager -n 40 -u 'claude-vm-podman@*' 2>&1 || true
+    ls -laZ /run/claude-vm-podman /run/claude-vm-podman/* /run/claude-vm-podman-run 2>&1 || true
+    getfacl -p /var/home/claude /var/home/claude/workspace 2>&1 || true
+    journalctl -b --no-pager -g 'avc:' 2>&1 | tail -n 20 || true
+}
+trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"; diagnose' ERR
 
 echo "== System testing (claude-vm) =="
 id
@@ -71,6 +80,7 @@ grep -qF '127.0.0.55:53' <<<"$udp"
 rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 grep -qF '1100-1101' <<<"$rules"
+grep -qF '1200-1201' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
@@ -92,6 +102,17 @@ sudo systemd-run --wait --pipe --collect -q -p User=claude \
     -p PrivateTmp=yes -p ProtectSystem=strict \
     bwrap --unshare-all --ro-bind / / --dev /dev --proc /proc true
 
+# An agent's home is private: owned by it, no group or other access. claude-vm-podman@<agent> adds a traverse-only ACL entry for
+# <agent>-podman, which makes `stat` show the ACL mask in the group bits (0710), so check the ACL, not the mode.
+home_private() {
+    [ "$(stat -c %U "/var/home/$1")" = "$1" ]
+    acl="$(getfacl -cp "/var/home/$1")"
+    grep -qx 'group::---' <<<"$acl"
+    grep -qx 'other::---' <<<"$acl"
+    # the only other entry allowed is the podman user's traverse-only one
+    extra="$(grep -E '^(user|group):[^:]+:' <<<"$acl" | grep -vE "^user:$1-podman:--x$" || true)"
+    [ -z "$extra" ] || { echo "unexpected ACL entries on /var/home/$1: $extra"; return 1; }
+}
 echo "--- users, ssh, home directories ---"
 [ "$(id -u claude)" = "1100" ]
 if id -nG claude | grep -qw wheel; then
@@ -103,7 +124,7 @@ if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
     echo "claude-rc-personal must not be in wheel or share claude's group"
     exit 1
 fi
-[ "$(stat -c %U:%a /var/home/claude-rc-personal)" = "claude-rc-personal:700" ]
+home_private claude-rc-personal
 test -e /var/lib/systemd/linger/claude-rc-personal
 # each agent user has its own GitHub App: the token directories are private, and the refresher is a per-user template
 [ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
@@ -115,13 +136,43 @@ if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u c
 fi
 id -nG caspertdk | grep -qw wheel
 sshd -T | grep -qx 'passwordauthentication no'
-[ "$(stat -c %U:%a /var/home/claude)" = "claude:700" ]
+home_private claude
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
-# podman API socket: enabled for every user manager and socket-activated for claude
-systemctl --global is-enabled podman.socket
-timeout 60 bash -c 'until [ -S /run/user/1100/podman/podman.sock ]; do sleep 1; done'
-# ...but it must not be exposed to the sandbox (it would bypass the file rules and podman's approval prompt)
+# containers run as separate UIDs (claude-vm-podman@<agent>.service), not as the agents
+[ "$(id -u claude-podman)" = "1200" ]
+[ "$(id -u claude-rc-personal-podman)" = "1201" ]
+for pu in claude-podman claude-rc-personal-podman; do
+    [ "$(getent passwd "$pu" | cut -d: -f7)" = "/usr/sbin/nologin" ]
+    if id -nG "$pu" | tr ' ' '\n' | grep -qxE 'wheel|claude|claude-rc-personal'; then
+        echo "$pu must not be in wheel or an agent's group"
+        exit 1
+    fi
+done
+# the agent users have no subuid range and cannot exec the real podman; the wrapper (first on PATH) talks to the API instead
+if grep -qE '^(claude|claude-rc-personal):' /etc/subuid /etc/subgid; then
+    echo "agent users must not have a subuid/subgid range"
+    exit 1
+fi
+[ "$(stat -c %G:%a /usr/bin/podman)" = "claude-podman-exec:750" ]
+for u in claude claude-rc-personal; do
+    if sudo -u "$u" test -x /usr/bin/podman; then echo "$u can exec /usr/bin/podman"; exit 1; fi
+done
+test -x /usr/libexec/claude-vm/bin/podman
+# each podman socket is reachable by its own agent only
+timeout 60 bash -c 'until [ -S /run/claude-vm-podman/claude/podman.sock ]; do sleep 1; done'
+[ "$(stat -c %U:%G:%a /run/claude-vm-podman/claude/podman.sock)" = "claude-podman:claude:660" ]
+sudo -u claude test -w /run/claude-vm-podman/claude/podman.sock
+if sudo -u claude-rc-personal test -x /run/claude-vm-podman/claude; then echo "claude-rc-personal reaches claude's podman socket"; exit 1; fi
+# the podman user cannot read the agent's secrets, whatever a container asks for
+if sudo -u claude-podman test -r /var/home/claude/.claude/.credentials.json || sudo -u claude-podman test -x /run/claude-vm/claude; then
+    echo "claude-podman can reach claude's secrets"
+    exit 1
+fi
+# ...but its workspace is shared by ACL
+sudo -u claude-podman test -w /var/home/claude/workspace
+# the old per-user podman.socket must be gone; and the socket must still not be exposed to the sandbox
+if systemctl --global is-enabled podman.socket 2>/dev/null; then echo "podman.socket must not be enabled for the agent users"; exit 1; fi
 if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.json >/dev/null; then
     echo "the podman socket must not be exposed to the sandbox"
     exit 1
