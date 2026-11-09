@@ -17,35 +17,65 @@ files and `tests/claude-vm/`.
 
 ```mermaid
 flowchart LR
-    REG[("ghcr.io image")]
     YOU["You<br/>claude.ai / app"]
     ANTH["claude.ai"]
-    GH["GitHub"]
+    GH["GitHub<br/>(only repos the App is installed on)"]
+    OK["Allowlisted hosts only"]
 
     subgraph VM["Claude VM"]
-        SETUP["Manual setup:<br/>GitHub App + Claude login<br/>(per agent user)"]
-        RC["claude remote-control<br/>(one service per agent user)"]
-        SB["Sandboxed shell<br/>limited paths + domains"]
-        POD["Rootless podman<br/>(approved commands)"]
-        GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
-        TOK["Token refresher<br/>(root, 30 min, per-user App)"]
-        UPD["03:00: bootc upgrade --apply<br/>(reboots if new image)"]
-        SSH["SSH<br/>(caspertdk, public keys only)"]
+        direction LR
+
+        subgraph AGENT["AGENT CONTROLS (agent user, no sudo)"]
+            direction TB
+            RC["claude remote-control<br/>= a shell as the agent user"]
+            FILES["Writable: ~/workspace, ~/.npm-global,<br/>~/.npm, ~/.local, ~/.cache, ~/go"]
+            GIT["git + gh<br/>PRs and branches via 1h App token"]
+        end
+
+        subgraph LIMITED["USABLE, BUT CONFINED"]
+            direction TB
+            SB["Bash sandbox (bubblewrap)<br/>no writes outside the paths on the left<br/>cannot read .credentials.json"]
+            POD["Rootless podman<br/>outside the sandbox, still egress-filtered"]
+        end
+
+        subgraph LOCKED["LOCKED DOWN (root-owned, agent cannot change)"]
+            direction TB
+            POLICY["managed-settings.json + AGENTS.md<br/>highest precedence, managed hooks only"]
+            GW["Egress gateway, enforced by UID<br/>nftables + nginx + dnsmasq<br/>blocks SSH, QUIC, IPv6, other ports"]
+            LIST["egress-allowlist.txt<br/>changed only by rebuilding the image"]
+            KEYS["GitHub App private key<br/>root 0600; token refresher runs as root"]
+            OS["/usr read-only image<br/>no sudo, no dnf<br/>03:00 bootc upgrade --apply"]
+            SSH["SSH: caspertdk only, public keys<br/>optional Pinggy tunnel"]
+        end
     end
 
-    REG -->|install / pull| VM
-    SETUP --> RC
-    TOK -->|"1h token"| RC
     RC --> SB
     RC --> POD
+    RC --- FILES
+    RC --- GIT
     SB --> GW
     POD --> GW
-    RC <--> GW
-    GW --> GH
-    GW <--> ANTH
+    GIT --> GW
+    POLICY -. "constrains" .-> RC
+    LIST -. "feeds" .-> GW
+    KEYS -. "1h token only" .-> GIT
+    GW --> OK
+    OK --- GH
+    OK --- ANTH
     ANTH <--> YOU
-    REG --> UPD
-    YOU -.->|"optional Pinggy tunnel"| SSH
+    YOU -. "optional" .-> SSH
+
+    classDef agent fill:#d8f5d8,stroke:#2e7d32,color:#000
+    classDef limited fill:#fff3cd,stroke:#b8860b,color:#000
+    classDef locked fill:#fadbd8,stroke:#c0392b,color:#000
+    classDef ext fill:#eef,stroke:#667,color:#000
+    class RC,FILES,GIT agent
+    class SB,POD limited
+    class POLICY,GW,LIST,KEYS,OS,SSH locked
+    class YOU,ANTH,GH,OK ext
+    style AGENT fill:#f2fbf2,stroke:#2e7d32
+    style LIMITED fill:#fffaea,stroke:#b8860b
+    style LOCKED fill:#fdf0ee,stroke:#c0392b
 ```
 
 - **No secrets in the image.** GitHub App keys and Claude logins are seeded by hand on the VM. SSH host keys are generated at first boot.
