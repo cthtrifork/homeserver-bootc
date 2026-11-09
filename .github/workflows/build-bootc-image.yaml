@@ -282,7 +282,6 @@ jobs:
             pkgupd.update=- **<package>** <old> → <new>\n
             pkgupd.remove=- **<package>** <old> → Removed\n
           
-      # rechunk lists every commit in the repo; group them by image so each changelog leads with its own.
       # The changelog file is written by the root rechunk container, so take ownership before editing it.
       - name: Group changelog commits
         env:
