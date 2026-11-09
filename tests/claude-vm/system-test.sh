@@ -93,6 +93,17 @@ sudo systemd-run --wait --pipe --collect -q -p User=claude \
     -p PrivateTmp=yes -p ProtectSystem=strict \
     bwrap --unshare-all --ro-bind / / --dev /dev --proc /proc true
 
+# An agent's home is private: owned by it, no group or other access. claude-vm-podman@<agent> adds a traverse-only ACL entry for
+# <agent>-podman, which makes `stat` show the ACL mask in the group bits (0710), so check the ACL, not the mode.
+home_private() {
+    [ "$(stat -c %U "/var/home/$1")" = "$1" ]
+    acl="$(getfacl -cp "/var/home/$1")"
+    grep -qx 'group::---' <<<"$acl"
+    grep -qx 'other::---' <<<"$acl"
+    # the only other entry allowed is the podman user's traverse-only one
+    extra="$(grep -E '^(user|group):[^:]+:' <<<"$acl" | grep -vE "^user:$1-podman:--x$" || true)"
+    [ -z "$extra" ] || { echo "unexpected ACL entries on /var/home/$1: $extra"; return 1; }
+}
 echo "--- users, ssh, home directories ---"
 [ "$(id -u claude)" = "1100" ]
 if id -nG claude | grep -qw wheel; then
@@ -104,7 +115,7 @@ if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
     echo "claude-rc-personal must not be in wheel or share claude's group"
     exit 1
 fi
-[ "$(stat -c %U:%a /var/home/claude-rc-personal)" = "claude-rc-personal:700" ]
+home_private claude-rc-personal
 test -e /var/lib/systemd/linger/claude-rc-personal
 # each agent user has its own GitHub App: the token directories are private, and the refresher is a per-user template
 [ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
@@ -116,7 +127,7 @@ if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u c
 fi
 id -nG caspertdk | grep -qw wheel
 sshd -T | grep -qx 'passwordauthentication no'
-[ "$(stat -c %U:%a /var/home/claude)" = "claude:700" ]
+home_private claude
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
 # containers run as separate UIDs (claude-vm-podman@<agent>.service), not as the agents
