@@ -177,6 +177,7 @@ tagged `environment=claude-vm`. Both agent users send; the managed settings carr
   if that resolver filters private answers for public names (DNS rebinding protection), exports fail with a DNS error in the Claude Code log.
 - **Auth:** none. The endpoint is LAN-only and the cluster's network policy limits who can reach it.
 - **Temporality:** delta, set explicitly; Prometheus turns it into cumulative counters.
+- **Labels:** Prometheus keeps every datapoint attribute as a label. `OTEL_METRICS_INCLUDE_SESSION_ID` and `_ACCOUNT_UUID` are off: a session id would start a new set of series per session. `user_email`, `user_id` and `organization_id` cannot be switched off.
 
 Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or on the usage page of the cluster.
 
