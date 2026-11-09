@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
+# on failure, also dump the podman units and the socket directories (the VM journal only reaches the run summary)
+diagnose() {
+    echo "--- podman diagnostics ---"
+    systemctl status 'claude-vm-podman@*' --no-pager -l 2>&1 | tail -n 40 || true
+    journalctl -b --no-pager -n 40 -u 'claude-vm-podman@*' 2>&1 || true
+    ls -laZ /run/claude-vm-podman /run/claude-vm-podman/* /run/claude-vm-podman-run 2>&1 || true
+    getfacl -p /var/home/claude /var/home/claude/workspace 2>&1 || true
+    journalctl -b --no-pager -g 'avc:' 2>&1 | tail -n 20 || true
+}
+trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"; diagnose' ERR
 
 echo "== System testing (claude-vm) =="
 id
