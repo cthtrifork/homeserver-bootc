@@ -30,7 +30,7 @@ flowchart LR
         GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
         TOK["Token refresher<br/>(root, 30 min, per-user App)"]
         UPD["03:00: bootc upgrade --apply<br/>(reboots if new image)"]
-        SSH["SSH<br/>(caspertdk, keys only)"]
+        SSH["SSH<br/>(caspertdk, public keys only)"]
     end
 
     REG -->|install / pull| VM
