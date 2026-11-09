@@ -265,13 +265,17 @@ jobs:
             ## Version: <version>
 
             Major Components:
+
               - Kernel: <relver:kernel>
               - KDE: <version:kwayland>
 
             ## Changes since last version (<previous>):
             ### Commits
+
             <!--COMMITS-->
-            ### Package Changes:
+
+            ### Package Changes
+
             <pkgupd>
 
           formatters: |
