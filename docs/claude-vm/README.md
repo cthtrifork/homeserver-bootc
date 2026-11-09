@@ -240,11 +240,10 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
 
 ## Containers run as a separate UID
 
-`podman` for the agent users is a wrapper (`/usr/libexec/claude-vm/bin/podman`) that talks to the API socket of a different
-user, `claude-podman` (UID 1200) or `claude-rc-personal-podman` (1201), run by `claude-vm-podman@<agent>.service`. Containers
-therefore run as that UID, which the kernel keeps out of the agent's home: `~/.claude`, `~/.ssh` and the token stay `0700`, so
-no mount flag (`:Z`, `label=disable`, `--privileged`, `--userns=host`, a symlink) can expose them. That is the point: a podman
-that ran as the agent could mount anything the agent can read, and podman is outside the Bash sandbox.
+`podman` for the agent users is a wrapper that talks to the API of another user, `claude-podman` (1200) or
+`claude-rc-personal-podman` (1201), run by `claude-vm-podman@<agent>.service`. Containers therefore run as that UID, which the
+kernel keeps out of the agent's home: `~/.claude`, `~/.ssh` and the token stay `0700`, so no mount flag can expose them. Podman
+is outside the Bash sandbox, so a podman running as the agent could mount anything the agent can read.
 
 What that looks like for a mount that is allowed, one that is not, and an outbound request:
 
@@ -276,18 +275,17 @@ sequenceDiagram
     G--xA: DNS refused / connection reset (nftables by UID)
 ```
 
-- The agent users have no subuid range and cannot execute `/usr/bin/podman` (mode 0750, group `claude-podman-exec`).
-- The socket is in `/run/claude-vm-podman/<agent>/` (setgid, agent's group, 0660): each agent reaches only its own podman.
-- `podman-prepare` (root, before the service starts) gives `<agent>-podman` an ACL on `~/workspace` only (default ACL for new
-  files, so what containers write stays writable for the agent) and traverse-only on the home directory.
-- The podman UIDs are in the egress gateway's UID set, so containers stay behind the allowlist. SELinux label separation is
-  off for these containers (`label = false`): the file permissions are the boundary.
-- Tools that create files with an explicit restrictive mode (`install -d -m 0755`, `cp -p`, `tar` extracting 0755 dirs) shrink the
-  ACL mask, so `<agent>-podman` gets read-only access to those paths; `chmod g+w` (or `setfacl -m m::rwx`) fixes one.
-- Residual risk: containers can read and write everything under that agent's `~/workspace` and anything world-readable, and a
-  container escape lands as `<agent>-podman`, not as the agent or root.
-  A container can also plant files in what you mount that the agent later runs; that is the same risk as running a download from
-  an allowlisted host, not a new one. Mount the narrowest folder (read-only when possible) and use images you trust.
+- The agent users have no subuid range and cannot execute `/usr/bin/podman` (0750, group `claude-podman-exec`).
+- The socket (`/run/claude-vm-podman/<agent>/`, 0660, agent's group) is reachable only by its own agent.
+- `podman-prepare` gives `<agent>-podman` an ACL on `~/workspace` only (default ACL, so what containers write stays writable for
+  the agent) and traverse-only on the home.
+- The podman UIDs are in the egress gateway's UID set. SELinux label separation is off for these containers (`label = false`):
+  file permissions are the boundary.
+- Files created with an explicit restrictive mode (`install -d -m 0755`, `cp -p`) shrink the ACL mask and leave `<agent>-podman`
+  read-only there; `chmod g+w` fixes a path.
+- Residual risk: containers can read and write whatever they mount from `~/workspace`, and a container escape lands as
+  `<agent>-podman`. Files they plant are as untrusted as any download, so mount the narrowest folder (read-only if possible) and
+  use trusted images.
 
 ## Egress gateway
 
