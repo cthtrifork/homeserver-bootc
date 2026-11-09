@@ -128,7 +128,6 @@ if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.j
 fi
 
 echo "--- usage telemetry ---"
-# OpenTelemetry metrics go to the collector in the cluster (no token); the name is covered by the egress allowlist
 jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/json"' /etc/claude-code/managed-settings.json >/dev/null
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
