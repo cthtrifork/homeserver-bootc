@@ -101,7 +101,7 @@ flowchart LR
         direction TB
         S1["Bash sandbox is a guardrail"]
         S2["Allowed hosts can leak data"]
-        S3["Containers can change what you mount<br/>and the agent may run it later"]
+        S3["Code the agent runs is untrusted:<br/>downloads, repos, container output"]
     end
 
     AG --> CAN
@@ -286,6 +286,8 @@ sequenceDiagram
   ACL mask, so `<agent>-podman` gets read-only access to those paths; `chmod g+w` (or `setfacl -m m::rwx`) fixes one.
 - Residual risk: containers can read and write everything under that agent's `~/workspace` and anything world-readable, and a
   container escape lands as `<agent>-podman`, not as the agent or root.
+  A container can also plant files in what you mount that the agent later runs; that is the same risk as running a download from
+  an allowlisted host, not a new one. Mount the narrowest folder (read-only when possible) and use images you trust.
 
 ## Egress gateway
 
