@@ -59,6 +59,7 @@ flowchart TB
     GW --> GH
     ANTH <--> YOU
 
+    linkStyle default stroke:#888,stroke-width:2px
     classDef agent fill:#d8f5d8,stroke:#2e7d32,color:#000
     classDef cont fill:#fff3cd,stroke:#b8860b,color:#000
     classDef locked fill:#fadbd8,stroke:#c0392b,color:#000
@@ -67,9 +68,9 @@ flowchart TB
     class POD,WS cont
     class TOK,GW,CFG locked
     class YOU,ANTH,GH ext
-    style AGENT fill:#f2fbf2,stroke:#2e7d32
-    style CONT fill:#fffaea,stroke:#b8860b
-    style ROOT fill:#fdf0ee,stroke:#c0392b
+    style AGENT fill:#f2fbf2,stroke:#2e7d32,color:#000
+    style CONT fill:#fffaea,stroke:#b8860b,color:#000
+    style ROOT fill:#fdf0ee,stroke:#c0392b,color:#000
 ```
 
 The same VM by behaviour: what the agent can and cannot do, and which limits are only guardrails:
@@ -107,15 +108,16 @@ flowchart LR
     AG -.-x CANT
     AG -.-> SOFT
 
+    linkStyle default stroke:#888,stroke-width:2px
     classDef ok fill:#d8f5d8,stroke:#2e7d32,color:#000
     classDef no fill:#fadbd8,stroke:#c0392b,color:#000
     classDef soft fill:#fff3cd,stroke:#b8860b,color:#000
     class C1,C2,C3,C4 ok
     class N1,N2,N3,N4,N5,N6 no
     class S1,S2,S3 soft
-    style CAN fill:#f2fbf2,stroke:#2e7d32
-    style CANT fill:#fdf0ee,stroke:#c0392b
-    style SOFT fill:#fffaea,stroke:#b8860b
+    style CAN fill:#f2fbf2,stroke:#2e7d32,color:#000
+    style CANT fill:#fdf0ee,stroke:#c0392b,color:#000
+    style SOFT fill:#fffaea,stroke:#b8860b,color:#000
     style AG fill:#eef,stroke:#667,color:#000
 ```
 
