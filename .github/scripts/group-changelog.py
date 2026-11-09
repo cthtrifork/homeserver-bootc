@@ -12,6 +12,8 @@ import sys
 
 REVISION_LABEL = "org.opencontainers.image.revision"
 MARKER = "<!--COMMITS-->"
+# rechunk leaves <version:pkg> as is when the image has no such package (e.g. KDE on claude-vm)
+UNRESOLVED = re.compile(r"^.*<version:[^>]*>.*\n", re.M)
 
 # a prefix ending in / matches a directory, anything else an exact path
 GROUPS = {
@@ -96,8 +98,8 @@ def main():
             print(f"::warning::git log {prev}..{head} failed: {e.stderr.strip().splitlines()[0]}")
             sections, body = {}, f"Could not list commits since `{prev[:7]}` (not in the checkout)."
         else:
-            shown = [f"#### {n}\n{sections[n]}" for n in SHOWN[image] if n in sections]
-            other = [f"#### {n}\n{t}" for n, t in sections.items() if n not in SHOWN[image]]
+            shown = [f"#### {n}\n\n{sections[n]}" for n in SHOWN[image] if n in sections]
+            other = [f"#### {n}\n\n{t}" for n, t in sections.items() if n not in SHOWN[image]]
             body = "\n\n".join(shown) or "No changes for this image."
             if other:
                 body += ("\n\n<details><summary>Other images, CI and unlisted paths</summary>\n\n"
@@ -106,7 +108,7 @@ def main():
     text = open(path).read()
     if MARKER not in text:
         sys.exit(f"{MARKER} not found in {path}")
-    open(path, "w").write(text.replace(MARKER, body))
+    open(path, "w").write(UNRESOLVED.sub("", text.replace(MARKER, body)))
 
 
 if __name__ == "__main__":
