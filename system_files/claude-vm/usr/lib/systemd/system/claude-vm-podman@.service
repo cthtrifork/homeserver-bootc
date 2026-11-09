@@ -14,8 +14,8 @@ Wants=network-online.target
 Type=simple
 User=%i-podman
 Group=%i-podman
-# The agent's own group on the socket directory (setgid, tmpfiles 16-claude-podman.conf) is what lets only that agent connect.
-UMask=0007
+# The agent's own group on the socket directory (setgid, tmpfiles 16-claude-podman.conf) is what lets only that agent connect;
+# podman creates the socket as 0600 whatever the UMask, so ExecStartPost widens it to 0660.
 # Root-only: gives %i-podman access to the agent's workspace (and nothing else in its home), see the script.
 ExecStartPre=+/usr/libexec/claude-vm/podman-prepare %i
 Environment=HOME=/var/home/%i-podman
@@ -26,6 +26,7 @@ Environment=CONTAINERS_CONF=/usr/share/claude-vm/podman-containers.conf
 RuntimeDirectory=claude-vm-podman-run/%i
 RuntimeDirectoryMode=0700
 ExecStart=/usr/bin/podman system service --time=0 unix:///run/claude-vm-podman/%i/podman.sock
+ExecStartPost=+/usr/libexec/claude-vm/podman-socket-perms %i
 Restart=always
 RestartSec=5
 
