@@ -1,11 +1,12 @@
 #!/usr/bin/bash
-# Runs as root (claude-vm-github-token.service). Signs a short-lived JWT with the GitHub App's private key,
-# trades it for a one-hour installation token and publishes the token for the claude user. The private key
-# never leaves /etc/claude-vm; claude only ever sees the one-hour token.
+# Runs as root (claude-vm-github-token@<user>.service). Signs a short-lived JWT with that user's GitHub App private
+# key, trades it for a one-hour installation token and publishes the token for that user only. The private key
+# never leaves /etc/claude-vm; the agent user only ever sees its own one-hour token.
 set -euo pipefail
 
-src=/etc/claude-vm/github-app
-dest=/run/claude-vm/github-token
+user="${1:?Usage: $0 <user>}"
+src="/etc/claude-vm/github-app/$user"
+dest="/run/claude-vm/$user/github-token"
 
 b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
 
@@ -25,12 +26,12 @@ token="$(curl -fsS --max-time 30 -X POST \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "https://api.github.com/app/installations/${installation_id}/access_tokens" | jq -er .token)"
 
-install -d -m 0750 -o root -g claude /run/claude-vm
-tmp="$(mktemp /run/claude-vm/.github-token.XXXXXX)"
+install -d -m 0750 -o root -g "$user" "/run/claude-vm/$user"
+tmp="$(mktemp "/run/claude-vm/$user/.github-token.XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
-chown root:claude "$tmp"
+chown "root:$user" "$tmp"
 chmod 0640 "$tmp"
 printf '%s\n' "$token" >"$tmp"
 mv -f "$tmp" "$dest"
 trap - EXIT
-echo "github-token refreshed"
+echo "github-token refreshed for $user"

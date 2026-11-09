@@ -1,10 +1,10 @@
 #!/usr/bin/bash
-# `gh` for the claude user: reads the current GitHub App installation token on every call, because the token
-# expires hourly and an environment variable set at service start would go stale. Comes first on the
+# `gh` for the agent users: reads the calling user's current GitHub App installation token on every call, because the
+# token expires hourly and an environment variable set at service start would go stale. Comes first on the
 # service's PATH and is what the git credential helper in /etc/gitconfig runs.
 set -euo pipefail
 
-token_file=/run/claude-vm/github-token
+token_file="/run/claude-vm/$(id -un)/github-token"
 if [[ -r "$token_file" ]]; then
     GH_TOKEN="$(<"$token_file")"
     export GH_TOKEN

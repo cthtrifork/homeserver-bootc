@@ -1,12 +1,12 @@
 [Unit]
 Description=Claude Code Remote Control (claude-rc-personal user)
 Documentation=https://code.claude.com/docs/en/remote-control
-After=network-online.target systemd-tmpfiles-setup.service user@1101.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
+After=network-online.target systemd-tmpfiles-setup.service user@1101.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service claude-vm-github-token@claude-rc-personal.service
 # egress allowlist gateway: without it the agent user has no network anyway, so do not start
 Requires=claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
-Wants=network-online.target user@1101.service
-# Opt-in, independent of claude-remote-control.service (start/stop each on its own): runs as its own Unix user (own home, login, podman storage). It gets no GitHub App token and no
-# signing key (root:claude files it cannot read). Inert until that user is signed in, see docs/claude-vm/README.md.
+Wants=network-online.target user@1101.service claude-vm-github-token@claude-rc-personal.service
+# Opt-in, independent of claude-remote-control.service (start/stop each on its own): runs as its own Unix user (own home, login, podman storage). It has its own GitHub App token
+# (/run/claude-vm/claude-rc-personal). Inert until that user is signed in, see docs/claude-vm/README.md.
 ConditionPathExists=/var/home/claude-rc-personal/.claude/.credentials.json
 
 [Service]
