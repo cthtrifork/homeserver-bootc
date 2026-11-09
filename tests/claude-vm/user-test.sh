@@ -37,7 +37,7 @@ fi
 echo "--- claude user: python, go, npm, rootless podman ---"
 sudo -u claude -H bash -lc '
   set -e
-  export XDG_RUNTIME_DIR=/run/user/$(id -u)
+  export PATH=/usr/libexec/claude-vm/bin:$PATH
   claude --version
   python3 -c "print(\"python ok\")"
   test "$(npm config get prefix)" = "$HOME/.npm-global"
@@ -90,7 +90,45 @@ grep -x "video ok (vp9)" <<<"$pw_out"
 rm -f "$pw_script"
 
 echo "--- podman API socket answers (outside the sandbox) ---"
-sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 curl -sf --unix-socket /run/user/1100/podman/podman.sock http://d/_ping | grep -x OK
+sudo -u claude -H curl -sf --unix-socket /run/claude-vm-podman/claude/podman.sock http://d/_ping | grep -x OK
+
+echo "--- containers cannot reach the agent's secrets (separate UID) ---"
+# the agent's podman is the wrapper; flags that would defeat SELinux or file permissions in a same-UID podman do nothing here
+agent_podman() { (cd / && sudo -u claude -H env PATH=/usr/libexec/claude-vm/bin:/usr/bin podman "$@"); }
+img_s=mirror.gcr.io/library/alpine:latest
+agent_podman pull -q "$img_s" >/dev/null
+secret_blocked() {
+    local out
+    if out="$(agent_podman run --rm --pull=never "$@" "$img_s" cat /x/podman-test-secret 2>&1)"; then echo "container read the secret file: $*"; echo "$out"; exit 1; fi
+}
+# a stand-in for .credentials.json (the real one is not present in the test VM)
+sudo -u claude sh -c "echo secret > /var/home/claude/.claude/podman-test-secret && chmod 0600 /var/home/claude/.claude/podman-test-secret"
+secret_blocked -v /var/home/claude/.claude:/x
+secret_blocked -v /var/home/claude/.claude:/x:Z
+secret_blocked -v /var/home/claude/.claude:/x:z
+secret_blocked --security-opt label=disable -v /var/home/claude/.claude:/x
+secret_blocked --privileged -v /var/home/claude/.claude:/x
+secret_blocked --userns=host -v /var/home/claude/.claude:/x
+secret_blocked --user 0:0 -v /var/home/claude/.claude:/x
+# a symlink in the workspace pointing at the secrets does not help either
+sudo -u claude ln -sfn /var/home/claude/.claude /var/home/claude/workspace/secret-link
+secret_blocked -v /var/home/claude/workspace/secret-link:/x
+sudo -u claude rm -f /var/home/claude/workspace/secret-link /var/home/claude/.claude/podman-test-secret
+# the signing key and the token are out of reach as well
+if agent_podman run --rm --pull=never --privileged -v /var/home/claude/.ssh:/x "$img_s" ls /x >/dev/null 2>&1; then echo "container listed ~/.ssh"; exit 1; fi
+if agent_podman run --rm --pull=never --privileged -v /run/claude-vm/claude:/x "$img_s" ls /x >/dev/null 2>&1; then echo "container listed the token directory"; exit 1; fi
+
+echo "--- containers read and write the workspace; the agent can use what they write ---"
+ws=/var/home/claude/workspace/podman-acl-test
+sudo -u claude install -d "$ws"
+sudo -u claude sh -c "echo from-agent > $ws/in.txt"
+agent_podman run --rm --pull=never -v "$ws":/w "$img_s" sh -c 'grep -x from-agent /w/in.txt && echo from-container > /w/out.txt'
+sudo -u claude grep -x from-container "$ws/out.txt"
+sudo -u claude sh -c "echo edited >> $ws/out.txt && rm -rf $ws"
+# the other agent's containers cannot touch claude's workspace
+if sudo -u claude-rc-personal-podman test -r /var/home/claude/workspace; then echo "claude-rc-personal-podman reads claude's workspace"; exit 1; fi
+# direct podman is not an option for the agent
+if sudo -u claude -H /usr/bin/podman info >/dev/null 2>&1; then echo "claude ran /usr/bin/podman"; exit 1; fi
 
 echo "--- claude doctor reports no invalid settings ---"
 # doctor exits 0 even when a settings file is invalid, so look for its "Invalid settings" section
@@ -149,8 +187,6 @@ sudo curl -sS --max-time 20 -o /dev/null https://github.com
 
 echo "--- egress allowlist: podman containers ---"
 img=mirror.gcr.io/curlimages/curl:latest   # the curl project's image via Google's Docker Hub mirror (~12 MB); gcr.io is allowlisted
-# from /: podman keeps the caller's cwd, which is caspertdk's home and not enterable by claude
-agent_podman() { (cd / && sudo -u claude -H env XDG_RUNTIME_DIR=/run/user/1100 podman "$@"); }
 # the container must start and curl must fail: podman's own errors (125-127) do not count as "blocked"
 container_blocked() {
     local rc=0

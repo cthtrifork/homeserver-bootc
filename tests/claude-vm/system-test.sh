@@ -71,6 +71,7 @@ grep -qF '127.0.0.55:53' <<<"$udp"
 rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 grep -qF '1100-1101' <<<"$rules"
+grep -qF '1200-1201' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
@@ -118,10 +119,40 @@ sshd -T | grep -qx 'passwordauthentication no'
 [ "$(stat -c %U:%a /var/home/claude)" = "claude:700" ]
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
-# podman API socket: enabled for every user manager and socket-activated for claude
-systemctl --global is-enabled podman.socket
-timeout 60 bash -c 'until [ -S /run/user/1100/podman/podman.sock ]; do sleep 1; done'
-# ...but it must not be exposed to the sandbox (it would bypass the file rules and podman's approval prompt)
+# containers run as separate UIDs (claude-vm-podman@<agent>.service), not as the agents
+[ "$(id -u claude-podman)" = "1200" ]
+[ "$(id -u claude-rc-personal-podman)" = "1201" ]
+for pu in claude-podman claude-rc-personal-podman; do
+    [ "$(getent passwd "$pu" | cut -d: -f7)" = "/usr/sbin/nologin" ]
+    if id -nG "$pu" | tr ' ' '\n' | grep -qxE 'wheel|claude|claude-rc-personal'; then
+        echo "$pu must not be in wheel or an agent's group"
+        exit 1
+    fi
+done
+# the agent users have no subuid range and cannot exec the real podman; the wrapper (first on PATH) talks to the API instead
+if grep -qE '^(claude|claude-rc-personal):' /etc/subuid /etc/subgid; then
+    echo "agent users must not have a subuid/subgid range"
+    exit 1
+fi
+[ "$(stat -c %G:%a /usr/bin/podman)" = "claude-podman-exec:750" ]
+for u in claude claude-rc-personal; do
+    if sudo -u "$u" test -x /usr/bin/podman; then echo "$u can exec /usr/bin/podman"; exit 1; fi
+done
+test -x /usr/libexec/claude-vm/bin/podman
+# each podman socket is reachable by its own agent only
+timeout 60 bash -c 'until [ -S /run/claude-vm-podman/claude/podman.sock ]; do sleep 1; done'
+[ "$(stat -c %U:%G:%a /run/claude-vm-podman/claude/podman.sock)" = "claude-podman:claude:660" ]
+sudo -u claude test -w /run/claude-vm-podman/claude/podman.sock
+if sudo -u claude-rc-personal test -x /run/claude-vm-podman/claude; then echo "claude-rc-personal reaches claude's podman socket"; exit 1; fi
+# the podman user cannot read the agent's secrets, whatever a container asks for
+if sudo -u claude-podman test -r /var/home/claude/.claude/.credentials.json || sudo -u claude-podman test -x /run/claude-vm/claude; then
+    echo "claude-podman can reach claude's secrets"
+    exit 1
+fi
+# ...but its workspace is shared by ACL
+sudo -u claude-podman test -w /var/home/claude/workspace
+# the old per-user podman.socket must be gone; and the socket must still not be exposed to the sandbox
+if systemctl --global is-enabled podman.socket 2>/dev/null; then echo "podman.socket must not be enabled for the agent users"; exit 1; fi
 if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.json >/dev/null; then
     echo "the podman socket must not be exposed to the sandbox"
     exit 1

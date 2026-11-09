@@ -17,35 +17,70 @@ files and `tests/claude-vm/`.
 
 ```mermaid
 flowchart LR
-    REG[("ghcr.io image")]
     YOU["You<br/>claude.ai / app"]
     ANTH["claude.ai"]
-    GH["GitHub"]
+    GH["GitHub<br/>(only repos the App is installed on)"]
+    OK["Allowlisted hosts only"]
 
     subgraph VM["Claude VM"]
-        SETUP["Manual setup:<br/>GitHub App + Claude login<br/>(per agent user)"]
-        RC["claude remote-control<br/>(one service per agent user)"]
-        SB["Sandboxed shell<br/>limited paths + domains"]
-        POD["Rootless podman<br/>(approved commands)"]
-        GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
-        TOK["Token refresher<br/>(root, 30 min, per-user App)"]
-        UPD["03:00: bootc upgrade --apply<br/>(reboots if new image)"]
-        SSH["SSH<br/>(caspertdk, public keys only)"]
+        direction LR
+
+        subgraph AGENT["AGENT CONTROLS (agent user, no sudo)"]
+            direction TB
+            RC["claude remote-control<br/>= a shell as the agent user"]
+            FILES["Writable: ~/workspace, ~/.npm-global,<br/>~/.npm, ~/.local, ~/.cache, ~/go"]
+            GIT["git + gh<br/>PRs and branches via 1h App token"]
+            WRAP["podman wrapper<br/>talks only to its own socket"]
+        end
+
+        subgraph LIMITED["USABLE, BUT CONFINED"]
+            direction TB
+            SB["Bash sandbox (bubblewrap)<br/>no writes outside the paths on the left<br/>cannot read .credentials.json"]
+            POD["Rootless podman as a separate UID<br/>(claude-podman, one per agent)<br/>sees only ~/workspace via ACL<br/>containers egress-filtered"]
+        end
+
+        subgraph LOCKED["LOCKED DOWN (root-owned, agent cannot change)"]
+            direction TB
+            POLICY["managed-settings.json + AGENTS.md<br/>highest precedence, managed hooks only"]
+            SECRETS["Agent secrets, mode 0700<br/>~/.claude, ~/.ssh, token dir<br/>unreadable by the podman UID"]
+            GW["Egress gateway, enforced by UID<br/>nftables + nginx + dnsmasq<br/>covers agent AND podman UIDs"]
+            LIST["egress-allowlist.txt<br/>changed only by rebuilding the image"]
+            KEYS["GitHub App private key<br/>root 0600; token refresher runs as root"]
+            OS["/usr read-only image<br/>real /usr/bin/podman not executable by agent<br/>no sudo, no dnf; 03:00 bootc upgrade"]
+            SSH["SSH: caspertdk only, public keys<br/>optional Pinggy tunnel"]
+        end
     end
 
-    REG -->|install / pull| VM
-    SETUP --> RC
-    TOK -->|"1h token"| RC
     RC --> SB
-    RC --> POD
+    RC --- FILES
+    RC --- GIT
+    RC --> WRAP
+    WRAP -->|"unix socket"| POD
+    FILES -. "ACL: rw on workspace only" .-> POD
     SB --> GW
     POD --> GW
-    RC <--> GW
-    GW --> GH
-    GW <--> ANTH
+    GIT --> GW
+    POLICY -. "constrains" .-> RC
+    SECRETS -. "no access" .-x POD
+    LIST -. "feeds" .-> GW
+    KEYS -. "1h token only" .-> GIT
+    GW --> OK
+    OK --- GH
+    OK --- ANTH
     ANTH <--> YOU
-    REG --> UPD
-    YOU -.->|"optional Pinggy tunnel"| SSH
+    YOU -. "optional" .-> SSH
+
+    classDef agent fill:#d8f5d8,stroke:#2e7d32,color:#000
+    classDef limited fill:#fff3cd,stroke:#b8860b,color:#000
+    classDef locked fill:#fadbd8,stroke:#c0392b,color:#000
+    classDef ext fill:#eef,stroke:#667,color:#000
+    class RC,FILES,GIT,WRAP agent
+    class SB,POD limited
+    class POLICY,SECRETS,GW,LIST,KEYS,OS,SSH locked
+    class YOU,ANTH,GH,OK ext
+    style AGENT fill:#f2fbf2,stroke:#2e7d32
+    style LIMITED fill:#fffaea,stroke:#b8860b
+    style LOCKED fill:#fdf0ee,stroke:#c0392b
 ```
 
 - **No secrets in the image.** GitHub App keys and Claude logins are seeded by hand on the VM. SSH host keys are generated at first boot.
@@ -156,14 +191,34 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
   [managed settings](https://code.claude.com/docs/en/managed-settings.md); changes to this file are in git.
 - **Bash sandbox:** required (`bubblewrap`), writes only to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache`
   and `~/go`, reaches only the allowlisted hosts, and cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose`
-  are excluded (rootless podman cannot run inside it) and keep only the egress gateway's network confinement. The podman API
-  socket is deliberately not exposed to the sandbox. It is a guardrail, not a hard boundary: the proxy filters by hostname,
+  are excluded (rootless podman cannot run inside it) and keep only the egress gateway's network confinement; they run
+  containers as a separate UID (see below). The podman API socket is deliberately not exposed to the sandbox. It is a guardrail, not a hard boundary: the proxy filters by hostname,
   broad hosts such as `github.com` can carry data out, and MCP servers and hooks are not covered.
 - **A Remote Control session is a shell as the agent user.** Whoever controls your claude.ai session controls the VM. Turn on
   [Require trusted devices](https://code.claude.com/docs/en/remote-control.md#trusted-devices).
 - **GitHub Apps:** install each only on the repositories its user should touch. The agent holds a one-hour token, never the key.
 - **Data and terms:** the session transcript is stored on Anthropic's servers while connected. Use your own login and do
   not share it. Do not set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`: it also disables Remote Control.
+
+## Containers run as a separate UID
+
+`podman` for the agent users is a wrapper (`/usr/libexec/claude-vm/bin/podman`) that talks to the API socket of a different
+user, `claude-podman` (UID 1200) or `claude-rc-personal-podman` (1201), run by `claude-vm-podman@<agent>.service`. Containers
+therefore run as that UID, which the kernel keeps out of the agent's home: `~/.claude`, `~/.ssh` and the token stay `0700`, so
+no mount flag (`:Z`, `label=disable`, `--privileged`, `--userns=host`, a symlink) can expose them. That is the point: a podman
+that ran as the agent could mount anything the agent can read, and podman is outside the Bash sandbox.
+
+- The agent users have no subuid range and cannot execute `/usr/bin/podman` (mode 0750, group `claude-podman-exec`).
+- The socket is in `/run/claude-vm-podman/<agent>/` (setgid, agent's group, 0660): each agent reaches only its own podman.
+- `podman-prepare` (root, before the service starts) gives `<agent>-podman` an ACL on `~/workspace` only (default ACL for new
+  files, so what containers write stays writable for the agent) and traverse-only on the home directory.
+- The podman UIDs are in the egress gateway's UID set, so containers stay behind the allowlist. SELinux label separation is
+  off for these containers (`label = false`): the file permissions are the boundary.
+- Residual risk: containers can read and write everything under that agent's `~/workspace` and anything world-readable, and a
+  container escape lands as `<agent>-podman`, not as the agent or root.
+- Existing VMs: `/etc/subuid` and `/etc/subgid` are not re-applied on upgrade. Replace the `claude:` and `claude-rc-personal:`
+  entries by `claude-podman:100000:65536` and `claude-rc-personal-podman:165536:65536`; the old per-user images and containers
+  under `~/.local/share/containers` are no longer used and can be deleted.
 
 ## Egress gateway
 
