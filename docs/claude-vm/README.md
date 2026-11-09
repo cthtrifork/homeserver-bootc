@@ -15,6 +15,39 @@ files and `tests/claude-vm/`.
 
 ## Overview
 
+```mermaid
+flowchart LR
+    REG[("ghcr.io image")]
+    YOU["You<br/>claude.ai / app"]
+    ANTH["claude.ai"]
+    GH["GitHub"]
+
+    subgraph VM["Claude VM"]
+        SETUP["Manual setup:<br/>GitHub App + Claude login<br/>(per agent user)"]
+        RC["claude remote-control<br/>(one service per agent user)"]
+        SB["Sandboxed shell<br/>limited paths + domains"]
+        POD["Rootless podman<br/>(approved commands)"]
+        GW["Egress gateway<br/>nftables + nginx + dnsmasq<br/>domain allowlist"]
+        TOK["Token refresher<br/>(root, 30 min, per-user App)"]
+        UPD["03:00: bootc upgrade --apply<br/>(reboots if new image)"]
+        SSH["SSH<br/>(caspertdk, keys only)"]
+    end
+
+    REG -->|install / pull| VM
+    SETUP --> RC
+    TOK -->|"1h token"| RC
+    RC --> SB
+    RC --> POD
+    SB --> GW
+    POD --> GW
+    RC <--> GW
+    GW --> GH
+    GW <--> ANTH
+    ANTH <--> YOU
+    REG --> UPD
+    YOU -.->|"optional Pinggy tunnel"| SSH
+```
+
 - **No secrets in the image.** GitHub App keys and Claude logins are seeded by hand on the VM. SSH host keys are generated at first boot.
 - **Agent users.** Each runs its own Remote Control service, with its own home, claude.ai login, podman storage, GitHub App and token.
   Nothing is shared between them except the egress gateway.
