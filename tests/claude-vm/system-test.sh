@@ -178,6 +178,10 @@ if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.j
     exit 1
 fi
 
+echo "--- usage telemetry ---"
+jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/protobuf" and .env.OTEL_METRICS_INCLUDE_SESSION_ID == "false"' /etc/claude-code/managed-settings.json >/dev/null
+claude-vm-egress allowed | grep -qx portableinfo.cloud
+
 echo "--- nothing secret baked in ---"
 hits="$(find /etc /root /var/home /usr/local -xdev -type f \
     \( -name 'id_rsa' -o -name 'id_dsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' -o -name 'github-token' -o -name 'private-key.pem' -o -name '.credentials.json' \) 2>/dev/null || true)"

@@ -200,6 +200,22 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
 - **Data and terms:** the session transcript is stored on Anthropic's servers while connected. Use your own login and do
   not share it. Do not set `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`: it also disables Remote Control.
 
+## Usage telemetry
+
+Claude Code sends OpenTelemetry metrics (tokens, cost, sessions, lines of code, commits, pull requests, active time) to the OTLP
+receiver of the cluster's Prometheus ([talos-gitops `k8s/apps/claude-system`](https://github.com/cthtrifork/talos-gitops/tree/main/k8s/apps/claude-system#usage-telemetry)),
+tagged `environment=claude-vm`. Both agent users send; the managed settings carry the whole configuration.
+
+- **Endpoint:** `http://otel.portableinfo.cloud/api/v1/otlp` (port 80, `http/protobuf`), a Cloudflare A record to a private LAN
+  address of the cluster. Claude Code appends `/v1/metrics`. No ingress and no new egress rule: `portableinfo.cloud` is already on the
+  allowlist and the gateway forwards plain HTTP by `Host`. The name must resolve to the private address through the VM's resolver:
+  if that resolver filters private answers for public names (DNS rebinding protection), exports fail with a DNS error in the Claude Code log.
+- **Auth:** none. The endpoint is LAN-only and the cluster's network policy limits who can reach it.
+- **Temporality:** delta, set explicitly; Prometheus turns it into cumulative counters.
+- **Labels:** Prometheus keeps every datapoint attribute as a label. `OTEL_METRICS_INCLUDE_SESSION_ID` and `_ACCOUNT_UUID` are off: a session id would start a new set of series per session. `user_email`, `user_id` and `organization_id` cannot be switched off.
+
+Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or on the usage page of the cluster.
+
 ## Containers run as a separate UID
 
 `podman` for the agent users is a wrapper (`/usr/libexec/claude-vm/bin/podman`) that talks to the API socket of a different
