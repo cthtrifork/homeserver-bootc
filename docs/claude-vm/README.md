@@ -242,7 +242,7 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
 
 Claude Code sends OpenTelemetry metrics to the OTLP receiver of the cluster's Prometheus, tagged `environment=claude-vm`. Both agent
 users send. The settings are the `OTEL_*` entries of [managed-settings.json](../../system_files/claude-vm/etc/claude-code/managed-settings.json)
-and are the same as `claude-rc`'s in the cluster, except for the environment name. What each variable does, the metric names, the
+and are the same as `claude-rc`'s in the cluster, except for the endpoint (the pod uses the in-cluster service) and the environment name. What each variable does, the metric names, the
 labels and the retention are described once, in
 [talos-gitops `k8s/apps/claude-system`](https://github.com/cthtrifork/talos-gitops/tree/main/k8s/apps/claude-system#usage-telemetry);
 change both places together.
