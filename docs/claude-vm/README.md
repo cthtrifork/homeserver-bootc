@@ -216,9 +216,6 @@ that ran as the agent could mount anything the agent can read, and podman is out
   off for these containers (`label = false`): the file permissions are the boundary.
 - Residual risk: containers can read and write everything under that agent's `~/workspace` and anything world-readable, and a
   container escape lands as `<agent>-podman`, not as the agent or root.
-- Existing VMs: `/etc/subuid` and `/etc/subgid` are not re-applied on upgrade. Replace the `claude:` and `claude-rc-personal:`
-  entries by `claude-podman:100000:65536` and `claude-rc-personal-podman:165536:65536`; the old per-user images and containers
-  under `~/.local/share/containers` are no longer used and can be deleted.
 
 ## Egress gateway
 
