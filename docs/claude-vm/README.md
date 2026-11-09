@@ -75,6 +75,53 @@ flowchart TB
     style LOCKED fill:#fdf0ee,stroke:#c0392b
 ```
 
+What the agent can and cannot do, and which limits are only guardrails:
+
+```mermaid
+flowchart LR
+    AG(("AGENT<br/>shell as the<br/>agent user"))
+
+    subgraph CAN["CAN DO"]
+        direction TB
+        C1["Write ~/workspace, ~/.npm, ~/.local,<br/>~/.cache, ~/go"]
+        C2["Clone repos, push branches, open PRs<br/>(App repos, 1h token)"]
+        C3["Run containers as claude-podman<br/>(sees ~/workspace only)"]
+        C4["Reach allowlisted hosts<br/>(GitHub, npm, PyPI, Go, registries)"]
+    end
+
+    subgraph CANT["CANNOT DO (enforced by the kernel / root)"]
+        direction TB
+        N1["Read the GitHub App private key"]
+        N2["Mount ~/.claude, ~/.ssh or the token<br/>in a container: any flag, any symlink"]
+        N3["Run /usr/bin/podman directly<br/>or start its own user namespace"]
+        N4["Reach any other host, SSH, QUIC,<br/>IP literals, other ports"]
+        N5["Change managed settings, hooks,<br/>the allowlist, or /usr; no sudo"]
+        N6["Read the other agent's files<br/>or podman socket"]
+    end
+
+    subgraph SOFT["GUARDRAIL ONLY (not a hard boundary)"]
+        direction TB
+        S1["Bash sandbox: unsandboxed tools<br/>can read the agent's own secrets"]
+        S2["Allowed hosts can still carry<br/>data out (name-based filter)"]
+        S3["Containers can read and write<br/>the whole ~/workspace"]
+    end
+
+    AG --> CAN
+    AG -.-x CANT
+    AG -.-> SOFT
+
+    classDef ok fill:#d8f5d8,stroke:#2e7d32,color:#000
+    classDef no fill:#fadbd8,stroke:#c0392b,color:#000
+    classDef soft fill:#fff3cd,stroke:#b8860b,color:#000
+    class C1,C2,C3,C4 ok
+    class N1,N2,N3,N4,N5,N6 no
+    class S1,S2,S3 soft
+    style CAN fill:#f2fbf2,stroke:#2e7d32
+    style CANT fill:#fdf0ee,stroke:#c0392b
+    style SOFT fill:#fffaea,stroke:#b8860b
+    style AG fill:#eef,stroke:#667,color:#000
+```
+
 - **No secrets in the image.** GitHub App keys and Claude logins are seeded by hand on the VM. SSH host keys are generated at first boot.
 - **Agent users.** Each runs its own Remote Control service, with its own home, claude.ai login, podman storage, GitHub App and token.
   Nothing is shared between them except the egress gateway.
@@ -199,6 +246,36 @@ user, `claude-podman` (UID 1200) or `claude-rc-personal-podman` (1201), run by `
 therefore run as that UID, which the kernel keeps out of the agent's home: `~/.claude`, `~/.ssh` and the token stay `0700`, so
 no mount flag (`:Z`, `label=disable`, `--privileged`, `--userns=host`, a symlink) can expose them. That is the point: a podman
 that ran as the agent could mount anything the agent can read, and podman is outside the Bash sandbox.
+
+What that looks like for a mount that is allowed, one that is not, and an outbound request:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant A as Agent shell<br/>(agent user)
+    participant W as podman wrapper
+    participant S as Socket<br/>/run/claude-vm-podman/agent/
+    participant P as claude-podman<br/>(separate UID)
+    participant F as ~/.claude, ~/.ssh,<br/>token (0700 agent)
+    participant G as Egress gateway
+
+    Note over A,P: Allowed: a repo from the workspace
+    A->>W: podman run -v ~/workspace/repo:/src ...
+    W->>S: podman-remote over the unix socket
+    S->>P: create container as claude-podman
+    P-->>A: reads and writes /src (ACL on ~/workspace)
+
+    Note over A,F: Blocked: the agent's secrets, with any flag
+    A->>W: podman run --privileged -v ~/.claude:/x:Z ...
+    W->>S: same socket, same UID
+    S->>P: create container as claude-podman
+    P-xF: open /x/.credentials.json
+    F-->>P: Permission denied (kernel, file mode 0700, other UID)
+
+    Note over A,G: Blocked: any other host
+    A->>G: curl https://example.com (also from containers)
+    G--xA: DNS refused / connection reset (nftables by UID)
+```
 
 - The agent users have no subuid range and cannot execute `/usr/bin/podman` (mode 0750, group `claude-podman-exec`).
 - The socket is in `/run/claude-vm-podman/<agent>/` (setgid, agent's group, 0660): each agent reaches only its own podman.
