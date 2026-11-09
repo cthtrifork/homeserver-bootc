@@ -1,15 +1,15 @@
 [Unit]
-Description=Refresh the GitHub App installation token for the Claude VM
+Description=Refresh the GitHub App installation token of %i
 Documentation=https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app
 After=network-online.target
 Wants=network-online.target
-ConditionPathExists=/etc/claude-vm/github-app/private-key.pem
+ConditionPathExists=/etc/claude-vm/github-app/%i/private-key.pem
 # Keep retrying instead of giving up after the default 5 starts in 10 seconds.
 StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/claude-vm/refresh-github-token
+ExecStart=/usr/libexec/claude-vm/refresh-github-token %i
 TimeoutStartSec=60
 # Retry quickly: at boot the network or clock may not be ready, and the next timer run is 30 minutes away.
 Restart=on-failure

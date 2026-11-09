@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh the GitHub App installation token every 30 minutes
+Description=Refresh the GitHub App installation token of %i every 30 minutes
 
 [Timer]
 # Wall-clock schedule, not OnUnitActiveSec: monotonic time stops while the VM is suspended or paused, which would

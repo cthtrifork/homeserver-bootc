@@ -22,14 +22,14 @@ if compgen -G "$HOME/.ssh/id_*" >/dev/null; then
 fi
 
 echo "--- seed helper refuses a non-PEM key and writes nothing ---"
-if printf 'not a key' | sudo claude-vm-seed-github-app 1 2 >/dev/null 2>&1; then
+if printf 'not a key' | sudo claude-vm-seed-github-app claude 1 2 >/dev/null 2>&1; then
     echo "seed helper accepted a non-PEM key"
     exit 1
 fi
-sudo test ! -e /etc/claude-vm/github-app/private-key.pem
+sudo test ! -e /etc/claude-vm/github-app/claude/private-key.pem
 
 echo "--- claude cannot read the App private key ---"
-if cat /etc/claude-vm/github-app/private-key.pem >/dev/null 2>&1; then
+if cat /etc/claude-vm/github-app/claude/private-key.pem >/dev/null 2>&1; then
     echo "claude can read the App private key"
     exit 1
 fi

@@ -105,8 +105,11 @@ if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
 fi
 [ "$(stat -c %U:%a /var/home/claude-rc-personal)" = "claude-rc-personal:700" ]
 test -e /var/lib/systemd/linger/claude-rc-personal
-# no access to claude's token or home
-if sudo -u claude-rc-personal test -r /run/claude-vm/github-token || sudo -u claude-rc-personal test -r /var/home/claude/.claude.json; then
+# each agent user has its own GitHub App: the token directories are private, and the refresher is a per-user template
+[ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
+[ "$(stat -c %U:%G:%a /run/claude-vm/claude-rc-personal)" = "root:claude-rc-personal:750" ]
+systemctl cat 'claude-vm-github-token@claude-rc-personal.service' 'claude-vm-github-token@claude-rc-personal.timer' >/dev/null
+if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u claude-rc-personal test -x /run/claude-vm/claude; then
     echo "claude-rc-personal can read claude's files"
     exit 1
 fi
