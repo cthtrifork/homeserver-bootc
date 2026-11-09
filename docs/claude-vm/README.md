@@ -167,17 +167,16 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
 
 ## Usage telemetry
 
-Claude Code sends OpenTelemetry metrics (tokens, cost, sessions, lines of code, commits, pull requests, active time) to the
-Redpanda Connect collector of the cluster ([talos-gitops `k8s/apps/claude-system`](https://github.com/cthtrifork/talos-gitops/tree/main/k8s/apps/claude-system#usage-telemetry)),
-tagged `environment=claude-vm`. Both agent users send; the managed settings carry the whole configuration except the token.
+Claude Code sends OpenTelemetry metrics (tokens, cost, sessions, lines of code, commits, pull requests, active time) to the OTLP
+receiver of the cluster's Prometheus ([talos-gitops `k8s/apps/claude-system`](https://github.com/cthtrifork/talos-gitops/tree/main/k8s/apps/claude-system#usage-telemetry)),
+tagged `environment=claude-vm`. Both agent users send; the managed settings carry the whole configuration.
 
-- **Endpoint:** `https://otel.portableinfo.cloud` (443), a Cloudflare A record to a private LAN address of the cluster. No ingress
-  and no new egress rule: `portableinfo.cloud` is already on the allowlist, and the gateway forwards by name. The name must
-  resolve to the private address through the VM's resolver: if that resolver filters private answers for public names (DNS rebinding
-  protection), exports fail with a DNS error in the Claude Code log.
-- **Protocol:** `http/json`, not `http/protobuf`: the open-source inputs of Redpanda Connect cannot decode protobuf. Delta
-  temporality is set explicitly because the collector adds every datapoint to a counter.
-- **Auth:** none. The collector is LAN-only and only accepts metrics; its network policy limits who can reach it.
+- **Endpoint:** `http://otel.portableinfo.cloud/api/v1/otlp` (port 80, `http/protobuf`), a Cloudflare A record to a private LAN
+  address of the cluster. Claude Code appends `/v1/metrics`. No ingress and no new egress rule: `portableinfo.cloud` is already on the
+  allowlist and the gateway forwards plain HTTP by `Host`. The name must resolve to the private address through the VM's resolver:
+  if that resolver filters private answers for public names (DNS rebinding protection), exports fail with a DNS error in the Claude Code log.
+- **Auth:** none. The endpoint is LAN-only and the cluster's network policy limits who can reach it.
+- **Temporality:** delta, set explicitly; Prometheus turns it into cumulative counters.
 
 Look at the result in Prometheus (`claude_code_*{environment="claude-vm"}`) or on the usage page of the cluster.
 

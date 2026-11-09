@@ -89,8 +89,8 @@
     "DISABLE_AUTOUPDATER": "1",
     "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
     "OTEL_METRICS_EXPORTER": "otlp",
-    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
-    "OTEL_EXPORTER_OTLP_ENDPOINT": "https://otel.portableinfo.cloud",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel.portableinfo.cloud/api/v1/otlp",
     "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE": "delta",
     "OTEL_RESOURCE_ATTRIBUTES": "environment=claude-vm"
   }

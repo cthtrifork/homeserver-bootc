@@ -128,7 +128,7 @@ if jq -e '.sandbox.network.allowUnixSockets' /etc/claude-code/managed-settings.j
 fi
 
 echo "--- usage telemetry ---"
-jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/json"' /etc/claude-code/managed-settings.json >/dev/null
+jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/protobuf"' /etc/claude-code/managed-settings.json >/dev/null
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
 echo "--- nothing secret baked in ---"
