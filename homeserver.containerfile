@@ -6,6 +6,13 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
+# Pin the Fedora repos to one mirror instead of their metalinks, which redirect to arbitrary mirrors that the CI runner's
+# egress allowlist cannot name. A repo override (dnf5) replaces the metalink; it is removed in build_files/post/90-cleanup.sh.
+ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
+RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
+      '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
+      '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
+    > /etc/dnf/repos.override.d/50-mirror.repo
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True" >> /etc/dnf/dnf.conf
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
