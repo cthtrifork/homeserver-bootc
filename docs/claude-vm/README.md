@@ -232,6 +232,9 @@ password login is off and only the keys in `authorized_keys.pub` work, but disab
   it; they run containers as a separate UID (see below) and the podman socket is not exposed to the sandbox. It is a guardrail,
   not a hard boundary: the proxy filters by hostname, so broad hosts such as `github.com` can carry data out, and MCP servers and
   hooks are not covered.
+  `allowAllUnixSockets` is on so podman and chromium work in any command shape (path-based `allowUnixSockets` is macOS only). The
+  cost: a sandboxed command can reach the agent's own systemd/D-Bus socket and start a process outside the sandbox. UIDs do not
+  help there (same user); only the egress gateway (nftables by UID) still applies.
 - **A Remote Control session is a shell as the agent user.** Whoever controls your claude.ai session controls the VM. Turn on
   [Require trusted devices](https://code.claude.com/docs/en/remote-control.md#trusted-devices).
 - **GitHub Apps:** install each only on the repositories its user should touch (see "GitHub access").
