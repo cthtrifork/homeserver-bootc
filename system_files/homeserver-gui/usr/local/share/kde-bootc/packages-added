@@ -26,6 +26,8 @@ plasma-breeze
 kscreenlocker
 # used by several apps
 webkitgtk6.0
+# Filemanager
+doplin
 
 # startup / initramfs
 clevis
