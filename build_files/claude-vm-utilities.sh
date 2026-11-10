@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs crane, hadolint and actionlint, checksum-verified (see download-lib.sh).
+# Installs crane, hadolint, actionlint and shfmt, checksum-verified (see download-lib.sh).
 set -euo pipefail
 
 BIN_DIR="/usr/bin"
@@ -40,3 +40,14 @@ fetch "$work/actionlint.sum" "${base}/actionlint_${ver}_checksums.txt"
 verify "$ACTIONLINT_TGZ" "actionlint_${ver}_linux_amd64.tar.gz" "$work/actionlint.sum"
 tar -xzf "$ACTIONLINT_TGZ" -C "$BIN_DIR" actionlint
 actionlint -version
+
+log "Installing shfmt"
+# The release has no checksum file: pin the sha256 GitHub reports for the asset, and update it with the version.
+SHFMT_VERSION=v3.14.1 # renovate: datasource=github-releases depName=mvdan/sh
+SHFMT_SHA256=76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf
+SHFMT_BIN="$(tmp_name shfmt "$SHFMT_VERSION" bin)"
+download_if_missing "$SHFMT_BIN" "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
+echo "${SHFMT_SHA256}  shfmt" >"$work/shfmt.sum"
+verify "$SHFMT_BIN" shfmt "$work/shfmt.sum"
+install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
+shfmt --version
