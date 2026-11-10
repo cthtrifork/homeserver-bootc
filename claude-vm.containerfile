@@ -30,7 +30,8 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx /ctx/build_files/pin-repos.s
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium ffmpeg-free \
-    && dnf clean all
+    && dnf clean all \
+    && /ctx/build_files/pin-repos.sh unpin
 
 # Rootless podman runs as separate UIDs, not as the agents: claude-podman (1200) and claude-rc-personal-podman (1201, see
 # sysusers.d). The agents get no subuid range, so they cannot start a user namespace of their own, and /usr/bin/podman is
