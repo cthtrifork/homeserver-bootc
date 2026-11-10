@@ -59,6 +59,9 @@ RUN dnf group install -y multimedia && \
   dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \
   dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
+# Cisco's repo has no metadata for a new release at first; Firefox-based browsers then download the plugin themselves.
+RUN dnf -y install --skip-unavailable --setopt install_weak_deps=false openh264 gstreamer1-plugin-openh264 mozilla-openh264
+
 # Set default applications
 #RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
