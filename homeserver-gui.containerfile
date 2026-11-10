@@ -6,13 +6,11 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
-# External hosts of the package repos. Each repo is pinned to one host instead of its metalink, which redirects to arbitrary mirrors
-# that the CI runner's egress allowlist cannot name: keep this list and the arc-runner policy in talos-gitops
-# (k8s/apps/arc-runner/networkpolicy.yaml) in step. Override with --build-arg.
+# Repo hosts, pinned instead of the metalinks; keep in step with the arc-runner egress policy in talos-gitops.
 ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
 ARG OPENH264_MIRROR=https://codecs.fedoraproject.org/openh264
-# A repo override (dnf5) replaces the metalinks; it is removed in build_files/post/90-cleanup.sh.
+# Removed in build_files/post/90-cleanup.sh.
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
       '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
