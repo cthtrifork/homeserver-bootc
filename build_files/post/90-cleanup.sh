@@ -23,8 +23,8 @@ dnf -y autoremove
 # Documentation is available online
 rm -rf /usr/share/doc
 
-# Restore the metalinks of the Fedora and RPM Fusion repos (pinned to one mirror during the build)
-"$(dirname "$0")/../pin-repos.sh" unpin
+# Back to the metalinks (the repos were pinned to one mirror during the build)
+rm -f /etc/dnf/repos.override.d/50-mirror.repo
 
 # Disable all COPR repos
 for i in /etc/yum.repos.d/_copr:*.repo; do
