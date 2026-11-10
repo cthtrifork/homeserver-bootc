@@ -114,6 +114,9 @@ path in your reply into a link that opens the file from the VM in a preview (con
   `/var/home/claude/workspace/shots/page.png`. Relative paths and `~` do not link.
 - Take screenshots with the image's `/usr/bin/chromium-browser`:
   `chromium-browser --headless --no-sandbox --disable-gpu --screenshot=<abs png path> --window-size=1280,800 <url or file:// url>`.
+  `chromium-browser` is excluded from the Bash sandbox like `podman` (it needs to create a unix socket for its profile
+  singleton, which the sandbox blocks), but only when it is the whole command: in `cd x && chromium-browser ...` or a pipe it
+  runs sandboxed and fails with "socket() failed: Operation not permitted". It is still behind the egress gateway.
   The dbus errors it prints are harmless. Only allowlisted hosts and localhost are reachable.
 - The same applies to any other file you want the user to see: give its absolute path (`path:line` for code).
 

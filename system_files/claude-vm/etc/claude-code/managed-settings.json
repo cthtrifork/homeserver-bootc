@@ -43,7 +43,9 @@
     "allowUnsandboxedCommands": true,
     "excludedCommands": [
       "podman *",
-      "podman-compose *"
+      "podman-compose *",
+      "chromium-browser *",
+      "/usr/bin/chromium-browser *"
     ],
     "filesystem": {
       "allowWrite": [
