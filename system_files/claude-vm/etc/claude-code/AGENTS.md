@@ -161,10 +161,5 @@ in your home directory, see below):
 - `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt. Containers run as
   `<user>-podman`: mount repos with `-v ~/workspace/<repo>:/src` (no `:Z` needed); `/usr/bin/podman` is not executable for you.
   Files a container writes into `~/workspace` are owned by `<user>-podman` but stay writable for you (default ACL).
-- Run `podman` / `podman compose` as the **whole** Bash command. The sandbox exclusion matches only when the command
-  starts with `podman`; in `cd x && podman ...`, a pipe, a loop or `VAR=1 podman ...` it runs sandboxed and fails with
-  "set sticky bit on: chmod /run/user/<uid>/libpod: read-only file system" (or "socket: operation not permitted"). That
-  is not flakiness: the same call succeeds when it is bare. Use `-w`/`--workdir`, `-f <compose file>` or absolute paths
-  instead of `cd`, and split pipes into separate calls. The wrapper now prints this hint and exits 125.
 - Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
   instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.
