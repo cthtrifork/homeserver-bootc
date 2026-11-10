@@ -23,7 +23,9 @@ ARG PLAYWRIGHT_VERSION=1.65.0 # renovate: datasource=npm depName=playwright
 # ffmpeg-free: Fedora's ffmpeg (VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265 encoders). The full RPM Fusion ffmpeg of the GUI
 # image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
-RUN dnf -y install --setopt=install_weak_deps=False \
+# Pin the Fedora repos to one mirror (build_files/pin-repos.sh) so the CI runner's egress allowlist can name it; restored after the install.
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx /ctx/build_files/pin-repos.sh pin \
+    && dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \

@@ -6,6 +6,9 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
+# Pin the Fedora and RPM Fusion repos to one mirror (build_files/pin-repos.sh) so the CI runner's egress allowlist can name it;
+# the metalinks are restored in build_files/post/90-cleanup.sh.
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx /ctx/build_files/pin-repos.sh pin
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True" >> /etc/dnf/dnf.conf
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
@@ -35,7 +38,8 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
   dnf -y install --setopt install_weak_deps=false rsync && \
   rsync -rvpKl /ctx/system_files/homeserver/ /ctx/system_files/homeserver-gui/ \
-  /
+  / && \
+  /ctx/build_files/pin-repos.sh pin
 
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed /usr/local/share/kde-bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove

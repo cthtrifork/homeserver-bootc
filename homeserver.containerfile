@@ -6,6 +6,9 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
+# Pin the Fedora and RPM Fusion repos to one mirror (build_files/pin-repos.sh) so the CI runner's egress allowlist can name it;
+# the metalinks are restored in build_files/post/90-cleanup.sh.
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx /ctx/build_files/pin-repos.sh pin
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True" >> /etc/dnf/dnf.conf
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
