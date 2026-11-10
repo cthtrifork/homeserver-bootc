@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.22@sha256:4a43a54dd1fedceb30ba47e76cfcf2b47304f4161c0caeac2db1c61804ea3c91
 # Minimal bootc VM running `claude remote-control`; contains no secrets.
-FROM quay.io/fedora/fedora-bootc:44 AS base
+FROM quay.io/fedora/fedora-bootc:45 AS base
 
 # Build context for the helper scripts (same pattern as homeserver.containerfile)
 FROM scratch AS ctx_build
