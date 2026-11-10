@@ -5,6 +5,16 @@
 # Comes first on the agent services' PATH, so `podman` and `podman compose` (podman-compose) both end up here.
 set -euo pipefail
 
+# The Bash sandbox exempts a command from itself only when `podman ...` is the whole command (managed-settings
+# sandbox.excludedCommands). In a compound command (`cd x && podman ...`, a pipe, `VAR=1 podman ...`, a loop) podman runs
+# inside the sandbox, where /run/user/<uid> is mounted read-only and unix sockets are blocked. podman-remote then fails
+# with a confusing "chmod .../libpod: read-only file system" or "socket: operation not permitted". Say what is wrong.
+if [[ -n "${XDG_RUNTIME_DIR:-}" && -d "$XDG_RUNTIME_DIR" && ! -w "$XDG_RUNTIME_DIR" ]]; then
+    echo "podman: running inside the Bash sandbox ($XDG_RUNTIME_DIR is read-only), where it cannot work." >&2
+    echo "podman: run it as a bare command, 'podman <args>' alone (no cd, &&, pipe, loop or VAR=... prefix; use -w/--workdir flags or absolute paths)." >&2
+    exit 125
+fi
+
 sock="/run/claude-vm-podman/$(id -un)/podman.sock"
 if [[ ! -S "$sock" ]]; then
     echo "podman: $sock is missing; is claude-vm-podman@$(id -un).service running?" >&2
