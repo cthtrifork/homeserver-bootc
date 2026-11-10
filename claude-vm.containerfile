@@ -23,8 +23,7 @@ ARG PLAYWRIGHT_VERSION=1.65.0 # renovate: datasource=npm depName=playwright
 # ffmpeg-free: Fedora's ffmpeg (VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265 encoders). The full RPM Fusion ffmpeg of the GUI
 # image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
-# Pin the Fedora repos to one mirror instead of their metalinks, which redirect to arbitrary mirrors that the CI runner's
-# egress allowlist cannot name. A repo override (dnf5) replaces the metalink; it is removed in build_files/post/90-cleanup.sh.
+# Repo host, pinned instead of the metalink; keep in step with the arc-runner egress policy in talos-gitops.
 ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
