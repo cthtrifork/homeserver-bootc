@@ -23,12 +23,20 @@ ARG PLAYWRIGHT_VERSION=1.65.0 # renovate: datasource=npm depName=playwright
 # ffmpeg-free: Fedora's ffmpeg (VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265 encoders). The full RPM Fusion ffmpeg of the GUI
 # image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
+# Repo host, pinned instead of the metalink; keep in step with the arc-runner egress policy in talos-gitops.
+ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
+RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
+      '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
+      '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
+    > /etc/dnf/repos.override.d/50-mirror.repo
+
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium ffmpeg-free \
-    && dnf clean all
+    && dnf clean all \
+    && rm -f /etc/dnf/repos.override.d/50-mirror.repo
 
 # Rootless podman runs as separate UIDs, not as the agents: claude-podman (1200) and claude-rc-personal-podman (1201, see
 # sysusers.d). The agents get no subuid range, so they cannot start a user namespace of their own, and /usr/bin/podman is

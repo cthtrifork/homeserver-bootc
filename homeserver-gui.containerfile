@@ -6,6 +6,20 @@ COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
 FROM base AS final
+# Repo hosts, pinned instead of the metalinks; keep in step with the arc-runner egress policy in talos-gitops.
+ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
+ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
+ARG OPENH264_MIRROR=https://codecs.fedoraproject.org/openh264
+# Removed in build_files/post/90-cleanup.sh.
+RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
+      '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
+      '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
+      '[rpmfusion-free]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/free/fedora/releases/\$releasever/Everything/\$basearch/os/" \
+      '[rpmfusion-free-updates]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/free/fedora/updates/\$releasever/\$basearch/" \
+      '[rpmfusion-nonfree]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/nonfree/fedora/releases/\$releasever/Everything/\$basearch/os/" \
+      '[rpmfusion-nonfree-updates]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/nonfree/fedora/updates/\$releasever/\$basearch/" \
+      '[fedora-cisco-openh264]' 'metalink=' "baseurl=${OPENH264_MIRROR}/\$releasever/\$basearch/os/" \
+    > /etc/dnf/repos.override.d/50-mirror.repo
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True" >> /etc/dnf/dnf.conf
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
