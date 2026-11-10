@@ -69,6 +69,9 @@
         "~/.config/git"
       ]
     },
+    "network": {
+      "allowAllUnixSockets": true
+    },
     "autoAllowBashIfSandboxed": true
   },
   "allowManagedHooksOnly": true,

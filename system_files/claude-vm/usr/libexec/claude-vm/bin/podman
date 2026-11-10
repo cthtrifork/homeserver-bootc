@@ -5,6 +5,14 @@
 # Comes first on the agent services' PATH, so `podman` and `podman compose` (podman-compose) both end up here.
 set -euo pipefail
 
+# Inside the Bash sandbox /run/user/<uid> is read-only and podman-remote cannot create its libpod dir there ("chmod
+# .../libpod: read-only file system"). Use a private writable runtime dir instead; the API socket needs none of it.
+if [[ -n "${XDG_RUNTIME_DIR:-}" && -d "$XDG_RUNTIME_DIR" && ! -w "$XDG_RUNTIME_DIR" ]]; then
+    XDG_RUNTIME_DIR="${TMPDIR:-/tmp}/podman-xdg-$(id -u)"
+    install -d -m 700 "$XDG_RUNTIME_DIR"
+    export XDG_RUNTIME_DIR
+fi
+
 sock="/run/claude-vm-podman/$(id -un)/podman.sock"
 if [[ ! -S "$sock" ]]; then
     echo "podman: $sock is missing; is claude-vm-podman@$(id -un).service running?" >&2
