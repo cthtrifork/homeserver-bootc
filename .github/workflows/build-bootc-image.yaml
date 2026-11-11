@@ -272,7 +272,7 @@ jobs:
           pkg_label="$(gzip -9n < "${RUNNER_TEMP}/packages.tsv" | base64 -w0)"
           sudo --preserve-env=CHUNKAH_CONFIG_STR podman run --rm \
             --security-opt label=disable \
-            --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},dest=/chunkah" \
+            --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},target=/chunkah" \
             -v "${out}:/out" \
             -e CHUNKAH_CONFIG_STR \
             -e SOURCE_DATE_EPOCH=1 \
