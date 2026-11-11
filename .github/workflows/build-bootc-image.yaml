@@ -247,6 +247,8 @@ jobs:
           skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json \
             || { echo "No previous manifest (first build of this image?)"; echo '{}' > previous.manifest.json; }
 
+      # SOURCE_DATE_EPOCH clamps file mtimes so unchanged packages give identical layer digests across builds,
+      # which is what lets the push skip layers the registry already has.
       # chunkah splits the flat rootfs of the built image into content-based (per RPM) layers. The image is
       # mounted straight from root's containers-storage, so nothing is copied or tarred. OSTree data is pruned
       # because the image is a plain layered bootc image, and the labels of the build (podman inspect) are kept
@@ -272,6 +274,7 @@ jobs:
             --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},dest=/chunkah" \
             -v "${out}:/out" \
             -e CHUNKAH_CONFIG_STR \
+            -e SOURCE_DATE_EPOCH=1 \
             "${CHUNKAH_IMAGE}" build \
               --prune /sysroot/ \
               --max-layers "${MAX_LAYERS}" \
