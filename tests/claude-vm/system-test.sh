@@ -135,7 +135,9 @@ if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u c
     exit 1
 fi
 id -nG caspertdk | grep -qw wheel
-sshd -T | grep -qx 'passwordauthentication no'
+# not `sshd -T | grep -q`: grep exits at the first match and, under pipefail, sshd's SIGPIPE on the rest of its output fails the pipeline
+sshd_config="$(sshd -T)"
+grep -qx 'passwordauthentication no' <<<"$sshd_config"
 home_private claude
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
