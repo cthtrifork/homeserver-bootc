@@ -25,7 +25,7 @@ env:
 jobs:
   build-bootc-image:
     name: Build image ${{ inputs.image }}
-    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu-docker' || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     #runs-on: arc-ubuntu
     #runs-on: ubuntu-latest
     continue-on-error: false
@@ -369,7 +369,7 @@ jobs:
 
   trivy:
     name: "Trivy scan: ${{ inputs.image }}"
-    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu-docker' || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     #runs-on: 'arc-ubuntu'
     needs:
       - build-bootc-image
@@ -455,7 +455,7 @@ jobs:
 
   run-on-pr:
     name: "Run on PR: ${{ inputs.image }}"
-    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu-docker' || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
     #runs-on: 'arc-ubuntu'
     needs:
       - build-bootc-image
@@ -565,7 +565,7 @@ jobs:
     name: "E2E Test on: ${{ inputs.image }}"
     # homeserver-gui has its own runner due to disksize requirements
     # pinned to 24.04: bootc-image-builder used to fail mounting containers-storage on ubuntu-latest (not re-checked with bootc install)
-    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu-docker' || 'ubuntu-24.04' }}
+    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
     needs:
       - build-bootc-image
     # only run if tagged for testing
