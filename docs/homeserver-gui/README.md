@@ -50,7 +50,7 @@ flowchart TD
 
 ## CI
 
-Builds and E2E run on the `arc-ubuntu` runner because of disk size, and rechunking uses 36 layers instead of 32.
+Builds and E2E run on the `arc-ubuntu` runner because of disk size, and rechunking (chunkah) uses the same 128 layers.
 Local builds work as in [homeserver](../homeserver/README.md#local-build-test) with `-f homeserver-gui.containerfile`.
 
 ## Tests

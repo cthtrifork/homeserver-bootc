@@ -22,7 +22,7 @@ The first two bake secrets into the image and must stay private. `claude-vm` is 
 
 ## Commit and PR titles
 
-Titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope)!: summary`, e.g. `ci(cleanup): run each package as a matrix job`. Allowed types: `feat`, `fix`, `security`, `perf`, `refactor`, `docs`, `test`, `chore`, `revert`, `ci`, `build`, `deps`. The `pr-title` workflow checks the PR title. Squash merges use it as the commit subject, which the rechunker changelog of each image release then lists.
+Titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope)!: summary`, e.g. `ci(cleanup): run each package as a matrix job`. Allowed types: `feat`, `fix`, `security`, `perf`, `refactor`, `docs`, `test`, `chore`, `revert`, `ci`, `build`, `deps`. The `pr-title` workflow checks the PR title. Squash merges use it as the commit subject, which the changelog of each image release then lists.
 
 ## Filesystem notes
 

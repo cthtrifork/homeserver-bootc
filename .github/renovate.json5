@@ -106,8 +106,7 @@
   ],
   customManagers: [
     {
-      // Container images that are not in a Dockerfile: the rechunk image passed to hhd-dev/rechunk
-      // (the action itself is updated by the github-actions manager) and the registry image the
+      // Container images that are not in a Dockerfile: the chunkah image used to rechunk the built image and the registry image the
       // self-hosted runner pulls in the prepare-podman action.
       customType: 'regex',
       managerFilePatterns: [
@@ -115,7 +114,7 @@
         '/^\\.github/actions/[^/]+/action\\.ya?ml$/',
       ],
       matchStrings: [
-        '(?<depName>ghcr\\.io/hhd-dev/rechunk):(?<currentValue>v?\\d[\\w.-]*)',
+        '(?<depName>quay\\.io/coreos/chunkah):(?<currentValue>v?\\d[\\w.-]*)',
         '(?<depName>docker\\.io/library/registry):(?<currentValue>\\d[\\w.-]*)',
       ],
       datasourceTemplate: 'docker',
