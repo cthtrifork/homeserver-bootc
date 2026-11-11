@@ -14,7 +14,7 @@ flowchart TD
     BASE["fedora-bootc:44"] --> IMG
     subgraph IMG["homeserver-gui image (PRIVATE: same baked secrets)"]
         KDE["KDE Plasma + SDDM + KDE apps<br/>PipeWire, NetworkManager Wi-Fi, TLP"]
-        APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>harper-pad, yaml-schema-router, multimedia codecs"]
+        APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>harper-pad, kglance, yaml-schema-router, multimedia codecs"]
         BOOTX["Boot<br/>Plymouth bgrt-better-luks, Clevis LUKS,<br/>dracut initramfs, graphical.target"]
         DEF["Defaults<br/>hostname kde-homeserver,<br/>Danish keymap, SDDM hides runner"]
         NOPING["pinggy.service DISABLED"]
@@ -32,7 +32,11 @@ flowchart TD
   SDDM, KDE apps, fonts, zen-browser, ghostty, the libvirt/virt-manager stack, NetworkManager with Wi-Fi, PipeWire,
   TLP and Clevis for LUKS. Multimedia codecs come from the `multimedia` group with ffmpeg swapped in.
 - **Extra software** (`build_files/gui/`): VS Code from Microsoft's repo, Zed, yaml-schema-router and the
-  trivy-scanner (`cthtrifork/trivy-dashboard-wail3`) and harper-pad (`cthtrifork/harper-pad`) RPMs. Versions use `# renovate:` comments.
+  trivy-scanner (`cthtrifork/trivy-dashboard-wail3`), harper-pad (`cthtrifork/harper-pad`) and kglance (`cthtrifork/kglance`)
+  RPMs. Versions use `# renovate:` comments. The trivy-scanner and harper-pad RPMs are PGP-signed and checked with
+  their release key; the kglance RPM is not signed, so it is checked against the release's `SHA256SUMS`.
+- **KGlance** is a popup with the clock, the date and the battery on `Meta+Alt+G` (change it in System Settings,
+  Shortcuts). Its RPM adds an autostart entry (`kglance --background`), so the shortcut works after login.
 - **Zed does not self-update.** The image pins Zed and the user-setup dotfiles sync restores that copy on every boot,
   so a self-update would be undone. `etc/environment.d/50-zed.conf` sets `ZED_UPDATE_EXPLANATION`, which is Zed's own
   switch for packaged installs: it stops update polling and makes "Check for Updates" show the message instead.
