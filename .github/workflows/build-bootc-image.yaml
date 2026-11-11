@@ -277,6 +277,7 @@ jobs:
               --max-layers "${MAX_LAYERS}" \
               --label ostree.commit- --label ostree.final-diffid- \
               --label "org.homeserver.rpm-packages=${pkg_label}" \
+              --compressed --compression-level 3 \
               --output oci:/out/img
           sudo chown -R "$(id -u):$(id -g)" "${out}"
           echo "ref=oci:${out}/img" >> "${GITHUB_OUTPUT}"
