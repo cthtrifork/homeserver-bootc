@@ -137,7 +137,8 @@ fi
 id -nG caspertdk | grep -qw wheel
 # not `sshd -T | grep -q`: grep exits at the first match and, under pipefail, sshd's SIGPIPE on the rest of its output fails the pipeline
 sshd_config="$(sshd -T)"
-grep -qx 'passwordauthentication no' <<<"$sshd_config"
+# case-insensitive: OpenSSH 10.5 (Fedora 45) prints `PasswordAuthentication no`, older releases printed it lowercase
+grep -qix 'passwordauthentication no' <<<"$sshd_config"
 home_private claude
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
