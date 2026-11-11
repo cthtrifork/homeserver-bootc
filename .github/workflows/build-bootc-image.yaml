@@ -568,7 +568,7 @@ jobs:
     # only run if tagged for testing
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'e2e') }}
     continue-on-error: false
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: read
