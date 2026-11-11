@@ -257,6 +257,7 @@ jobs:
         id: rechunk
         env:
           CHUNKAH_IMAGE: quay.io/coreos/chunkah:v0.7.1
+          CREATED: ${{ steps.date.outputs.date }}
           MAX_LAYERS: "128"
         run: |
           out="${RUNNER_TEMP}/chunked"
@@ -283,6 +284,8 @@ jobs:
               --compressed --compression-level 3 \
               --output oci:/out/img
           sudo chown -R "$(id -u):$(id -g)" "${out}"
+          # SOURCE_DATE_EPOCH=1 leaves the image created time at 1970; set the real build time (layers untouched)
+          python3 -I .github/scripts/set-image-created.py "${out}/img" "${CREATED}"
           echo "ref=oci:${out}/img" >> "${GITHUB_OUTPUT}"
           printf '# %s\n## Version: %s\n\n## Changes since last version:\n### Commits\n\n<!--COMMITS-->\n\n### Package Changes\n\n<!--PACKAGES-->\n' \
             "${IMAGE_NAME}" "${UNIQUE_VERSION}" > "${RUNNER_TEMP}/changelog.md"
