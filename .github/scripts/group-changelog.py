@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fill the <!--COMMITS--> marker of a changelog with commits grouped by the files they touch.
 
-Env: IMAGE, REPO_URL, GITHUB_SHA (or HEAD_REV); MANIFEST (default previous.manifest.json); PREV_REV overrides its label.
+Env: PACKAGES (rpm list, tab separated), IMAGE, REPO_URL, GITHUB_SHA (or HEAD_REV); MANIFEST (default previous.manifest.json); PREV_REV overrides its label.
 Usage: group-changelog.py <changelog.md>
 """
 import json

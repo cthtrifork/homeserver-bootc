@@ -261,6 +261,12 @@ jobs:
           rm -rf "${out}"; mkdir -p "${out}"
           CHUNKAH_CONFIG_STR="$(sudo podman inspect "localhost/${IMAGE_NAME}:${DOCKER_TAG}")"
           export CHUNKAH_CONFIG_STR
+          # Package overview for the changelog: name and version of every RPM, stored gzip+base64 as an image
+          # label so the next build can diff against it (see group-changelog.py).
+          sudo podman run --rm "localhost/${IMAGE_NAME}:${DOCKER_TAG}" \
+            rpm -qa --qf '%{NAME}\t%{EVR}\n' | LC_ALL=C sort > "${RUNNER_TEMP}/packages.tsv"
+          wc -l "${RUNNER_TEMP}/packages.tsv"
+          pkg_label="$(gzip -9n < "${RUNNER_TEMP}/packages.tsv" | base64 -w0)"
           sudo --preserve-env=CHUNKAH_CONFIG_STR podman run --rm \
             --security-opt label=disable \
             --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},dest=/chunkah" \
@@ -270,9 +276,10 @@ jobs:
               --prune /sysroot/ \
               --max-layers "${MAX_LAYERS}" \
               --label ostree.commit- --label ostree.final-diffid- \
-              --output oci:/out
+              --label "org.homeserver.rpm-packages=${pkg_label}" \
+              --output oci:/out/img
           sudo chown -R "$(id -u):$(id -g)" "${out}"
-          echo "ref=oci:${out}" >> "${GITHUB_OUTPUT}"
+          echo "ref=oci:${out}/img" >> "${GITHUB_OUTPUT}"
           printf '# %s\n## Version: %s\n\n## Changes since last version:\n### Commits\n\n<!--COMMITS-->\n' \
             "${IMAGE_NAME}" "${UNIQUE_VERSION}" > "${RUNNER_TEMP}/changelog.md"
           echo "changelog=${RUNNER_TEMP}/changelog.md" >> "${GITHUB_OUTPUT}"
