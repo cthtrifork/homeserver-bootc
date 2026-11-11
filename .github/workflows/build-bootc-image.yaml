@@ -280,7 +280,7 @@ jobs:
               --output oci:/out/img
           sudo chown -R "$(id -u):$(id -g)" "${out}"
           echo "ref=oci:${out}/img" >> "${GITHUB_OUTPUT}"
-          printf '# %s\n## Version: %s\n\n## Changes since last version:\n### Commits\n\n<!--COMMITS-->\n' \
+          printf '# %s\n## Version: %s\n\n## Changes since last version:\n### Commits\n\n<!--COMMITS-->\n\n### Package Changes\n\n<!--PACKAGES-->\n' \
             "${IMAGE_NAME}" "${UNIQUE_VERSION}" > "${RUNNER_TEMP}/changelog.md"
           echo "changelog=${RUNNER_TEMP}/changelog.md" >> "${GITHUB_OUTPUT}"
 
@@ -290,6 +290,7 @@ jobs:
           CHANGELOG: ${{ steps.rechunk.outputs.changelog }}
           IMAGE: ${{ inputs.image }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          PACKAGES: ${{ runner.temp }}/packages.tsv
         run: |
           python3 -I .github/scripts/group-changelog.py "${CHANGELOG}"
 
