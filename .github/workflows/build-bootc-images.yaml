@@ -35,10 +35,10 @@ permissions:
 jobs:
   changes:
     name: Detect changed areas
-    # `labeled` is only a trigger for the labels the build reads (`e2e`, `push`, `gui`). Renovate adds several
+    # `labeled` is only a trigger for the labels the build reads (`e2e`, `push`, `gui`, `vm`). Renovate adds several
     # other labels right after opening a PR; each of those started a duplicate run that the concurrency
     # group of the image job then cancelled mid-build. Skipping here skips the image jobs too (needs).
-    if: ${{ github.event.action != 'labeled' || contains(fromJSON('["e2e","push","gui"]'), github.event.label.name) }}
+    if: ${{ github.event.action != 'labeled' || contains(fromJSON('["e2e","push","gui","vm"]'), github.event.label.name) }}
     runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions:
@@ -147,9 +147,14 @@ jobs:
           if [ "$FORCE" == "true" ]; then
             IMAGES='["homeserver","homeserver-gui","claude-vm"]'
           fi
-          # Opt-in for the large GUI image on a PR (it builds on the self-hosted runner): label the PR `gui`
-          if [ "$EVENT_NAME" == "pull_request" ] && jq -e 'index("gui")' <<< "$PR_LABELS" > /dev/null; then
-            IMAGES=$(jq -c 'if index("homeserver-gui") then . else . + ["homeserver-gui"] end' <<< "$IMAGES")
+          # Opt-in for the other images on a PR: label it `gui` (the large image, built on the self-hosted runner)
+          # or `vm` (claude-vm)
+          if [ "$EVENT_NAME" == "pull_request" ]; then
+            for opt in gui:homeserver-gui vm:claude-vm; do
+              if jq -e --arg l "${opt%%:*}" 'index($l)' <<< "$PR_LABELS" > /dev/null; then
+                IMAGES=$(jq -c --arg i "${opt#*:}" 'if index($i) then . else . + [$i] end' <<< "$IMAGES")
+              fi
+            done
           fi
           # A manual run without inputs builds the default image. Elsewhere an empty list means
           # nothing relevant changed (or, on a scheduled run, everything is up to date): build nothing.
