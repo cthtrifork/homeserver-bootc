@@ -11,10 +11,11 @@ on:
         type: boolean
       override_image:
         description: "Image to build (overrides change detection)"
-        default: ""
+        default: auto
         type: choice
         required: false
         options:
+          - auto
           - homeserver
           - homeserver-gui
           - claude-vm
@@ -140,7 +141,7 @@ jobs:
             done
             echo "Scheduled rebuild of: $IMAGES"
           fi
-          if [ -n "$OVERRIDE_IMAGE" ]; then
+          if [ -n "$OVERRIDE_IMAGE" ] && [ "$OVERRIDE_IMAGE" != "auto" ]; then
             IMAGES=$(jq -cn --arg i "$OVERRIDE_IMAGE" '[$i]')
           fi
           if [ "$FORCE" == "true" ]; then
