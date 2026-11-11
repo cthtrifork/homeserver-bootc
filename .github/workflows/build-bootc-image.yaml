@@ -48,7 +48,7 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 300 # Checkout last 300 commits (for rechunk <commits> to work)
+          fetch-depth: 300 # Checkout last 300 commits (for the changelog commit list)
 
       - name: Install crane
         uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987 # v0.5
@@ -187,14 +187,13 @@ jobs:
         if: ${{ steps.cache-cfg.outputs.save == 'true' }}
         run: echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      # A killed or evicted pod skips the end-of-job cleanup and leaves working containers and the rechunk
-      # volume on the persistent runner volumes, so drop them before building.
+      # A killed or evicted pod skips the end-of-job cleanup and leaves working containers
+      # on the persistent runner volumes, so drop them before building.
       - name: Remove leftovers of earlier builds
         if: ${{ runner.environment == 'self-hosted' }}
         shell: bash
         run: |
           sudo buildah rm --all || true
-          sudo podman volume rm -f cache_ostree || true
 
       - name: Check free disk space
         if: ${{ runner.environment == 'self-hosted' }}
@@ -244,65 +243,47 @@ jobs:
 
       - name: Extract previous manifest
         run: |
-          # Work around Rechunker not being able to use private registry auth details
+          # The previous revision label is read from this to build the changelog
           skopeo inspect "docker://${{ env.IMAGE_FULL }}:${{ env.DEFAULT_TAG }}" --authfile ${{ runner.temp }}/auth.json > previous.manifest.json \
             || { echo "No previous manifest (first build of this image?)"; echo '{}' > previous.manifest.json; }
 
-      - name: Clean stale rechunk cache
-        run: sudo podman volume rm -f cache_ostree || true
-
-      - name: Run Rechunker
+      # chunkah splits the flat rootfs of the built image into content-based (per RPM) layers. The image is
+      # mounted straight from root's containers-storage, so nothing is copied or tarred. OSTree data is pruned
+      # because the image is a plain layered bootc image, and the labels of the build (podman inspect) are kept
+      # except the ostree ones the base image carries.
+      - name: Rechunk with chunkah
         id: rechunk
-        uses: hhd-dev/rechunk@5fbe1d3a639615d2548d83bc888360de6267b1a2 # v1.2.4
-        with:
-          rechunk: ghcr.io/hhd-dev/rechunk:v1.2.4
-          ref: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-          # Keep empty: rechunk reads ./previous.manifest.json from the step above, but with prev-ref set it
-          # would overwrite that file with an unauthenticated (failing) skopeo inspect of the private image.
-          prev-ref: ""
-          max-layers: ${{ inputs.image == 'homeserver-gui' && '36' || '32' }}
-          # Saves 3-5 min of rechunk time; skopeo compresses the layers while pushing instead.
-          skip_compression: true
-          #clear-plan: true
-          labels: ${{ steps.metadata.outputs.labels }} # Rechunk strips out all the labels during build, this needs to be reapplied here with newline separator
-          pretty: 'Rechunked (from ${{ env.DOCKER_TAG }})'
-          #registry_auth_file: /home/runner/.docker/config.json
-          git: "${{ github.workspace }}"
-          revision: ${{ github.sha }}
-          changelog: |
-            # ${{ env.IMAGE_NAME }} <pretty>
-            ## Version: <version>
+        env:
+          CHUNKAH_IMAGE: quay.io/coreos/chunkah:v0.7.1
+          MAX_LAYERS: "128"
+        run: |
+          out="${RUNNER_TEMP}/chunked"
+          rm -rf "${out}"; mkdir -p "${out}"
+          CHUNKAH_CONFIG_STR="$(sudo podman inspect "localhost/${IMAGE_NAME}:${DOCKER_TAG}")"
+          export CHUNKAH_CONFIG_STR
+          sudo --preserve-env=CHUNKAH_CONFIG_STR podman run --rm \
+            --security-opt label=disable \
+            --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},dest=/chunkah" \
+            -v "${out}:/out" \
+            -e CHUNKAH_CONFIG_STR \
+            "${CHUNKAH_IMAGE}" build \
+              --prune /sysroot/ \
+              --max-layers "${MAX_LAYERS}" \
+              --label ostree.commit- --label ostree.final-diffid- \
+              --output oci:/out
+          sudo chown -R "$(id -u):$(id -g)" "${out}"
+          echo "ref=oci:${out}" >> "${GITHUB_OUTPUT}"
+          printf '# %s\n## Version: %s\n\n## Changes since last version:\n### Commits\n\n<!--COMMITS-->\n' \
+            "${IMAGE_NAME}" "${UNIQUE_VERSION}" > "${RUNNER_TEMP}/changelog.md"
+          echo "changelog=${RUNNER_TEMP}/changelog.md" >> "${GITHUB_OUTPUT}"
 
-            Major Components:
-
-              - Kernel: <relver:kernel>
-              - KDE: <version:kwayland>
-
-            ## Changes since last version (<previous>):
-            ### Commits
-
-            <!--COMMITS-->
-
-            ### Package Changes
-
-            <pkgupd>
-
-          formatters: |
-            commits.none=No changes\n
-            commits.commit=- **[<short>](https://github.com/cthtrifork/homeserver-bootc/commit/<hash>)** <subject>\n
-            pkgupd.none=No package updates\n
-            pkgupd.add=- **<package>** Added at <new>\n
-            pkgupd.update=- **<package>** <old> → <new>\n
-            pkgupd.remove=- **<package>** <old> → Removed\n
-          
-      # The changelog file is written by the root rechunk container, so take ownership before editing it.
+      # Fill the commit list of the changelog.
       - name: Group changelog commits
         env:
           CHANGELOG: ${{ steps.rechunk.outputs.changelog }}
           IMAGE: ${{ inputs.image }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          sudo chown "$(id -u):$(id -g)" "${CHANGELOG}"
           python3 -I .github/scripts/group-changelog.py "${CHANGELOG}"
 
       - name: Changelog PR comment

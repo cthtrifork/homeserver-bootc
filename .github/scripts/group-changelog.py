@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fill the <!--COMMITS--> marker of a rechunk changelog with commits grouped by the files they touch.
+"""Fill the <!--COMMITS--> marker of a changelog with commits grouped by the files they touch.
 
 Env: IMAGE, REPO_URL, GITHUB_SHA (or HEAD_REV); MANIFEST (default previous.manifest.json); PREV_REV overrides its label.
 Usage: group-changelog.py <changelog.md>
@@ -12,7 +12,7 @@ import sys
 
 REVISION_LABEL = "org.opencontainers.image.revision"
 MARKER = "<!--COMMITS-->"
-# rechunk leaves <version:pkg> as is when the image has no such package (e.g. KDE on claude-vm)
+# placeholders like <version:pkg> are dropped when left unresolved
 UNRESOLVED = re.compile(r"^.*<version:[^>]*>.*\n", re.M)
 
 # a prefix ending in / matches a directory, anything else an exact path

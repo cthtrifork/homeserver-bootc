@@ -1,7 +1,7 @@
 name: PR title
 
 # Enforces Conventional Commits on the PR title: `type(scope)!: summary`, e.g. `ci(cleanup): run each package as a matrix job`.
-# Squash merges use the title as the commit subject, and the rechunker changelog of every image release lists
+# Squash merges use the title as the commit subject, and the changelog of every image release lists
 # those subjects, so a good title is what makes the release notes readable.
 # Make "check title" a required status check in the branch rules to enforce it on merge.
 # synchronize matters: a required status check is attached to the head commit, so every new head needs its own run
