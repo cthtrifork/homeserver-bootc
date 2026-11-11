@@ -177,15 +177,24 @@ jobs:
         shell: bash
         run: |
           mkdir -p /home/runner/.cache/tmp
-          tree -f -D -L 3 /home/runner/.cache/tmp
           echo "Deleting old files:"
-          find /home/runner/.cache/tmp -type f -mtime +14 -print -delete || true
-          find /home/runner/.cache/tmp -type d -empty -mtime +14 -print -delete || true
+          # earlier builds ran as root, so the files may be root-owned
+          sudo find /home/runner/.cache/tmp -type f -mtime +14 -print -delete
+          sudo find /home/runner/.cache/tmp -mindepth 1 -type d -empty -mtime +14 -print -delete
 
       - name: Fingerprint runner cache
         id: cache-before
         if: ${{ steps.cache-cfg.outputs.save == 'true' }}
         run: echo "sum=$(find /home/runner/.cache/tmp -type f -printf '%P %s\n' | sort | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # A killed or evicted pod skips the end-of-job cleanup and leaves working containers and the rechunk
+      # volume on the persistent runner volumes, so drop them before building.
+      - name: Remove leftovers of earlier builds
+        if: ${{ runner.environment == 'self-hosted' }}
+        shell: bash
+        run: |
+          sudo buildah rm --all || true
+          sudo podman volume rm -f cache_ostree || true
 
       - name: Check free disk space
         if: ${{ runner.environment == 'self-hosted' }}
