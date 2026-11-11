@@ -427,6 +427,7 @@ jobs:
           vuln-type: "library"
           severity: "CRITICAL,HIGH,MEDIUM"
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -531,6 +532,7 @@ jobs:
           skip-setup-trivy: true
           scanners: "vuln"
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           vuln-type: "library"
           #severity: "CRITICAL,HIGH,MEDIUM"
         env:
@@ -545,6 +547,7 @@ jobs:
           format: json
           output: ${{ github.workspace }}/latest_trivy.json
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           ignore-unfixed: true
           skip-setup-trivy: true
           #severity: HIGH,CRITICAL
@@ -571,7 +574,9 @@ jobs:
     # only run if tagged for testing
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'e2e') }}
     continue-on-error: false
-    timeout-minutes: 15
+    # bootc install of a chunkah image hashes and relabels every file on the client (rechunk shipped a ready ostree
+    # commit), so it takes minutes on homeserver and longer on the large GUI image
+    timeout-minutes: ${{ inputs.image == 'homeserver-gui' && 45 || 30 }}
     permissions:
       contents: read
       packages: read
@@ -778,6 +783,7 @@ jobs:
           scanners: "vuln"
           vuln-type: "library"
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           #severity: "CRITICAL,HIGH,MEDIUM"
         env:
           TRIVY_SKIP_DB_UPDATE: true
