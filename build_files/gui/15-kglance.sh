@@ -6,7 +6,7 @@ set -ouex pipefail
 
 # KGlance, the KDE popup with the clock, the date and the battery (shortcut Meta+Alt+G), installed from the RPM of a
 # GitHub release. The rpm adds an autostart entry that starts it hidden at login, so the shortcut works right away.
-KGLANCE_VERSION="v0.2.0" # renovate: datasource=github-releases depName=cthtrifork/kglance
+KGLANCE_VERSION="v0.3.0" # renovate: datasource=github-releases depName=cthtrifork/kglance
 
 base="https://github.com/cthtrifork/kglance/releases/download/${KGLANCE_VERSION}"
 rpm_name="kglance-${KGLANCE_VERSION#v}-1.x86_64.rpm"
