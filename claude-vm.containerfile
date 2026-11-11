@@ -28,6 +28,7 @@ ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
       '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
+      '[updates-archive]' 'enabled=0' \
     > /etc/dnf/repos.override.d/50-mirror.repo
 
 RUN dnf -y install --setopt=install_weak_deps=False \

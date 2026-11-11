@@ -13,6 +13,7 @@ ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
       '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
+      '[updates-archive]' 'enabled=0' \
       '[rpmfusion-free]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/free/fedora/releases/\$releasever/Everything/\$basearch/os/" \
       '[rpmfusion-free-updates]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/free/fedora/updates/\$releasever/\$basearch/" \
       '[rpmfusion-nonfree]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/nonfree/fedora/releases/\$releasever/Everything/\$basearch/os/" \
