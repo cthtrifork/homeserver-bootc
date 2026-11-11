@@ -13,7 +13,7 @@ ARG PLAYWRIGHT_VERSION=1.65.0 # renovate: datasource=npm depName=playwright
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman (+ podman-compose, the provider behind
 # `podman compose`), plus linters/formatters
-# (ShellCheck, shfmt, yamllint, jq/yq; hadolint and actionlint are installed below).
+# (ShellCheck, yamllint, jq/yq; shfmt, hadolint and actionlint are installed below).
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
 # (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
 # egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
@@ -32,7 +32,7 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
 
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
-        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck shfmt yamllint make ripgrep tmux tree cloc qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium ffmpeg-free \
     && dnf clean all \
@@ -46,7 +46,7 @@ RUN echo "claude-podman:100000:65536" >> /etc/subuid && echo "claude-podman:1000
 RUN echo "claude-rc-personal-podman:165536:65536" >> /etc/subuid && echo "claude-rc-personal-podman:165536:65536" >> /etc/subgid
 RUN chgrp 1210 /usr/bin/podman && chmod 0750 /usr/bin/podman
 
-# crane, hadolint, actionlint (not packaged in Fedora): pinned release binaries, checksum-verified. Versions live in
+# crane, hadolint, actionlint, shfmt (not packaged in Fedora 45): pinned release binaries, checksum-verified. Versions live in
 # build_files/claude-vm-utilities.sh (Renovate `# renovate:` comments); downloads are kept in the CI runner cache.
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     /ctx/build_files/claude-vm-utilities.sh
