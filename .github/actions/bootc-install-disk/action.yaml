@@ -64,8 +64,12 @@ runs:
           SOURCE_ARGS=(--source-imgref "containers-storage:${IMAGE}" --target-imgref "${IMAGE}")
         fi
 
+        # TEMP diagnostics: show whether the install makes progress
+        ( while sleep 45; do date -u +%T; sudo ps -eo pid,etime,pcpu,rss,args --sort=-pcpu | head -6 | cut -c1-160; df -h / /var/lib/containers | tail -2; done ) &
+
         # image must already be in root containers-storage (see load-image with run_as_sudo)
-        sudo podman run \
+        sudo timeout 420 podman run \
+          -e RUST_LOG=debug \
           --rm \
           --privileged \
           "${PID_ARGS[@]}" \
