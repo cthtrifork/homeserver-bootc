@@ -19,24 +19,27 @@ runs:
         buildah rm --all || true
         sudo buildah rm --all || true
 
+        df -h /var/lib/containers/storage | tail -1
         podman system prune -f
         sudo podman system prune -f
 
         # The container storage lives on persistent runner volumes and only grew (the rootless one held ~180 GiB).
         # Deleting layers is slow (101s + 40s on the first run), so only prune when the node volume is getting full,
         # and run the rootless and rootful prunes in parallel. They drop unused images, not just dangling ones,
-        # that were created more than 7 days ago.
+        # that were created more than 3 days ago.
         avail_gb=$(df --output=avail -BG /var/lib/containers/storage | tail -1 | tr -dc '0-9')
-        if (( avail_gb < 150 )); then
-          podman image prune -a -f --filter "until=168h" &
-          sudo podman image prune -a -f --filter "until=168h" &
+        if (( avail_gb < 100 )); then
+          podman image prune -a -f --filter "until=72h" &
+          sudo podman image prune -a -f --filter "until=72h" &
           wait || true
         else
           echo "${avail_gb}G free on the container storage, skipping the image prune"
         fi
 
-        # The dnf cache lives on a persistent runner volume; drop what has not been used for 14 days
-        find /home/runner/.cache/dnf -type f -mtime +14 -delete || true
+        # The dnf cache lives on a persistent runner volume; drop what has not been used for 14 days.
+        # buildah runs under sudo, so the files are root-owned and a plain find cannot delete them.
+        sudo find /home/runner/.cache/dnf -type f -mtime +14 -delete
+        sudo find /home/runner/.cache/dnf -mindepth 1 -type d -empty -mtime +14 -delete
         
         # remove all PR images
         #podman images --format '{{.Repository}}:{{.Tag}}' \
