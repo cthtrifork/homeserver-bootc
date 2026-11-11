@@ -27,7 +27,7 @@ kscreenlocker
 # used by several apps
 webkitgtk6.0
 # Filemanager
-doplin
+dolphin
 
 # startup / initramfs
 clevis
