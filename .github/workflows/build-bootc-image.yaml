@@ -257,6 +257,7 @@ jobs:
         id: rechunk
         env:
           CHUNKAH_IMAGE: quay.io/coreos/chunkah:v0.7.1
+          CREATED: ${{ steps.date.outputs.date }}
           MAX_LAYERS: "128"
         run: |
           out="${RUNNER_TEMP}/chunked"
@@ -271,7 +272,7 @@ jobs:
           pkg_label="$(gzip -9n < "${RUNNER_TEMP}/packages.tsv" | base64 -w0)"
           sudo --preserve-env=CHUNKAH_CONFIG_STR podman run --rm \
             --security-opt label=disable \
-            --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},dest=/chunkah" \
+            --mount "type=image,src=localhost/${IMAGE_NAME}:${DOCKER_TAG},target=/chunkah" \
             -v "${out}:/out" \
             -e CHUNKAH_CONFIG_STR \
             -e SOURCE_DATE_EPOCH=1 \
@@ -283,6 +284,8 @@ jobs:
               --compressed --compression-level 3 \
               --output oci:/out/img
           sudo chown -R "$(id -u):$(id -g)" "${out}"
+          # SOURCE_DATE_EPOCH=1 leaves the image created time at 1970; set the real build time (layers untouched)
+          python3 -I .github/scripts/set-image-created.py "${out}/img" "${CREATED}"
           echo "ref=oci:${out}/img" >> "${GITHUB_OUTPUT}"
           printf '# %s\n## Version: %s\n\n## Changes since last version:\n### Commits\n\n<!--COMMITS-->\n\n### Package Changes\n\n<!--PACKAGES-->\n' \
             "${IMAGE_NAME}" "${UNIQUE_VERSION}" > "${RUNNER_TEMP}/changelog.md"
@@ -424,6 +427,7 @@ jobs:
           vuln-type: "library"
           severity: "CRITICAL,HIGH,MEDIUM"
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -528,6 +532,7 @@ jobs:
           skip-setup-trivy: true
           scanners: "vuln"
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           vuln-type: "library"
           #severity: "CRITICAL,HIGH,MEDIUM"
         env:
@@ -542,6 +547,7 @@ jobs:
           format: json
           output: ${{ github.workspace }}/latest_trivy.json
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           ignore-unfixed: true
           skip-setup-trivy: true
           #severity: HIGH,CRITICAL
@@ -568,7 +574,9 @@ jobs:
     # only run if tagged for testing
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'e2e') }}
     continue-on-error: false
-    timeout-minutes: 15
+    # bootc install of a chunkah image hashes and relabels every file on the client (rechunk shipped a ready ostree
+    # commit), so it takes minutes on homeserver and longer on the large GUI image
+    timeout-minutes: ${{ inputs.image == 'homeserver-gui' && 45 || 30 }}
     permissions:
       contents: read
       packages: read
@@ -775,6 +783,7 @@ jobs:
           scanners: "vuln"
           vuln-type: "library"
           cache: "false"
+          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           #severity: "CRITICAL,HIGH,MEDIUM"
         env:
           TRIVY_SKIP_DB_UPDATE: true

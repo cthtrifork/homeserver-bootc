@@ -16,6 +16,7 @@ REVISION_LABEL = "org.opencontainers.image.revision"
 MARKER = "<!--COMMITS-->"
 PKG_MARKER = "<!--PACKAGES-->"
 PKG_LABEL = "org.homeserver.rpm-packages"
+PKG_INLINE_MAX = 15  # longer lists are folded into <details>
 # placeholders like <version:pkg> are dropped when left unresolved
 UNRESOLVED = re.compile(r"^.*<version:[^>]*>.*\n", re.M)
 
@@ -100,10 +101,16 @@ def package_changes(manifest, current_file):
     if not old_label:
         return "No package list on the previous image, so no package diff."
     old = read_packages(gzip.decompress(base64.b64decode(old_label)).decode())
-    lines = [f"- **{n}** Added at {new[n]}" for n in sorted(new.keys() - old.keys())]
-    lines += [f"- **{n}** {old[n]} → {new[n]}" for n in sorted(new.keys() & old.keys()) if old[n] != new[n]]
-    lines += [f"- **{n}** {old[n]} → Removed" for n in sorted(old.keys() - new.keys())]
-    return "\n".join(lines) or "No package updates"
+    added = [f"- **{n}** Added at {new[n]}" for n in sorted(new.keys() - old.keys())]
+    updated = [f"- **{n}** {old[n]} → {new[n]}" for n in sorted(new.keys() & old.keys()) if old[n] != new[n]]
+    removed = [f"- **{n}** {old[n]} → Removed" for n in sorted(old.keys() - new.keys())]
+    if not (added or updated or removed):
+        return "No package updates"
+    summary = f"{len(added)} added, {len(updated)} updated, {len(removed)} removed"
+    lines = "\n".join(updated + added + removed)
+    if len(added) + len(updated) + len(removed) <= PKG_INLINE_MAX:
+        return f"{summary}\n\n{lines}"
+    return f"{summary}\n\n<details><summary>Show all package changes</summary>\n\n{lines}\n\n</details>"
 
 
 def main():
@@ -135,7 +142,9 @@ def main():
     text = text.replace(MARKER, body)
     if PKG_MARKER in text:
         text = text.replace(PKG_MARKER, package_changes(manifest, os.environ.get("PACKAGES", "packages.tsv")))
-    open(path, "w").write(UNRESOLVED.sub("", text))
+    # blocks are separated by exactly one blank line and the file ends with a newline
+    text = re.sub(r"\n{3,}", "\n\n", UNRESOLVED.sub("", text)).strip() + "\n"
+    open(path, "w").write(text)
 
 
 if __name__ == "__main__":
