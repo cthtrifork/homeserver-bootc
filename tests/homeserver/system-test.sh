@@ -33,4 +33,12 @@ fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
 
+
+# packages that must not be in the image
+if rpm -q kernel-devel >/dev/null 2>&1; then
+    echo "Package must not be installed: kernel-devel"
+    exit 1
+fi
+echo "✅ removed packages are absent"
+
 echo "== System testing finished =="

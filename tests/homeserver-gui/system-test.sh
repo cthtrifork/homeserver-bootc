@@ -27,4 +27,14 @@ if [ -z "${ENV_LOAD:-}" ]; then
 fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
+
+# packages that must not be in the image
+for p in kernel-devel plasma-workspace-wallpapers; do
+    if rpm -q "$p" >/dev/null 2>&1; then
+        echo "Package must not be installed: $p"
+        exit 1
+    fi
+done
+echo "✅ removed packages are absent"
+
 echo "== System testing finished =="
