@@ -3,8 +3,7 @@ Description=Ask the Update Claude VM button whether to run bootc upgrade
 Documentation=file:///usr/share/doc/claude-vm/README.md
 After=network-online.target
 Wants=network-online.target
-# Opt-in: the token and the URL are created by hand (see docs/claude-vm/README.md); without them the unit is skipped.
-ConditionPathExists=/etc/claude-vm/upgrade/token
+# Opt-in: the URL file is created by hand (see docs/claude-vm/README.md); without it the unit is skipped.
 ConditionPathExists=/etc/claude-vm/upgrade/url
 
 [Service]

@@ -2,7 +2,8 @@
 # Run as root by claude-vm-upgrade-poll.service every minute. Asks the "Update Claude VM" button in the cluster (claude-system/vm-upgrade in
 # talos-gitops) whether an upgrade was requested; if so, starts bootc-fetch-apply-updates.service, the same unit the 03:00 timer runs.
 # The answer is only {"upgrade": true|false}: nothing from the network is run or used as an argument, so the cluster can at worst
-# ask for an upgrade of the image this VM already tracks. Reads /etc/claude-vm/upgrade/{url,token} (root only).
+# ask for an upgrade of the image this VM already tracks. Reads the page's URL from /etc/claude-vm/upgrade/url (root only).
+# There is no token: the cluster's NetworkPolicy lets only this VM's address reach the poll listener.
 set -euo pipefail
 
 dir=/etc/claude-vm/upgrade
@@ -15,11 +16,8 @@ if [ -e "$stamp" ] && [ $(($(date +%s) - $(stat -c %Y "$stamp"))) -lt "$min_inte
 fi
 
 url="$(<"$dir/url")"
-token="$(<"$dir/token")"
 
-# The token goes through curl's config on stdin, not the command line (printf is a builtin, so it never shows in ps).
-answer="$(printf 'header = "Authorization: Bearer %s"\n' "$token" |
-    curl --fail --silent --show-error --max-time 10 --config - --request POST "${url%/}/api/v1/claim")"
+answer="$(curl --fail --silent --show-error --max-time 10 --request POST "${url%/}/api/v1/claim")"
 
 if [ "$(jq -r '.upgrade // false' <<<"$answer")" = "true" ]; then
     touch "$stamp"
