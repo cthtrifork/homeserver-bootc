@@ -34,6 +34,9 @@ echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intende
 
 
 
+echo "--- 20 largest installed packages ---"
+rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
+
 # packages that must not be in the image
 if rpm -q kernel-devel >/dev/null 2>&1; then
     echo "Package must not be installed: kernel-devel"
