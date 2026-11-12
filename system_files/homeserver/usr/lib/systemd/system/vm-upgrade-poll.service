@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/vm-upgrade-poll homeserver /etc/homeserver/upgrade/url /var/lib/vm-upgrade/last
+ExecStart=/usr/libexec/vm-upgrade-poll homeserver
 TimeoutStartSec=30
 StateDirectory=vm-upgrade
 PrivateTmp=yes
