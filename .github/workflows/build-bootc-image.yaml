@@ -435,24 +435,27 @@ jobs:
         with:
           pull_latest: ${{ steps.baseline.outputs.exists }}
 
-      # Both scans are independent, so run them side by side. The table report is rendered from the PR scan's JSON
-      # (trivy convert) instead of scanning the same image a second time.
-      - name: Trivy vuln scan (JSON) - current and latest
+      # The table report is rendered from the PR scan's JSON (trivy convert) instead of scanning the image twice.
+      # Scans run one after the other: they share trivy's cache directory, which only one process can lock.
+      - name: Trivy vuln scan (JSON) - current
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
           TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
-          BASELINE: ${{ steps.baseline.outputs.exists }}
         run: | #sh
-          set -euo pipefail
           # timeout: the default 5m is too short for the large GUI image on a cold runner
-          common=(--scanners vuln --ignore-unfixed --timeout 15m --format json --cache-backend memory)
-          if [ "$BASELINE" = "true" ]; then
-            trivy image "${common[@]}" --output "$GITHUB_WORKSPACE/latest_trivy.json" "${IMAGE_FULL}:latest" &
-            latest_pid=$!
-          fi
-          trivy image "${common[@]}" --output "$GITHUB_WORKSPACE/current_trivy.json" "$LOCAL_PR_IMAGE"
-          if [ "$BASELINE" = "true" ]; then wait "$latest_pid"; fi
+          trivy image --scanners vuln --ignore-unfixed --timeout 15m --format json \
+            --output "$GITHUB_WORKSPACE/current_trivy.json" "$LOCAL_PR_IMAGE"
+
+      - name: Trivy vuln scan (JSON) - latest
+        if: ${{ steps.baseline.outputs.exists == 'true' }}
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+        run: | #sh
+          trivy image --scanners vuln --ignore-unfixed --timeout 15m --format json \
+            --output "$GITHUB_WORKSPACE/latest_trivy.json" "${IMAGE_FULL}:latest"
 
       - name: Trivy REPORT table - current
         env:
