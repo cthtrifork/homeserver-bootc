@@ -16,7 +16,7 @@ flowchart TD
         KDE["KDE Plasma + SDDM + KDE apps<br/>PipeWire, NetworkManager Wi-Fi, TLP"]
         APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>harper-pad, kglance, yaml-schema-router, multimedia codecs"]
         BOOTX["Boot<br/>Plymouth bgrt-better-luks, Clevis LUKS,<br/>dracut initramfs, graphical.target"]
-        DEF["Defaults<br/>hostname kde-homeserver,<br/>Danish keymap, SDDM hides runner"]
+        DEF["Defaults<br/>hostname kde-homeserver,<br/>Danish keymap"]
         NOPING["pinggy.service DISABLED"]
     end
     TIMER["bootc-fetch-apply-updates.timer<br/>daily 00:30"] --> UPG["bootc upgrade<br/>(no reboot)"]
@@ -41,8 +41,8 @@ flowchart TD
   so a self-update would be undone. `etc/environment.d/50-zed.conf` sets `ZED_UPDATE_EXPLANATION`, which is Zed's own
   switch for packaged installs: it stops update polling and makes "Check for Updates" show the message instead.
   Zed updates arrive with the image, via Renovate and `bootc upgrade`.
-- **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed by the first user setup, SDDM
-  hides the `runner` user, and the graphical target is the default.
+- **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed by the first user setup, and
+  the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.
 - **No pinggy tunnel:** `build_files/gui/21-systemd.sh` disables `pinggy.service`.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 and `bootc upgrade` does not reboot, because
