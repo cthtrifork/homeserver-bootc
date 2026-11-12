@@ -141,7 +141,7 @@ flowchart LR
   (`claude-system/vm-upgrade` in talos-gitops): it reports the booted and staged ostree deployment from `rpm-ostree status --json` (local, no registry call), and, when a click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00
   timer runs. The answer is only `{"upgrade": true|false}`, so the cluster never sends a command. At most one upgrade per hour, checked before the
   click is claimed. Opt-in: the unit is skipped until, as root, `/etc/claude-vm/upgrade/url` (for example `http://192.168.1.244`) exists.
-  There is no token: the cluster's NetworkPolicy lets only this VM's address reach the poll listener. Check with
+  Access control is the cluster's NetworkPolicy, which lets only this VM's address reach the poll listener. Check with
   `journalctl -u claude-vm-upgrade-poll`.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint and
   actionlint in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.

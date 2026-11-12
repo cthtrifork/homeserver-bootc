@@ -5,7 +5,7 @@
 #   2. claim: ask whether an upgrade was requested; if so, start bootc-fetch-apply-updates.service, the unit the 03:00 timer runs
 # The claim answer is only {"upgrade": true|false}: nothing from the network is run or used as an argument, so the cluster can at
 # worst ask for an upgrade of the image this VM already tracks. Reads the page's URL from /etc/claude-vm/upgrade/url (root only).
-# There is no token: the cluster's NetworkPolicy lets only this VM's address reach the poll listener.
+# Access control is the cluster's NetworkPolicy, which lets only this VM's address reach the poll listener.
 set -euo pipefail
 
 dir=/etc/claude-vm/upgrade
