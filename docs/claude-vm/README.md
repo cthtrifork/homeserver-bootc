@@ -221,14 +221,20 @@ The address changes whenever the tunnel restarts (free tunnels last about 60 min
 password login is off and only the keys in `authorized_keys.pub` work, but disable it when unused
 (`sudo systemctl disable --now claude-pinggy`).
 
-## cluster-ops subagent (thin relay)
+## Haiku subagents
 
-`/usr/share/claude-vm/agents/cluster-ops.md` is a user-level Claude Code subagent on Haiku, symlinked into
-`~/.claude/agents/` of both agent accounts by tmpfiles.d. The VM has no route to the Talos cluster, so the agent only
-relays a read-only question to a new session in the `claude-k8s-helper` Remote Control environment (`create_session`) and
-reports the answer. It has no edit tools.
+`/usr/share/claude-vm/agents/*.md` are user-level Claude Code subagents, all on Haiku, symlinked into `~/.claude/agents/`
+of both agent accounts by tmpfiles.d (so they follow the image on upgrade). None has edit tools.
 
-It shares its name with the full `cluster-ops` agent in the talos-gitops repo (`.claude/agents/`). Project agents beat
+| Agent | Use |
+|---|---|
+| `cluster-ops` | Thin relay: the VM has no route to the Talos cluster, so it sends a read-only question to a new session in the `claude-k8s-helper` Remote Control environment (`create_session`) and reports the answer |
+| `ci-triage` | Read-only triage of a failing Actions run or PR check with `gh`: first real error, kind of failure, likely fix |
+| `lint-runner` | Runs `yamllint`, `shellcheck`, `shfmt`, `actionlint`, `hadolint` and the repo's validation script on the changed files and returns only the failures |
+
+The repo also has a project-level `researcher` (`.claude/agents/researcher.md`: Read and web only).
+
+`cluster-ops` shares its name with the full `cluster-ops` agent in the talos-gitops repo (`.claude/agents/`). Project agents beat
 user agents of the same name, so inside a talos-gitops worktree the full agent (repo edits, validation, PRs) loads, and
 everywhere else this relay does.
 
