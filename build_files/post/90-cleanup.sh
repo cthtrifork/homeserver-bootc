@@ -16,6 +16,10 @@ dnf -y remove \
     dracut-config-rescue \
     at
 
+# kernel-devel comes back as a weak dependency of docker-ce (core/10-server-docker-ce.sh), after
+# packages-removed has been applied; a bootc host does not build out-of-tree modules at runtime
+dnf -y remove kernel-devel || true
+
 # Clean package manager cache
 dnf -y autoremove
 #dnf -y clean all
