@@ -89,6 +89,16 @@ image, which has no `ghostty` binary.
 after the terminfo is installed. Keep it only for hosts or clients without the `xterm-ghostty` terminfo.
 Manage the install cache with `ghostty +ssh-cache` (for example `--prune=30d`).
 
+## Update button
+
+`vm-upgrade-poll.timer` (every minute) runs `/usr/libexec/vm-upgrade-poll homeserver ...`, which reports the booted and staged ostree deployment
+(`rpm-ostree status --json`, local) to the "Update VMs" page in the cluster (`claude-system/vm-upgrade` in talos-gitops) at
+`http://vm-upgrade.portableinfo.cloud` (hardcoded; a Cloudflare A record, DNS only), and starts `bootc-fetch-apply-updates.service` when a click is
+waiting. That unit already runs every 10 minutes on its own (`bootc-fetch-apply-updates.timer.d/updates.conf`), so the button only brings the
+next upgrade forward; it reboots only if a new image exists. At most one button upgrade per hour. Nothing needs seeding: until the DNS record
+exists the poll only logs that the page is unreachable. To point the machine elsewhere, write a URL to `/etc/homeserver/upgrade/url`. Check with
+`journalctl -u vm-upgrade-poll`. The claude-vm image ships the same script; keep the two identical.
+
 ## Secrets (sops + age)
 
 ```sh

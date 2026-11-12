@@ -1,0 +1,14 @@
+[Unit]
+Description=Report to the Update VMs page and ask whether to run bootc upgrade
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/vm-upgrade-poll homeserver /etc/homeserver/upgrade/url /var/lib/vm-upgrade/last
+TimeoutStartSec=30
+StateDirectory=vm-upgrade
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+NoNewPrivileges=yes

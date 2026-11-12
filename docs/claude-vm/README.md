@@ -137,12 +137,14 @@ flowchart LR
 - **Updates:** `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so a new image reboots the VM and ends
   running sessions (Remote Control brings them back for about four hours). Drop `--apply` in
   `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
-- **Update button:** `claude-vm-upgrade-poll.timer` (every minute) runs `poll-upgrade`, which POSTs to the "Update Claude VM" page in the cluster
-  (`claude-system/vm-upgrade` in talos-gitops): it reports the booted and staged ostree deployment from `rpm-ostree status --json` (local, no registry call), and, when a click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00
-  timer runs. The answer is only `{"upgrade": true|false}`, so the cluster never sends a command. At most one upgrade per hour, checked before the
-  click is claimed. Opt-in: the unit is skipped until, as root, `/etc/claude-vm/upgrade/url` (for example `http://192.168.1.244`) exists.
-  Access control is the cluster's NetworkPolicy, which lets only this VM's address reach the poll listener. Check with
-  `journalctl -u claude-vm-upgrade-poll`.
+- **Update button:** `claude-vm-upgrade-poll.timer` (every minute) runs `poll-upgrade claude-vm ...`, which talks to the "Update VMs" page in the
+  cluster (`claude-system/vm-upgrade` in talos-gitops) at `http://vm-upgrade.portableinfo.cloud` (hardcoded; a Cloudflare A record, DNS only, to the
+  MetalLB address of `claude-vm-upgrade-lb`). It first reports the booted and staged ostree deployment from `rpm-ostree status --json` (local, no
+  registry call), then, when a click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00 timer runs. The answer is only
+  `{"upgrade": true|false}`, so the cluster never sends a command. At most one upgrade per hour, checked before the click is claimed. Nothing needs
+  seeding: until the DNS record exists the poll only logs that the page is unreachable. To point the VM elsewhere, write a URL to
+  `/etc/claude-vm/upgrade/url` as root. Access control is the cluster's NetworkPolicy, which lets only the VMs' addresses reach the poll listener.
+  Check with `journalctl -u claude-vm-upgrade-poll`. The homeserver image ships the same script (`usr/libexec/vm-upgrade-poll`); keep the two identical.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint and
   actionlint in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
 

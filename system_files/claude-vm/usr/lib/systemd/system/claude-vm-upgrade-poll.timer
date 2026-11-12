@@ -1,5 +1,5 @@
 [Unit]
-Description=Poll the Update Claude VM button every minute
+Description=Poll the Update VMs page every minute
 
 [Timer]
 OnBootSec=2min
