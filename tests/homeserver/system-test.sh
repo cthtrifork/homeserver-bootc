@@ -20,6 +20,11 @@ for s in $CORE_SERVICES; do
 done
 echo "✅ core services are OK"
 
+# the Update VMs poll timer: enabled, unit loads (it only logs that the page is unreachable until the DNS record exists)
+systemctl is-enabled --quiet vm-upgrade-poll.timer
+systemctl cat vm-upgrade-poll.service >/dev/null
+test -x /usr/libexec/vm-upgrade-poll
+
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"

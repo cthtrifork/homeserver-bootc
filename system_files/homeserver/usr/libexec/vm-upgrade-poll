@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+# Run as root by a systemd timer every minute: poll-upgrade <vm-name> <url-override-file> <state-file>
+# Talks to the "Update VMs" page in the cluster (claude-system/vm-upgrade in talos-gitops) as <vm-name>:
+#   1. report: say which ostree deployment is booted and which is staged (local `rpm-ostree status`, no registry call)
+#   2. claim: ask whether an upgrade was requested; if so, start bootc-fetch-apply-updates.service, the unit the nightly timer runs
+# The claim answer is only {"upgrade": true|false}: nothing from the network is run or used as an argument, so the cluster can at
+# worst ask for an upgrade of the image this machine already tracks.
+# The page is at the hardcoded name below (a Cloudflare A record, DNS only, to the MetalLB address of claude-vm-upgrade-lb); the override
+# file only exists to point a machine elsewhere. Access control is the cluster's NetworkPolicy, which lets only the known VM addresses
+# reach the poll listener. The same script ships in the claude-vm and homeserver images; keep the two copies identical.
+set -euo pipefail
+
+vm="${1:?usage: poll-upgrade <vm-name> <url-override-file> <state-file>}"
+override="${2:?}"
+stamp="${3:?}"
+default_url="http://vm-upgrade.portableinfo.cloud"
+min_interval=3600
+
+url="$default_url"
+[ -r "$override" ] && url="$(<"$override")"
+url="${url%/}/api/v1/vms/$vm"
+
+# 1. Report. Never fatal: an unreadable status is sent as {} and the page shows "unknown". The report also counts as a poll, so it
+# runs even inside the rate-limit window below (the page then still shows the VM alive).
+status="$(rpm-ostree status --json 2>/dev/null | jq -c '
+    ([.deployments[]? | select(.booted)] | first // {}) as $b
+    | ([.deployments[]? | select(.staged)] | first // {}) as $s
+    | {booted_version: ($b.version // ""),
+       booted_digest: (($b["container-image-reference-digest"] // "") | ltrimstr("sha256:") | .[0:12]),
+       staged_version: ($s.version // "")}' 2>/dev/null || true)"
+if ! curl --fail --silent --show-error --max-time 10 --request POST --header 'Content-Type: application/json' \
+    --data "${status:-{\}}" "$url/report" >/dev/null; then
+    # Most likely the DNS record does not exist yet, or the page is down: try again next minute, without failing the unit.
+    echo "update page unreachable at $url"
+    exit 0
+fi
+
+# 2. Claim, unless an upgrade was started less than an hour ago. Checked before claiming, so a click made inside the window is kept
+# (the flag lives 10 minutes) and a stuck button cannot reboot-loop the machine.
+if [ -e "$stamp" ] && [ $(($(date +%s) - $(stat -c %Y "$stamp"))) -lt "$min_interval" ]; then
+    exit 0
+fi
+
+answer="$(curl --fail --silent --show-error --max-time 10 --request POST "$url/claim")"
+
+if [ "$(jq -r '.upgrade // false' <<<"$answer")" = "true" ]; then
+    touch "$stamp"
+    echo "upgrade requested by the button"
+    systemctl start --no-block bootc-fetch-apply-updates.service
+fi
