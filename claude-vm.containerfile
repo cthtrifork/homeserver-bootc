@@ -100,7 +100,7 @@ RUN install -m 0755 /usr/sbin/nginx /usr/libexec/claude-vm/egress-proxy
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-app /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
         claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service \
-        claude-vm-podman@claude.service
+        claude-vm-podman@claude.service claude-vm-upgrade-poll.timer
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the
 # runner UID, which does not exist in the image), which that lint reports as an unknown user.

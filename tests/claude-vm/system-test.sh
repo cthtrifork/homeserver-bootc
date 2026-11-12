@@ -57,6 +57,9 @@ test -f /usr/share/claude-vm/agents/lint-runner.md
 test -f /usr/share/claude-vm/agents/researcher.md
 # nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
+# the button poll is enabled but skipped until the URL file exists
+systemctl is-enabled --quiet claude-vm-upgrade-poll.timer
+systemctl cat claude-vm-upgrade-poll.service >/dev/null
 
 echo "--- egress gateway ---"
 for u in nft proxy dns; do
