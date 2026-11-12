@@ -367,106 +367,6 @@ jobs:
         if: always()
         uses: ./.github/actions/build-cleanup
 
-  trivy:
-    name: "Trivy scan: ${{ inputs.image }}"
-    runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
-    #runs-on: 'arc-ubuntu'
-    needs:
-      - build-bootc-image
-    if: ${{ github.event_name == 'pull_request' }}
-    continue-on-error: false
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      packages: read
-      id-token: write
-      pull-requests: write
-
-    steps:
-      - name: Clone the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Set image vars
-        uses: ./.github/actions/set-image-vars
-        with:
-          image: ${{ inputs.image }}
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          #auth_file_path: ${{ runner.temp }}/auth.json
-
-      - name: Prepare Podman
-        uses: ./.github/actions/prepare-podman
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Ensure trivy is installed and DB is cached
-        uses: ./.github/actions/setup-trivy
-        with:
-          trivy_version: ${{ env.TRIVY_VERSION }}
-
-      # only the PR image is scanned here, so the :latest baseline is not needed
-      - name: Load ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
-        uses: ./.github/actions/load-image
-        with:
-          pull_latest: "false"
-
-      - name: Trivy REPORT table - current
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.LOCAL_PR_IMAGE }}
-          ignore-unfixed: true
-          format: table
-          output: trivy-${{ inputs.image }}-report.txt
-          skip-setup-trivy: true
-          scanners: "vuln"
-          vuln-type: "library"
-          severity: "CRITICAL,HIGH,MEDIUM"
-          cache: "false"
-          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      # not zipped (archive: false), so the report opens straight in the browser from the link
-      - name: Upload Trivy report as an artifact
-        id: trivy-artifact
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          path: trivy-${{ inputs.image }}-report.txt
-          archive: false
-          retention-days: 20
-
-      - name: Write Trivy comment
-        env:
-          ARTIFACT_URL: ${{ steps.trivy-artifact.outputs.artifact-url }}
-        run: | #sh
-          {
-            echo "### 🛡️ Trivy summary for ${{ inputs.image }}"
-            echo ""
-            echo "[Full Trivy report](${ARTIFACT_URL})"
-          } > trivy-comment.md
-
-      - name: Sticky PR comment (Trivy summary)
-        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
-        with:
-          path: trivy-comment.md
-          header: "🛡️ Trivy summary for ${{ inputs.image }}"
-
-      - name: Upload trivy scan results to github
-        if: github.ref == 'refs/heads/main'
-        uses: ./.github/actions/trivy-uploads
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build cleanup
-        if: always()
-        uses: ./.github/actions/build-cleanup
-
   run-on-pr:
     name: "Run on PR: ${{ inputs.image }}"
     runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-latest' }}
@@ -535,39 +435,56 @@ jobs:
         with:
           pull_latest: ${{ steps.baseline.outputs.exists }}
 
-      - name: Trivy vuln scan (JSON) - current
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.LOCAL_PR_IMAGE }}
-          format: json
-          output: ${{ github.workspace }}/current_trivy.json
-          ignore-unfixed: true
-          skip-setup-trivy: true
-          scanners: "vuln"
-          cache: "false"
-          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
-          vuln-type: "library"
-          #severity: "CRITICAL,HIGH,MEDIUM"
+      # Both scans are independent, so run them side by side. The table report is rendered from the PR scan's JSON
+      # (trivy convert) instead of scanning the same image a second time.
+      - name: Trivy vuln scan (JSON) - current and latest
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+          BASELINE: ${{ steps.baseline.outputs.exists }}
+        run: | #sh
+          set -euo pipefail
+          # timeout: the default 5m is too short for the large GUI image on a cold runner
+          common=(--scanners vuln --ignore-unfixed --timeout 15m --format json)
+          if [ "$BASELINE" = "true" ]; then
+            trivy image "${common[@]}" --output "$GITHUB_WORKSPACE/latest_trivy.json" "${IMAGE_FULL}:latest" &
+            latest_pid=$!
+          fi
+          trivy image "${common[@]}" --pkg-types library --output "$GITHUB_WORKSPACE/current_trivy.json" "$LOCAL_PR_IMAGE"
+          if [ "$BASELINE" = "true" ]; then wait "$latest_pid"; fi
 
-      - name: Trivy vuln scan (JSON) - latest
-        if: ${{ steps.baseline.outputs.exists == 'true' }}
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ${{ env.IMAGE_FULL }}:latest
-          format: json
-          output: ${{ github.workspace }}/latest_trivy.json
-          cache: "false"
-          timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
-          ignore-unfixed: true
-          skip-setup-trivy: true
-          #severity: HIGH,CRITICAL
-          scanners: "vuln"
+      - name: Trivy REPORT table - current
         env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+        run: | #sh
+          trivy convert --format table --severity CRITICAL,HIGH,MEDIUM \
+            --output "trivy-${{ inputs.image }}-report.txt" current_trivy.json
+
+      # not zipped (archive: false), so the report opens straight in the browser from the link
+      - name: Upload Trivy report as an artifact
+        id: trivy-artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: trivy-${{ inputs.image }}-report.txt
+          archive: false
+          retention-days: 20
+
+      - name: Write Trivy comment
+        env:
+          ARTIFACT_URL: ${{ steps.trivy-artifact.outputs.artifact-url }}
+        run: | #sh
+          {
+            echo "### 🛡️ Trivy summary for ${{ inputs.image }}"
+            echo ""
+            echo "[Full Trivy report](${ARTIFACT_URL})"
+          } > trivy-comment.md
+
+      - name: Sticky PR comment (Trivy summary)
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          path: trivy-comment.md
+          header: "🛡️ Trivy summary for ${{ inputs.image }}"
 
       - name: Generate a report for the PR
         if: ${{ steps.baseline.outputs.exists == 'true' }}
