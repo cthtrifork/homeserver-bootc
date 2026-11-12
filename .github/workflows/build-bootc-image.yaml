@@ -446,7 +446,7 @@ jobs:
         run: | #sh
           set -euo pipefail
           # timeout: the default 5m is too short for the large GUI image on a cold runner
-          common=(--scanners vuln --ignore-unfixed --timeout 15m --format json)
+          common=(--scanners vuln --ignore-unfixed --timeout 15m --format json --cache-backend memory)
           if [ "$BASELINE" = "true" ]; then
             trivy image "${common[@]}" --output "$GITHUB_WORKSPACE/latest_trivy.json" "${IMAGE_FULL}:latest" &
             latest_pid=$!
