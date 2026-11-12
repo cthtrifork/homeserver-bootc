@@ -137,6 +137,12 @@ flowchart LR
 - **Updates:** `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so a new image reboots the VM and ends
   running sessions (Remote Control brings them back for about four hours). Drop `--apply` in
   `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
+- **Update button:** `claude-vm-upgrade-poll.timer` (every minute) runs `poll-upgrade`, which POSTs to the "Update Claude VM" page in the cluster
+  (`claude-system/vm-upgrade` in talos-gitops) and, when a click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00
+  timer runs. The answer is only `{"upgrade": true|false}`, so the cluster never sends a command. At most one upgrade per hour, checked before the
+  click is claimed. Opt-in: the unit is skipped until, as root, `/etc/claude-vm/upgrade/url` (for example `http://192.168.1.244`) and
+  `/etc/claude-vm/upgrade/token` (the same value as the Secret `claude-vm-upgrade-token`, mode 0600) exist. Check with
+  `journalctl -u claude-vm-upgrade-poll`.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint and
   actionlint in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
 

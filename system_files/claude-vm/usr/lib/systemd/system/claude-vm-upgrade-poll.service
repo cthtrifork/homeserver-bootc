@@ -1,0 +1,18 @@
+[Unit]
+Description=Ask the Update Claude VM button whether to run bootc upgrade
+Documentation=file:///usr/share/doc/claude-vm/README.md
+After=network-online.target
+Wants=network-online.target
+# Opt-in: the token and the URL are created by hand (see docs/claude-vm/README.md); without them the unit is skipped.
+ConditionPathExists=/etc/claude-vm/upgrade/token
+ConditionPathExists=/etc/claude-vm/upgrade/url
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/claude-vm/poll-upgrade
+TimeoutStartSec=30
+StateDirectory=claude-vm-upgrade
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+NoNewPrivileges=yes

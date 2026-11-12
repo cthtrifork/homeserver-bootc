@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+# Run as root by claude-vm-upgrade-poll.service every minute. Asks the "Update Claude VM" button in the cluster (claude-system/vm-upgrade in
+# talos-gitops) whether an upgrade was requested; if so, starts bootc-fetch-apply-updates.service, the same unit the 03:00 timer runs.
+# The answer is only {"upgrade": true|false}: nothing from the network is run or used as an argument, so the cluster can at worst
+# ask for an upgrade of the image this VM already tracks. Reads /etc/claude-vm/upgrade/{url,token} (root only).
+set -euo pipefail
+
+dir=/etc/claude-vm/upgrade
+stamp=/var/lib/claude-vm-upgrade/last
+min_interval=3600
+
+# Rate limit before claiming, so a click made inside the window is kept (the flag lives 10 minutes) and a stuck button cannot reboot-loop the VM.
+if [ -e "$stamp" ] && [ $(($(date +%s) - $(stat -c %Y "$stamp"))) -lt "$min_interval" ]; then
+    exit 0
+fi
+
+url="$(<"$dir/url")"
+token="$(<"$dir/token")"
+
+# The token goes through curl's config on stdin, not the command line (printf is a builtin, so it never shows in ps).
+answer="$(printf 'header = "Authorization: Bearer %s"\n' "$token" |
+    curl --fail --silent --show-error --max-time 10 --config - --request POST "${url%/}/api/v1/claim")"
+
+if [ "$(jq -r '.upgrade // false' <<<"$answer")" = "true" ]; then
+    touch "$stamp"
+    echo "upgrade requested by the button"
+    systemctl start --no-block bootc-fetch-apply-updates.service
+fi
