@@ -36,7 +36,7 @@ runs:
         install_dir="$HOME/.local/bin"
         mkdir -p "$install_dir"
 
-        curl -sL \
+        curl -sSL --fail --retry 3 --retry-delay 5 \
           "https://github.com/aquasecurity/trivy/releases/download/${version}/trivy_${version#v}_Linux-64bit.tar.gz" \
           -o "$install_dir/trivy.tar.gz"
         tar -xzf "$install_dir/trivy.tar.gz" -C "$install_dir"
@@ -57,7 +57,14 @@ runs:
       if: ${{ runner.environment == 'self-hosted' }}
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
-        oras pull ${ZOT_REGISTRY}/ghcr-cache/aquasecurity/trivy-db:2
+        # The in-cluster zot cache occasionally answers with a stream INTERNAL_ERROR; fail fast and retry
+        # instead of hanging for a minute and failing the whole job.
+        for attempt in 1 2 3; do
+          timeout 30 oras pull ${ZOT_REGISTRY}/ghcr-cache/aquasecurity/trivy-db:2 && break
+          [ "$attempt" -lt 3 ] || { echo "::error::trivy-db pull from zot failed after $attempt attempts"; exit 1; }
+          echo "::warning::trivy-db pull attempt $attempt failed, retrying"
+          sleep $((attempt * 5))
+        done
         tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
         rm db.tar.gz
 
@@ -66,6 +73,11 @@ runs:
       shell: bash
       run: |
         mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
-        oras pull ${ZOT_REGISTRY}/ghcr-cache/aquasecurity/trivy-java-db:1
+        for attempt in 1 2 3; do
+          timeout 30 oras pull ${ZOT_REGISTRY}/ghcr-cache/aquasecurity/trivy-java-db:1 && break
+          [ "$attempt" -lt 3 ] || { echo "::error::trivy-java-db pull from zot failed after $attempt attempts"; exit 1; }
+          echo "::warning::trivy-java-db pull attempt $attempt failed, retrying"
+          sleep $((attempt * 5))
+        done
         tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
         rm javadb.tar.gz
