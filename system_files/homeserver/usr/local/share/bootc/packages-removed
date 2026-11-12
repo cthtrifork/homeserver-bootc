@@ -1,2 +1,4 @@
 python3-boto
 nvidia-gpu-firmware
+# Not needed on a bootc host (no DKMS/out-of-tree modules built at runtime); pulled in as a dependency
+kernel-devel

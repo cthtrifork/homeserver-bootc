@@ -16,8 +16,7 @@ dnf -y install --enablerepo=docker-ce-stable \
     docker-ce \
     docker-ce-cli \
     docker-compose-plugin \
-    docker-model-plugin \
-    oci-seccomp-bpf-hook
+    docker-model-plugin
 
 # hide docker so we can rely on podman via a shim
 #mv /usr/bin/docker /usr/bin/docker.real

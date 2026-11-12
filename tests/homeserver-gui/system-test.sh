@@ -27,4 +27,8 @@ if [ -z "${ENV_LOAD:-}" ]; then
 fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
+
+echo "--- 20 largest installed packages ---"
+rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
+
 echo "== System testing finished =="

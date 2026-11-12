@@ -31,3 +31,5 @@ python3-botocore
 tuned
 tuned-ppd
 power-profiles-daemon
+# Large wallpaper pack, not needed
+plasma-workspace-wallpapers
