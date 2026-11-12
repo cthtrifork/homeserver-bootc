@@ -451,7 +451,7 @@ jobs:
             trivy image "${common[@]}" --output "$GITHUB_WORKSPACE/latest_trivy.json" "${IMAGE_FULL}:latest" &
             latest_pid=$!
           fi
-          trivy image "${common[@]}" --pkg-types library --output "$GITHUB_WORKSPACE/current_trivy.json" "$LOCAL_PR_IMAGE"
+          trivy image "${common[@]}" --output "$GITHUB_WORKSPACE/current_trivy.json" "$LOCAL_PR_IMAGE"
           if [ "$BASELINE" = "true" ]; then wait "$latest_pid"; fi
 
       - name: Trivy REPORT table - current
@@ -711,7 +711,7 @@ jobs:
           ignore-unfixed: true
           skip-setup-trivy: true
           scanners: "vuln"
-          vuln-type: "library"
+          vuln-type: "os,library"
           cache: "false"
           timeout: 15m # the default 5m is too short for the large GUI image on a cold runner
           #severity: "CRITICAL,HIGH,MEDIUM"
