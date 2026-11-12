@@ -221,6 +221,24 @@ The address changes whenever the tunnel restarts (free tunnels last about 60 min
 password login is off and only the keys in `authorized_keys.pub` work, but disable it when unused
 (`sudo systemctl disable --now claude-pinggy`).
 
+## Haiku subagents
+
+`/usr/share/claude-vm/agents/*.md` are user-level Claude Code subagents, all on Haiku, symlinked into `~/.claude/agents/`
+of both agent accounts by tmpfiles.d (so they follow the image on upgrade). None has edit tools.
+
+| Agent | Use |
+|---|---|
+| `cluster-ops` | Thin relay: the VM has no route to the Talos cluster, so it sends a read-only question to a new session in the `claude-k8s-helper` Remote Control environment (`create_session`) and reports the answer |
+| `ci-triage` | Read-only triage of a failing Actions run or PR check with `gh`: first real error, kind of failure, likely fix |
+| `lint-runner` | Runs `yamllint`, `shellcheck`, `shfmt`, `actionlint`, `hadolint` and the repo's validation script on the changed files and returns only the failures |
+| `researcher` | Read, Grep, Glob, WebSearch and WebFetch only: looks up upstream docs and current facts and reports sources with versions |
+
+Only `cluster-ops` has cluster-specific details; the others are repo-agnostic.
+
+`cluster-ops` shares its name with the full `cluster-ops` agent in the talos-gitops repo (`.claude/agents/`). Project agents beat
+user agents of the same name, so inside a talos-gitops worktree the full agent (repo edits, validation, PRs) loads, and
+everywhere else this relay does.
+
 ## Security model
 
 - **Policy:** `/etc/claude-code/managed-settings.json` has the highest precedence and `claude` cannot change it. Sessions start
