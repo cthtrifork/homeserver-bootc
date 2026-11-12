@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/claude-vm/poll-upgrade claude-vm /etc/claude-vm/upgrade/url /var/lib/claude-vm-upgrade/last
+ExecStart=/usr/libexec/claude-vm/poll-upgrade claude-vm
 TimeoutStartSec=30
 StateDirectory=claude-vm-upgrade
 PrivateTmp=yes
