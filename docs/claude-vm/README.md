@@ -138,7 +138,7 @@ flowchart LR
   running sessions (Remote Control brings them back for about four hours). Drop `--apply` in
   `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
 - **Update button:** `claude-vm-upgrade-poll.timer` (every minute) runs `poll-upgrade`, which POSTs to the "Update Claude VM" page in the cluster
-  (`claude-system/vm-upgrade` in talos-gitops) and, when a click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00
+  (`claude-system/vm-upgrade` in talos-gitops): it reports the booted and staged ostree deployment from `rpm-ostree status --json` (local, no registry call), and, when a click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00
   timer runs. The answer is only `{"upgrade": true|false}`, so the cluster never sends a command. At most one upgrade per hour, checked before the
   click is claimed. Opt-in: the unit is skipped until, as root, `/etc/claude-vm/upgrade/url` (for example `http://192.168.1.244`) exists.
   There is no token: the cluster's NetworkPolicy lets only this VM's address reach the poll listener. Check with
