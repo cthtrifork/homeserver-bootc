@@ -231,8 +231,9 @@ of both agent accounts by tmpfiles.d (so they follow the image on upgrade). None
 | `cluster-ops` | Thin relay: the VM has no route to the Talos cluster, so it sends a read-only question to a new session in the `claude-k8s-helper` Remote Control environment (`create_session`) and reports the answer |
 | `ci-triage` | Read-only triage of a failing Actions run or PR check with `gh`: first real error, kind of failure, likely fix |
 | `lint-runner` | Runs `yamllint`, `shellcheck`, `shfmt`, `actionlint`, `hadolint` and the repo's validation script on the changed files and returns only the failures |
+| `researcher` | Read, Grep, Glob, WebSearch and WebFetch only: looks up upstream docs and current facts and reports sources with versions |
 
-The repo also has a project-level `researcher` (`.claude/agents/researcher.md`: Read and web only).
+Only `cluster-ops` has cluster-specific details; the others are repo-agnostic.
 
 `cluster-ops` shares its name with the full `cluster-ops` agent in the talos-gitops repo (`.claude/agents/`). Project agents beat
 user agents of the same name, so inside a talos-gitops worktree the full agent (repo edits, validation, PRs) loads, and

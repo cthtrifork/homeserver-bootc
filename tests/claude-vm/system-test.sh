@@ -54,6 +54,7 @@ test -x /usr/bin/claude-vm-signing-key
 test -f /usr/share/claude-vm/agents/cluster-ops.md
 test -f /usr/share/claude-vm/agents/ci-triage.md
 test -f /usr/share/claude-vm/agents/lint-runner.md
+test -f /usr/share/claude-vm/agents/researcher.md
 # nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 
