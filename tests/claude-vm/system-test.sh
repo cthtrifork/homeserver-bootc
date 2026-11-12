@@ -50,6 +50,8 @@ fi
 test -x /usr/bin/claude-vm-ssh-address
 test -x /usr/bin/claude-vm-egress
 test -x /usr/bin/claude-vm-signing-key
+# thin cluster-ops subagent, linked into each agent account by tmpfiles.d
+test -f /usr/share/claude-vm/agents/cluster-ops.md
 # nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 
