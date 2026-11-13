@@ -32,8 +32,6 @@ if [ -z "${ENV_LOAD:-}" ]; then
 fi
 echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intended."
 
-
-
 echo "--- boot timing ---"
 # wait for startup to finish so systemd-analyze reports final numbers; informational only, never fails the test
 timeout 120 systemctl is-system-running --wait || true
