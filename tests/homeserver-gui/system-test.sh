@@ -60,8 +60,29 @@ if [ "$present" -eq 0 ] && [ "${marketplace_status:-}" = "HTTP 200" ]; then
     present=$(count_extensions)
     echo "extensions installed after that run: $present"
     if [ "$present" -eq 0 ]; then
-        echo "--- journal of $user_unit (the installs still failed) ---"
-        sudo -n journalctl -u "$user_unit" -n 60 --no-pager 2>&1 | cut -c1-220 || true
+        echo "--- why the installs fail: vsce-sign (a .NET binary that maps a 2 TiB memfd) ---"
+        sudo -n journalctl -u "$user_unit" -n 80 --no-pager 2>&1 | grep -E "Error while installing|Signature|Failed Installing" | cut -c1-200 | head -4 || true
+        vsce_sign=$(find /usr/share/code -path '*vsce-sign/bin/vsce-sign' -type f 2>/dev/null | head -1)
+        echo "vsce-sign: ${vsce_sign:-not found}; SELinux: $(getenforce 2>&1)"
+        echo "limits of the unit: $(systemctl show "$user_unit" -p LimitFSIZE -p LimitAS -p LimitDATA | tr '\n' ' ')"
+        echo "-- vsce-sign run directly as caspertdk (no arguments, so it only starts up):"
+        sign_out=$(sudo -n -H -u caspertdk "$vsce_sign" 2>&1) && sign_status=0 || sign_status=$?
+        echo "exit status: $sign_status; output: $(head -c 300 <<<"$sign_out")"
+        echo "-- SELinux / kernel messages about it:"
+        sudo -n journalctl -k --no-pager 2>&1 | grep -i -E "avc|vsce-sign|memfd|SIGXFSZ" | tail -5 || true
+        # same install, from a transient systemd service (the context of the hook) and from a shell, with and without
+        # .NET's W^X double mapping, the usual workaround when the runtime cannot create that mapping
+        for variant in "service" "service+W^X off" "shell" "shell+W^X off"; do
+            case "$variant" in
+            "service") run=(systemd-run --pipe --wait --quiet -p User=caspertdk -E HOME=/var/home/caspertdk) ;;
+            "service+W^X off") run=(systemd-run --pipe --wait --quiet -p User=caspertdk -E HOME=/var/home/caspertdk -E DOTNET_EnableWriteXorExecute=0) ;;
+            "shell") run=(env) ;;
+            *) run=(env DOTNET_EnableWriteXorExecute=0) ;;
+            esac
+            case "$variant" in shell*) prefix=(sudo -n -H -u caspertdk) ;; *) prefix=(sudo -n) ;; esac
+            result=$("${prefix[@]}" "${run[@]}" code --install-extension mkhl.shfmt 2>&1 | grep -E "successfully installed|Error while installing|Signature" | head -1 || true)
+            echo "install as $variant -> ${result:-no result} (installed now: $(count_extensions))"
+        done
     fi
 fi
 if [ "$present" -eq 0 ]; then
