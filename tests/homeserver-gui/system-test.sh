@@ -35,14 +35,44 @@ systemd-analyze critical-chain --no-pager || true
 echo "--- 15 slowest units ---"
 systemd-analyze blame --no-pager | head -15 || true
 
-# The first boot installs every vscode extension. Run user-setup again to time the skip path
-# (extensions already installed); informational only.
-echo "--- user-setup second run ---"
+# 10-vscode.sh must install only the extensions that are missing. The CI VM cannot install real extensions (nothing
+# ends up in ~/.vscode/extensions), so test the hook's logic with a stub `code` that records installs: the first run
+# must install something and the second run must install nothing more. These are real assertions.
+echo "--- vscode hook: install only missing extensions ---"
 user_unit="bootc-user-setup@caspertdk.service"
-second_start=$SECONDS
-sudo -n systemctl restart "$user_unit" || true
-echo "second run of $user_unit took $((SECONDS - second_start))s"
-sudo -n journalctl -u "$user_unit" -n 40 --no-pager 2>&1 | grep -c "already installed" || true
+stub_dir=/var/tmp/fake-code
+state="$stub_dir/installed"
+sudo -n install -d -m 0777 "$stub_dir"
+sudo -n install -m 0666 /dev/null "$state"
+sudo -n tee "$stub_dir/code" >/dev/null <<'EOF'
+#!/usr/bin/env bash
+state=/var/tmp/fake-code/installed
+case "$1" in
+    --list-extensions) cat "$state" ;;
+    --install-extension) echo "$2" >>"$state" ;;
+esac
+EOF
+sudo -n chmod 0755 "$stub_dir/code"
+sudo -n mkdir -p /run/systemd/system/bootc-user-setup@.service.d
+printf '[Service]\nEnvironment=PATH=%s:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin\n' "$stub_dir" |
+    sudo -n tee /run/systemd/system/bootc-user-setup@.service.d/10-fake-code.conf >/dev/null
+sudo -n systemctl daemon-reload
+sudo -n systemctl restart "$user_unit"
+first=$(grep -c . "$state" || true)
+sudo -n systemctl restart "$user_unit"
+second=$(grep -c . "$state" || true)
+echo "extensions installed after the first run: $first, after the second run: $second"
+sudo -n rm -rf /run/systemd/system/bootc-user-setup@.service.d "$stub_dir"
+sudo -n systemctl daemon-reload
+[ "$first" -ge 1 ] || {
+    echo "10-vscode.sh did not install anything through the stubbed code"
+    exit 1
+}
+[ "$second" -eq "$first" ] || {
+    echo "10-vscode.sh installed extensions again on the second run"
+    exit 1
+}
+echo "✅ 10-vscode.sh installs only missing extensions"
 
 echo "--- 20 largest installed packages ---"
 rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
