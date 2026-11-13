@@ -39,6 +39,10 @@ systemd-analyze time || true
 systemd-analyze critical-chain --no-pager || true
 echo "--- 15 slowest units ---"
 systemd-analyze blame --no-pager | head -15 || true
+echo "--- failed units ---"
+systemctl --failed --no-pager || true
+echo "--- user-setup hook timings ---"
+sudo -n journalctl -u 'bootc-user-setup@*' -o short-precise --no-pager 2>&1 | grep -E "user-setup:|Finished|Failed" | tail -20 || true
 
 echo "--- 20 largest installed packages ---"
 rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
