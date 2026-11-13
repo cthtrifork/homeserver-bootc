@@ -1,0 +1,105 @@
+name: E2E
+
+# Boots the PR image in QEMU for pull requests labelled `e2e`. It runs on its own so that adding the label does not
+# rebuild the images (that also caused a duplicate run when a PR was created with the label): it waits for the
+# "Build bootc image" run of the same commit and tests the images that run built successfully.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    branches:
+      - main
+
+# least privilege by default, jobs elevate individually
+permissions:
+  contents: read
+
+# One live run per PR; a newer commit or label supersedes it. A label other than `e2e` (Renovate adds several right
+# after opening) gets a unique group so it can neither cancel a waiting run nor be cancelled by one.
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.event.action != 'labeled' || github.event.label.name == 'e2e') && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: true
+
+jobs:
+  select:
+    name: Select images to test
+    # labels are read from the API below (the event payload can lag behind a label added right after the PR is opened)
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'e2e' }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 60
+    permissions:
+      actions: read # list the build run and its jobs
+      pull-requests: read
+      contents: read
+    outputs:
+      images: ${{ steps.select.outputs.images }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+      BUILD_WORKFLOW: build-bootc-images.yaml
+    steps:
+      - name: Wait for the build of this commit and list the images it built
+        id: select
+        run: | #sh
+          set -euo pipefail
+
+          skip() {
+            echo "$1"
+            echo "images=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          [ "$IS_FORK" = "false" ] || skip "Fork PRs get no secrets: nothing to test."
+
+          pr=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '{draft: .draft, e2e: ([.labels[].name] | index("e2e") != null), sha: .head.sha}')
+          [ "$(jq -r .draft <<< "$pr")" = "false" ] || skip "Draft PR: nothing to test."
+          [ "$(jq -r .e2e <<< "$pr")" = "true" ] || skip "The PR has no e2e label: nothing to test."
+          # a newer commit has been pushed since this run started: its own run takes over
+          [ "$(jq -r .sha <<< "$pr")" = "$HEAD_SHA" ] || skip "Head moved to $(jq -r .sha <<< "$pr"): a newer run takes over."
+
+          started=$(date +%s)
+          while :; do
+            # newest build run of this commit; a run cancelled by a newer duplicate does not count
+            run=$(gh api "repos/$REPO/actions/workflows/$BUILD_WORKFLOW/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=30" \
+              --jq '[.workflow_runs[] | select(.conclusion != "cancelled")] | sort_by(.created_at) | last // empty')
+            if [ -z "$run" ]; then
+              [ $(( $(date +%s) - started )) -lt 300 ] || { echo "::error::No build run found for $HEAD_SHA after 5 minutes"; exit 1; }
+              echo "No build run for $HEAD_SHA yet, waiting"
+            elif [ "$(jq -r .status <<< "$run")" = "completed" ]; then
+              break
+            else
+              echo "Build run $(jq -r .id <<< "$run") is $(jq -r .status <<< "$run"), waiting"
+            fi
+            sleep 30
+          done
+
+          run_id=$(jq -r .id <<< "$run")
+          echo "Build run: $(jq -r .html_url <<< "$run")"
+
+          # jobs are named "<image> / Build image <image>"; only images whose build succeeded are tested
+          images=$(gh api "repos/$REPO/actions/runs/$run_id/jobs?per_page=100" --paginate \
+            --jq '.jobs[] | select(.conclusion == "success") | .name' \
+            | sed -n 's# / Build image .*##p' | jq -R . | jq -sc .)
+          echo "Images with a successful build: $images"
+          echo "images=$images" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    name: ${{ matrix.image }}
+    needs: select
+    if: ${{ needs.select.outputs.images != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.select.outputs.images) }}
+    uses: ./.github/workflows/e2e-test.yaml
+    with:
+      image: ${{ matrix.image }}
+    secrets: inherit
+    # the called job can only narrow these
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      pull-requests: write
