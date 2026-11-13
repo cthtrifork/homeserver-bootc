@@ -40,8 +40,14 @@ systemd-analyze blame --no-pager | head -15 || true
 # so loudly instead of passing silently, and do not fail the test for an environment limit.
 echo "--- vscode hook: install only missing extensions ---"
 user_unit="bootc-user-setup@caspertdk.service"
-echo "marketplace reachability from the VM:"
-curl -sS -o /dev/null --max-time 15 -w 'marketplace.visualstudio.com -> HTTP %{http_code}\n' https://marketplace.visualstudio.com/ 2>&1 || true
+echo "marketplace DNS and reachability from the VM (IPs can be compared with the dropped IPs in Hubble):"
+for host in marketplace.visualstudio.com ms-vscode-remote.gallery.vsassets.io ms-vscode-remote.gallerycdn.vsassets.io \
+    update.code.visualstudio.com vscode.download.prss.microsoft.com dc.services.visualstudio.com \
+    mobile.events.data.microsoft.com open-vsx.org; do
+    ips=$(getent ahostsv4 "$host" 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ' || true)
+    status=$(curl -sS -o /dev/null --max-time 10 -w 'HTTP %{http_code}' "https://$host/" 2>&1 | tail -n 1 || true)
+    echo "$host: ${ips:-no DNS answer} -> $status"
+done
 present=$(sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true)
 echo "extensions installed after the first boot: $present"
 if [ "$present" -eq 0 ]; then
