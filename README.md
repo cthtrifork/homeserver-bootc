@@ -1,6 +1,6 @@
 # homeserver-bootc
 
-Fedora bootc (`fedora-bootc:44`) images for a home server, built and published by GitHub Actions. Full bootc docs: <https://bootc-dev.github.io/bootc/>
+Fedora bootc (`fedora-bootc:45`) images for a home server, built and published by GitHub Actions. Full bootc docs: <https://bootc-dev.github.io/bootc/>
 
 ## Images
 
