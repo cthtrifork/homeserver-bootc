@@ -15,6 +15,9 @@ log "Enabling system services"
 # GUI
 systemctl set-default graphical.target
 
+# VS Code extensions: installed after boot, once the network is up
+systemctl enable bootc-vscode-extensions@caspertdk.service
+
 # Power management
 systemctl enable tlp.service
 systemctl enable tlp-pd.service

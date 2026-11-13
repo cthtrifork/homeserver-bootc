@@ -1,0 +1,44 @@
+#!/usr/bin/bash
+# Installs the VS Code extensions that are missing. Runs after boot (bootc-vscode-extensions@<user>.service), so it
+# waits for the marketplace instead of failing when the network is not up yet.
+set -x
+
+extensions=(
+    ms-vscode-remote.remote-containers
+    ms-vscode-remote.remote-ssh
+    ms-azuretools.vscode-containers
+    ruschaaf.extended-embedded-languages
+    mkhl.shfmt
+    redhat.vscode-yaml
+)
+
+# a failed listing may still have printed some IDs; do not treat that as authoritative
+if ! installed="$(code --list-extensions 2>/dev/null)"; then
+    installed=""
+fi
+
+missing=()
+for ext in "${extensions[@]}"; do
+    if grep -qixF "$ext" <<<"$installed"; then
+        echo "already installed: $ext"
+    else
+        missing+=("$ext")
+    fi
+done
+
+if [ "${#missing[@]}" -eq 0 ]; then
+    echo "all extensions are installed"
+    exit 0
+fi
+
+# up to 10 minutes; the next boot tries again
+for _ in $(seq 1 60); do
+    if curl -fsS --max-time 5 -o /dev/null https://marketplace.visualstudio.com/; then
+        break
+    fi
+    sleep 10
+done
+
+for ext in "${missing[@]}"; do
+    code --install-extension "$ext"
+done

@@ -39,31 +39,26 @@ systemctl --failed --no-pager || true
 echo "--- user-setup hook timings ---"
 sudo -n journalctl -u 'bootc-user-setup@*' -o short-precise --no-pager 2>&1 | grep -E "user-setup:|Finished|Failed" | tail -20 || true
 
-# 10-vscode.sh must install only the extensions that are missing (real code, real marketplace).
-echo "--- vscode hook: install only missing extensions ---"
-user_unit="bootc-user-setup@caspertdk.service"
-count_extensions() { sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true; }
-present=$(count_extensions)
-echo "extensions installed after the first boot: $present"
+# The VS Code extensions are installed after boot by a unit that waits for the network, and a second run must not
+# install anything again (real code, real marketplace).
+echo "--- vscode extensions: installed after boot, only the missing ones ---"
+user_unit="bootc-vscode-extensions@caspertdk.service"
+# blocks until the boot run has finished (or runs the unit if it already has)
+sudo -n timeout 900 systemctl start "$user_unit"
+present=$(sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true)
+echo "extensions installed: $present"
 if [ "$present" -eq 0 ]; then
-    # bootc-user-setup runs at boot without waiting for the network, so its first run can fail before the network is up
-    echo "nothing installed at boot: running $user_unit again now that the network is up"
-    sudo -n systemctl restart "$user_unit"
-    present=$(count_extensions)
-    echo "extensions installed after that run: $present"
-fi
-if [ "$present" -eq 0 ]; then
-    echo "::warning::No vscode extension could be installed in this VM (marketplace unreachable?): the install-only-missing path of 10-vscode.sh was NOT tested"
+    echo "::warning::No vscode extension could be installed in this VM (marketplace unreachable?): the install-only-missing path was NOT tested"
 else
     since=$(date '+%Y-%m-%d %H:%M:%S')
-    sudo -n systemctl restart "$user_unit"
+    sudo -n systemctl start "$user_unit"
     reinstalled=$(sudo -n journalctl -u "$user_unit" --since "$since" --no-pager 2>&1 | grep -c "install-extension" || true)
     echo "second run: $reinstalled install call(s)"
     [ "$reinstalled" -eq 0 ] || {
-        echo "10-vscode.sh tried to install extensions again although $present are present"
+        echo "the extensions unit tried to install again although $present extensions are present"
         exit 1
     }
-    echo "✅ 10-vscode.sh skips installed extensions"
+    echo "✅ the extensions unit installs only missing extensions"
 fi
 
 echo "--- 20 largest installed packages ---"
