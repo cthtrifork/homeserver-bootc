@@ -1,0 +1,5 @@
+{
+    // Runtime arguments, restored on every boot by the user-setup dotfiles sync (like settings.json).
+    // The crash reporter is configured here, not in settings.json (VS Code 1.49+).
+    "enable-crash-reporter": false
+}
