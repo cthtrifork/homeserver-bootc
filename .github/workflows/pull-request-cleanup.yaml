@@ -53,5 +53,4 @@ jobs:
           use-regex: true
           keep-n-tagged: 0
           exclude-tags: ^(latest|main-.*|pr-(?!${{ github.event.pull_request.number }}(-|$)).*)$
-          dry-run: true
           packages: homeserver-bootc/homeserver-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
