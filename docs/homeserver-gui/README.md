@@ -11,7 +11,7 @@ Plasma desktop. Back to the [main README](../../README.md).
 ```mermaid
 flowchart TD
     HS["homeserver image<br/>(files, tools, secrets, services)"] --> IMG
-    BASE["fedora-bootc:44"] --> IMG
+    BASE["fedora-bootc:45"] --> IMG
     subgraph IMG["homeserver-gui image (PRIVATE: same baked secrets)"]
         KDE["KDE Plasma + SDDM + KDE apps<br/>PipeWire, NetworkManager Wi-Fi, TLP"]
         APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>harper-pad, kglance, yaml-schema-router, multimedia codecs"]
@@ -41,6 +41,10 @@ flowchart TD
   so a self-update would be undone. `etc/environment.d/50-zed.conf` sets `ZED_UPDATE_EXPLANATION`, which is Zed's own
   switch for packaged installs: it stops update polling and makes "Check for Updates" show the message instead.
   Zed updates arrive with the image, via Renovate and `bootc upgrade`.
+- **VS Code does not self-update and sends no telemetry.** It comes from Microsoft's repo at build time, so updates also
+  arrive with the image. The dotfiles sync restores `~/.config/Code/User/settings.json` (`update.mode: none`,
+  `extensions.autoUpdate` and `extensions.autoCheckUpdates` off, `telemetry.telemetryLevel: off`) and
+  `~/.vscode/argv.json` (`enable-crash-reporter: false`) on every boot, so a change made in the editor is undone.
 - **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed by the first user setup, and
   the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.

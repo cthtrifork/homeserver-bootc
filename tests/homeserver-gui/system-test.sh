@@ -34,6 +34,10 @@ systemd-analyze time || true
 systemd-analyze critical-chain --no-pager || true
 echo "--- 15 slowest units ---"
 systemd-analyze blame --no-pager | head -15 || true
+echo "--- failed units ---"
+systemctl --failed --no-pager || true
+echo "--- user-setup hook timings ---"
+sudo -n journalctl -u 'bootc-user-setup@*' -o short-precise --no-pager 2>&1 | grep -E "user-setup:|Finished|Failed" | tail -20 || true
 
 # 10-vscode.sh must install only the extensions that are missing. This uses the real `code` and the real marketplace.
 # If the VM cannot install extensions (the marketplace is unreachable from CI), the skip path cannot be exercised: say

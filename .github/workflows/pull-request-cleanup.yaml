@@ -31,19 +31,22 @@ jobs:
           done
 
   ghcr-cleanup-image:
-    name: ghcr cleanup action
+    name: delete the ghcr images of the closed pull request
+    # A fork's run has no access to the PAT
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-slim
     timeout-minutes: 15
     concurrency:
       group: cleanup-images
-    permissions:
-      actions: write
+    permissions: {}
     steps:
-      - name: Delete image
+      # The PAT owns the packages (GITHUB_TOKEN does not). delete-tags would untag with empty manifests, which GHCR
+      # rejects (HTTP 400), so delete whole images and protect all others: latest, main-*, the other PRs' pr-* tags.
+      - name: Delete the images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
-          delete-tags: pr-${{github.event.pull_request.number}}
+          token: ${{ secrets.PAT_RENOVATEBOT }}
+          use-regex: true
+          keep-n-tagged: 0
+          exclude-tags: ^(latest|main-.*|pr-(?!${{ github.event.pull_request.number }}(-|$)).*)$
           packages: homeserver-bootc/homeserver-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
-
-      - name: Delete Untagged Images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
