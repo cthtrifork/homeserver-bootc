@@ -11,7 +11,7 @@
 
 ```mermaid
 flowchart TD
-    BASE["fedora-bootc:44"] --> IMG
+    BASE["fedora-bootc:45"] --> IMG
     subgraph IMG["homeserver image (PRIVATE: baked secrets)"]
         SEC["Secrets<br/>age key, SSH key (sops),<br/>registry creds + token, pinggy token"]
         TOOLS["Tools<br/>kubectl, flux, helm, k9s, talosctl, kind,<br/>sops, age, cosign, gh, docker CE, podman,<br/>qemu-kvm, libvirt, tmux, azure-cli"]

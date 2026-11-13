@@ -11,7 +11,7 @@ Plasma desktop. Back to the [main README](../../README.md).
 ```mermaid
 flowchart TD
     HS["homeserver image<br/>(files, tools, secrets, services)"] --> IMG
-    BASE["fedora-bootc:44"] --> IMG
+    BASE["fedora-bootc:45"] --> IMG
     subgraph IMG["homeserver-gui image (PRIVATE: same baked secrets)"]
         KDE["KDE Plasma + SDDM + KDE apps<br/>PipeWire, NetworkManager Wi-Fi, TLP"]
         APPS["Apps<br/>zen-browser, ghostty, VS Code, Zed,<br/>virt-manager, trivy-scanner,<br/>harper-pad, kglance, yaml-schema-router, multimedia codecs"]
