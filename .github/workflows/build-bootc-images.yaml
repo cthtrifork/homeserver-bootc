@@ -112,7 +112,7 @@ jobs:
           REGISTRY_USER: ${{ github.actor }}
           REGISTRY_TOKEN: ${{ github.token }}
           IMAGE_PREFIX: ghcr.io/${{ github.repository }}
-          BASE_IMAGE: quay.io/fedora/fedora-bootc:45 # keep in step with the FROM line of the containerfiles
+          BASE_IMAGE: quay.io/fedora/fedora-bootc:45 # bumped by Renovate together with the FROM lines of the containerfiles
           MAX_AGE_DAYS: "13" # a published image older than this is rebuilt even if the base is unchanged
         run: | #sh
           set -x
