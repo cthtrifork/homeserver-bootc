@@ -1,4 +1,8 @@
-name: Clean up pull request images
+name: Clean up closed pull request
+# The PR's ghcr images (pr-<number>) are deleted by cleanup-old-images.yml (daily, whole images older than 7 days). A
+# per-PR ghcr cleanup used to live here and failed on every close: GITHUB_TOKEN does not own the user-owned packages
+# (404 "Package not found"; the daily job uses PAT_RENOVATEBOT), and `delete-tags` is rejected with HTTP 400 for
+# multi-tag images, as noted in cleanup-old-images.yml.
 on:
   pull_request:
     types:
@@ -29,21 +33,3 @@ jobs:
             echo "Cancelling run $id"
             gh run cancel "$id" || true
           done
-
-  ghcr-cleanup-image:
-    name: ghcr cleanup action
-    runs-on: ubuntu-slim
-    timeout-minutes: 15
-    concurrency:
-      group: cleanup-images
-    permissions:
-      actions: write
-    steps:
-      - name: Delete image
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
-        with:
-          delete-tags: pr-${{github.event.pull_request.number}}
-          packages: homeserver-bootc/homeserver-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
-
-      - name: Delete Untagged Images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
