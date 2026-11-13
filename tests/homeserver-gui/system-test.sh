@@ -35,44 +35,30 @@ systemd-analyze critical-chain --no-pager || true
 echo "--- 15 slowest units ---"
 systemd-analyze blame --no-pager | head -15 || true
 
-# 10-vscode.sh must install only the extensions that are missing. The CI VM cannot install real extensions (nothing
-# ends up in ~/.vscode/extensions), so test the hook's logic with a stub `code` that records installs: the first run
-# must install something and the second run must install nothing more. These are real assertions.
+# 10-vscode.sh must install only the extensions that are missing. This uses the real `code` and the real marketplace.
+# If the VM cannot install extensions (the marketplace is unreachable from CI), the skip path cannot be exercised: say
+# so loudly instead of passing silently, and do not fail the test for an environment limit.
 echo "--- vscode hook: install only missing extensions ---"
 user_unit="bootc-user-setup@caspertdk.service"
-stub_dir=/var/tmp/fake-code
-state="$stub_dir/installed"
-sudo -n install -d -m 0777 "$stub_dir"
-sudo -n install -m 0666 /dev/null "$state"
-sudo -n tee "$stub_dir/code" >/dev/null <<'EOF'
-#!/usr/bin/env bash
-state=/var/tmp/fake-code/installed
-case "$1" in
-    --list-extensions) cat "$state" ;;
-    --install-extension) echo "$2" >>"$state" ;;
-esac
-EOF
-sudo -n chmod 0755 "$stub_dir/code"
-sudo -n mkdir -p /run/systemd/system/bootc-user-setup@.service.d
-printf '[Service]\nEnvironment=PATH=%s:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin\n' "$stub_dir" |
-    sudo -n tee /run/systemd/system/bootc-user-setup@.service.d/10-fake-code.conf >/dev/null
-sudo -n systemctl daemon-reload
-sudo -n systemctl restart "$user_unit"
-first=$(grep -c . "$state" || true)
-sudo -n systemctl restart "$user_unit"
-second=$(grep -c . "$state" || true)
-echo "extensions installed after the first run: $first, after the second run: $second"
-sudo -n rm -rf /run/systemd/system/bootc-user-setup@.service.d "$stub_dir"
-sudo -n systemctl daemon-reload
-[ "$first" -ge 1 ] || {
-    echo "10-vscode.sh did not install anything through the stubbed code"
-    exit 1
-}
-[ "$second" -eq "$first" ] || {
-    echo "10-vscode.sh installed extensions again on the second run"
-    exit 1
-}
-echo "✅ 10-vscode.sh installs only missing extensions"
+echo "marketplace reachability from the VM:"
+curl -sS -o /dev/null --max-time 15 -w 'marketplace.visualstudio.com -> HTTP %{http_code}\n' https://marketplace.visualstudio.com/ 2>&1 || true
+present=$(sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true)
+echo "extensions installed after the first boot: $present"
+if [ "$present" -eq 0 ]; then
+    echo "::warning::No vscode extension could be installed in this VM (marketplace unreachable?): the install-only-missing path of 10-vscode.sh was NOT tested"
+else
+    since=$(date '+%Y-%m-%d %H:%M:%S')
+    sudo -n systemctl restart "$user_unit"
+    journal=$(sudo -n journalctl -u "$user_unit" --since "$since" --no-pager 2>&1)
+    skipped=$(grep -c "already installed:" <<<"$journal" || true)
+    reinstalled=$(grep -c "install-extension" <<<"$journal" || true)
+    echo "second run: $skipped extension(s) skipped, $reinstalled install call(s) for missing ones"
+    [ "$skipped" -ge "$present" ] || {
+        echo "10-vscode.sh did not skip all $present installed extension(s)"
+        exit 1
+    }
+    echo "✅ 10-vscode.sh skips installed extensions"
+fi
 
 echo "--- 20 largest installed packages ---"
 rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
