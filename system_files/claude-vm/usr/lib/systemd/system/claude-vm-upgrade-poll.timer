@@ -1,9 +1,9 @@
 [Unit]
-Description=Poll the Update VMs page every minute
+Description=Poll the Update VMs page every 5 minutes
 
 [Timer]
 OnBootSec=2min
-OnUnitInactiveSec=60s
+OnUnitInactiveSec=5min
 AccuracySec=10s
 
 [Install]

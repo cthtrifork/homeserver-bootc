@@ -137,7 +137,7 @@ flowchart LR
 - **Updates:** `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so a new image reboots the VM and ends
   running sessions (Remote Control brings them back for about four hours). Drop `--apply` in
   `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
-- **Update button:** `claude-vm-upgrade-poll.timer` (every minute) runs `poll-upgrade claude-vm`, which talks to the "Update VMs" page in the cluster
+- **Update button:** `claude-vm-upgrade-poll.timer` (every 5 minutes) runs `poll-upgrade claude-vm`, which talks to the "Update VMs" page in the cluster
   (`claude-system/vm-upgrade` in talos-gitops) at `http://vm-upgrade.portableinfo.cloud` (hardcoded; a Cloudflare A record, DNS only, to the
   MetalLB address of `claude-vm-upgrade-lb`). It reports the booted and staged ostree deployment (`rpm-ostree status --json`, local), then, when a
   click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00 timer runs. The answer is only `{"upgrade": true|false}`, so the
