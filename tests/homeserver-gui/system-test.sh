@@ -44,7 +44,12 @@ sudo -n journalctl -u 'bootc-user-setup@*' -o short-precise --no-pager 2>&1 | gr
 echo "--- vscode extensions: installed after boot, only the missing ones ---"
 user_unit="bootc-vscode-extensions@caspertdk.service"
 # blocks until the boot run has finished (or runs the unit if it already has)
-sudo -n timeout 900 systemctl start "$user_unit"
+sudo -n timeout 900 systemctl start "$user_unit" || {
+    echo "--- $user_unit failed ---"
+    sudo -n systemctl list-jobs --no-pager || true
+    sudo -n journalctl -u "$user_unit" -n 60 --no-pager | cut -c1-200 || true
+    exit 1
+}
 present=$(sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true)
 echo "extensions installed: $present"
 if [ "$present" -eq 0 ]; then

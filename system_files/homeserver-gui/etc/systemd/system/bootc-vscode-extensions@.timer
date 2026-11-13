@@ -1,0 +1,8 @@
+[Unit]
+Description=Install the VS Code extensions for %i after boot
+
+[Timer]
+OnBootSec=30s
+
+[Install]
+WantedBy=timers.target

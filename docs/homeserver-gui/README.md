@@ -45,7 +45,7 @@ flowchart TD
   arrive with the image. The dotfiles sync restores `~/.config/Code/User/settings.json` (`update.mode: none`,
   `extensions.autoUpdate` and `extensions.autoCheckUpdates` off, `telemetry.telemetryLevel: off`) and
   `~/.vscode/argv.json` (`enable-crash-reporter: false`) on every boot, so a change made in the editor is undone.
-- **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed after boot by `bootc-vscode-extensions@caspertdk.service` (it waits for the network), and
+- **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed after boot by `bootc-vscode-extensions@caspertdk` (a timer starts it 30 s after boot and it waits for the network), and
   the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.
 - **No pinggy tunnel:** `build_files/gui/21-systemd.sh` disables `pinggy.service`.

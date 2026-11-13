@@ -1,7 +1,7 @@
 [Unit]
 Description=Install the VS Code extensions for %i
-# After the dotfiles (settings.json) are in place. Not ordered before any target: the install waits for the network and
-# must not delay boot, and NetworkManager-wait-online is disabled, so network-online.target is no guarantee.
+# Started by bootc-vscode-extensions@%i.timer, not by a target: a target waits for the services it wants, and this one
+# waits for the network. After the dotfiles (settings.json) are in place.
 After=bootc-user-setup@%i.service
 Wants=bootc-user-setup@%i.service
 
@@ -10,6 +10,3 @@ Type=oneshot
 User=%i
 ExecStart=/usr/libexec/vscode-extensions
 TimeoutStartSec=15min
-
-[Install]
-WantedBy=graphical.target
