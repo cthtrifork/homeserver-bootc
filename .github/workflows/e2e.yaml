@@ -63,9 +63,10 @@ jobs:
 
           started=$(date +%s)
           while :; do
-            # newest build run of this commit; a run cancelled by a newer duplicate does not count
+            # newest build run of this commit. Cancelled runs (superseded duplicates) and skipped runs (a `labeled`
+            # event for a label the build ignores, such as e2e itself, skips the whole run) built nothing and do not count.
             run=$(gh api "repos/$REPO/actions/workflows/$BUILD_WORKFLOW/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=30" \
-              --jq '[.workflow_runs[] | select(.conclusion != "cancelled")] | sort_by(.created_at) | last // empty')
+              --jq '[.workflow_runs[] | select(.conclusion != "cancelled" and .conclusion != "skipped")] | sort_by(.created_at) | last // empty')
             if [ -z "$run" ]; then
               [ $(( $(date +%s) - started )) -lt 300 ] || { echo "::error::No build run found for $HEAD_SHA after 5 minutes"; exit 1; }
               echo "No build run for $HEAD_SHA yet, waiting"
