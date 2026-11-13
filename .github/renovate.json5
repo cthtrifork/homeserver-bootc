@@ -1,36 +1,26 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    'config:best-practices'
+    'config:best-practices',
   ],
   labels: [
     'dependencies',
     'automated-pr',
   ],
-  dependencyDashboard: true,
-  dependencyDashboardTitle: 'Dependency Dashboard',
-  dependencyDashboardLabels: ['dependencies'],
-  // New releases wait 2 days. 'strict' means no branch or PR exists until the wait is over, so a
-  // PR (and an automerge) never races a release that gets yanked or fixed within the first days.
+  dependencyDashboard: {
+    enabled: true,
+    title: 'Dependency Dashboard',
+    labels: [
+      'dependencies',
+    ],
+  },
   minimumReleaseAge: '2 days',
-  // A release with no timestamp (quay.io and ghcr.io images, for one) counts as old enough. By default
-  // it never is, so with 'strict' below an update from such a source would wait forever on the
-  // renovate/stability-days check, with no branch, no PR and no sign on the dashboard.
   minimumReleaseAgeBehaviour: 'timestamp-optional',
   internalChecksFilter: 'strict',
-  // Commits go through GitHub's API as the GitHub App, so they are verified (signed) without a key.
   platformCommit: 'enabled',
-  // Security advisories from OSV.dev as well as GitHub's own alerts (the App's Dependabot alerts permission).
   osvVulnerabilityAlerts: true,
-
-  // Rate limits, explicit instead of Renovate's defaults (2 PRs an hour, 10 open): a burst of releases opens
-  // a handful of PRs per run without flooding CI, and the open-PR cap stops a stale backlog from growing.
   prHourlyLimit: 5,
   prConcurrentLimit: 10,
-  // No Renovate `schedule` here: the cron in renovate.yaml is the only timing. A schedule makes Renovate
-  // skip branch creation and updates in every run outside its window, which looked like the workflow
-  // schedule being ignored (the cron fires every 2 hours, but only runs between 00:00 and 07:00 did anything).
-  // Renovate itself is the exception: it automerges for every update type (last packageRule).
   vulnerabilityAlerts: {
     addLabels: [
       'vulnerability',
@@ -46,70 +36,74 @@
   patch: {
     automerge: true,
   },
-  // Renovate merges the PR itself once the status checks pass, so no branch protection / GitHub auto-merge is required.
   automergeType: 'pr',
   platformAutomerge: false,
   ignoreTests: false,
   rebaseWhen: 'auto',
-  // Rules apply in order and a later rule wins, so the general ones come first.
   packageRules: [
     {
-      matchUpdateTypes: ['digest', 'pin', 'pinDigest'],
+      matchUpdateTypes: [
+        'digest',
+        'pin',
+        'pinDigest',
+      ],
       automerge: true,
     },
     {
-      // The Fedora base image: every update (new release, digest pin, digest bump) is only created
-      // once ticked on the Dependency Dashboard, so a rebuild of the whole image is a decision.
-      // One group: the FROM lines of the containerfiles and BASE_IMAGE of build-bootc-images.yaml move together.
-      matchPackageNames: ['quay.io/fedora/fedora-bootc'],
+      matchPackageNames: [
+        'quay.io/fedora/fedora-bootc',
+      ],
       dependencyDashboardApproval: true,
       groupName: 'fedora-bootc base image',
     },
     {
-      // Patches stay out of the groups on purpose: a group is merged as a whole, so a minor in the
-      // same branch would hold the patches back. Patches get their own PR and automerge.
-      matchManagers: ['github-actions'],
-      matchUpdateTypes: ['minor'],
+      matchManagers: [
+        'github-actions',
+      ],
+      matchUpdateTypes: [
+        'minor',
+      ],
       groupName: 'actions',
     },
     {
-      // The tool versions pinned with a `# renovate:` comment in build_files and the workflows.
-      matchManagers: ['custom.regex'],
-      matchUpdateTypes: ['minor'],
+      matchManagers: [
+        'custom.regex',
+      ],
+      matchUpdateTypes: [
+        'minor',
+      ],
       groupName: 'tools',
-      // Pinned CI/build tool versions (renovate itself included): minors automerge once checks pass.
       automerge: true,
     },
     {
-      // Our own release stream: no cooldown, not grouped with the other tools, and every update
-      // (minor and major too) automerges. With the cooldown a new release restarted the 2 days every
-      // time and, inside the 'tools' group, a pending update is left out of the branch and off the
-      // dashboard.
-      matchPackageNames: ['cthtrifork/trivy-dashboard-wail3', 'cthtrifork/harper-pad', 'cthtrifork/kglance'],
+      matchPackageNames: [
+        'cthtrifork/trivy-dashboard-wail3',
+        'cthtrifork/harper-pad',
+        'cthtrifork/kglance',
+      ],
       minimumReleaseAge: null,
       groupName: null,
       automerge: true,
     },
     {
-      "extends": [
-        "helpers:pinGitHubActionDigests"
+      extends: [
+        'helpers:pinGitHubActionDigests',
       ],
-      "extractVersion": "^(?<version>v?\\d+\\.\\d+\\.\\d+)$",
-      "versioning": "regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$",
-      "recreateWhen": "always",
+      extractVersion: '^(?<version>v?\\d+\\.\\d+\\.\\d+)$',
+      versioning: 'regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+)\\.(?<patch>\\d+))?$',
+      recreateWhen: 'always',
     },
     {
-      // Renovate itself (the pinned renovate version and the renovatebot/github-action) automerges for every
-      // update type, in its own PR. Last, so it wins over the groups and the manual-review rules above.
-      matchPackageNames: ['renovate', 'renovatebot/github-action'],
+      matchPackageNames: [
+        'renovate',
+        'renovatebot/github-action',
+      ],
       automerge: true,
       groupName: null,
     },
   ],
   customManagers: [
     {
-      // Container images that are not in a Dockerfile: the chunkah image used to rechunk the built image, the registry image the
-      // self-hosted runner pulls in the prepare-podman action, and the Fedora base image BASE_IMAGE compares against.
       customType: 'regex',
       managerFilePatterns: [
         '/^\\.github/workflows/[^/]+\\.ya?ml$/',
@@ -123,9 +117,6 @@
       datasourceTemplate: 'docker',
     },
     {
-      // Versions in the workflows with no manager of their own: a `# renovate: datasource=<ds>
-      // depName=<name>` (or packageName=) comment at the end of a `KEY: value` or `KEY=value` line
-      // (also `ARG KEY=value` in the *.containerfile files).
       customType: 'regex',
       managerFilePatterns: [
         '/^[^/]+\\.containerfile$/',
