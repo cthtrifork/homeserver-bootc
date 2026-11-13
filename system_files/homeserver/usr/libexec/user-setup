@@ -5,9 +5,6 @@ USER_HOOKS_DIRECTORY="/usr/share/bootc/user-setup.hooks.d"
 # Privileged setup can be called via user services
 if [ -d "$USER_HOOKS_DIRECTORY" ]; then
   for script in "$USER_HOOKS_DIRECTORY"/*; do
-    start=$SECONDS
     bash "$script"
-    # Shows in `journalctl -u bootc-user-setup@<user>` which hook dominates boot time
-    echo "user-setup: $(basename "$script") took $((SECONDS - start))s"
   done
 fi
