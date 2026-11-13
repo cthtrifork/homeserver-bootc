@@ -5,7 +5,9 @@ name: E2E
 # "Build bootc image" run of the same commit and tests the images that run built successfully.
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled]
+    # No `opened`: a PR only needs e2e once it has the label, and adding the label is a `labeled` event. With
+    # `opened` too, creating a PR with `--label e2e` started two runs and cancelled one, which shows as a failed check.
+    types: [labeled, synchronize, reopened, ready_for_review]
     branches:
       - main
 
