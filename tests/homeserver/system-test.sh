@@ -34,6 +34,14 @@ echo "✅ ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d/* is working as intende
 
 
 
+echo "--- boot timing ---"
+# wait for startup to finish so systemd-analyze reports final numbers; informational only, never fails the test
+timeout 120 systemctl is-system-running --wait || true
+systemd-analyze time || true
+systemd-analyze critical-chain --no-pager || true
+echo "--- 15 slowest units ---"
+systemd-analyze blame --no-pager | head -15 || true
+
 echo "--- 20 largest installed packages ---"
 rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
 
