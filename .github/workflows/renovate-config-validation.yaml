@@ -33,11 +33,11 @@ jobs:
 
       - name: Validate repository config
         env:
-          RENOVATE_VERSION: 44.222.5 # renovate: datasource=npm depName=renovate
+          RENOVATE_VERSION: 44.225.1 # renovate: datasource=npm depName=renovate
         run: npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict .github/renovate.json5
 
       - name: Validate self-hosted config
         env:
-          RENOVATE_VERSION: 44.222.5 # renovate: datasource=npm depName=renovate
+          RENOVATE_VERSION: 44.225.1 # renovate: datasource=npm depName=renovate
           RENOVATE_PAT_TOKEN: placeholder # only needs to be a string for validation
         run: npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict .github/workflows/renovate-config.js
