@@ -1,8 +1,4 @@
-name: Clean up closed pull request
-# The PR's ghcr images (pr-<number>) are deleted by cleanup-old-images.yml (daily, whole images older than 7 days). A
-# per-PR ghcr cleanup used to live here and failed on every close: GITHUB_TOKEN does not own the user-owned packages
-# (404 "Package not found"; the daily job uses PAT_RENOVATEBOT), and `delete-tags` is rejected with HTTP 400 for
-# multi-tag images, as noted in cleanup-old-images.yml.
+name: Clean up pull request images
 on:
   pull_request:
     types:
@@ -33,3 +29,53 @@ jobs:
             echo "Cancelling run $id"
             gh run cancel "$id" || true
           done
+
+  ghcr-cleanup-image:
+    name: delete the ghcr images of the closed pull request
+    # A fork's run has no access to the PAT
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
+    concurrency:
+      group: cleanup-images
+    permissions: {}
+    steps:
+      # GITHUB_TOKEN does not own the user-owned packages (404 "Package not found"), so this uses the same PAT as
+      # cleanup-old-images.yml. dataaxiom/ghcr-cleanup-action is not used with delete-tags: an image carries four tags
+      # (pr-<n>, pr-<n>-v0.1, pr-<n>-v0.1.<run>, sha-<commit>) and untagging them one by one is rejected with HTTP 400.
+      # Deleting the whole package version removes all of its tags at once.
+      - name: Delete the image versions tagged pr-<number>
+        env:
+          GH_TOKEN: ${{ secrets.PAT_RENOVATEBOT }}
+          OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: | #sh
+          set -euo pipefail
+
+          status=0
+          for image in homeserver-bootc homeserver-gui-bootc claude-vm-bootc; do
+            package="${REPO_NAME}%2F${image}"
+            if ! versions=$(gh api --paginate "users/${OWNER}/packages/container/${package}/versions?per_page=100"); then
+              echo "::error::could not list the versions of ${REPO_NAME}/${image}"
+              status=1
+              continue
+            fi
+
+            # Versions with a pr-<n> or pr-<n>-* tag, never one that also carries latest or a main-* tag
+            ids=$(jq -r --arg tag "pr-${PR_NUMBER}" '
+              .[] | .metadata.container.tags as $t
+              | select(($t | any(. == $tag or startswith($tag + "-")))
+                and (($t | any(. == "latest" or startswith("main-"))) | not))
+              | .id' <<< "$versions")
+
+            if [ -z "$ids" ]; then
+              echo "${image}: no image for pr-${PR_NUMBER}"
+              continue
+            fi
+            while read -r id; do
+              echo "${image}: deleting version ${id}"
+              gh api -X DELETE "users/${OWNER}/packages/container/${package}/versions/${id}" || status=1
+            done <<< "$ids"
+          done
+          exit "$status"
