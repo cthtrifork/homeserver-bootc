@@ -40,45 +40,16 @@ jobs:
       group: cleanup-images
     permissions: {}
     steps:
-      # GITHUB_TOKEN does not own the user-owned packages (404 "Package not found"), so both steps use the PAT that
-      # cleanup-old-images.yml uses. `delete-tags: pr-<n>` alone cannot work either: an image carries four tags
-      # (pr-<n>, pr-<n>-v0.1, pr-<n>-v0.1.<run>, sha-<commit>) and the action only deletes the image once all of its
-      # tags are gone, unlinking them one by one, which GHCR rejects with HTTP 400. So list every tag of the pull
-      # request's images first and hand the action the complete list.
-      - name: List every tag of the pull request's images
-        id: tags
-        env:
-          GH_TOKEN: ${{ secrets.PAT_RENOVATEBOT }}
-          OWNER: ${{ github.repository_owner }}
-          REPO_NAME: ${{ github.event.repository.name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: | #sh
-          set -euo pipefail
-
-          all=""
-          for image in homeserver-bootc homeserver-gui-bootc claude-vm-bootc; do
-            if ! versions=$(gh api --paginate "users/${OWNER}/packages/container/${REPO_NAME}%2F${image}/versions?per_page=100"); then
-              echo "::error::could not list the versions of ${REPO_NAME}/${image}"
-              exit 1
-            fi
-            # Versions with a pr-<n> or pr-<n>-* tag, never one that also carries latest or a main-* tag
-            found=$(jq -r --arg tag "pr-${PR_NUMBER}" '
-              .[] | .metadata.container.tags as $t
-              | select(($t | any(. == $tag or startswith($tag + "-")))
-                and (($t | any(. == "latest" or startswith("main-"))) | not))
-              | $t[]' <<< "$versions")
-            all="${all}"$'\n'"${found}"
-          done
-
-          tags=$(sed '/^$/d' <<< "$all" | sort -u | paste -sd, -)
-          echo "Tags of pr-${PR_NUMBER} images: ${tags:-none}"
-          echo "tags=${tags}" >> "$GITHUB_OUTPUT"
-
+      # GITHUB_TOKEN does not own the user-owned packages (404 "Package not found"), so this uses the PAT that
+      # cleanup-old-images.yml uses. `delete-tags` alone cannot work: it unlinks the tags of a multi-tag image one by one
+      # (an image carries pr-<n>, pr-<n>-v0.1, pr-<n>-v0.1.<run> and sha-<commit>), which GHCR rejects with HTTP 400.
+      # `keep-n-tagged: 0` deletes whole images, and delete-tags restricts it to this pull request's images.
       - name: Delete the images
-        if: steps.tags.outputs.tags != ''
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          delete-tags: ${{ steps.tags.outputs.tags }}
+          delete-tags: pr-${{ github.event.pull_request.number }},pr-${{ github.event.pull_request.number }}-*
+          keep-n-tagged: 0
           exclude-tags: latest,main-*
+          dry-run: true
           packages: homeserver-bootc/homeserver-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
