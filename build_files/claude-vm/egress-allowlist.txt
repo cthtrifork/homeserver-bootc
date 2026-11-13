@@ -73,6 +73,12 @@ oneuptime.com
 # JSON schemas (settings validation)
 json.schemastore.org
 
+# VS Code extension marketplace (checking what the homeserver-gui e2e fetches: names, IPs and reachability)
+marketplace.visualstudio.com
+vsassets.io
+update.code.visualstudio.com
+vscode.download.prss.microsoft.com
+
 # Vulnerability data
 nvd.nist.gov
 osv.dev
