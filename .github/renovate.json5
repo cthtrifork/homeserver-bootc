@@ -7,9 +7,14 @@
     'dependencies',
     'automated-pr',
   ],
-  dependencyDashboard: true,
-  dependencyDashboardTitle: 'Dependency Dashboard',
-  dependencyDashboardLabels: ['dependencies'],
+  // Renovate's own config-migration PR rewrites this file as plain JSON and drops every comment, so it is
+  // switched off. Deprecated options are migrated by hand instead (Renovate still migrates them internally).
+  configMigration: false,
+  dependencyDashboard: {
+    enabled: true,
+    title: 'Dependency Dashboard',
+    labels: ['dependencies'],
+  },
   // New releases wait 2 days. 'strict' means no branch or PR exists until the wait is over, so a
   // PR (and an automerge) never races a release that gets yanked or fixed within the first days.
   minimumReleaseAge: '2 days',
