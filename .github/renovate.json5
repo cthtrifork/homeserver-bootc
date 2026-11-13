@@ -60,8 +60,10 @@
     {
       // The Fedora base image: every update (new release, digest pin, digest bump) is only created
       // once ticked on the Dependency Dashboard, so a rebuild of the whole image is a decision.
+      // One group: the FROM lines of the containerfiles and BASE_IMAGE of build-bootc-images.yaml move together.
       matchPackageNames: ['quay.io/fedora/fedora-bootc'],
       dependencyDashboardApproval: true,
+      groupName: 'fedora-bootc base image',
     },
     {
       // Patches stay out of the groups on purpose: a group is merged as a whole, so a minor in the
@@ -106,8 +108,8 @@
   ],
   customManagers: [
     {
-      // Container images that are not in a Dockerfile: the chunkah image used to rechunk the built image and the registry image the
-      // self-hosted runner pulls in the prepare-podman action.
+      // Container images that are not in a Dockerfile: the chunkah image used to rechunk the built image, the registry image the
+      // self-hosted runner pulls in the prepare-podman action, and the Fedora base image BASE_IMAGE compares against.
       customType: 'regex',
       managerFilePatterns: [
         '/^\\.github/workflows/[^/]+\\.ya?ml$/',
@@ -115,6 +117,7 @@
       ],
       matchStrings: [
         '(?<depName>quay\\.io/coreos/chunkah):(?<currentValue>v?\\d[\\w.-]*)',
+        '(?<depName>quay\\.io/fedora/fedora-bootc):(?<currentValue>\\d[\\w.-]*)',
         '(?<depName>docker\\.io/library/registry):(?<currentValue>\\d[\\w.-]*)',
       ],
       datasourceTemplate: 'docker',
