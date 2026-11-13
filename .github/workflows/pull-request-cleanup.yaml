@@ -41,15 +41,17 @@ jobs:
     permissions: {}
     steps:
       # GITHUB_TOKEN does not own the user-owned packages (404 "Package not found"), so this uses the PAT that
-      # cleanup-old-images.yml uses. `delete-tags` alone cannot work: it unlinks the tags of a multi-tag image one by one
-      # (an image carries pr-<n>, pr-<n>-v0.1, pr-<n>-v0.1.<run> and sha-<commit>), which GHCR rejects with HTTP 400.
-      # `keep-n-tagged: 0` deletes whole images, and delete-tags restricts it to this pull request's images.
+      # cleanup-old-images.yml uses. `delete-tags` cannot be used: for an image with several tags (pr-<n>,
+      # pr-<n>-v0.1, pr-<n>-v0.1.<run>, sha-<commit>) the action untags by pushing empty manifests, which GHCR rejects
+      # with HTTP 400. `keep-n-tagged: 0` deletes whole images instead. To limit it to this pull request, every other
+      # image is protected through exclude-tags (an image is protected if any of its tags matches): latest, main-* and
+      # the pr-<other number> tags of the other pull requests.
       - name: Delete the images
         uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
-          delete-tags: pr-${{ github.event.pull_request.number }},pr-${{ github.event.pull_request.number }}-*
+          use-regex: true
           keep-n-tagged: 0
-          exclude-tags: latest,main-*
+          exclude-tags: ^(latest|main-.*|pr-(?!${{ github.event.pull_request.number }}(-|$)).*)$
           dry-run: true
-          packages: homeserver-bootc/homeserver-bootc,homeserver-bootc/homeserver-gui-bootc,homeserver-bootc/claude-vm-bootc
+          packages: ^homeserver-bootc/homeserver-bootc$,^homeserver-bootc/homeserver-gui-bootc$,^homeserver-bootc/claude-vm-bootc$
