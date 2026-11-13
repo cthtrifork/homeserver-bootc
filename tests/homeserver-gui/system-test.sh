@@ -47,9 +47,23 @@ for host in marketplace.visualstudio.com ms-vscode-remote.gallery.vsassets.io ms
     ips=$(getent ahostsv4 "$host" 2>/dev/null | awk '{print $1}' | sort -u | tr '\n' ' ' || true)
     status=$(curl -sS -o /dev/null --max-time 10 -w 'HTTP %{http_code}' "https://$host/" 2>&1 | tail -n 1 || true)
     echo "$host: ${ips:-no DNS answer} -> $status"
+    [ "$host" != marketplace.visualstudio.com ] || marketplace_status=$status
 done
-present=$(sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true)
+count_extensions() { sudo -n -H -u caspertdk code --list-extensions 2>/dev/null | grep -c . || true; }
+present=$(count_extensions)
 echo "extensions installed after the first boot: $present"
+if [ "$present" -eq 0 ] && [ "${marketplace_status:-}" = "HTTP 200" ]; then
+    # bootc-user-setup runs at boot without waiting for the network, so the installs of that first run can fail before
+    # the network is up. The marketplace answers now: run the hook again and recount.
+    echo "marketplace reachable but nothing installed: running $user_unit again now that the network is up"
+    sudo -n systemctl restart "$user_unit"
+    present=$(count_extensions)
+    echo "extensions installed after that run: $present"
+    if [ "$present" -eq 0 ]; then
+        echo "--- journal of $user_unit (the installs still failed) ---"
+        sudo -n journalctl -u "$user_unit" -n 60 --no-pager 2>&1 | cut -c1-220 || true
+    fi
+fi
 if [ "$present" -eq 0 ]; then
     echo "::warning::No vscode extension could be installed in this VM (marketplace unreachable?): the install-only-missing path of 10-vscode.sh was NOT tested"
 else
