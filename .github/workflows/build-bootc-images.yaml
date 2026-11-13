@@ -31,6 +31,15 @@ on:
 permissions:
   contents: read
 
+# `gh pr create --label e2e` fires `opened` and then `labeled`. The image jobs' own concurrency group only cancels the
+# older run after its image jobs exist, which left red `${{ inputs.image }}` checks. Cancelling at the workflow level
+# means the superseded run stops before any image job is created. Only pull request events that start real work
+# share a group; everything else (push, schedule, manual, labels the build ignores) gets a unique group per run, so
+# it never cancels, or is cancelled by, anything. Keep the label list in step with the `changes` job condition.
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.event_name == 'pull_request' && (github.event.action != 'labeled' || contains(fromJSON('["e2e","push","gui","vm"]'), github.event.label.name))) && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 
 jobs:
   changes:
