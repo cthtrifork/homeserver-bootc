@@ -134,6 +134,6 @@ podman build \
 
 ## Tests
 
-`tests/homeserver/system-test.sh` and `user-test.sh`, run in QEMU when a pull request has the `e2e` label. `e2e.yaml` waits for the build of the same commit and tests the
-image it built, so adding the label does not rebuild anything. The shared
+`tests/homeserver/system-test.sh` and `user-test.sh`, run in QEMU when a pull request has the `e2e` label. The build tests each image when it finishes, and `e2e.yaml`
+tests the images already built when the label is added, so adding the label does not rebuild anything. The shared
 `tests/diagnostics.sh` runs for every image, and `tests/verify-cosign.sh` for the home server images.

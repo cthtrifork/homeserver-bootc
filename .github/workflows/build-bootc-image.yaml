@@ -2,7 +2,7 @@ name: Build and publish bootc image
 
 # Called once per image by build-bootc-images.yaml. Every image runs this whole pipeline on its own
 # (build, then scan on a PR or push and sign on main), so a slow image never holds back another
-# one's publish step. The QEMU e2e test of a PR image is e2e-test.yaml, started by e2e.yaml.
+# one's publish step. On a PR the image is also tested in QEMU (e2e-test.yaml, only with the `e2e` label).
 on:
   workflow_call:
     inputs:
@@ -496,6 +496,24 @@ jobs:
       - name: Build cleanup
         if: always()
         uses: ./.github/actions/build-cleanup
+
+  # QEMU test of the image just built. e2e-test.yaml checks the PR's `e2e` label itself, so a label added while
+  # the build runs counts; a label added after the build is handled by e2e.yaml.
+  e2e:
+    name: "E2E: ${{ inputs.image }}"
+    needs:
+      - build-bootc-image
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: ./.github/workflows/e2e-test.yaml
+    with:
+      image: ${{ inputs.image }}
+    secrets: inherit
+    # the called jobs can only narrow these
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      pull-requests: write
 
   push-latest:
     name: "Push and sign latest tag for: ${{ inputs.image }}"
