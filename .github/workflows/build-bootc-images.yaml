@@ -36,7 +36,7 @@ jobs:
   changes:
     name: Detect changed areas
     # `labeled` is only a trigger for the labels the build reads (`push`, `gui`, `vm`). The `e2e` label is handled by
-    # e2e.yaml, which tests the image this workflow already built instead of rebuilding it. Renovate adds several
+    # e2e.yaml, which tests the images this workflow already built instead of rebuilding them. Renovate adds several
     # other labels right after opening a PR; each of those started a duplicate run that the concurrency
     # group of the image job then cancelled mid-build. Skipping here skips the image jobs too (needs).
     if: ${{ github.event.action != 'labeled' || contains(fromJSON('["push","gui","vm"]'), github.event.label.name) }}

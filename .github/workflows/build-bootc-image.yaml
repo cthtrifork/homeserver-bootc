@@ -2,7 +2,7 @@ name: Build and publish bootc image
 
 # Called once per image by build-bootc-images.yaml. Every image runs this whole pipeline on its own
 # (build, then scan on a PR or push and sign on main), so a slow image never holds back another
-# one's publish step. The QEMU e2e test of a PR image is e2e-test.yaml, started by e2e.yaml.
+# one's publish step. On a PR the image is also tested in QEMU (e2e-test.yaml, only with the `e2e` label).
 on:
   workflow_call:
     inputs:
@@ -129,6 +129,7 @@ jobs:
           PINGGY_TOKEN_SECRET: ${{ secrets.PINGGY_TOKEN }}
           HOMESERVER_PAT_SECRET: ${{ secrets.HOMESERVER_PAT }}
           AGE_KEY_SECRET: ${{ secrets.AGE_KEY }}
+          GITHUB_API_TOKEN: ${{ github.token }} # the release downloads of the build (github-release-url.sh)
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
             echo "" > /tmp/PINGGY_TOKEN
@@ -139,10 +140,12 @@ jobs:
           printf "%s\n" "${HOMESERVER_PAT_SECRET}" > /tmp/REGISTRY_TOKEN
           cp "${HOME}/.docker/config.json" /tmp/creds
           printf "%s\n" "${AGE_KEY_SECRET}" > /tmp/AGE_KEY
+          printf "%s\n" "${GITHUB_API_TOKEN}" > /tmp/GITHUB_API_TOKEN
           chmod 600 /tmp/creds
           chmod 600 /tmp/REGISTRY_TOKEN
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
+          chmod 600 /tmp/GITHUB_API_TOKEN
 
       # All images use /runner/cache for downloaded release binaries; hosted runners only (self-hosted keep
       # the directory); only main saves, so PR runs do not fill the 10 GB repo cache quota.
@@ -236,6 +239,7 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
+            --secret id=github_api_token,src=/tmp/GITHUB_API_TOKEN \
             -v /home/runner/.cache/dnf:/var/cache/libdnf5:z \
             -v /home/runner/.cache/tmp:/runner/cache:z \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
@@ -328,6 +332,19 @@ jobs:
           source_ref: ${{ steps.rechunk.outputs.ref }}
           additional_tags: ${{ steps.metadata.outputs.tags }}
           auth_file_path: ${{ runner.temp }}/auth.json
+
+      # Tells e2e.yaml (the `e2e` label added after this build) that this commit's image is pushed and can be tested.
+      - name: Mark the image as built
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "${{ github.event.pull_request.head.sha }}" > built.txt
+
+      - name: Upload the built marker
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: built-${{ inputs.image }}-${{ github.event.pull_request.head.sha }}
+          path: built.txt
+          retention-days: 1
 
       # Only main saves, so PR runs do not fill the 10 GB repo cache quota. always() so a failed
       # build still keeps what it downloaded. The build runs as root via sudo, so hand the files
@@ -496,6 +513,24 @@ jobs:
       - name: Build cleanup
         if: always()
         uses: ./.github/actions/build-cleanup
+
+  # QEMU test of the image just built. e2e-test.yaml checks the PR's `e2e` label itself, so a label added while
+  # the build runs counts; a label added after the build is handled by e2e.yaml.
+  e2e:
+    name: "E2E: ${{ inputs.image }}"
+    needs:
+      - build-bootc-image
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: ./.github/workflows/e2e-test.yaml
+    with:
+      image: ${{ inputs.image }}
+    secrets: inherit
+    # the called jobs can only narrow these
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      pull-requests: write
 
   push-latest:
     name: "Push and sign latest tag for: ${{ inputs.image }}"
