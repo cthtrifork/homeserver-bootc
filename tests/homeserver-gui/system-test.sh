@@ -43,6 +43,29 @@ sudo -n journalctl -u 'bootc-user-setup@*' -o short-precise --no-pager 2>&1 | gr
 # install anything again (real code, real marketplace).
 echo "--- vscode extensions: installed after boot, only the missing ones ---"
 user_unit="bootc-vscode-extensions@caspertdk.service"
+# TEMPORARY: find the hosts the extension signature check contacts, then stop (no waiting for the slow unit)
+echo "--- which hosts does the signature check contact? ---"
+sudo -n systemctl stop "bootc-vscode-extensions@caspertdk.timer" "$user_unit" || true
+sudo -n -H -u caspertdk code --uninstall-extension mkhl.shfmt >/dev/null 2>&1 || true
+dns_log=/tmp/dns-monitor.log
+syn_log=/tmp/syn-sent.log
+: >"$syn_log"
+sudo -n timeout 280 resolvectl monitor >"$dns_log" 2>&1 &
+(for _ in $(seq 1 270); do
+    ss -tnH state syn-sent >>"$syn_log" 2>&1
+    sleep 1
+done) &
+install_start=$SECONDS
+sudo -n -H -u caspertdk timeout 250 code --install-extension mkhl.shfmt 2>&1 | grep -E "successfully installed|Error while installing" | head -2 || true
+echo "install took $((SECONDS - install_start))s"
+sudo -n pkill -f "resolvectl monitor" || true
+echo "-- names queried (count name):"
+grep -oE "Q: [^ ]+" "$dns_log" | sort | uniq -c | sort -rn | head -40 || true
+echo "-- peers left in SYN-SENT (count ip:port):"
+awk '{print $4}' "$syn_log" | sort | uniq -c | sort -rn | head -20 || true
+echo "-- raw monitor lines about microsoft/digicert/crl/ocsp:"
+grep -i -E "microsoft|digicert|crl|ocsp|msocsp|pki|windowsupdate|globalsign|verisign" "$dns_log" | cut -c1-160 | sort -u | head -30 || true
+exit 0
 # blocks until the boot run has finished (or runs the unit if it already has)
 sudo -n timeout 900 systemctl start "$user_unit" || {
     echo "--- $user_unit failed ---"
