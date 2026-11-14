@@ -31,28 +31,21 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-      BUILD_WORKFLOW: build-bootc-images.yaml
     steps:
       - name: List the images already built for this commit
         id: select
         run: | #sh
           set -euo pipefail
 
-          # newest build run of this commit. Cancelled runs (superseded duplicates) and skipped runs (a `labeled`
-          # event for a label the build ignores, such as e2e itself, skips the whole run) built nothing and do not count.
-          run_id=$(gh api "repos/$REPO/actions/workflows/$BUILD_WORKFLOW/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=30" \
-            --jq '[.workflow_runs[] | select(.conclusion != "cancelled" and .conclusion != "skipped")] | sort_by(.created_at) | last | .id // empty')
-
-          images='[]'
-          if [ -n "$run_id" ]; then
-            # jobs are named "<image> / Build image <image>"; only images whose build succeeded are tested here.
-            # An image that is still building tests itself when its build finishes.
-            images=$(gh api "repos/$REPO/actions/runs/$run_id/jobs?per_page=100" --paginate \
-              --jq '.jobs[] | select(.conclusion == "success") | .name' \
-              | sed -n 's# / Build image .*##p' | jq -R . | jq -sc .)
-          else
-            echo "No build run for $HEAD_SHA: the build tests the images itself once it runs"
-          fi
+          # Each build uploads a `built-<image>-<head sha>` marker artifact once its image is pushed. An image that
+          # is still building has none yet and tests itself when its build finishes.
+          images=$(
+            for image in homeserver homeserver-gui claude-vm; do
+              built=$(gh api "repos/$REPO/actions/artifacts?name=built-$image-$HEAD_SHA" \
+                --jq '[.artifacts[] | select(.expired | not)] | length')
+              if [ "$built" -gt 0 ]; then echo "$image"; fi
+            done | jq -R . | jq -sc .
+          )
           echo "Images already built: $images"
           echo "images=$images" >> "$GITHUB_OUTPUT"
 
