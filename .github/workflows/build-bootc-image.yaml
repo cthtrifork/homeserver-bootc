@@ -20,6 +20,7 @@ env:
   DEFAULT_TAG: "latest"
   CONTEXT: ./
   TRIVY_VERSION: v0.76.2 # renovate: datasource=github-releases depName=aquasecurity/trivy
+  GRYPE_VERSION: v0.121.3 # renovate: datasource=github-releases depName=anchore/grype
   CRANE_VERSION: v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
 
 jobs:
@@ -490,6 +491,19 @@ jobs:
           archive: false
           retention-days: 20
 
+      # Experiment: Trivy has no Fedora data, so see what Grype finds for the RPMs (it may fall back to NVD CPE matching).
+      - name: Grype scan (experimental)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: | #sh
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin" grype-dl
+          gh release download "$GRYPE_VERSION" -R anchore/grype -p '*_linux_amd64.tar.gz' -D grype-dl
+          tar -xzf grype-dl/*_linux_amd64.tar.gz -C "$HOME/.local/bin" grype
+          "$HOME/.local/bin/grype" "podman:$LOCAL_PR_IMAGE" -o json --file grype.json
+          jq -r '.matches | group_by(.artifact.type) | map({type: .[0].artifact.type, n: length}) | .[] | "\(.type): \(.n)"' grype.json
+
       # Trivy has no Fedora advisories, so OS packages are checked with Fedora's own security updateinfo instead.
       - name: Fedora security updates (dnf updateinfo)
         run: | #sh
@@ -539,6 +553,19 @@ jobs:
               fi
             fi
             echo ""
+            if [[ -s grype.json ]]; then
+              echo "#### Grype on RPMs (experimental, NVD/CPE-based, may include backported fixes)"
+              echo "| Severity | rpm matches |"
+              echo "| --- | --- |"
+              for sev in Critical High; do
+                n=$(jq --arg s "$sev" '[.matches[] | select(.artifact.type=="rpm" and .vulnerability.severity==$s)] | length' grype.json)
+                echo "| ${sev} | ${n} |"
+              done
+              echo ""
+            else
+              echo "Grype scan produced no result."
+              echo ""
+            fi
             echo "[Full Trivy report](${ARTIFACT_URL})"
           } > trivy-comment.md
 
