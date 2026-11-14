@@ -108,6 +108,30 @@ runs:
         sudo mkdir -p /etc/containers/registries.conf.d
         sudo cp -f ~/.config/containers/registries.conf.d/ghcr-mirror.conf /etc/containers/registries.conf.d/ghcr-mirror.conf
 
+    # The base image of every build (quay.io/fedora/fedora-bootc) is pulled from quay.io on each cold runner (about 70 s).
+    # zot keeps a pull-through cache of quay.io (quay-cache) and the runner policy allows zot. The podman runner pods
+    # already get this mirror from their podman-registries ConfigMap, so only add it where it is missing.
+    - name: Configure Podman mirror for quay.io
+      shell: bash
+      if: ${{ runner.environment == 'self-hosted' }}
+      run: | #sh
+        if grep -rqs 'quay-cache' /etc/containers/registries.conf /etc/containers/registries.conf.d/ 2>/dev/null; then
+          echo "quay.io mirror already configured"
+          exit 0
+        fi
+
+        echo "Applying Podman mirror for quay.io to user and root"
+        mkdir -p ~/.config/containers/registries.conf.d
+        printf "%s\n" \
+          '[[registry]]' \
+          'location = "quay.io"' \
+          '' \
+          '  [[registry.mirror]]' \
+          "  location = \"${ZOT_REGISTRY}/quay-cache\"" \
+          > ~/.config/containers/registries.conf.d/quay-mirror.conf
+        sudo mkdir -p /etc/containers/registries.conf.d
+        sudo cp -f ~/.config/containers/registries.conf.d/quay-mirror.conf /etc/containers/registries.conf.d/quay-mirror.conf
+
     - name: Set PODMAN command
       id: config
       shell: bash
