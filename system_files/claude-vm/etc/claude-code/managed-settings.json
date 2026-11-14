@@ -43,7 +43,10 @@
     "allowUnsandboxedCommands": true,
     "excludedCommands": [
       "podman *",
-      "podman-compose *"
+      "podman-compose *",
+      "dig *",
+      "nslookup *",
+      "getent hosts *"
     ],
     "filesystem": {
       "allowWrite": [
