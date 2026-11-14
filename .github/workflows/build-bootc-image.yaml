@@ -490,12 +490,54 @@ jobs:
           archive: false
           retention-days: 20
 
+      # Trivy has no Fedora advisories, so OS packages are checked with Fedora's own security updateinfo instead.
+      - name: Fedora security updates (dnf updateinfo)
+        run: | #sh
+          podman run --rm --pull=never "$LOCAL_PR_IMAGE" \
+            dnf -q updateinfo list --security --refresh > dnf-security.txt 2> dnf-security.err || {
+              echo "dnf updateinfo failed:"; cat dnf-security.err; echo "failed" > dnf-security.failed; }
+          cat dnf-security.txt
+
       - name: Write Trivy comment
         env:
           ARTIFACT_URL: ${{ steps.trivy-artifact.outputs.artifact-url }}
         run: | #sh
           {
             echo "### 🛡️ Trivy summary for ${{ inputs.image }}"
+            echo ""
+            crit=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' current_trivy.json)
+            high=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' current_trivy.json)
+            os_vulns=$(jq '[.Results[]? | select(.Class=="os-pkgs") | .Vulnerabilities[]?] | length' current_trivy.json)
+            os_name=$(jq -r '.Metadata.OS | if . then "\(.Family) \(.Name)" else "" end' current_trivy.json)
+            echo "| Severity | Count |"
+            echo "| --- | --- |"
+            echo "| 🔴 CRITICAL | ${crit} |"
+            echo "| 🟠 HIGH | ${high} |"
+            echo ""
+            os_scanned=$(jq '[.Results[]? | select(.Class=="os-pkgs")] | length' current_trivy.json)
+            # Trivy still reports Metadata.OS for unsupported distros (e.g. fedora) but emits no os-pkgs result
+            if [[ "$os_scanned" -eq 0 ]]; then
+              echo "⚠️ **OS packages were NOT scanned:** Trivy has no advisories for ${os_name:-the detected OS} (Fedora is unsupported), so only library/language findings are counted."
+            else
+              echo "OS packages scanned: ${os_name} (${os_vulns} findings)"
+            fi
+            echo ""
+            echo "#### Fedora security updates (dnf updateinfo)"
+            if [[ -f dnf-security.failed ]]; then
+              echo "⚠️ \`dnf updateinfo\` failed; see the job log."
+            else
+              adv=$(grep -c . dnf-security.txt || true)
+              echo "**${adv}** pending security advisories in the image's packages."
+              if [[ "$adv" -gt 0 ]]; then
+                echo ""
+                echo "<details><summary>Advisories</summary>"
+                echo ""
+                echo '```'
+                head -n 50 dnf-security.txt
+                echo '```'
+                echo "</details>"
+              fi
+            fi
             echo ""
             echo "[Full Trivy report](${ARTIFACT_URL})"
           } > trivy-comment.md
