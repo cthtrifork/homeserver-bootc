@@ -56,7 +56,7 @@ ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=secret,id=pinggy_token,required=true \
-    --mount=type=secret,id=registry_token \
+    --mount=type=secret,id=github_api_token \
     /ctx/build_files/build.sh "/ctx/build_files/base" \
     && PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
     PINGGY_HOST="${PINGGY_HOST}" /ctx/build_files/build.sh "/ctx/build_files/core" \

@@ -49,10 +49,10 @@ debug "Temporary JSON file=${API_JSON}"
 
 # Unauthenticated API requests are limited to 60 per hour per IP address, and one image build makes about 30 of them from
 # the same address as every other runner, so builds failed with curl exit 22 once the limit was used up. Send the
-# build's GitHub token (the registry_token secret) when it is mounted: 5000 per hour. The token goes through a header
-# file, not the command line.
+# workflow's own GitHub token (build secret github_api_token, read-only use on public releases) when it is mounted:
+# 1000 per hour per repository. The token goes through a header file, not the command line.
 AUTH_ARGS=()
-TOKEN_FILE="${GITHUB_TOKEN_FILE:-/run/secrets/registry_token}"
+TOKEN_FILE="${GITHUB_TOKEN_FILE:-/run/secrets/github_api_token}"
 if [[ -s "${TOKEN_FILE}" ]]; then
     AUTH_HEADER=$(mktemp /tmp/gh-auth-XXXXXXXX)
     trap 'rm -f "${AUTH_HEADER}"' EXIT
