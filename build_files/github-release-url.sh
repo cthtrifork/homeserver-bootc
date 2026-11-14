@@ -47,14 +47,40 @@ API="https://api.github.com/repos/${ORG_PROJ}/releases/${RELTAG}"
 debug "GitHub API URL=${API}"
 debug "Temporary JSON file=${API_JSON}"
 
-# retry up to 5 times with 5 second delays for any error including HTTP 404 etc
-curl --fail \
+# Unauthenticated API requests are limited to 60 per hour per IP address, and one image build makes about 30 of them from
+# the same address as every other runner, so builds failed with curl exit 22 once the limit was used up. Send the
+# workflow's own GitHub token (build secret github_api_token, read-only use on public releases) when it is mounted:
+# 1000 per hour per repository. The token goes through a header file, not the command line.
+AUTH_ARGS=()
+TOKEN_FILE="${GITHUB_TOKEN_FILE:-/run/secrets/github_api_token}"
+if [[ -s "${TOKEN_FILE}" ]]; then
+    AUTH_HEADER=$(mktemp /tmp/gh-auth-XXXXXXXX)
+    trap 'rm -f "${AUTH_HEADER}"' EXIT
+    chmod 600 "${AUTH_HEADER}"
+    {
+        printf 'Authorization: Bearer '
+        tr -d '[:space:]' <"${TOKEN_FILE}"
+        printf '\n'
+    } >"${AUTH_HEADER}"
+    AUTH_ARGS=(-H "@${AUTH_HEADER}")
+    debug "Authenticated GitHub API request"
+else
+    debug "No token mounted: unauthenticated GitHub API request (60 per hour per IP)"
+fi
+
+# retry up to 5 times with 5 second delays for any error including HTTP 404 etc; on failure show why (rate limit, 404...)
+curl --fail-with-body \
     --retry 5 \
     --retry-delay 5 \
     --retry-all-errors \
-    -sL \
+    -sSL \
+    "${AUTH_ARGS[@]}" \
     "${API}" \
-    -o "${API_JSON}"
+    -o "${API_JSON}" || {
+    rc=$?
+    debug "GitHub API request failed (curl exit ${rc}): $(head -c 300 "${API_JSON}" 2>/dev/null | tr '\n' ' ')"
+    exit "${rc}"
+}
 
 debug "GitHub API response downloaded"
 debug "Filtering assets using jq"
