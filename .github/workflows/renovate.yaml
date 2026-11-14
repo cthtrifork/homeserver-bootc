@@ -32,6 +32,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read # check out the config; Renovate itself uses the GitHub App token below
+      packages: read # the workflow token reads ghcr.io for the image lookups
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -62,7 +63,7 @@ jobs:
         env:
           LOG_LEVEL: debug
           RENOVATE_DRY_RUN: full
-          RENOVATE_PAT_TOKEN: ${{ secrets.PAT_RENOVATEBOT }}
+          RENOVATE_GHCR_TOKEN: ${{ github.token }} # ghcr.io lookups (see renovate-config.js)
           # Only this repository.
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           # Look at the PR's branch, not main, so the PR's own changes are what gets checked.
@@ -105,6 +106,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read # check out the config; Renovate itself uses the GitHub App token below
+      packages: read # the workflow token reads ghcr.io for the image lookups
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -151,7 +153,7 @@ jobs:
           renovate-version: '44' # Renovate's github-actions manager updates this itself
         env:
           LOG_LEVEL: ${{ inputs.log_level || 'info' }}
-          RENOVATE_PAT_TOKEN: ${{ secrets.PAT_RENOVATEBOT }}
+          RENOVATE_GHCR_TOKEN: ${{ github.token }} # ghcr.io lookups (see renovate-config.js)
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_REPOSITORY_CACHE: 'enabled'
           RENOVATE_X_GITHUB_HOST_RULES: 'true'

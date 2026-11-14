@@ -4,7 +4,7 @@ module.exports = {
       "hostType": 'docker',
       "matchHost": 'ghcr.io',
       "username": 'cthtrifork',
-      "password": process.env.RENOVATE_PAT_TOKEN,
+      "password": process.env.RENOVATE_GHCR_TOKEN,
     }
   ]
 }
