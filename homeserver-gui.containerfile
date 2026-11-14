@@ -19,7 +19,9 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[rpmfusion-nonfree]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/nonfree/fedora/releases/\$releasever/Everything/\$basearch/os/" \
       '[rpmfusion-nonfree-updates]' 'metalink=' "baseurl=${RPMFUSION_MIRROR}/nonfree/fedora/updates/\$releasever/\$basearch/" \
     > /etc/dnf/repos.override.d/50-mirror.repo
-RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True" >> /etc/dnf/dnf.conf
+# tsflags=nodocs: do not install files marked as documentation (man pages and /usr/share/doc included). /usr/share/doc is
+# deleted at the end of the build anyway (build_files/post/90-cleanup.sh), so this only saves writing it.
+RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True\ntsflags=nodocs" >> /etc/dnf/dnf.conf
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
 RUN [ -e /etc/subuid ] || touch /etc/subuid; \
