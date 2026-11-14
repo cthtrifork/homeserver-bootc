@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.28@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
+# syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 FROM quay.io/fedora/fedora-bootc:45 AS base
 
 FROM scratch AS ctx_build
@@ -72,6 +72,7 @@ ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=secret,id=pinggy_token,required=true \
+    --mount=type=secret,id=github_api_token \
     /ctx/build_files/build.sh "/ctx/build_files/base" \
     && PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
     PINGGY_HOST="${PINGGY_HOST}" /ctx/build_files/build.sh "/ctx/build_files/core" \

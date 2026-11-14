@@ -1,7 +1,8 @@
 name: E2E test bootc image
 
-# Called once per image by e2e.yaml. Boots the PR image of the current commit in QEMU and runs the system and user
-# tests. Split out of build-bootc-image.yaml so that adding the `e2e` label no longer rebuilds the images.
+# Called once per image, from the end of an image's pipeline (build-bootc-image.yaml) and from e2e.yaml (the `e2e`
+# label was added after the image was built). Boots the PR image of the current commit in QEMU and runs the system
+# and user tests. A separate workflow so that adding the `e2e` label does not rebuild the images.
 on:
   workflow_call:
     inputs:
@@ -14,12 +15,52 @@ permissions:
   contents: read
 
 jobs:
+  # Both callers can start a test for the same image (a label added just as its build finishes), and the build
+  # calls this for every PR image whether or not the PR is labelled, so the PR is checked here, against the API
+  # (the event payload can lag behind a label added right after the PR is opened).
+  gate:
+    name: Check the PR wants e2e
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      run: ${{ steps.pr.outputs.run }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check label, draft state and head commit
+        id: pr
+        run: | #sh
+          set -euo pipefail
+          pr=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '{draft: .draft, e2e: ([.labels[].name] | index("e2e") != null), sha: .head.sha}')
+          run=false
+          if [ "$(jq -r .draft <<< "$pr")" != "false" ]; then
+            echo "Draft PR: nothing to test."
+          elif [ "$(jq -r .e2e <<< "$pr")" != "true" ]; then
+            echo "The PR has no e2e label: nothing to test."
+          elif [ "$(jq -r .sha <<< "$pr")" != "$HEAD_SHA" ]; then
+            echo "Head moved to $(jq -r .sha <<< "$pr"): a newer run takes over."
+          else
+            run=true
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   test:
     name: "E2E Test on: ${{ inputs.image }}"
+    needs: gate
+    if: ${{ needs.gate.outputs.run == 'true' }}
+    # one test per image and PR: a duplicate start or a newer commit supersedes the running one
+    concurrency:
+      group: e2e-${{ inputs.image }}-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     # homeserver-gui has its own runner due to disksize requirements
     # pinned to 24.04: bootc-image-builder used to fail mounting containers-storage on ubuntu-latest (not re-checked with bootc install)
     runs-on: ${{ inputs.image == 'homeserver-gui' && 'arc-ubuntu' || 'ubuntu-24.04' }}
-    # e2e.yaml only calls this for a non-draft PR with the `e2e` label, after the build of the same commit succeeded
     continue-on-error: false
     # bootc install of a chunkah image hashes and relabels every file on the client (rechunk shipped a ready ostree
     # commit), so it takes minutes on homeserver and longer on the large GUI image
