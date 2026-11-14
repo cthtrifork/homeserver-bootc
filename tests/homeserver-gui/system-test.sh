@@ -39,6 +39,15 @@ systemctl --failed --no-pager || true
 echo "--- user-setup hook timings ---"
 sudo -n journalctl -u 'bootc-user-setup@*' -o short-precise --no-pager 2>&1 | grep -E "user-setup:|Finished|Failed" | tail -20 || true
 
+echo "--- vscode extensions come with the image ---"
+grep -qx 'VSCODE_EXTENSIONS=/usr/share/vscode-extensions' /etc/environment.d/50-vscode.conf
+count=$(sudo -n -H -u caspertdk env VSCODE_EXTENSIONS=/usr/share/vscode-extensions code --list-extensions 2>/dev/null | grep -c . || true)
+echo "extensions code finds in the image directory: $count"
+[ "$count" -gt 0 ] || {
+    echo "expected extensions installed in the image, found none"
+    exit 1
+}
+
 echo "--- 20 largest installed packages ---"
 rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
 
