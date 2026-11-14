@@ -129,6 +129,7 @@ jobs:
           PINGGY_TOKEN_SECRET: ${{ secrets.PINGGY_TOKEN }}
           HOMESERVER_PAT_SECRET: ${{ secrets.HOMESERVER_PAT }}
           AGE_KEY_SECRET: ${{ secrets.AGE_KEY }}
+          GITHUB_API_TOKEN: ${{ github.token }} # the release downloads of the build (github-release-url.sh)
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
             echo "" > /tmp/PINGGY_TOKEN
@@ -139,10 +140,12 @@ jobs:
           printf "%s\n" "${HOMESERVER_PAT_SECRET}" > /tmp/REGISTRY_TOKEN
           cp "${HOME}/.docker/config.json" /tmp/creds
           printf "%s\n" "${AGE_KEY_SECRET}" > /tmp/AGE_KEY
+          printf "%s\n" "${GITHUB_API_TOKEN}" > /tmp/GITHUB_API_TOKEN
           chmod 600 /tmp/creds
           chmod 600 /tmp/REGISTRY_TOKEN
           chmod 600 /tmp/PINGGY_TOKEN
           chmod 600 /tmp/AGE_KEY
+          chmod 600 /tmp/GITHUB_API_TOKEN
 
       # All images use /runner/cache for downloaded release binaries; hosted runners only (self-hosted keep
       # the directory); only main saves, so PR runs do not fill the 10 GB repo cache quota.
@@ -236,6 +239,7 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
+            --secret id=github_api_token,src=/tmp/GITHUB_API_TOKEN \
             -v /home/runner/.cache/dnf:/var/cache/libdnf5:z \
             -v /home/runner/.cache/tmp:/runner/cache:z \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
