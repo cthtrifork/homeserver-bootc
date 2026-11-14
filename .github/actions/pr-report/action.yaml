@@ -52,8 +52,8 @@ runs:
         elif [[ $delta -lt 0 ]]; then trend="-${delta_h}"
         else trend="±0"; fi
 
-        base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' latest_trivy.json | sort || true)
-        pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' current_trivy.json   | sort || true)
+        base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH" or .Severity=="CRITICAL") | .VulnerabilityID] | unique[]?' latest_trivy.json | sort || true)
+        pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH" or .Severity=="CRITICAL") | .VulnerabilityID] | unique[]?' current_trivy.json   | sort || true)
         new=$(comm -13 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
         fix=$(comm -23 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
         new_n=$(printf "%s\n" "$new" | grep -c . || true)
