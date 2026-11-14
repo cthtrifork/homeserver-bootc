@@ -12,6 +12,8 @@ Fedora bootc (`fedora-bootc:45`) images for a home server, built and published b
 
 The first two bake secrets into the image and must stay private. `claude-vm` is built without any.
 
+To build a `claude-vm` disk image yourself, see [docs/claude-vm](docs/claude-vm/README.md#build-a-disk-image).
+
 ## Layout
 
 - `build_files/` – build scripts (base, core, gui, post, ...)

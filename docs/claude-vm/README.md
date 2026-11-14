@@ -364,13 +364,39 @@ blocked requests since boot (`--raw` plus any `journalctl` argument for each one
 
 ## Build a disk image
 
-`create-vmdk-image.yaml` accepts `claude-vm-bootc`; CI builds it with the other images. Locally:
+The container image is public (`ghcr.io/cthtrifork/homeserver-bootc/claude-vm-bootc:latest`), so you can build a disk from it
+instead of downloading one. CI does the same with `create-vmdk-image.yaml`. The `homeserver` images contain secrets, are never
+published, and have nothing to build for others.
 
-```sh
-sudo podman run --rm -it --privileged -v ./out:/output -v ./config.toml:/config.toml:ro \
-  quay.io/centos-bootc/bootc-image-builder:latest --type qcow2 --config /config.toml \
-  ghcr.io/cthtrifork/homeserver-bootc/claude-vm-bootc:latest
-```
+1. Create `config.toml`. The image only trusts the maintainer's SSH key, so add a login of your own:
+
+   ```toml
+   [[customizations.filesystem]]
+   mountpoint = "/"
+   minsize = "20 GiB"
+
+   [[customizations.user]]
+   name = "me"
+   key = "ssh-ed25519 AAAA... you@host"
+   groups = ["wheel"]
+   ```
+
+2. Build it with [bootc-image-builder](https://github.com/osbuild/image-builder) on Linux with rootful podman and about 20 GiB free:
+
+   ```sh
+   mkdir output
+   sudo podman pull ghcr.io/cthtrifork/homeserver-bootc/claude-vm-bootc:latest
+   sudo podman run --rm -it --privileged --pull=newer --security-opt label=type:unconfined_t \
+     -v ./config.toml:/config.toml:ro -v ./output:/output \
+     -v /var/lib/containers/storage:/var/lib/containers/storage \
+     quay.io/centos-bootc/bootc-image-builder:latest --type qcow2 --rootfs xfs \
+     ghcr.io/cthtrifork/homeserver-bootc/claude-vm-bootc:latest
+   ```
+
+   The disk is `output/qcow2/disk.qcow2`. Other `--type` values: `raw`, `vmdk`, `vhd`.
+
+3. Boot it (for example with `virt-install --import --disk output/qcow2/disk.qcow2`), SSH in as your user, and do the
+   [first-boot setup](#first-boot-setup-once-per-vm-per-agent-user).
 
 ## Tests
 
