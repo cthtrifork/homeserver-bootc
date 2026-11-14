@@ -161,5 +161,8 @@ in your home directory, see below):
 - `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt. Containers run as
   `<user>-podman`: mount repos with `-v ~/workspace/<repo>:/src` (no `:Z` needed); `/usr/bin/podman` is not executable for you.
   Files a container writes into `~/workspace` are owned by `<user>-podman` but stay writable for you (default ACL).
+- `dig`, `nslookup` and `getent hosts` are excluded from the sandbox (its network namespace cannot reach the local resolver), so
+  they run unsandboxed and prompt-free. They still go through the egress gateway's DNS filter by UID: only allowlisted names
+  resolve. Other tools resolve names through the sandbox proxy, which needs no exclusion.
 - Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
   instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.
