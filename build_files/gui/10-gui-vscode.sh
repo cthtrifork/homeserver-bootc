@@ -15,11 +15,10 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
 sed -i "s/enabled=.*/enabled=0/g" /etc/yum.repos.d/vscode.repo
-# openssl3-libs: Fedora 45 ships OpenSSL 4, which the bundled .NET signature verifier of VS Code (vsce-sign) cannot load;
-# it aborts with SIGABRT and every extension install fails with 'Signature verification failed with UnknownError'.
+
+# Install VSCode
 dnf -y install --enablerepo=code \
-    code \
-    openssl3-libs
+    code
 
 # The extensions come with the image: installed here into a system directory that VS Code is pointed at by
 # VSCODE_EXTENSIONS (system_files/homeserver-gui/etc/environment.d/50-vscode.conf). Updates arrive with the image, like
