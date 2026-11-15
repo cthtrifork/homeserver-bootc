@@ -36,6 +36,9 @@ bat
 
 # This is troublesome and brittle to install outside dnf
 azure-cli
+# Required by vscode (remote) to check signatures
+openssl3-libs
+
 
 ##################
 # Virtualisation #
