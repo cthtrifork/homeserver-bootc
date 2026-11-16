@@ -193,6 +193,13 @@ echo "--- usage telemetry ---"
 jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/protobuf" and .env.OTEL_METRICS_INCLUDE_SESSION_ID == "false"' /etc/claude-code/managed-settings.json >/dev/null
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
+echo "--- status line report ---"
+jq -e '.statusLine.type == "command" and .statusLine.command == "/usr/libexec/claude-vm/statusline-report"' /etc/claude-code/managed-settings.json >/dev/null
+# the status bar shows the plan limits (the send goes to a closed port here and is never fatal)
+line="$(echo '{"rate_limits":{"five_hour":{"used_percentage":23.5},"seven_day":{"used_percentage":41.2}}}' |
+    COCKPIT_URL=http://127.0.0.1:9/x XDG_CACHE_HOME="$(mktemp -d)" /usr/libexec/claude-vm/statusline-report)"
+[ "$line" = "5h 24% · 7d 41%" ]
+
 echo "--- nothing secret baked in ---"
 hits="$(find /etc /root /var/home /usr/local -xdev -type f \
     \( -name 'id_rsa' -o -name 'id_dsa' -o -name 'id_ecdsa' -o -name 'id_ed25519' -o -name 'github-token' -o -name 'private-key.pem' -o -name '.credentials.json' \) 2>/dev/null || true)"
