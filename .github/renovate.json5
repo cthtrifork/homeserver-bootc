@@ -76,6 +76,7 @@
       matchManagers: ['github-actions'],
       matchUpdateTypes: ['minor'],
       groupName: 'actions',
+      automerge: true,
     },
     {
       // The tool versions pinned with a `# renovate:` comment in build_files and the workflows.
