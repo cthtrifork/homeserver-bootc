@@ -65,7 +65,7 @@ install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
 kubectl version --client
 
 log "Installing helm"
-HELM_VERSION=v4.3.1 # renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION=v4.3.2 # renovate: datasource=github-releases depName=helm/helm
 HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
 helm_tarball="helm-${HELM_VERSION}-linux-amd64.tar.gz"
 download_if_missing "$HELM_TGZ" "https://get.helm.sh/${helm_tarball}"
