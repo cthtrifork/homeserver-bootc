@@ -8,7 +8,7 @@ on:
       - .github/workflows/renovate-config.js
       - .github/workflows/renovate.yaml
   schedule:
-    - cron: "37 */2 * * *" # every 2 hours, so automerges happen soon after CI is green; not at :00, where GitHub delays and drops scheduled runs the most
+    - cron: "47 6 * * *" # once a day, as the fallback: the in-cluster Renovate (cthtrifork/talos-gitops) runs every 30 minutes; not at :00, where GitHub delays and drops scheduled runs the most
   workflow_dispatch:
     inputs:
       log_level:
