@@ -105,10 +105,10 @@
     },
     {
       // Renovate itself (the pinned renovate version and the renovatebot/github-action) automerges for every
-      // update type, in its own PR. Last, so it wins over the groups and the manual-review rules above.
+      // update type, in one PR together. Last, so it wins over the groups and the manual-review rules above.
       matchPackageNames: ['renovate', 'renovatebot/github-action'],
       automerge: true,
-      groupName: null,
+      groupName: 'renovate',
     },
   ],
   customManagers: [
