@@ -1,10 +1,11 @@
 #!/usr/bin/bash
 # Claude Code status line (managed-settings.json): prints the plan limits and posts them to the cockpit page in the cluster, in the background.
 # Sent: limits, model name, Claude Code version, context use. Not sent: working directory, session id, transcript path, cost.
-# Only the `claude` user sends: each agent user has its own login, so its own limits.
+# Every agent user sends under its own name: each has its own login, so its own limits, and the cockpit keeps one slot per user
+# (a user it does not know gets a 404, which is harmless).
 set -u
 
-url="${COCKPIT_URL:-http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm}"
+url="${COCKPIT_URL:-http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm/$(id -un)}"
 min_interval=60
 
 input="$(cat)"
@@ -15,8 +16,7 @@ jq -r '
      (.rate_limits.seven_day.used_percentage // null | if . == null then empty else "7d \(pct)" end)]
     | if length == 0 then "" else join(" · ") end' <<<"$input" 2>/dev/null || true
 
-# Send. Not for the other agent user, and not without limits to report (a session before its first reply has none).
-[ "$(id -un)" = "claude" ] || [ -n "${COCKPIT_URL:-}" ] || exit 0
+# Send, unless there is nothing to report (a session before its first reply has no limits).
 payload="$(jq -c '{rate_limits: (.rate_limits // {}), model: {display_name: (.model.display_name // "")}, version: (.version // ""),
                    context_window: {used_percentage: (.context_window.used_percentage // null)}}' <<<"$input" 2>/dev/null)" || exit 0
 [ -n "$payload" ] || exit 0

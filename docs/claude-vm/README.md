@@ -146,8 +146,9 @@ flowchart LR
   `journalctl -u claude-vm-upgrade-poll`. The homeserver image ships the same script (`usr/libexec/vm-upgrade-poll`); keep the two identical.
 - **Usage windows:** the managed `statusLine` runs `/usr/libexec/claude-vm/statusline-report` after each reply. It prints `5h 24% · 7d 41%` and, at most once a
   minute, posts the plan limits, model, Claude Code version and context use to the cockpit page in the cluster (`claude-system/cockpit` in talos-gitops) at
-  `http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm` (a Cloudflare A record, DNS only, to `claude-cockpit-lb`). Only the `claude` user sends; until the
-  record exists the post fails quietly. Access control is the cluster's NetworkPolicy, which lets only this VM's address in.
+  `http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm/<user>` (a Cloudflare A record, DNS only, to `claude-cockpit-lb`). Every agent user sends under its own
+  name (`claude`, `claude-rc-personal`), because each has its own login and limits; the cockpit keeps one slot per user and answers 404 for a user it does not know.
+  Until the record exists the post fails quietly. Access control is the cluster's NetworkPolicy, which lets only this VM's address in.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint,
   actionlint, shfmt, kubectl, helm, kustomize and kubeconform in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
 
