@@ -77,6 +77,10 @@
     },
     "autoAllowBashIfSandboxed": true
   },
+  "statusLine": {
+    "type": "command",
+    "command": "/usr/libexec/claude-vm/statusline-report"
+  },
   "allowManagedHooksOnly": true,
   "hooks": {
     "SessionStart": [

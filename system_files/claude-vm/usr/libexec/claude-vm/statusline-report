@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+# Claude Code status line (see /etc/claude-code/managed-settings.json). Claude Code runs it after each assistant message and passes the session
+# as JSON on stdin. It does two things:
+#   1. prints one short line for the status bar: the used part of the 5-hour and 7-day plan limits, when Claude Code reports them
+#   2. sends the plan limits, the model name, the Claude Code version and the context use to the cockpit page in the cluster
+#      (claude-system/cockpit in talos-gitops), at most once a minute, in the background, so the status bar never waits for the network
+# Only those fields are sent: not the working directory, the session id, the transcript path or any cost figure. The cockpit keeps them in memory
+# for 24 hours. The page is at the hardcoded name below (a Cloudflare A record, DNS only, to the MetalLB address of claude-cockpit-lb); access
+# control is the cluster's NetworkPolicy, which lets only this VM's address in. It is never fatal: if the name does not resolve yet, nothing is sent.
+# Only the `claude` agent user sends: each agent user has its own claude.ai login, so their limits are not the same numbers.
+set -u
+
+url="${COCKPIT_URL:-http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm}"
+min_interval=60
+
+input="$(cat)"
+
+jq -r '
+    def pct: if . == null then "?" else "\(. | round)%" end;
+    [(.rate_limits.five_hour.used_percentage // null | if . == null then empty else "5h \(pct)" end),
+     (.rate_limits.seven_day.used_percentage // null | if . == null then empty else "7d \(pct)" end)]
+    | if length == 0 then "" else join(" · ") end' <<<"$input" 2>/dev/null || true
+
+# Send. Not for the other agent user, and not without limits to report (a session before its first reply has none).
+[ "$(id -un)" = "claude" ] || [ -n "${COCKPIT_URL:-}" ] || exit 0
+payload="$(jq -c '{rate_limits: (.rate_limits // {}), model: {display_name: (.model.display_name // "")}, version: (.version // ""),
+                   context_window: {used_percentage: (.context_window.used_percentage // null)}}' <<<"$input" 2>/dev/null)" || exit 0
+[ -n "$payload" ] || exit 0
+
+stamp_dir="${XDG_CACHE_HOME:-$HOME/.cache}/claude-vm"
+stamp="$stamp_dir/statusline-report"
+mkdir -p "$stamp_dir" 2>/dev/null || exit 0
+if [ -e "$stamp" ] && [ $(($(date +%s) - $(stat -c %Y "$stamp"))) -lt "$min_interval" ]; then
+    exit 0
+fi
+touch "$stamp"
+
+( curl --silent --max-time 5 --request POST --header 'Content-Type: application/json' --data "$payload" "$url" >/dev/null 2>&1 & )
+exit 0
