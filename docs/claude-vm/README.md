@@ -144,13 +144,10 @@ flowchart LR
   cluster never sends a command; at most one upgrade per hour. Nothing is seeded: until the DNS record exists the poll only logs that the page is
   unreachable. Access control is the cluster's NetworkPolicy, which lets only the VMs' addresses reach the poll listener. Check with
   `journalctl -u claude-vm-upgrade-poll`. The homeserver image ships the same script (`usr/libexec/vm-upgrade-poll`); keep the two identical.
-- **Usage windows:** the managed `statusLine` runs `/usr/libexec/claude-vm/statusline-report` after each reply. It prints `5h 24% · 7d 41%` (the used part
-  of the plan limits Claude Code reports on a Pro, Max or Ultra login) and, at most once a minute and in the background, posts the limits, the model name,
-  the Claude Code version and the context use to the cockpit page in the cluster (`claude-system/cockpit` in talos-gitops) at
-  `http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm` (hardcoded; a Cloudflare A record, DNS only, to the MetalLB address of `claude-cockpit-lb`).
-  It does not send the working directory, session id, transcript path or cost. Only the `claude` user sends, since each agent user has its own login and
-  so its own limits. The cockpit keeps the numbers in memory for 24 hours, so they show only while Claude Code is in use. Nothing is seeded: until the
-  DNS record exists the post fails quietly. Access control is the cluster's NetworkPolicy, which lets only this VM's address in.
+- **Usage windows:** the managed `statusLine` runs `/usr/libexec/claude-vm/statusline-report` after each reply. It prints `5h 24% · 7d 41%` and, at most once a
+  minute, posts the plan limits, model, Claude Code version and context use to the cockpit page in the cluster (`claude-system/cockpit` in talos-gitops) at
+  `http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm` (a Cloudflare A record, DNS only, to `claude-cockpit-lb`). Only the `claude` user sends; until the
+  record exists the post fails quietly. Access control is the cluster's NetworkPolicy, which lets only this VM's address in.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint,
   actionlint, shfmt, kubectl, helm, kustomize and kubeconform in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
 
