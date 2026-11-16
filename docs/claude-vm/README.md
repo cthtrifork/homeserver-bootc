@@ -144,8 +144,8 @@ flowchart LR
   cluster never sends a command; at most one upgrade per hour. Nothing is seeded: until the DNS record exists the poll only logs that the page is
   unreachable. Access control is the cluster's NetworkPolicy, which lets only the VMs' addresses reach the poll listener. Check with
   `journalctl -u claude-vm-upgrade-poll`. The homeserver image ships the same script (`usr/libexec/vm-upgrade-poll`); keep the two identical.
-- **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint and
-  actionlint in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
+- **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint,
+  actionlint, shfmt, kubectl, helm, kustomize and kubeconform in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
 
 ## First-boot setup (once per VM, per agent user)
 

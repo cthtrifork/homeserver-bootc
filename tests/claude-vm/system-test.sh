@@ -17,7 +17,7 @@ id
 
 echo "--- tools ---"
 claude --version
-for c in bash python3 pip3 node npm go chromium-browser ffmpeg ffprobe podman podman-compose skopeo crane gh git jq yq shellcheck shfmt yamllint make hadolint actionlint bwrap socat ssh; do
+for c in bash python3 pip3 node npm go chromium-browser ffmpeg ffprobe podman podman-compose skopeo crane gh git jq yq shellcheck shfmt yamllint make hadolint actionlint kubectl helm kustomize kubeconform bwrap socat ssh; do
     command -v "$c" >/dev/null || { echo "missing: $c"; exit 1; }
 done
 

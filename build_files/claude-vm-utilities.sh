@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs crane, hadolint, actionlint and shfmt, checksum-verified (see download-lib.sh).
+# Installs crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize and kubeconform, checksum-verified (see download-lib.sh).
 set -euo pipefail
 
 BIN_DIR="/usr/bin"
@@ -51,3 +51,46 @@ echo "${SHFMT_SHA256}  shfmt" >"$work/shfmt.sum"
 verify "$SHFMT_BIN" shfmt "$work/shfmt.sum"
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 shfmt --version
+
+log "Installing kubectl"
+# Keep within one minor version of the cluster. dl.k8s.io publishes a bare sha256 file (no file name in it).
+KUBECTL_VERSION=v1.34.1 # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_BIN="$(tmp_name kubectl "$KUBECTL_VERSION" bin)"
+base="https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64"
+download_if_missing "$KUBECTL_BIN" "${base}/kubectl"
+fetch "$work/kubectl.sha256" "${base}/kubectl.sha256"
+echo "$(cat "$work/kubectl.sha256")  kubectl" >"$work/kubectl.sum"
+verify "$KUBECTL_BIN" kubectl "$work/kubectl.sum"
+install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
+kubectl version --client
+
+log "Installing helm"
+HELM_VERSION=v4.3.1 # renovate: datasource=github-releases depName=helm/helm
+HELM_TGZ="$(tmp_name helm "$HELM_VERSION" tar.gz)"
+helm_tarball="helm-${HELM_VERSION}-linux-amd64.tar.gz"
+download_if_missing "$HELM_TGZ" "https://get.helm.sh/${helm_tarball}"
+fetch "$work/helm.sum" "https://get.helm.sh/${helm_tarball}.sha256sum"
+verify "$HELM_TGZ" "$helm_tarball" "$work/helm.sum"
+tar -xzf "$HELM_TGZ" -C "$BIN_DIR" --strip-components=1 linux-amd64/helm
+helm version --short
+
+log "Installing kustomize"
+# The release tag contains a slash (kustomize/v...), so it is URL-encoded in the download path.
+KUSTOMIZE_VERSION=5.8.3 # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/v(?<version>.+)$
+KUSTOMIZE_TGZ="$(tmp_name kustomize "$KUSTOMIZE_VERSION" tar.gz)"
+base="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}"
+download_if_missing "$KUSTOMIZE_TGZ" "${base}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz"
+fetch "$work/kustomize.sum" "${base}/checksums.txt"
+verify "$KUSTOMIZE_TGZ" "kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" "$work/kustomize.sum"
+tar -xzf "$KUSTOMIZE_TGZ" -C "$BIN_DIR" kustomize
+kustomize version
+
+log "Installing kubeconform"
+KUBECONFORM_VERSION=v0.8.0 # renovate: datasource=github-releases depName=yannh/kubeconform
+KUBECONFORM_TGZ="$(tmp_name kubeconform "$KUBECONFORM_VERSION" tar.gz)"
+base="https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}"
+download_if_missing "$KUBECONFORM_TGZ" "${base}/kubeconform-linux-amd64.tar.gz"
+fetch "$work/kubeconform.sum" "${base}/CHECKSUMS"
+verify "$KUBECONFORM_TGZ" kubeconform-linux-amd64.tar.gz "$work/kubeconform.sum"
+tar -xzf "$KUBECONFORM_TGZ" -C "$BIN_DIR" kubeconform
+kubeconform -v

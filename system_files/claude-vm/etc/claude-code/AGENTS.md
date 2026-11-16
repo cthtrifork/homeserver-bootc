@@ -146,6 +146,7 @@ in your home directory, see below):
 - **Git and GitHub:** `git`, `gh` (wrapped to use the GitHub App token, see `CLAUDE.md`).
 - **Search and counting:** `rg` (ripgrep), `cloc` (lines of code per language), `tree`, `jq`, `yq`.
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
+- **Kubernetes (offline tooling, no cluster access):** `kubectl`, `helm`, `kustomize`, `kubeconform`.
 - **Containers:** rootless `podman` and `podman compose` (a wrapper to your own podman user's API, so containers see only
   `~/workspace`, not the rest of your home), `skopeo`, `crane`. There is no Docker.
 - **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).
