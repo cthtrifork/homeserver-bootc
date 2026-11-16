@@ -1,13 +1,7 @@
 #!/usr/bin/bash
-# Claude Code status line (see /etc/claude-code/managed-settings.json). Claude Code runs it after each assistant message and passes the session
-# as JSON on stdin. It does two things:
-#   1. prints one short line for the status bar: the used part of the 5-hour and 7-day plan limits, when Claude Code reports them
-#   2. sends the plan limits, the model name, the Claude Code version and the context use to the cockpit page in the cluster
-#      (claude-system/cockpit in talos-gitops), at most once a minute, in the background, so the status bar never waits for the network
-# Only those fields are sent: not the working directory, the session id, the transcript path or any cost figure. The cockpit keeps them in memory
-# for 24 hours. The page is at the hardcoded name below (a Cloudflare A record, DNS only, to the MetalLB address of claude-cockpit-lb); access
-# control is the cluster's NetworkPolicy, which lets only this VM's address in. It is never fatal: if the name does not resolve yet, nothing is sent.
-# Only the `claude` agent user sends: each agent user has its own claude.ai login, so their limits are not the same numbers.
+# Claude Code status line (managed-settings.json): prints the plan limits and posts them to the cockpit page in the cluster, in the background.
+# Sent: limits, model name, Claude Code version, context use. Not sent: working directory, session id, transcript path, cost.
+# Only the `claude` user sends: each agent user has its own login, so its own limits.
 set -u
 
 url="${COCKPIT_URL:-http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm}"
