@@ -199,6 +199,21 @@ jq -e '.statusLine.type == "command" and .statusLine.command == "/usr/libexec/cl
 line="$(echo '{"rate_limits":{"five_hour":{"used_percentage":23.5},"seven_day":{"used_percentage":41.2}}}' |
     COCKPIT_URL=http://127.0.0.1:9/x XDG_CACHE_HOME="$(mktemp -d)" /usr/libexec/claude-vm/statusline-report)"
 [ "$line" = "5h 24% · 7d 41%" ]
+# every agent user posts under its own name (a stub curl records the URL; the post runs in the background)
+stub="$(mktemp -d)"
+cat >"$stub/curl" <<STUB
+#!/bin/sh
+for a in "\$@"; do last="\$a"; done
+echo "\$last" >"$stub/url"
+STUB
+chmod +x "$stub/curl"
+echo '{"rate_limits":{"five_hour":{"used_percentage":1}}}' |
+    PATH="$stub:$PATH" XDG_CACHE_HOME="$(mktemp -d)" /usr/libexec/claude-vm/statusline-report >/dev/null
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    [ -s "$stub/url" ] && break
+    sleep 0.2
+done
+[ "$(cat "$stub/url")" = "http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm/$(id -un)" ]
 
 echo "--- nothing secret baked in ---"
 hits="$(find /etc /root /var/home /usr/local -xdev -type f \
