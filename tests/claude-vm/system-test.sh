@@ -64,6 +64,9 @@ test -f /usr/share/claude-vm/agents/lint-runner.md
 test -f /usr/share/claude-vm/agents/researcher.md
 # nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
+# the 30-minute check stages new images without rebooting
+systemctl is-enabled --quiet claude-vm-upgrade-check.timer
+systemctl cat claude-vm-upgrade-check.service >/dev/null
 # the Update VMs poll is enabled; without the DNS record it only logs that the page is unreachable
 systemctl is-enabled --quiet claude-vm-upgrade-poll.timer
 systemctl cat claude-vm-upgrade-poll.service >/dev/null

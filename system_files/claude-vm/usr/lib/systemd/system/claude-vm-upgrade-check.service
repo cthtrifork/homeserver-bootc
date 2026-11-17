@@ -1,0 +1,16 @@
+[Unit]
+Description=Check for a new bootc image and stage it (no reboot)
+Documentation=man:bootc(8) file:///usr/share/doc/claude-vm/README.md
+ConditionPathExists=/run/ostree-booted
+After=network-online.target
+Wants=network-online.target
+# Never race the apply run (03:00 timer or the Update VMs button): both use bootc's sysroot lock.
+After=bootc-fetch-apply-updates.service
+
+[Service]
+Type=oneshot
+# Download and stage only. bootc-fetch-apply-updates.service (--apply, once a day) reboots into what is staged here.
+ExecStart=/usr/bin/bootc upgrade --quiet
+# Leave the marker that a Claude Code SessionStart hook reports, and keep it current when nothing is staged. The '-' ignores failures.
+ExecStartPost=-/usr/libexec/claude-vm/note-staged-update
+TimeoutStartSec=20min

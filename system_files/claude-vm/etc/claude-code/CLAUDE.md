@@ -19,8 +19,8 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
   from there with `-v ~/workspace/<repo>:/src`; they cannot mount `~/.claude`, `~/.ssh` or anything else in your home, and no
   flag changes that). There is no Docker.
 - Git over HTTPS uses `gh` with a GitHub App installation token (one hour, refreshed every 30 minutes). There are no SSH keys on this VM, so use `https://` remotes.
-- The OS updates nightly at 03:00 (`bootc upgrade --apply`) and the VM reboots into a new image, which ends running
-  sessions. You cannot reboot it yourself; do not try to apply updates.
+- A new image is staged within 30 minutes of its release (`bootc upgrade`, no reboot). The OS applies it nightly at 03:00
+  (`bootc upgrade --apply`) and the VM reboots into it, which ends running sessions. You cannot reboot it yourself; do not try to apply updates.
 - `/etc/claude-code/` (managed settings and this file) is root-owned. You cannot and should not change your own policy.
 
 ## SSH access from outside
