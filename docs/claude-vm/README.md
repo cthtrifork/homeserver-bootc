@@ -149,6 +149,10 @@ flowchart LR
   `http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm/<user>` (a Cloudflare A record, DNS only, to `claude-cockpit-lb`). Every agent user sends under its own
   name (`claude`, `claude-rc-personal`), because each has its own login and limits; the cockpit keeps one slot per user and answers 404 for a user it does not know.
   Until the record exists the post fails quietly. Access control is the cluster's NetworkPolicy, which lets only this VM's address in.
+  `claude remote-control` is a server without a terminal UI, so its sessions may never run the status line (check
+  `ls -l --time-style=full-iso ~/.cache/claude-vm/statusline-report`: the time should advance every minute). The opt-in
+  `claude-statusline@<user>` unit (`sudo systemctl enable --now claude-statusline@claude`) runs an interactive `claude --model haiku` in a
+  detached tmux and sends it a one-word prompt every 10 minutes (`STATUSLINE_PING_INTERVAL`), because the limits only refresh on an API reply.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint,
   actionlint, shfmt, kubectl, helm, kustomize and kubeconform in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.
 
