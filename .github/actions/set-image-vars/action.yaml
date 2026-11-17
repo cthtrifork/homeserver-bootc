@@ -54,6 +54,9 @@ runs:
             "refs/tags/${IMAGE_NAME}_latest-${TODAY}-*" | head -n1)"
           LAST_REV="${LAST_TAG##*-}" # empty when nothing is tagged yet today
           UNIQUE_VERSION="latest-${TODAY}-$(( ${LAST_REV:-0} + 1 ))"
+        elif [ -n "${PR_NUMBER}" ] && [ "${PR_NUMBER}" != "null" ]; then
+          # pr-<number>-<yyyyMMdd>-<run>
+          UNIQUE_VERSION="pr-${PR_NUMBER}-$(date -u +%Y%m%d)-${{ github.run_number }}"
         else
           UNIQUE_VERSION="${DOCKER_TAG}.${{ github.run_number }}"
         fi
