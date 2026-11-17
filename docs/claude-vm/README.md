@@ -247,6 +247,15 @@ Only `cluster-ops` has cluster-specific details; the others are repo-agnostic.
 user agents of the same name, so inside a talos-gitops worktree the full agent (repo edits, validation, PRs) loads, and
 everywhere else this relay does.
 
+## Skills
+
+`/usr/share/claude-vm/skills/<name>/SKILL.md` are user-level skills, symlinked into `~/.claude/skills/<name>/` of both agent
+accounts by tmpfiles.d (so they follow the image on upgrade).
+
+| Skill | Use |
+|---|---|
+| `urlshare` | Read a page the egress allowlist does not cover: ask `urlshare.portableinfo.cloud` (the approval service in the talos-gitops `claude-system` namespace), the owner approves the exact URL, the pod fetches it once. Same skill as the claude-runner pod; the VM reaches it through the gateway like any other allowlisted host (`portableinfo.cloud`) |
+
 ## Security model
 
 - **Policy:** `/etc/claude-code/managed-settings.json` has the highest precedence and `claude` cannot change it. Sessions start
