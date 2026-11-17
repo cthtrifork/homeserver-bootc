@@ -134,9 +134,10 @@ flowchart LR
   (2 vCPU / 4 GB light use, 4-8 vCPU / 8-16 GB for parallel builds, 30 GB+ disk for podman). Override with a drop-in in
   `/etc/systemd/system/<service>.d/`.
 - **SSH:** key-only for `caspertdk` (sudo), with the same public keys as the home server. The agents have no sudo.
-- **Updates:** `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so a new image reboots the VM and ends
-  running sessions (Remote Control brings them back for about four hours). Drop `--apply` in
-  `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
+- **Updates:** `claude-vm-upgrade-check.timer` runs `bootc upgrade` (stage only, no reboot) every 30 minutes, so a new image is downloaded soon
+  after it is published and shows as staged on the Update VMs page. `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so
+  the staged image (or a newer one) reboots the VM and ends running sessions (Remote Control brings them back for about four hours). Drop
+  `--apply` in `bootc-fetch-apply-updates.service.d/override.conf` to only stage.
 - **Update button:** `claude-vm-upgrade-poll.timer` (every minute) runs `poll-upgrade claude-vm`, which talks to the "Update VMs" page in the cluster
   (`claude-system/vm-upgrade` in talos-gitops) at `http://vm-upgrade.portableinfo.cloud` (hardcoded; a Cloudflare A record, DNS only, to the
   MetalLB address of `claude-vm-upgrade-lb`). It reports the booted and staged ostree deployment (`rpm-ostree status --json`, local), then, when a
