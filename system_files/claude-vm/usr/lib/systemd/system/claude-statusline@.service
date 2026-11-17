@@ -16,6 +16,10 @@ Group=%i
 WorkingDirectory=/var/home/%i/workspace
 Environment=HOME=/var/home/%i
 Environment=DISABLE_AUTOUPDATER=1
+# This session needs no Remote Control, so it can turn off telemetry and background traffic. Never set these in
+# managed-settings.json: both also disable feature-flag fetching, which Remote Control needs.
+Environment=DISABLE_TELEMETRY=1
+Environment=CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 Environment=NPM_CONFIG_PREFIX=/var/home/%i/.npm-global
 Environment=PATH=/var/home/%i/.npm-global/bin:/var/home/%i/.local/bin:/usr/local/bin:/usr/bin:/usr/sbin
 ExecStart=/usr/libexec/claude-vm/run-statusline-session
