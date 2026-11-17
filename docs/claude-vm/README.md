@@ -145,7 +145,8 @@ flowchart LR
   cluster never sends a command; at most one upgrade per hour. Nothing is seeded: until the DNS record exists the poll only logs that the page is
   unreachable. Access control is the cluster's NetworkPolicy, which lets only the VMs' addresses reach the poll listener. Check with
   `journalctl -u claude-vm-upgrade-poll`. The homeserver image ships the same script (`usr/libexec/vm-upgrade-poll`); keep the two identical.
-- **Usage windows:** the managed `statusLine` runs `/usr/libexec/claude-vm/statusline-report` after each reply. It prints `5h 24% · 7d 41%` and, at most once a
+- **Usage windows:** the managed settings no longer set a `statusLine`, so nothing runs `/usr/libexec/claude-vm/statusline-report` by default (the script
+  and the opt-in unit below stay). When wired up as the status line, it prints `5h 24% · 7d 41%` and, at most once a
   minute, posts the plan limits, model, Claude Code version and context use to the cockpit page in the cluster (`claude-system/cockpit` in talos-gitops) at
   `http://cockpit.portableinfo.cloud/api/v1/sessions/claude-vm/<user>` (a Cloudflare A record, DNS only, to `claude-cockpit-lb`). Every agent user sends under its own
   name (`claude`, `claude-rc-personal`), because each has its own login and limits; the cockpit keeps one slot per user and answers 404 for a user it does not know.

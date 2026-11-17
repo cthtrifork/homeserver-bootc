@@ -204,7 +204,7 @@ jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROT
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
 echo "--- status line report ---"
-jq -e '.statusLine.type == "command" and .statusLine.command == "/usr/libexec/claude-vm/statusline-report"' /etc/claude-code/managed-settings.json >/dev/null
+jq -e 'has("statusLine") | not' /etc/claude-code/managed-settings.json >/dev/null
 # the status bar shows the plan limits (the send goes to a closed port here and is never fatal)
 line="$(echo '{"rate_limits":{"five_hour":{"used_percentage":23.5},"seven_day":{"used_percentage":41.2}}}' |
     COCKPIT_URL=http://127.0.0.1:9/x XDG_CACHE_HOME="$(mktemp -d)" /usr/libexec/claude-vm/statusline-report)"
