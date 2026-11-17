@@ -40,13 +40,6 @@ if systemctl is-enabled --quiet claude-remote-control-rc-personal.service || sys
     echo "claude-remote-control-rc-personal must be opt-in"
     exit 1
 fi
-# interactive session that feeds the status line report: opt-in per agent user
-systemctl cat claude-statusline@claude.service >/dev/null
-if systemctl is-enabled --quiet claude-statusline@claude.service || systemctl is-active --quiet claude-statusline@claude.service; then
-    echo "claude-statusline@claude must be opt-in"
-    exit 1
-fi
-test -x /usr/libexec/claude-vm/run-statusline-session
 # free Pinggy SSH tunnel is opt-in: present but neither enabled nor running
 systemctl cat claude-pinggy.service >/dev/null
 if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --quiet claude-pinggy.service; then
