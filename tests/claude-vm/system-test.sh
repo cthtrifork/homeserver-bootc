@@ -55,6 +55,8 @@ test -f /usr/share/claude-vm/agents/cluster-ops.md
 test -f /usr/share/claude-vm/agents/ci-triage.md
 test -f /usr/share/claude-vm/agents/lint-runner.md
 test -f /usr/share/claude-vm/agents/researcher.md
+# user-level skills, linked the same way
+test -f /usr/share/claude-vm/skills/urlshare/SKILL.md
 # nightly bootc upgrade applies (reboots) when a new image is staged
 systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
 # the 30-minute check stages new images without rebooting
