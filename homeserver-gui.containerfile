@@ -55,6 +55,12 @@ RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed /usr/local/share/kde-bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove
 
+# swtpm-selinux's %post cannot always rebuild the policy inside a container build, leaving /usr/bin/swtpm as bin_t at deploy
+# so libvirt fails with "cannot execute binary /usr/bin/swtpm: Permission denied". Rebuild the policy, then fail the build
+# if the swtpm file contexts are still missing.
+RUN semodule -B && \
+    grep -q swtpm_exec_t /etc/selinux/targeted/contexts/files/file_contexts
+
 # multimedia
 RUN dnf group install -y multimedia && \
   dnf swap -y 'ffmpeg-free' 'ffmpeg' --allowerasing && \
