@@ -1,13 +1,54 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# Guards for the claude-vm image: negative checks (things that must NOT be true) and the hardening assertions (permissions,
-# ownership, ACLs, firewall rules, SSH config). Split out of system-test.sh, which keeps the "does it work" checks (tools, units,
-# files present). Like system-test.sh, it runs as a user with sudo on the VM.
+# Guards check that the claude-vm image is configured as intended and in the right state: packages and files present, units
+# enabled or idle, users, permissions, ACLs, firewall rules, SSH and sandbox config, and what must NOT be true. system-test.sh does
+# things and sees that they work. Like system-test.sh, it runs as a user with sudo on the VM.
 
-trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
+# on failure, also dump the podman units and the socket directories (the VM journal only reaches the run summary)
+diagnose() {
+    echo "--- podman diagnostics ---"
+    systemctl status 'claude-vm-podman@*' --no-pager -l 2>&1 | tail -n 40 || true
+    journalctl -b --no-pager -n 40 -u 'claude-vm-podman@*' 2>&1 || true
+    ls -laZ /run/claude-vm-podman /run/claude-vm-podman/* /run/claude-vm-podman-run 2>&1 || true
+    getfacl -p /var/home/claude /var/home/claude/workspace 2>&1 || true
+    journalctl -b --no-pager -g 'avc:' 2>&1 | tail -n 20 || true
+}
+trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"; diagnose' ERR
 
 echo "== Guard testing (claude-vm) =="
+
+echo "--- installed ---"
+test -d /usr/lib/node_modules/playwright
+test -x /usr/libexec/claude-vm/bin/claude-vm-dnf
+
+echo "--- units and files ---"
+# claude-remote-control is enabled, but idle until the GitHub token is seeded and claude is signed in
+systemctl is-enabled --quiet claude-remote-control.service
+systemctl cat claude-remote-control-rc-personal.service >/dev/null
+systemctl cat claude-pinggy.service >/dev/null
+[ "$(hostname)" = "claude-vm-bootc" ]
+test -x /usr/bin/claude-vm-ssh-address
+test -x /usr/bin/claude-vm-egress
+test -x /usr/bin/claude-vm-signing-key
+# user-level Haiku subagents, linked into each agent account by tmpfiles.d
+test -f /usr/share/claude-vm/agents/cluster-ops.md
+test -f /usr/share/claude-vm/agents/ci-triage.md
+test -f /usr/share/claude-vm/agents/lint-runner.md
+test -f /usr/share/claude-vm/agents/researcher.md
+# user-level skills, linked the same way
+test -f /usr/share/claude-vm/skills/urlshare/SKILL.md
+# nightly bootc upgrade applies (reboots) when a new image is staged
+systemctl is-enabled --quiet bootc-fetch-apply-updates.timer
+# the 30-minute check stages new images without rebooting
+systemctl is-enabled --quiet claude-vm-upgrade-check.timer
+systemctl cat claude-vm-upgrade-check.service >/dev/null
+# the Update VMs poll is enabled; without the DNS record it only logs that the page is unreachable
+systemctl is-enabled --quiet claude-vm-upgrade-poll.timer
+systemctl cat claude-vm-upgrade-poll.service >/dev/null
+# each agent user has its own GitHub App; the refresher is a per-user template
+systemctl cat 'claude-vm-github-token@claude-rc-personal.service' 'claude-vm-github-token@claude-rc-personal.timer' >/dev/null
+jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/protobuf" and .env.OTEL_METRICS_INCLUDE_SESSION_ID == "false"' /etc/claude-code/managed-settings.json >/dev/null
 
 echo "--- services are opt-in or idle ---"
 # claude-remote-control is enabled, but idle until the GitHub token is seeded and claude is signed in
@@ -27,10 +68,7 @@ if systemctl is-enabled --quiet claude-pinggy.service || systemctl is-active --q
 fi
 
 echo "--- egress gateway ---"
-# the proxy runs from a bin_t copy of nginx; in the packaged httpd_t domain SELinux denies its upstream connections
-proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
-echo "egress-proxy runs as: $proxy_label"
-if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
+# the gateway units, listeners, allowlist files and the proxy's SELinux domain are checked next to the allowlist query in system-test.sh
 # resolved's varlink socket (glibc nss-resolve) bypasses the DNS redirect for everyone but root
 [ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
@@ -56,6 +94,11 @@ home_private() {
 }
 home_private claude-rc-personal
 home_private claude
+[ "$(id -u claude)" = "1100" ]
+[ "$(id -u claude-rc-personal)" = "1101" ]
+test -e /var/lib/systemd/linger/claude
+test -e /var/lib/systemd/linger/claude-rc-personal
+timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
 if id -nG claude | grep -qw wheel; then
     echo "claude must not be in wheel"
     exit 1
@@ -81,6 +124,9 @@ sshd_config="$(sshd -T)"
 grep -qix 'passwordauthentication no' <<<"$sshd_config"
 
 echo "--- podman isolation ---"
+# containers run as separate UIDs (claude-vm-podman@<agent>.service), not as the agents
+[ "$(id -u claude-podman)" = "1200" ]
+[ "$(id -u claude-rc-personal-podman)" = "1201" ]
 for pu in claude-podman claude-rc-personal-podman; do
     if id -nG "$pu" | tr ' ' '\n' | grep -qxE 'wheel|claude|claude-rc-personal'; then
         echo "$pu must not be in wheel or an agent's group"
@@ -91,8 +137,7 @@ for pu in claude-podman claude-rc-personal-podman; do
     [ "$(getent passwd "$pu" | cut -d: -f7)" = "/usr/sbin/nologin" ]
 done
 [ "$(stat -c %G:%a /usr/bin/podman)" = "claude-podman-exec:750" ]
-# each podman socket is reachable by its own agent only
-[ "$(stat -c %U:%G:%a /run/claude-vm-podman/claude/podman.sock)" = "claude-podman:claude:660" ]
+# each podman socket is reachable by its own agent only (its owner and mode are checked next to the socket use in system-test.sh)
 # the agent users have no subuid range and cannot exec the real podman; the wrapper talks to the API instead
 if grep -qE '^(claude|claude-rc-personal):' /etc/subuid /etc/subgid; then
     echo "agent users must not have a subuid/subgid range"
