@@ -97,6 +97,10 @@ jobs:
               - '**/claude-vm/**'
               # the VM reuses the homeserver SSH public keys
               - 'system_files/homeserver/usr/share/homeserver/authorized_keys.pub'
+              # and the signature policy, its key and the registry config that reads the signatures
+              - 'cosign.pub'
+              - 'policy.json'
+              - 'system_files/homeserver/etc/containers/registries.d/**'
               - 'build_files/claude-vm-utilities.sh'
               - 'build_files/download-lib.sh' # sourced by claude-vm-utilities.sh
               - '!**/*.md' # docs never change an image

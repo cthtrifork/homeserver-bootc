@@ -19,7 +19,7 @@ To build a `claude-vm` disk image yourself, see [docs/claude-vm](docs/claude-vm/
 - `build_files/` – build scripts (base, core, gui, post, ...)
 - `system_files/` – files copied into the images
 - `tests/` – image verification scripts, one folder per image
-- `docs/` – per-image documentation (not in `system_files/`, which is copied into the images)
+- `docs/` – per-image documentation (not in `system_files/`, which is copied into the images); [docs/signing.md](docs/signing.md) covers image signing
 - `.github/workflows/` – build, lint, cleanup and Renovate pipelines
 
 ## Commit and PR titles
