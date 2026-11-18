@@ -177,6 +177,7 @@ for u in claude claude-rc-personal; do
     if sudo -u "$u" test -x /usr/bin/podman; then echo "$u can exec /usr/bin/podman"; exit 1; fi
 done
 test -x /usr/libexec/claude-vm/bin/podman
+test -x /usr/libexec/claude-vm/bin/claude-vm-dnf
 # each podman socket is reachable by its own agent only
 timeout 60 bash -c 'until [ -S /run/claude-vm-podman/claude/podman.sock ]; do sleep 1; done'
 [ "$(stat -c %U:%G:%a /run/claude-vm-podman/claude/podman.sock)" = "claude-podman:claude:660" ]

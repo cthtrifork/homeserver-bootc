@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+# `dnf` queries for the agent users (no dnf on the VM: /usr is read-only and there is no sudo). Runs dnf in a throwaway
+# fedora-bootc container of the VM's own Fedora release, so `claude-vm-dnf repoquery --available nodejs24` answers what the
+# image build would see. Nothing is installed anywhere; use it to check package names, versions and file lists.
+# The default metalink answers with mirror hosts the egress gateway blocks, so the repos are pinned to static baseurls on
+# dl.fedoraproject.org (covered by `fedoraproject.org` in build_files/claude-vm/egress-allowlist.txt).
+set -euo pipefail
+
+# shellcheck source=/dev/null
+releasever="$(. /etc/os-release && echo "$VERSION_ID")"
+base="https://dl.fedoraproject.org/pub/fedora/linux"
+
+exec podman run --rm "quay.io/fedora/fedora-bootc:${releasever}" dnf -q \
+    --setopt=fedora.metalink= --setopt="fedora.baseurl=${base}/releases/\$releasever/Everything/\$basearch/os/" \
+    --setopt=updates.metalink= --setopt="updates.baseurl=${base}/updates/\$releasever/Everything/\$basearch/" \
+    --setopt=updates-archive.enabled=0 "$@"
