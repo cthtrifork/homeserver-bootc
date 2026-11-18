@@ -149,10 +149,10 @@
         '/^build_files/.*\\.sh$/',
       ],
       matchStrings: [
-        '(?<depName>[^\\s"\']+)="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
+        // The dependency is named by the comment (cli/cli), not by the variable (GH_CLI_VERSION), so titles read "update dependency cli/cli".
+        '[^\\s"\']+="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s]+)',
       ],
       datasourceTemplate: '{{{datasource}}}',
-      packageNameTemplate: '{{{packageName}}}',
       versioningTemplate: 'semver',
     },
   ],
