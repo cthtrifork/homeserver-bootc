@@ -10,7 +10,7 @@ EOF
     skopeo copy --policy /tmp/policy-permissive.json docker://${IMAGE_FULL}:latest dir:$(mktemp -d ${HOME}/tmp-image.XXXXXX)
     DIGEST=$(skopeo inspect --format "{{.Digest}}" docker://${IMAGE_FULL}:latest)
     echo "Manually verifying image signature for image: ${IMAGE_FULL}@${DIGEST}"
-    cosign verify --key /etc/pki/cosign/cosign.pub ${IMAGE_FULL}@${DIGEST}
+    cosign verify --key /etc/pki/cosign/cosign.pub --new-bundle-format=false --insecure-ignore-tlog=true ${IMAGE_FULL}@${DIGEST}
     echo "Image signature verified manually"
 }
 

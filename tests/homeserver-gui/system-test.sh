@@ -48,6 +48,13 @@ echo "extensions code finds in the image directory: $count"
     exit 1
 }
 
+echo "--- signature policy ---"
+# our OS images must be signed by the key in the image (docs/signing.md); other images are not covered here
+jq -e '.transports.docker["ghcr.io/cthtrifork/homeserver-bootc"][0] | .type == "sigstoreSigned" and .keyPath == "/etc/pki/cosign/cosign.pub" and .signedIdentity.type == "matchRepository"' /etc/containers/policy.json >/dev/null \
+    || { echo "no signature requirement for ghcr.io/cthtrifork/homeserver-bootc in /etc/containers/policy.json"; exit 1; }
+grep -q 'BEGIN PUBLIC KEY' /etc/pki/cosign/cosign.pub
+grep -q 'use-sigstore-attachments: true' /etc/containers/registries.d/ghcr.yaml
+
 echo "--- 20 largest installed packages ---"
 rpm -qa --queryformat '%{SIZE} %{NAME}\n' | sort -rn | head -20 || true
 

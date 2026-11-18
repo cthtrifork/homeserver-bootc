@@ -75,16 +75,25 @@ jobs:
       - name: Install Cosign
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+        with:
+          cosign-release: v3.1.4 # renovate: datasource=github-releases depName=sigstore/cosign # keep the legacy signature format for containers/image
 
       - name: Sign container image
         if: ${{ github.ref == 'refs/heads/main' }}
         run: | #sh
+          set -euo pipefail
+          [[ -n "$COSIGN_PRIVATE_KEY" ]] || { echo "::error::SIGNING_SECRET is not set: the image cannot be signed"; exit 1; }
           # build-push-action pushes an index (image + provenance); containers/image also
-          # checks the platform manifest it pulls, so sign the children too
-          cosign sign -y --recursive --use-signing-config=false --new-bundle-format=false --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/hello@${{ env.DIGEST }} # --registry-username='${{ github.actor }}' --registry-token='${{ secrets.GITHUB_TOKEN }}'
+          # checks the platform manifest it pulls, so sign the children too (see docs/signing.md for the flags)
+          cosign sign --yes --recursive --key env://COSIGN_PRIVATE_KEY \
+            --tlog-upload=false \
+            --new-bundle-format=false \
+            --use-signing-config=false \
+            --registry-referrers-mode=legacy \
+            "ghcr.io/$GITHUB_REPOSITORY/hello@$DIGEST"
+          echo "Signed \`ghcr.io/$GITHUB_REPOSITORY/hello@$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
         env:
           DIGEST: ${{ steps.push-latest.outputs.digest }}
-          COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
 

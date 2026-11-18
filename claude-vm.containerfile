@@ -97,6 +97,12 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 COPY --chmod=0644 system_files/homeserver/usr/share/homeserver/authorized_keys.pub /usr/share/claude-vm/authorized_keys.pub
 
 COPY system_files/claude-vm/ /
+
+# The VM refuses an unsigned image of ours: the public key of the OS image signatures and the policy that requires it,
+# the same files as the homeserver images (docs/signing.md)
+COPY --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
+COPY --chmod=0644 policy.json /etc/containers/policy.json
+COPY --chmod=0644 system_files/homeserver/etc/containers/registries.d/ghcr.yaml /etc/containers/registries.d/ghcr.yaml
 # Egress allowlist: validate it (fails the build on a bad entry) and derive the sandbox's allowedDomains and the
 # gateway's nginx/dnsmasq lists from the one source file.
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \

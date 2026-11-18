@@ -46,7 +46,7 @@ jobs:
           #delete-orphaned-images: true
           #delete-untagged: true
           packages: homeserver-bootc/${{ matrix.image }}
-          exclude-tags: main-*,latest,latest-*
+          exclude-tags: main-*,latest,latest-*,sha256-*
           keep-n-tagged: 7
           #keep-n-untagged: 7
           # dry-run: true
@@ -66,7 +66,7 @@ jobs:
           # tags one by one, which GHCR rejects with HTTP 400. keep-n-tagged: 0
           # deletes whole images; exclude-tags protects main and latest images.
           keep-n-tagged: 0
-          exclude-tags: main-*,latest,latest-*
+          exclude-tags: main-*,latest,latest-*,sha256-*
           older-than: 7 days
           packages: homeserver-bootc/${{ matrix.image }}
 
@@ -75,7 +75,7 @@ jobs:
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-ghost-images: true
-          exclude-tags: main-*,latest,latest-*
+          exclude-tags: main-*,latest,latest-*,sha256-*
           packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Clean up old images
@@ -86,6 +86,6 @@ jobs:
           # 5 newest older ones. No delete-tags, so whole images are deleted. latest is
           # never deleted.
           keep-n-tagged: 5
-          exclude-tags: latest
+          exclude-tags: latest,sha256-*
           older-than: 30 days
           packages: homeserver-bootc/${{ matrix.image }}
