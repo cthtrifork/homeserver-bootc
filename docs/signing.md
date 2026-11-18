@@ -13,7 +13,7 @@ accepts an email identity. A GitHub Actions certificate names a workflow, not an
 - The `push-latest` job of `build-bootc-image.yaml` (never run for a pull request) signs the pushed digest with cosign **v3** in its
   legacy format (`--new-bundle-format=false` and `--registry-referrers-mode=legacy`), which writes the `sha256-<digest>.sig` tag that
   podman and bootc read. `--use-signing-config=false` keeps the explicit key-based signing and `--tlog-upload=false` skips the
-  transparency log: the host needs no Rekor. The same flags sign the Trivy `vuln` attestation. `push-hello-containerfile.yaml`
+  transparency log: the host needs no Rekor. The Trivy `vuln` attestation uses the same flags except `--registry-referrers-mode`, which `cosign attest` does not accept. `push-hello-containerfile.yaml`
   signs the `hello` image the same way, with `--recursive` because it pushes an index.
 - The job fails when the key is not set, so a build never ships an image the hosts would reject.
 - The private key is the secret `SIGNING_SECRET` (an unencrypted key, so `COSIGN_PASSWORD` is empty). A pull request build never
