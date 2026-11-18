@@ -73,6 +73,9 @@ oneuptime.com
 # JSON schemas (settings validation)
 json.schemastore.org
 
+# Sigstore trust root (gh attestation verify, to check the build provenance of the images and ISOs)
+tuf-repo-cdn.sigstore.dev
+
 # Vulnerability data
 nvd.nist.gov
 osv.dev
