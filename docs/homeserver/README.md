@@ -38,7 +38,8 @@ flowchart TD
   sops, gh, kubectl and plugins, kind, flux, kustomize, helm, k9s, talosctl, omnictl, mkcert, jq, yq, cosign, copa,
   shfmt, lazygit, lazydocker, lazyjournal and a few more. Docker CE comes from `10-server-docker-ce.sh`.
 - **Services:** sshd, docker and podman sockets, qemu-guest-agent, `pinggy.service` (SSH tunnel, see below),
-  `libvirt-workaround.service` (relabels libvirt paths) and the two setup units below.
+  `libvirt-workaround.service` (relabels libvirt paths), `swtpm-label-workaround.service` (bind-mounts a correctly
+  labelled `swtpm` over `/usr/bin/swtpm`, which the image ships as `bin_t`) and the two setup units below.
 - **Basics:** timezone Europe/Copenhagen, passwordless sudo for `wheel`, cosign policy in `/etc/containers/policy.json`.
 
 ## First boot

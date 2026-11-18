@@ -1,0 +1,21 @@
+[Unit]
+Description=Workaround: bind-mount a correctly labelled swtpm over /usr/bin/swtpm
+Documentation=https://github.com/cthtrifork/homeserver-bootc/pull/1197
+# The image ships /usr/bin/swtpm as bin_t instead of swtpm_exec_t, so libvirt cannot start a VM with a TPM. /usr is
+# read-only on the host (restorecon fails), so label a copy under /var and bind-mount it over the original.
+# Remove once `setfiles -n -v` no longer reports /usr/bin/swtpm.
+ConditionPathExists=/usr/bin/swtpm
+After=local-fs.target
+Before=virtqemud.service virtqemud.socket libvirtd.service libvirtd.socket
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/mkdir -p /var/lib/swtpm-bin
+ExecStart=/usr/bin/install -m 0755 /usr/bin/swtpm /var/lib/swtpm-bin/swtpm
+ExecStart=/usr/bin/chcon -t swtpm_exec_t /var/lib/swtpm-bin/swtpm
+ExecStart=/usr/bin/mount --bind /var/lib/swtpm-bin/swtpm /usr/bin/swtpm
+ExecStop=-/usr/bin/umount /usr/bin/swtpm
+
+[Install]
+WantedBy=multi-user.target
