@@ -659,7 +659,6 @@ jobs:
           # Attach the Trivy JSON as an attestation of type "vuln"
           cosign attest \
             --yes --tlog-upload=false --use-signing-config=false --new-bundle-format=false \
-            --registry-referrers-mode=legacy \
             --key env://COSIGN_PRIVATE_KEY \
             --type vuln \
             --predicate ${{ github.workspace }}/current_trivy.json \
