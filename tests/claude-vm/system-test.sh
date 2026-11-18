@@ -22,10 +22,12 @@ for c in bash python3 pip3 node npm go chromium-browser ffmpeg ffprobe podman po
 done
 
 test -d /usr/lib/node_modules/playwright
+node --version | grep -q '^v24\.' || { echo "node: expected v24, got $(node --version)"; exit 1; }
+lighthouse --version
 
-# Node needs the full ICU data (nodejs-full-i18n): without it Intl.Segmenter segfaults instead of throwing.
+# Node needs the full ICU data (nodejs24-full-i18n): without it Intl.Segmenter segfaults instead of throwing.
 graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "grapheme" }).segment("héllo 👍🏽")].length)' || true)"
-[ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs-full-i18n installed?"; exit 1; }
+[ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs24-full-i18n installed?"; exit 1; }
 
 echo "--- services ---"
 # enabled, but idle until the GitHub token is seeded and claude is signed in
