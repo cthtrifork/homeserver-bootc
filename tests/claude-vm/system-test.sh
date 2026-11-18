@@ -71,23 +71,14 @@ done
 test -x /usr/libexec/claude-vm/egress-proxy
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
-# resolved's varlink socket (glibc nss-resolve) bypasses the DNS redirect for everyone but root
-[ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
 grep -qF '127.0.0.1:8443' <<<"$tcp"
 grep -qF '127.0.0.1:8008' <<<"$tcp"
 grep -qF '127.0.0.55:53' <<<"$udp"
-# capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
-rules="$(sudo nft list table inet claude_egress)"
-grep -qF 'meta skuid != @agent_uids' <<<"$rules"
-grep -qF '1100-1101' <<<"$rules"
-grep -qF '1200-1201' <<<"$rules"
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
 for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
-requires="$(systemctl show -p Requires --value claude-remote-control.service)"
-grep -qF claude-vm-egress-proxy <<<"$requires"
 
 echo "--- staged-update notice ---"
 sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null
@@ -104,44 +95,21 @@ sudo systemd-run --wait --pipe --collect -q -p User=claude \
     -p PrivateTmp=yes -p ProtectSystem=strict \
     bwrap --unshare-all --ro-bind / / --dev /dev --proc /proc true
 
-# An agent's home is private: owned by it, no group or other access. claude-vm-podman@<agent> adds a traverse-only ACL entry for
-# <agent>-podman, which makes `stat` show the ACL mask in the group bits (0710), so check the ACL, not the mode.
-home_private() {
-    [ "$(stat -c %U "/var/home/$1")" = "$1" ]
-    acl="$(getfacl -cp "/var/home/$1")"
-    grep -qx 'group::---' <<<"$acl"
-    grep -qx 'other::---' <<<"$acl"
-}
 echo "--- users, ssh, home directories ---"
 [ "$(id -u claude)" = "1100" ]
 [ "$(id -u claude-rc-personal)" = "1101" ]
-home_private claude-rc-personal
 test -e /var/lib/systemd/linger/claude-rc-personal
-# each agent user has its own GitHub App: the token directories are private, and the refresher is a per-user template
-[ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
-[ "$(stat -c %U:%G:%a /run/claude-vm/claude-rc-personal)" = "root:claude-rc-personal:750" ]
+# each agent user has its own GitHub App; the refresher is a per-user template
 systemctl cat 'claude-vm-github-token@claude-rc-personal.service' 'claude-vm-github-token@claude-rc-personal.timer' >/dev/null
-id -nG caspertdk | grep -qw wheel
-# not `sshd -T | grep -q`: grep exits at the first match and, under pipefail, sshd's SIGPIPE on the rest of its output fails the pipeline
-sshd_config="$(sshd -T)"
-# case-insensitive: OpenSSH 10.5 (Fedora 45) prints `PasswordAuthentication no`, older releases printed it lowercase
-grep -qix 'passwordauthentication no' <<<"$sshd_config"
-home_private claude
 test -e /var/lib/systemd/linger/claude
 timeout 60 bash -c 'until [ -d /run/user/1100 ]; do sleep 1; done'
 # containers run as separate UIDs (claude-vm-podman@<agent>.service), not as the agents
 [ "$(id -u claude-podman)" = "1200" ]
 [ "$(id -u claude-rc-personal-podman)" = "1201" ]
-for pu in claude-podman claude-rc-personal-podman; do
-    [ "$(getent passwd "$pu" | cut -d: -f7)" = "/usr/sbin/nologin" ]
-done
-# the agent users have no subuid range and cannot exec the real podman; the wrapper (first on PATH) talks to the API instead
-[ "$(stat -c %G:%a /usr/bin/podman)" = "claude-podman-exec:750" ]
+# the agents use the wrapper (first on PATH), which talks to the API of their podman user
 test -x /usr/libexec/claude-vm/bin/podman
 test -x /usr/libexec/claude-vm/bin/claude-vm-dnf
-# each podman socket is reachable by its own agent only
 timeout 60 bash -c 'until [ -S /run/claude-vm-podman/claude/podman.sock ]; do sleep 1; done'
-[ "$(stat -c %U:%G:%a /run/claude-vm-podman/claude/podman.sock)" = "claude-podman:claude:660" ]
 sudo -u claude test -w /run/claude-vm-podman/claude/podman.sock
 # the podman user's workspace access is shared by ACL
 sudo -u claude-podman test -w /var/home/claude/workspace
@@ -149,7 +117,5 @@ sudo -u claude-podman test -w /var/home/claude/workspace
 echo "--- usage telemetry ---"
 jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY == "1" and .env.OTEL_EXPORTER_OTLP_PROTOCOL == "http/protobuf" and .env.OTEL_METRICS_INCLUDE_SESSION_ID == "false"' /etc/claude-code/managed-settings.json >/dev/null
 claude-vm-egress allowed | grep -qx portableinfo.cloud
-
-[ "$(stat -c %a /etc/claude-vm)" = "700" ]
 
 echo "✅ System testing finished"

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# Negative checks ("guards") for the claude-vm image: things that must NOT be true. Split out of system-test.sh, which keeps the
-# positive checks (tools, units enabled, files present, permissions). Like system-test.sh, it runs as a user with sudo on the VM.
+# Guards for the claude-vm image: negative checks (things that must NOT be true) and the hardening assertions (permissions,
+# ownership, ACLs, firewall rules, SSH config). Split out of system-test.sh, which keeps the "does it work" checks (tools, units,
+# files present). Like system-test.sh, it runs as a user with sudo on the VM.
 
 trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 
@@ -30,17 +31,31 @@ echo "--- egress gateway ---"
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
+# resolved's varlink socket (glibc nss-resolve) bypasses the DNS redirect for everyone but root
+[ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
+# capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
+rules="$(sudo nft list table inet claude_egress)"
+grep -qF 'meta skuid != @agent_uids' <<<"$rules"
+grep -qF '1100-1101' <<<"$rules"
+grep -qF '1200-1201' <<<"$rules"
+# the agent cannot run without the egress proxy
+requires="$(systemctl show -p Requires --value claude-remote-control.service)"
+grep -qF claude-vm-egress-proxy <<<"$requires"
 
 echo "--- users and home directories ---"
-# An agent's home is private (see home_private in system-test.sh). claude-vm-podman@<agent> adds a traverse-only ACL entry for
-# <agent>-podman, so that is the only extra entry allowed.
-no_extra_acl() {
+# An agent's home is private: owned by it, no group or other access. claude-vm-podman@<agent> adds a traverse-only ACL entry for
+# <agent>-podman, which makes `stat` show the ACL mask in the group bits (0710), so check the ACL, not the mode; that is also the
+# only extra entry allowed.
+home_private() {
+    [ "$(stat -c %U "/var/home/$1")" = "$1" ]
     acl="$(getfacl -cp "/var/home/$1")"
+    grep -qx 'group::---' <<<"$acl"
+    grep -qx 'other::---' <<<"$acl"
     extra="$(grep -E '^(user|group):[^:]+:' <<<"$acl" | grep -vE "^user:$1-podman:--x$" || true)"
     [ -z "$extra" ] || { echo "unexpected ACL entries on /var/home/$1: $extra"; return 1; }
 }
-no_extra_acl claude-rc-personal
-no_extra_acl claude
+home_private claude-rc-personal
+home_private claude
 if id -nG claude | grep -qw wheel; then
     echo "claude must not be in wheel"
     exit 1
@@ -53,6 +68,17 @@ if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u c
     echo "claude-rc-personal can read claude's files"
     exit 1
 fi
+# each agent user has its own GitHub App: the token directories are private
+[ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
+[ "$(stat -c %U:%G:%a /run/claude-vm/claude-rc-personal)" = "root:claude-rc-personal:750" ]
+[ "$(stat -c %a /etc/claude-vm)" = "700" ]
+
+echo "--- ssh ---"
+id -nG caspertdk | grep -qw wheel
+# not `sshd -T | grep -q`: grep exits at the first match and, under pipefail, sshd's SIGPIPE on the rest of its output fails the pipeline
+sshd_config="$(sshd -T)"
+# case-insensitive: OpenSSH 10.5 (Fedora 45) prints `PasswordAuthentication no`, older releases printed it lowercase
+grep -qix 'passwordauthentication no' <<<"$sshd_config"
 
 echo "--- podman isolation ---"
 for pu in claude-podman claude-rc-personal-podman; do
@@ -61,6 +87,12 @@ for pu in claude-podman claude-rc-personal-podman; do
         exit 1
     fi
 done
+for pu in claude-podman claude-rc-personal-podman; do
+    [ "$(getent passwd "$pu" | cut -d: -f7)" = "/usr/sbin/nologin" ]
+done
+[ "$(stat -c %G:%a /usr/bin/podman)" = "claude-podman-exec:750" ]
+# each podman socket is reachable by its own agent only
+[ "$(stat -c %U:%G:%a /run/claude-vm-podman/claude/podman.sock)" = "claude-podman:claude:660" ]
 # the agent users have no subuid range and cannot exec the real podman; the wrapper talks to the API instead
 if grep -qE '^(claude|claude-rc-personal):' /etc/subuid /etc/subgid; then
     echo "agent users must not have a subuid/subgid range"
