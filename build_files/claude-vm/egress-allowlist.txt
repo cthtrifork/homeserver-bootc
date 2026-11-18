@@ -69,6 +69,7 @@ readthedocs.io
 wikipedia.org
 stackoverflow.com
 oneuptime.com
+github.blog
 
 # JSON schemas (settings validation)
 json.schemastore.org
