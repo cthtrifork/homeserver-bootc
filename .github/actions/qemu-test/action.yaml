@@ -109,6 +109,24 @@ runs:
           -p 2222 \
           ${SSH_USERNAME}@localhost
 
+    - name: Run guard tests
+      shell: bash
+      env:
+        SSH_KEY: ${{ inputs.SSH_KEY }}
+        SSH_USERNAME: ${{ inputs.SSH_USERNAME }}
+        SSH_OPTIONS: ${{ inputs.SSH_OPTIONS }}
+        IMAGE: ${{ inputs.IMAGE }}
+      run: | #sh
+        # turn the env string into a Bash array
+        read -ra SSH_OPTS <<< "${SSH_OPTIONS}"
+
+        if [ -e "./tests/${IMAGE}/guard-tests.sh" ]; then
+          cat "./tests/${IMAGE}/guard-tests.sh" | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost
+        fi
+
     - name: Run user tests
       shell: bash
       env:
