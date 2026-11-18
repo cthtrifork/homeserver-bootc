@@ -32,6 +32,8 @@
   // a handful of PRs per run without flooding CI, and the open-PR cap stops a stale backlog from growing.
   prHourlyLimit: 5,
   prConcurrentLimit: 10,
+  // The update type (major, minor, patch, digest) ends every PR title, e.g. "update dependency cli/cli to v2.105.0 (minor)".
+  commitMessageSuffix: '({{updateType}})',
   // No Renovate `schedule` here: the cron in renovate.yaml is the only timing. A schedule makes Renovate
   // skip branch creation and updates in every run outside its window, which looked like the workflow
   // schedule being ignored (the cron fires every 2 hours, but only runs between 00:00 and 07:00 did anything).
@@ -149,10 +151,10 @@
         '/^build_files/.*\\.sh$/',
       ],
       matchStrings: [
-        '(?<depName>[^\\s"\']+)="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
+        // The dependency is named by the comment (cli/cli), not by the variable (GH_CLI_VERSION), so titles read "update dependency cli/cli".
+        '[^\\s"\']+="?(?<currentValue>.[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<depName>[^\\s]+)',
       ],
       datasourceTemplate: '{{{datasource}}}',
-      packageNameTemplate: '{{{packageName}}}',
       versioningTemplate: 'semver',
     },
   ],
