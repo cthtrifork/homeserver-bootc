@@ -10,6 +10,7 @@ FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.325 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG PLAYWRIGHT_VERSION=1.65.1 # renovate: datasource=npm depName=playwright
+ARG LIGHTHOUSE_VERSION=13.6.0 # renovate: datasource=npm depName=lighthouse
 
 # Tooling Claude can use: bash, python (+pip), node (+npm), go, make, rootless podman (+ podman-compose, the provider behind
 # `podman compose`), plus linters/formatters
@@ -17,9 +18,11 @@ ARG PLAYWRIGHT_VERSION=1.65.1 # renovate: datasource=npm depName=playwright
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
 # (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
 # egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
-# nodejs-full-i18n (an alias of nodejs22-full-i18n, pinned to the same nodejs22 build): Fedora builds Node with small ICU, which has no
-# break-iterator data, so without this package any `new Intl.Segmenter()` segfaults (Lighthouse's "Minify CSS" audit hit it); it puts
-# icudt78l.dat in /usr/share/node-22/icudata, where Node looks. tests/claude-vm/system-test.sh checks it.
+# Node 24 (the Active LTS line, packaged by Fedora as the parallel-installable nodejs24): nodejs24-bin and nodejs24-npm-bin are
+# the packages that provide /usr/bin/node, npm and npx (via alternatives); the plain nodejs/nodejs22 packages are not installed.
+# nodejs24-full-i18n: Fedora builds Node with small ICU, which has no break-iterator data, so without this package any
+# `new Intl.Segmenter()` segfaults (Lighthouse's "Minify CSS" audit hit it); it puts the full ICU data in
+# /usr/share/node-24/icudata, where Node looks. tests/claude-vm/system-test.sh checks it.
 # ffmpeg-free: Fedora's ffmpeg (VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265 encoders). The full RPM Fusion ffmpeg of the GUI
 # image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
@@ -32,7 +35,7 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
     > /etc/dnf/repos.override.d/50-mirror.repo
 
 RUN dnf -y install --setopt=install_weak_deps=False \
-        bash python3 python3-pip nodejs nodejs-full-i18n npm golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
+        bash python3 python3-pip nodejs24 nodejs24-bin nodejs24-npm nodejs24-npm-bin nodejs24-full-i18n golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck yamllint make ripgrep tmux tree cloc qemu-guest-agent \
         nftables nginx nginx-mod-stream dnsmasq \
         chromium ffmpeg-free \
@@ -69,6 +72,14 @@ RUN npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
 RUN PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
         npm install --global --prefix /usr "playwright@${PLAYWRIGHT_VERSION}" \
     && rm -rf /tmp/npm-cache
+
+# Lighthouse (page audits). Installed under /usr like Claude Code and Playwright; it drives Fedora's chromium RPM through
+# CHROME_PATH (exported by /etc/profile.d/81-claude-playwright.sh), and Chrome must be started with --no-sandbox inside bubblewrap
+# (`lighthouse <url> --chrome-flags="--headless=new --no-sandbox"`).
+RUN npm_config_cache=/tmp/npm-cache npm_config_logs_dir=/tmp/npm-cache/_logs \
+        npm install --global --prefix /usr "lighthouse@${LIGHTHOUSE_VERSION}" \
+    && rm -rf /tmp/npm-cache \
+    && lighthouse --version
 
 # Playwright's own ffmpeg (a small build that encodes VP9 .webm, not a browser): `recordVideo` writes through it and fails without it
 # ("Video rendering requires ffmpeg binary"). Downloaded at build time only (the VM's egress gateway blocks Playwright's CDN) into

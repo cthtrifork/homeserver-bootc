@@ -151,6 +151,7 @@ in your home directory, see below):
   `~/workspace`, not the rest of your home), `skopeo`, `crane`. There is no Docker.
 - **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).
 - **Video:** `ffmpeg`/`ffprobe` (Fedora's `ffmpeg-free`: VP8/VP9, Opus, AAC, MJPEG, PNG; no x264/x265) for converting or trimming; Playwright's own bundled ffmpeg does `recordVideo` (`.webm`, see above).
+- **Package queries:** `claude-vm-dnf` (e.g. `claude-vm-dnf repoquery --available nodejs24`) runs dnf in a throwaway fedora-bootc container of the VM's release against `dl.fedoraproject.org`, the one Fedora host the gateway allows; the default metalink points at blocked mirrors. Query only, nothing installs.
 - **Other:** `make`, `tmux`, `socat`, `bubblewrap` (the Bash sandbox), `ssh` client (no keys on this VM).
 - Not installed: `sudo`, `dnf`, Docker. Check with `command -v <tool>` before assuming something else is there.
 
