@@ -11,34 +11,41 @@ echo "== System testing (claude-vm) =="
 id
 
 echo "--- tools run ---"
+# print only the first line of a tool's version output; not `cmd | head -n 1`: head exits early and, under pipefail, the SIGPIPE
+# (141) fails the pipeline
+first() {
+    local out
+    out="$("$@" 2>&1)"
+    echo "${out%%$'\n'*}"
+}
 claude --version
-bash --version | head -n 1
+first bash --version
 python3 --version
 pip3 --version
 go version
-ffmpeg -version | head -n 1
-ffprobe -version | head -n 1
+first ffmpeg -version
+first ffprobe -version
 chromium-browser --version
 podman --version
 podman-compose --version
 skopeo --version
 crane version
-gh --version | head -n 1
+first gh --version
 git --version
 jq --version
 yq --version
-shellcheck --version | head -n 2
+first shellcheck --version
 shfmt --version
 yamllint --version
-make --version | head -n 1
+first make --version
 hadolint --version
-actionlint -version | head -n 1
+first actionlint -version
 kubectl version --client
 helm version --short
 kustomize version
 kubeconform -v
 bwrap --version
-socat -V | head -n 2
+first socat -V
 ssh -V
 lighthouse --version
 npm --version
