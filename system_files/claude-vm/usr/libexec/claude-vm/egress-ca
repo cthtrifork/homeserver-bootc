@@ -9,9 +9,9 @@ set -euo pipefail
 umask 077
 dir=/var/lib/claude-vm/ca
 anchor=/etc/pki/ca-trust/source/anchors/claude-vm-egress-ca.pem
-allowlist=/usr/share/claude-vm/egress/allowlist.txt
+allowlist=/usr/share/claude-vm/egress/iron-proxy.yaml
 
-names="$(sed 's/#.*//' "$allowlist" | tr -s ' \t\n' ' ')"
+names="$(grep -oP '^\s+- "\*\.\K[^"]+' "$allowlist" | tr '\n' ' ')"
 constraints=""
 for domain in $names; do constraints+="${constraints:+,}permitted;DNS:$domain"; done
 

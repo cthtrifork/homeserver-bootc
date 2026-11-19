@@ -10,7 +10,7 @@ files and `tests/claude-vm/`.
 ## Key files
 
 - [Managed settings](../../system_files/claude-vm/etc/claude-code/managed-settings.json): root-owned policy shipped to `/etc/claude-code/`
-- [Egress allowlist](../../system_files/claude-vm/usr/share/claude-vm/egress/allowlist.txt): the one list of hosts the agent users may reach
+- [Egress allowlist](../../system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml): the one list of hosts the agent users may reach
 - [AGENTS.md](../../system_files/claude-vm/etc/claude-code/AGENTS.md): guidelines and installed tools for the agent
 
 ## Overview
@@ -364,10 +364,11 @@ Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted
 units. SELinux is enforcing, which is why iron-proxy is installed under `/usr/libexec/claude-vm/`, and systemd-resolved's
 varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
 
-**One allowlist, four copies.** `system_files/claude-vm/usr/share/claude-vm/egress/allowlist.txt` has one domain per line (subdomains
-included) and is what `claude-vm-egress allowed` and the CA's name constraints read. The same domains are written out by hand in
-`iron-proxy.yaml` (`*.<domain>`), `dnsmasq-servers` and the sandbox's `allowedDomains` in `managed-settings.json`; nothing is
-generated at build time, and `tests/claude-vm/guard-tests.sh` fails when a copy differs. To allow another host, add it to all four.
+**One allowlist.** The `transforms: allowlist` block of `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` (one
+`"*.<domain>"` line each, covering the domain and its subdomains) is the list: iron-proxy enforces it, the DNS filter builds its
+dnsmasq list from it at start, and `claude-vm-egress allowed` and the CA's name constraints read it. The one copy is the sandbox's
+`allowedDomains` in `managed-settings.json` (Claude Code cannot read a file); `tests/claude-vm/guard-tests.sh` fails when it
+differs. Nothing is generated at build time. To allow another host, add it to both.
 
 **TLS is intercepted for every allowlisted host.** iron-proxy ends TLS with a CA created on the VM at first boot
 (`/var/lib/claude-vm/ca`, key readable by the proxy user only, never in the image), so it can swap the token in and write an

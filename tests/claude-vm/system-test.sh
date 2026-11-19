@@ -79,8 +79,9 @@ grep -qF '127.0.0.55:53' <<<"$udp"
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
-# the allowlist (usr/share/claude-vm/egress/allowlist.txt) and its copies for the gateway and the sandbox (guard-tests.sh compares them)
-for f in /usr/share/claude-vm/egress/{allowlist.txt,iron-proxy.yaml,dnsmasq-servers}; do test -s "$f"; done
+# the allowlist in iron-proxy.yaml feeds the proxy, the DNS filter (its list is built at start) and the CA; guard-tests.sh compares the sandbox copy
+test -s /usr/share/claude-vm/egress/iron-proxy.yaml
+[ "$(grep -c '^server=/' /run/claude-vm-egress-dns/servers)" = "$(claude-vm-egress allowed | wc -l)" ]
 claude-vm-egress allowed | grep -qx github.com
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 

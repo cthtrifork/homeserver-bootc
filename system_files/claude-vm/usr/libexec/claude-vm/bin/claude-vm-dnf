@@ -3,7 +3,7 @@
 # fedora-bootc container of the VM's own Fedora release, so `claude-vm-dnf repoquery --available nodejs24` answers what the
 # image build would see. Nothing is installed anywhere; use it to check package names, versions and file lists.
 # The default metalink answers with mirror hosts the egress gateway blocks, so the repos are pinned to static baseurls on
-# dl.fedoraproject.org (covered by `fedoraproject.org` in system_files/claude-vm/usr/share/claude-vm/egress/allowlist.txt).
+# dl.fedoraproject.org (covered by `fedoraproject.org` in system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml).
 set -euo pipefail
 
 # shellcheck source=/dev/null

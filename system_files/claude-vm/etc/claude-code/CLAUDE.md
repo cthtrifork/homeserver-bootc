@@ -11,7 +11,7 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
   `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries).
   Everything you start, including podman containers, goes through an egress gateway that blocks all other hosts
   (DNS lookups are refused, connections reset). Approving a prompt does not change that; the user adds a host by
-  editing `system_files/claude-vm/usr/share/claude-vm/egress/allowlist.txt` and rebuilding the image. If a command fails with a permission
+  editing `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` and rebuilding the image. If a command fails with a permission
   or network error, say so and name the host instead of retrying.
 - `podman` and `podman-compose` (the provider behind `podman compose`) are excluded from the sandbox and allowed without an
   approval prompt; use them freely, including `podman compose up --build`. `podman` is a wrapper: containers run as a

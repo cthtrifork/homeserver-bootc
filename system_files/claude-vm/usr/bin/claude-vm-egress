@@ -11,7 +11,7 @@ set -euo pipefail
 
 case "${1:-}" in
 allowed)
-    exec sed 's/#.*//;/^[[:space:]]*$/d' /usr/share/claude-vm/egress/allowlist.txt
+    exec grep -oP '^\s+- "\*\.\K[^"]+' /usr/share/claude-vm/egress/iron-proxy.yaml
     ;;
 blocked)
     shift
