@@ -103,7 +103,7 @@ grep -qF claude-vm-egress-proxy <<<"$requires"
 
 echo "--- one allowlist ---"
 # the allowlist in iron-proxy.yaml is the only list: no copy in the sandbox settings (the gateway enforces it for every process)
-grep -qP '^\s+- "\*\.anthropic\.com"' /usr/share/claude-vm/egress/iron-proxy.yaml
+yq -e '.transforms[] | select(.name == "allowlist") | .config.domains | contains(["*.anthropic.com"])' /usr/share/claude-vm/egress/iron-proxy.yaml >/dev/null
 jq -e '.sandbox.network | has("allowedDomains") | not' /etc/claude-code/managed-settings.json >/dev/null || { echo "managed-settings.json has its own allowedDomains"; exit 1; }
 
 echo "--- users and home directories ---"

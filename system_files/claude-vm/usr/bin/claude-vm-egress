@@ -11,7 +11,8 @@ set -euo pipefail
 
 case "${1:-}" in
 allowed)
-    exec grep -oP '^\s+- "\*\.\K[^"]+' /usr/share/claude-vm/egress/iron-proxy.yaml
+    # the allowlist transform's domains, without the "*." in front of each
+    exec yq '.transforms[] | select(.name == "allowlist") | .config.domains[] | .[2:]' /usr/share/claude-vm/egress/iron-proxy.yaml
     ;;
 blocked)
     shift

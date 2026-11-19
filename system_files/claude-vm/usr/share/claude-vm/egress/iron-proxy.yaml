@@ -17,8 +17,7 @@ tls:
   ca_cert: /var/lib/claude-vm/ca/ca.crt # made by claude-vm-egress-ca
   ca_key: /var/lib/claude-vm/ca/ca.key
 transforms:
-  # THE allowlist: default deny, "*.example.com" covers example.com and every subdomain. One domain per line in exactly this
-  # form: claude-vm-egress reads it from here. managed-settings.json deliberately has no sandbox allowedDomains (see docs/claude-vm/README.md).
+  # THE allowlist: default deny, "*.example.com" covers example.com and every subdomain. claude-vm-egress reads it from here (with yq). managed-settings.json deliberately has no sandbox allowedDomains (see docs/claude-vm/README.md).
   - name: allowlist
     config:
       domains:
