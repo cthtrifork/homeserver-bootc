@@ -80,12 +80,27 @@ echo "--- egress gateway ---"
 [ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
 rules="$(sudo nft list table inet claude_egress)"
-grep -qF 'meta skuid != @agent_uids' <<<"$rules"
-grep -qF '1100-1101' <<<"$rules"
-grep -qF '1200-1201' <<<"$rules"
+# each agent user has its own proxy address and their containers (the podman users and subuid ranges) share a fourth: the map is the
+# DNS target and says who is an agent, the set says which address each may reach. Both must list every row (they are kept in step by hand).
+for row in '1100 : 198.18.0.2' '1101 : 198.18.0.3' '1200-1201 : 198.18.0.4' '100000-231071 : 198.18.0.4'; do
+    grep -qF "$row" <<<"$rules"
+    grep -qF "${row/ : / . }" <<<"$rules"
+done
+grep -qF 'dnat ip to meta skuid map @proxy:53' <<<"$rules"
+# a user reaches its own proxy only, on the proxy's ports only; every other agent connection is refused
+grep -qF 'meta skuid . ip daddr @proxy_of tcp dport { 53, 80, 443 } accept' <<<"$rules"
+grep -qF 'meta skuid . ip daddr @proxy_of udp dport 53 accept' <<<"$rules"
+grep -qF 'meta skuid != @proxy return' <<<"$rules"
+# the gateway runs as its own system user, outside the agent UIDs
+[ "$(id -u ironproxy)" -lt 1000 ]
 # the agent cannot run without the egress proxy
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"
+
+echo "--- one allowlist ---"
+# the allowlist in iron-proxy.yaml is the only list: no copy in the sandbox settings (the gateway enforces it for every process)
+yq -e '.transforms[] | select(.name == "allowlist") | .config.domains | contains(["*.anthropic.com"])' /usr/share/claude-vm/egress/iron-proxy.yaml >/dev/null
+jq -e '.sandbox.network | has("allowedDomains") | not' /etc/claude-code/managed-settings.json >/dev/null || { echo "managed-settings.json has its own allowedDomains"; exit 1; }
 
 echo "--- users and home directories ---"
 # An agent's home is private: owned by it, no group or other access. claude-vm-podman@<agent> adds a traverse-only ACL entry for
@@ -114,13 +129,17 @@ if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
     echo "claude-rc-personal must not be in wheel or share claude's group"
     exit 1
 fi
-if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u claude-rc-personal test -x /run/claude-vm/claude; then
+if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u claude-rc-personal test -x /run/claude-vm/egress/claude; then
     echo "claude-rc-personal can read claude's files"
     exit 1
 fi
-# each agent user has its own GitHub App: the token directories are private
-[ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
-[ "$(stat -c %U:%G:%a /run/claude-vm/claude-rc-personal)" = "root:claude-rc-personal:750" ]
+# each agent user has its own GitHub App: the token directories belong to the egress gateway, which no agent user can enter
+[ "$(stat -c %U:%G:%a /run/claude-vm/egress)" = "root:ironproxy:750" ]
+[ "$(stat -c %U:%G:%a /run/claude-vm/egress/claude)" = "root:ironproxy:750" ]
+[ "$(stat -c %U:%G:%a /run/claude-vm/egress/claude-rc-personal)" = "root:ironproxy:750" ]
+for u in claude claude-rc-personal; do
+    if sudo -u "$u" test -x /run/claude-vm/egress; then echo "$u can enter the token directory"; exit 1; fi
+done
 [ "$(stat -c %a /etc/claude-vm)" = "700" ]
 
 echo "--- ssh ---"
@@ -155,7 +174,7 @@ for u in claude claude-rc-personal; do
 done
 if sudo -u claude-rc-personal test -x /run/claude-vm-podman/claude; then echo "claude-rc-personal reaches claude's podman socket"; exit 1; fi
 # the podman user cannot read the agent's secrets, whatever a container asks for
-if sudo -u claude-podman test -r /var/home/claude/.claude/.credentials.json || sudo -u claude-podman test -x /run/claude-vm/claude; then
+if sudo -u claude-podman test -r /var/home/claude/.claude/.credentials.json || sudo -u claude-podman test -x /run/claude-vm/egress/claude; then
     echo "claude-podman can reach claude's secrets"
     exit 1
 fi

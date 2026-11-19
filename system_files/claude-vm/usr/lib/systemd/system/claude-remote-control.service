@@ -1,9 +1,9 @@
 [Unit]
 Description=Claude Code Remote Control
 Documentation=https://code.claude.com/docs/en/remote-control
-After=network-online.target systemd-tmpfiles-setup.service user@1100.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service claude-vm-github-token@claude.service claude-vm-podman@claude.service
+After=network-online.target systemd-tmpfiles-setup.service user@1100.service claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-github-token@claude.service claude-vm-podman@claude.service
 # egress allowlist gateway: without it the agent user has no network anyway, so do not start
-Requires=claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service
+Requires=claude-vm-egress-nft.service claude-vm-egress-proxy.service
 Wants=network-online.target user@1100.service claude-vm-github-token@claude.service claude-vm-podman@claude.service
 # Stays inert until both manual steps are done: GitHub App seeded + `claude` signed in/trusted.
 ConditionPathExists=/etc/claude-vm/github-app/claude/private-key.pem
@@ -16,6 +16,8 @@ Group=claude
 WorkingDirectory=/var/home/claude/workspace
 Environment=HOME=/var/home/claude
 Environment=DISABLE_AUTOUPDATER=1
+# the egress gateway signs GitHub with its own CA (claude-vm-egress-ca), and Node does not read the system store
+Environment=NODE_EXTRA_CA_CERTS=/etc/pki/ca-trust/source/anchors/claude-vm-egress-ca.pem
 # rootless podman needs a runtime dir (user@1100 is started by lingering, see 14-claude-podman-linger.conf)
 Environment=XDG_RUNTIME_DIR=/run/user/1100
 # /usr is read-only: global npm installs, pip --user and go install go to the home directory

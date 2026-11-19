@@ -1,4 +1,5 @@
-# HTTPS-only auth through the gh wrapper, which supplies the current GitHub App token as GH_TOKEN. No SSH keys on this VM.
+# HTTPS-only. The gh wrapper supplies a placeholder token; the egress gateway replaces it with the user's GitHub App token.
+# No SSH keys on this VM.
 [credential "https://github.com"]
 	helper =
 	helper = !/usr/libexec/claude-vm/bin/gh auth git-credential

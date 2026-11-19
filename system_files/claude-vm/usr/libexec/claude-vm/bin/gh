@@ -1,12 +1,10 @@
 #!/usr/bin/bash
-# `gh` for the agent users: reads the calling user's current GitHub App installation token on every call, because the
-# token expires hourly and an environment variable set at service start would go stale. Comes first on the
-# service's PATH and is what the git credential helper in /etc/gitconfig runs.
+# `gh` for the agent users. The agent holds no GitHub token: the egress gateway adds the user's current GitHub App token to
+# every request to GitHub (see docs/claude-vm/README.md), swapping it in for the placeholder. `gh` (and
+# `gh auth git-credential`, which /etc/gitconfig runs) only refuse to work without some token, so give them the placeholder
+# the gateway looks for (proxy_value in /usr/share/claude-vm/egress/iron-proxy.yaml).
+# Comes first on the service's PATH.
 set -euo pipefail
 
-token_file="/run/claude-vm/$(id -un)/github-token"
-if [[ -r "$token_file" ]]; then
-    GH_TOKEN="$(<"$token_file")"
-    export GH_TOKEN
-fi
+export GH_TOKEN=proxy-gh-token
 exec /usr/bin/gh "$@"

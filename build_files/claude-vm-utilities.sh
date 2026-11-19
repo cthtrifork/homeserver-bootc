@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize and kubeconform, checksum-verified (see download-lib.sh).
+# Installs iron-proxy (the egress gateway), crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize and kubeconform, checksum-verified (see download-lib.sh).
 set -euo pipefail
 
 BIN_DIR="/usr/bin"
@@ -9,6 +9,19 @@ mkdir -p "$CACHE_DIR"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
+
+log "Installing iron-proxy"
+# The egress gateway. Under /usr/libexec (bin_t, so it runs unconfined and may connect upstream), next to the other claude-vm helpers.
+IRON_PROXY_VERSION=v0.58.0 # renovate: datasource=github-releases depName=paradigmxyz/iron-proxy
+ver="${IRON_PROXY_VERSION#v}"
+IRON_PROXY_TGZ="$(tmp_name iron-proxy "$IRON_PROXY_VERSION" tar.gz)"
+base="https://github.com/paradigmxyz/iron-proxy/releases/download/${IRON_PROXY_VERSION}"
+download_if_missing "$IRON_PROXY_TGZ" "${base}/iron-proxy_${ver}_linux_amd64.tar.gz"
+fetch "$work/iron-proxy.sum" "${base}/checksums.txt"
+verify "$IRON_PROXY_TGZ" "iron-proxy_${ver}_linux_amd64.tar.gz" "$work/iron-proxy.sum"
+mkdir -p "$work/iron-proxy" /usr/libexec/claude-vm
+tar -xzf "$IRON_PROXY_TGZ" -C "$work/iron-proxy" iron-proxy
+install -o root -g root -m 0755 "$work/iron-proxy/iron-proxy" /usr/libexec/claude-vm/egress-proxy
 
 log "Installing crane"
 CRANE_VERSION=v0.22.1 # renovate: datasource=github-releases depName=google/go-containerregistry

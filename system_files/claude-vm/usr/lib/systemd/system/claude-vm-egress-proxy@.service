@@ -1,0 +1,29 @@
+[Unit]
+Description=Claude VM egress gateway: iron-proxy for %i
+After=systemd-resolved.service claude-vm-egress-ca.service claude-vm-egress-nft.service systemd-tmpfiles-setup.service
+Wants=systemd-resolved.service
+Requires=claude-vm-egress-ca.service claude-vm-egress-nft.service
+PartOf=claude-vm-egress-proxy.service
+
+[Service]
+User=ironproxy
+Group=ironproxy
+# the user's token directory is mounted as a directory, not a file, so that a renamed-in new token is seen (the containers' instance has none)
+EnvironmentFile=/usr/share/claude-vm/egress/proxy-%i.env
+ExecStart=/usr/libexec/claude-vm/egress-proxy -config /usr/share/claude-vm/egress/iron-proxy.yaml
+Restart=always
+RestartSec=2
+LimitNOFILE=65536
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+# ports 53, 80 and 443 on the proxy address
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+TemporaryFileSystem=/run/claude-vm/egress:ro
+BindReadOnlyPaths=-/run/claude-vm/egress/%i:/run/claude-vm/egress/current
+ReadOnlyPaths=/var/lib/claude-vm/ca
+
+[Install]
+WantedBy=multi-user.target

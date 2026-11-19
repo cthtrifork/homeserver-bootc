@@ -1,5 +1,5 @@
 [Unit]
-Description=Claude VM egress gateway: firewall rules for the agent user
+Description=Claude VM egress gateway: firewall rules and proxy addresses for the agent users
 Documentation=file:///usr/share/claude-vm/egress.nft
 DefaultDependencies=no
 Wants=network-pre.target
@@ -10,8 +10,15 @@ Conflicts=shutdown.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# the proxy addresses (one per agent user and one for containers, see egress.nft): on lo, so they exist before the proxies start
+ExecStart=/usr/sbin/ip addr replace 198.18.0.2/32 dev lo
+ExecStart=/usr/sbin/ip addr replace 198.18.0.3/32 dev lo
+ExecStart=/usr/sbin/ip addr replace 198.18.0.4/32 dev lo
 ExecStart=/usr/sbin/nft -f /usr/share/claude-vm/egress.nft
 ExecStop=/usr/sbin/nft delete table inet claude_egress
+ExecStop=/usr/sbin/ip addr del 198.18.0.2/32 dev lo
+ExecStop=/usr/sbin/ip addr del 198.18.0.3/32 dev lo
+ExecStop=/usr/sbin/ip addr del 198.18.0.4/32 dev lo
 
 [Install]
 WantedBy=sysinit.target

@@ -10,7 +10,7 @@ files and `tests/claude-vm/`.
 ## Key files
 
 - [Managed settings](../../system_files/claude-vm/etc/claude-code/managed-settings.json): root-owned policy shipped to `/etc/claude-code/`
-- [Egress allowlist](../../build_files/claude-vm/egress-allowlist.txt): the one list of hosts the agent users may reach
+- [Egress allowlist](../../system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml): the one list of hosts the agent users may reach
 - [AGENTS.md](../../system_files/claude-vm/etc/claude-code/AGENTS.md): guidelines and installed tools for the agent
 
 ## Overview
@@ -41,7 +41,7 @@ flowchart TB
         subgraph ROOT["ROOT-OWNED"]
             direction LR
             TOK["GitHub App key<br/>+ token refresher"]
-            GW["Egress gateway<br/>nftables, nginx, dnsmasq"]
+            GW["Egress gateway<br/>nftables + iron-proxy<br/>(DNS, allowlist, token swap)"]
             CFG["Managed policy<br/>allowlist, read-only /usr,<br/>updates, SSH"]
         end
     end
@@ -178,13 +178,11 @@ Rotate an App key by re-running step 1. Claude logins live in `~/.claude/` and s
 
 ## GitHub access
 
-Each agent user acts as its own GitHub App (a bot), not as a person with a personal token, so repositories and permissions
-can differ per user. An App's private key lives only in `/etc/claude-vm/github-app/<user>/` (root, 0600). The template
-units `claude-vm-github-token@<user>.timer` and `.service` run `refresh-github-token <user>` as root every 30 minutes (and at
-boot): it signs a JWT, trades it for a one-hour installation token and writes it to `/run/claude-vm/<user>/github-token`
-(0640 root:`<user>`, tmpfs). Nothing holds the token in an environment variable: the `gh` wrapper in
-`/usr/libexec/claude-vm/bin` (first on the service's `PATH`, and the git credential helper in `/etc/gitconfig`) reads the
-calling user's token file on every call. A user cannot read another user's token or any private key.
+Each agent user acts as its own GitHub App (a bot), so repositories and permissions can differ per user. The App's private key lives
+only in `/etc/claude-vm/github-app/<user>/` (root, 0600). `claude-vm-github-token@<user>.timer` runs `refresh-github-token` as root
+every 30 minutes and hands a one-hour installation token to the egress gateway. **The agent never holds the token**: `gh` and git send
+the placeholder `proxy-gh-token` and the gateway swaps the real one in ([Egress gateway](#egress-gateway)). The agent can still do
+everything the App allows, so narrow its permissions and repositories.
 
 Create an App per user:
 
@@ -195,7 +193,6 @@ Create an App per user:
    the **installation ID** (the number at the end of `https://github.com/settings/installations/<id>`).
 3. `sudo claude-vm-seed-github-app <user> <app-id> <installation-id> ./key.pem`, then delete the `.pem`.
 
-The token carries the App's permissions on every repository it is installed on, so narrow them in the App's settings.
 Check with `journalctl -u claude-vm-github-token@<user>` and `sudo -u <user> gh api /installation/repositories`.
 
 ## Signed commits
@@ -262,8 +259,8 @@ accounts by tmpfiles.d (so they follow the image on upgrade).
   in bypass-permissions mode; the sandbox, deny rules and egress gateway are the limits. Only managed hooks run
   (`allowManagedHooksOnly`), so hooks in cloned repositories are ignored. Keys and values are documented by
   [managed settings](https://code.claude.com/docs/en/managed-settings.md); changes to this file are in git.
-- **Bash sandbox:** required (`bubblewrap`). It limits writes to the paths in the diagram above, reaches only allowlisted hosts and
-  cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose` are excluded because rootless podman cannot run inside
+- **Bash sandbox:** required (`bubblewrap`). It limits writes to the paths in the diagram above, reaches only allowlisted hosts (enforced by the egress
+  gateway, not by a list in the sandbox settings) and cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose` are excluded because rootless podman cannot run inside
   it; they run containers as a separate UID (see below) and the podman socket is reachable from the sandbox (unix sockets are allowed, see below). It is a guardrail,
   not a hard boundary: the proxy filters by hostname, so broad hosts such as `github.com` can carry data out, and MCP servers and
   hooks are not covered.
@@ -324,7 +321,7 @@ sequenceDiagram
 
     Note over A,G: Blocked: any other host
     A->>G: curl https://example.com (also from containers)
-    G--xA: DNS refused / connection reset (nftables by UID)
+    G--xA: name answered by the proxy, then 403; direct IPs refused (nftables by UID)
 ```
 
 - The agent users have no subuid range and cannot execute `/usr/bin/podman` (0750, group `claude-podman-exec`).
@@ -341,26 +338,27 @@ sequenceDiagram
 
 ## Egress gateway
 
-Everything the agent users start, including rootless podman containers, reaches only hosts on one allowlist, enforced in the
-kernel by UID (`claude`, `claude-rc-personal` and the podman subuid ranges), independent of the sandbox.
+Everything the agent users start, including rootless podman containers, is confined by UID in the kernel to one proxy that enforces a
+single allowlist, independent of the sandbox. The config is the code: [`egress.nft`](../../system_files/claude-vm/usr/share/claude-vm/egress.nft)
+and [`egress/`](../../system_files/claude-vm/usr/share/claude-vm/egress/) (`iron-proxy.yaml` holds the allowlist).
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | nftables: redirects DNS to dnsmasq and HTTPS/HTTP to nginx, rejects everything else (QUIC, SSH, other ports, IPv6) |
-| `claude-vm-egress-proxy` | nginx, no TLS interception: reads the SNI (or HTTP `Host`) and drops unlisted names and IP literals |
-| `claude-vm-egress-dns` | dnsmasq: resolves only allowlisted domains |
+| `claude-vm-egress-nft` | an address per proxy on `lo`, and the nftables rules: a user's DNS goes to its proxy, everything else that leaves the machine is refused |
+| `claude-vm-egress-ca` | makes the private CA the agents' proxies sign with, once |
+| `claude-vm-egress-proxy@<instance>` | [iron-proxy](https://github.com/paradigmxyz/iron-proxy): one per agent user, one shared by their containers |
 
-Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. The remote-control services require all three
-units. SELinux is enforcing, which is why nginx runs from a copy under `/usr/libexec/claude-vm/`, and systemd-resolved's
-varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
-
-**One allowlist.** `build_files/claude-vm/egress-allowlist.txt` has one domain per line (subdomains included).
-`egress_allowlist.py` fails the image build on an invalid, duplicate or redundant entry and derives the sandbox's
-`allowedDomains` and the nginx and dnsmasq maps from it. To allow another host, add it and rebuild.
-
-**What a block looks like.** Usually "could not resolve host"; a listed name blocked at the proxy shows as a connection reset
-(HTTPS) or a 403 (HTTP). SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises
-blocked requests since boot (`--raw` plus any `journalctl` argument for each one), `claude-vm-egress allowed` prints the list.
+- **Every name resolves to the user's proxy**, which refuses names off the allowlist (403). Direct connections to an IP, other ports,
+  IPv6 and another user's proxy are refused by nftables. The proxy addresses (198.18.0.x) are not loopback, so containers reach them too.
+- **The agents' proxies end TLS** with the CA (trusted system-wide and via `NODE_EXTRA_CA_CERTS`) to swap the GitHub token in. Tools
+  with their own trust store fail on every host. **Containers pass TLS through** (`IRON_TLS_MODE=sni-only`), so they need no CA and
+  never see a token.
+- **One allowlist.** To allow a host, add it to `iron-proxy.yaml`. `managed-settings.json` sets no `sandbox.network.allowedDomains`: the
+  gateway enforces the list for every process, so the sandbox only follows the permission mode (allowed in `bypassPermissions`, a prompt
+  in manual and `acceptEdits`, refused in `dontAsk`, in Auto only when the command names the host).
+- **Blocks** show as a 403 or "connection refused". `sudo claude-vm-egress blocked` summarises them, `claude-vm-egress allowed` lists the hosts.
+- Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. SSH and git-over-SSH are blocked; use HTTPS remotes.
+- A guardrail, not a hard boundary: an allowed host that accepts writes can carry data out.
 
 ## Operating notes
 

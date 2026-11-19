@@ -143,7 +143,7 @@ in your home directory, see below):
 
 - **Languages:** `python3` with `pip`, `node` with `npm`, `go`. `pip --user`, `npm -g` and `go install` write to the home
   directory and are already on `PATH`.
-- **Git and GitHub:** `git`, `gh` (wrapped to use the GitHub App token, see `CLAUDE.md`).
+- **Git and GitHub:** `git`, `gh` (the GitHub App token is added by the egress gateway, see `CLAUDE.md`).
 - **Search and counting:** `rg` (ripgrep), `cloc` (lines of code per language), `tree`, `jq`, `yq`.
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
 - **Kubernetes (offline tooling, no cluster access):** `kubectl`, `helm`, `kustomize`, `kubeconform`.
@@ -158,13 +158,13 @@ in your home directory, see below):
 ## Network and filesystem reminders
 
 - Writes are limited to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
-- Only hosts in `build_files/claude-vm/egress-allowlist.txt` are reachable. If a command fails with a network error,
+- Only hosts in `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` are reachable. If a command fails with a network error,
   report the host instead of retrying; adding a host means editing that file and rebuilding the image.
 - `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt. Containers run as
   `<user>-podman`: mount repos with `-v ~/workspace/<repo>:/src` (no `:Z` needed); `/usr/bin/podman` is not executable for you.
   Files a container writes into `~/workspace` are owned by `<user>-podman` but stay writable for you (default ACL).
 - `dig`, `nslookup` and `getent hosts` are excluded from the sandbox (its network namespace cannot reach the local resolver), so
-  they run unsandboxed and prompt-free. They still go through the egress gateway's DNS filter by UID: only allowlisted names
-  resolve. Other tools resolve names through the sandbox proxy, which needs no exclusion.
+  they run unsandboxed and prompt-free. They still go through the egress gateway's DNS by UID: every name resolves to the proxy,
+  and a host that is not allowed gets a 403. Other tools resolve names through the sandbox proxy, which needs no exclusion.
 - Prefer `mirror.gcr.io` over `docker.io` for Docker Hub images where possible (e.g. `mirror.gcr.io/library/alpine`
   instead of `docker.io/library/alpine`): it avoids Docker Hub rate limits and its blob CDN hosts.

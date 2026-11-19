@@ -1,0 +1,18 @@
+[Unit]
+Description=Claude VM egress gateway: CA for the allowlisted hosts
+DefaultDependencies=no
+After=local-fs.target systemd-sysusers.service systemd-tmpfiles-setup.service
+Before=claude-vm-egress-proxy.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/claude-vm/egress-ca
+ProtectSystem=strict
+ReadWritePaths=/var/lib/claude-vm /etc/pki
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

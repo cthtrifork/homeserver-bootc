@@ -56,7 +56,7 @@ graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "g
 [ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs24-full-i18n installed?"; exit 1; }
 
 echo "--- egress gateway ---"
-for u in nft proxy dns; do
+for u in nft ca proxy; do
     unit="claude-vm-egress-$u.service"
     if ! timeout 30 bash -c "until systemctl is-active --quiet $unit; do sleep 1; done"; then
         echo "$unit is not active"
@@ -69,17 +69,37 @@ done
 test -x /usr/libexec/claude-vm/egress-proxy
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
-grep -qF '127.0.0.1:8443' <<<"$tcp"
-grep -qF '127.0.0.1:8008' <<<"$tcp"
-grep -qF '127.0.0.55:53' <<<"$udp"
-# the proxy runs from a bin_t copy of nginx; in the packaged httpd_t domain SELinux denies its upstream connections
+# each agent user has its own proxy address (on lo), so the proxy adds that user's token, and the containers share a fourth that passes TLS through: web and DNS on each
+for addr in 198.18.0.2 198.18.0.3 198.18.0.4; do
+    grep -qF "$addr:443" <<<"$tcp"
+    grep -qF "$addr:80" <<<"$tcp"
+    grep -qF "$addr:53" <<<"$udp"
+done
+# the proxy binary is installed under /usr/libexec (bin_t); in the packaged httpd_t domain SELinux denies its upstream connections
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
-# one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
-for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
-claude-vm-egress allowed | grep -qx github.com
-claude-vm-egress allowed | grep -qx portableinfo.cloud
+# the allowlist in iron-proxy.yaml is the only list
+test -s /usr/share/claude-vm/egress/iron-proxy.yaml
+# capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
+allowed="$(claude-vm-egress allowed)"
+grep -qx github.com <<<"$allowed"
+grep -qx portableinfo.cloud <<<"$allowed"
+
+echo "--- egress gateway: GitHub token swap and CA ---"
+# one proxy per agent user, each holding that user's token only
+for u in claude claude-rc-personal containers; do systemctl is-active --quiet "claude-vm-egress-proxy@$u.service"; done
+# the CA key is readable by the proxy user only; the agents read neither it nor a token
+[ "$(stat -c %a:%U:%G /var/lib/claude-vm/ca/ca.key)" = "640:root:ironproxy" ]
+[ "$(stat -c %a:%U:%G /run/claude-vm/egress)" = "750:root:ironproxy" ]
+# each proxy sees its own user's token directory only, under the same name
+[ "$(sudo nsenter -t "$(systemctl show -p MainPID --value claude-vm-egress-proxy@claude.service)" -m ls /run/claude-vm/egress)" = current ]
+for u in claude claude-rc-personal; do
+    if sudo -u "$u" cat /var/lib/claude-vm/ca/ca.key >/dev/null 2>&1; then echo "$u can read the CA key"; exit 1; fi
+    if sudo -u "$u" cat "/run/claude-vm/egress/$u/github-token" >/dev/null 2>&1; then echo "$u can read its token"; exit 1; fi
+done
+# the CA is in the system trust store
+openssl verify -CAfile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /var/lib/claude-vm/ca/ca.crt
 
 echo "--- staged-update notice ---"
 sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null

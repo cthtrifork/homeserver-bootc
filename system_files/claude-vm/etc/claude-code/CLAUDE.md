@@ -10,15 +10,15 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
 - Work in `~/workspace`. The Bash sandbox lets commands write only there and to `~/.npm-global`, `~/.npm`, `~/.local`,
   `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries).
   Everything you start, including podman containers, goes through an egress gateway that blocks all other hosts
-  (DNS lookups are refused, connections reset). Approving a prompt does not change that; the user adds a host by
-  editing `build_files/claude-vm/egress-allowlist.txt` and rebuilding the image. If a command fails with a permission
+  (every name resolves, but a host that is not allowed gets a 403, and direct connections to an IP are refused). Approving a prompt does not change that; the user adds a host by
+  editing `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` and rebuilding the image. If a command fails with a permission
   or network error, say so and name the host instead of retrying.
 - `podman` and `podman-compose` (the provider behind `podman compose`) are excluded from the sandbox and allowed without an
   approval prompt; use them freely, including `podman compose up --build`. `podman` is a wrapper: containers run as a
   separate rootless user (`<you>-podman`), confined by the same egress gateway, and can only see `~/workspace` (mount repos
   from there with `-v ~/workspace/<repo>:/src`; they cannot mount `~/.claude`, `~/.ssh` or anything else in your home, and no
   flag changes that). There is no Docker.
-- Git over HTTPS uses `gh` with a GitHub App installation token (one hour, refreshed every 30 minutes). There are no SSH keys on this VM, so use `https://` remotes.
+- Git over HTTPS and `gh` use a GitHub App installation token that the egress gateway swaps in for the placeholder you send (the `GH_TOKEN` you see is that placeholder, so do not look for the real token or try to print it). There are no SSH keys on this VM, so use `https://` remotes. The gateway ends TLS for every allowed host with its own CA, so a tool with its own CA bundle may reject certificates: point it at `/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem`.
 - A new image is staged within 30 minutes of its release (`bootc upgrade`, no reboot). The OS applies it nightly at 03:00
   (`bootc upgrade --apply`) and the VM reboots into it, which ends running sessions. You cannot reboot it yourself; do not try to apply updates.
 - `/etc/claude-code/` (managed settings and this file) is root-owned. You cannot and should not change your own policy.
