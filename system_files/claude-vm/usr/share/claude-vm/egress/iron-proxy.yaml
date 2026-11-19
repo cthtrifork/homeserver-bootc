@@ -1,11 +1,15 @@
 # Config of the egress gateway's iron-proxy (https://github.com/paradigmxyz/iron-proxy). One instance runs per agent user
 # (claude-vm-egress-proxy@<user>): the ports come from proxy-<user>.env (IRON_* variables override this file) and each
 # instance sees its own user's token as /run/claude-vm/egress/current/github-token. See docs/claude-vm/README.md.
+# iron-proxy is also the DNS server of the agent users (egress.nft sends their DNS here): every name resolves to proxy_ip, so web
+# traffic arrives here, and names that are not on the allowlist are refused at the proxy (403). Nothing is forwarded to a real
+# resolver. The addresses below are the claude user's; proxy-<user>.env overrides them per instance.
 dns:
-  enabled: false # dnsmasq filters DNS, nftables (egress.nft) sends the traffic here
+  listen: "198.18.0.2:53"
+  proxy_ip: "198.18.0.2"
 proxy:
-  http_listen: "127.0.0.1:8008"
-  https_listen: "127.0.0.1:8443"
+  http_listen: "198.18.0.2:80"
+  https_listen: "198.18.0.2:443"
 metrics:
   listen: "127.0.0.1:19090" # the default is :9090 on every address
 tls:
@@ -13,7 +17,7 @@ tls:
   ca_key: /var/lib/claude-vm/ca/ca.key
 transforms:
   # THE allowlist: default deny, "*.example.com" covers example.com and every subdomain. One domain per line in exactly this
-  # form: claude-vm-egress and the DNS filter (claude-vm-egress-dns.service) read it from here. managed-settings.json deliberately has no sandbox allowedDomains (see docs/claude-vm/README.md).
+  # form: claude-vm-egress reads it from here. managed-settings.json deliberately has no sandbox allowedDomains (see docs/claude-vm/README.md).
   - name: allowlist
     config:
       domains:

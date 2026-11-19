@@ -41,7 +41,7 @@ flowchart TB
         subgraph ROOT["ROOT-OWNED"]
             direction LR
             TOK["GitHub App key<br/>+ token refresher"]
-            GW["Egress gateway<br/>nftables, iron-proxy, dnsmasq"]
+            GW["Egress gateway<br/>nftables + iron-proxy<br/>(DNS, allowlist, token swap)"]
             CFG["Managed policy<br/>allowlist, read-only /usr,<br/>updates, SSH"]
         end
     end
@@ -333,7 +333,7 @@ sequenceDiagram
 
     Note over A,G: Blocked: any other host
     A->>G: curl https://example.com (also from containers)
-    G--xA: DNS refused / connection reset (nftables by UID)
+    G--xA: name answered by the proxy, then 403; direct IPs refused (nftables by UID)
 ```
 
 - The agent users have no subuid range and cannot execute `/usr/bin/podman` (0750, group `claude-podman-exec`).
@@ -355,18 +355,24 @@ kernel by UID (`claude`, `claude-rc-personal` and the podman subuid ranges), ind
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | nftables: redirects DNS to dnsmasq and HTTPS/HTTP to the proxy (own ports per agent user), rejects everything else (QUIC, SSH, other ports, IPv6) |
+| `claude-vm-egress-nft` | puts a proxy address per agent user on `lo` (198.18.0.2, 198.18.0.3), and nftables sends that user's DNS (any server) to its proxy and rejects everything else that leaves the machine: direct connections to an IP, QUIC, SSH, other ports, IPv6, and the other user's proxy |
 | `claude-vm-egress-ca` | makes the private CA the proxy signs with (once; kept across updates, made again only when the allowlist changes) |
-| `claude-vm-egress-proxy@<user>` | iron-proxy, one per agent user: ends TLS, refuses names not on the allowlist (403), swaps in that user's GitHub token. `claude-vm-egress-proxy` is the service the agents depend on; it requires both |
-| `claude-vm-egress-dns` | dnsmasq: resolves only allowlisted domains |
+| `claude-vm-egress-proxy@<user>` | iron-proxy, one per agent user: answers DNS (every name resolves to the proxy's own address), ends TLS, refuses names not on the allowlist (403), swaps in that user's GitHub token. `claude-vm-egress-proxy` is the service the agents depend on; it requires both |
 
-Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. The remote-control services require all three
-units. SELinux is enforcing, which is why iron-proxy is installed under `/usr/libexec/claude-vm/`, and systemd-resolved's
-varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
+Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. The remote-control services require these units.
+SELinux is enforcing, which is why iron-proxy is installed under `/usr/libexec/claude-vm/`, and systemd-resolved's varlink socket is
+root-only so `nss-resolve` cannot bypass the DNS redirect.
+
+**How traffic gets to the proxy.** An agent's DNS goes to its proxy, which answers every name with its own address, so the web traffic
+arrives there without redirect rules and nothing is forwarded to a real resolver. The address is on `lo` but is not a loopback
+address (198.18.0.x): a container's own loopback is not the host's, so it could not reach a 127.x answer. Whatever a process does
+instead (a fixed IP, another resolver, `--network=host`, a subuid, IPv6, the other user's proxy) is refused by nftables by UID, and
+a rootless container's root cannot change the host's network or firewall. The proxy picks the upstream from the SNI or Host, never
+from the address the client dialled, and refuses a Host that differs from the SNI. `tests/claude-vm/user-test.sh` checks these
+paths from the agent and from containers ("containers cannot get around the proxy").
 
 **One allowlist.** The `transforms: allowlist` block of `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` (one
-`"*.<domain>"` line each, covering the domain and its subdomains) is the list: iron-proxy enforces it, the DNS filter builds its
-dnsmasq list from it at start, and `claude-vm-egress allowed` reads it. Nothing is generated at build
+`"*.<domain>"` line each, covering the domain and its subdomains) is the list: iron-proxy enforces it and `claude-vm-egress allowed` reads it. Nothing is generated at build
 time and nothing is copied: `managed-settings.json` sets no `sandbox.network.allowedDomains`, because Claude Code cannot read a
 file and the gateway enforces the list for every process anyway. Without it, a sandboxed command that reaches for a host is
 decided by the session's permission mode: allowed in `bypassPermissions` (the VM's default), a prompt in manual and
@@ -383,8 +389,8 @@ fail with a certificate error on every host. iron-proxy also has a `sni-only` mo
 per proxy, not per host, so it cannot be combined with the token swap. To swap a credential in for another host, add a `secrets`
 rule to `iron-proxy.yaml` and have `refresh-github-token` write the file.
 
-**What a block looks like.** Usually "could not resolve host"; a request the proxy refuses shows as a 403 (or, for HTTPS to a name off
-the allowlist, a certificate error, because the CA may not sign for it). SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises
+**What a block looks like.** Every name resolves (to the proxy), so a name off the allowlist is a 403 from the proxy, and a direct
+connection to an IP is "connection refused". SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises
 blocked requests since boot (`--raw` plus any `journalctl` argument for each one), `claude-vm-egress allowed` prints the list.
 
 ## Operating notes

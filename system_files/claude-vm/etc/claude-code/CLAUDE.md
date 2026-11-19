@@ -10,7 +10,7 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
 - Work in `~/workspace`. The Bash sandbox lets commands write only there and to `~/.npm-global`, `~/.npm`, `~/.local`,
   `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries).
   Everything you start, including podman containers, goes through an egress gateway that blocks all other hosts
-  (DNS lookups are refused, connections reset). Approving a prompt does not change that; the user adds a host by
+  (every name resolves, but a host that is not allowed gets a 403, and direct connections to an IP are refused). Approving a prompt does not change that; the user adds a host by
   editing `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` and rebuilding the image. If a command fails with a permission
   or network error, say so and name the host instead of retrying.
 - `podman` and `podman-compose` (the provider behind `podman compose`) are excluded from the sandbox and allowed without an

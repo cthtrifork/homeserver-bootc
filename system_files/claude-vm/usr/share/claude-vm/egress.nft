@@ -1,16 +1,12 @@
-# Egress gateway: redirects traffic of the agent UIDs to the local allowlist proxy and DNS filter. Each agent user (with the
-# podman user that runs its containers and that user's subuid range, see claude-vm.containerfile) has its own proxy ports, so
-# the proxy adds that user's GitHub token. The ports are in proxy-<user>.env next to this file.
+# Egress gateway: sends the DNS of the agent users to their own proxy and refuses everything else that leaves the machine. Each
+# agent user (with the podman user that runs its containers and that user's subuid range, see claude-vm.containerfile) has its own
+# iron-proxy, so the proxy adds that user's GitHub token. The proxy answers every name with its own address (the DNS settings in
+# egress/iron-proxy.yaml and proxy-<user>.env), so web traffic reaches it without redirect rules. The addresses are on lo (see
+# claude-vm-egress-nft.service): a non-loopback address, so that containers (whose own loopback is not the host's) can reach it too.
 table inet claude_egress
 delete table inet claude_egress
 
 table inet claude_egress {
-    set agent_uids {
-        type uid
-        flags interval
-        elements = { 1100-1101, 1200-1201, 100000-231071 }
-    }
-
     set uids_claude {
         type uid
         flags interval
@@ -25,23 +21,21 @@ table inet claude_egress {
 
     chain nat_out {
         type nat hook output priority -100; policy accept;
-        meta skuid != @agent_uids return
-        # DNS first (the resolver stub lives on 127.0.0.53), then leave other loopback traffic alone
-        meta nfproto ipv4 udp dport 53 counter dnat ip to 127.0.0.55:53
-        meta nfproto ipv4 tcp dport 53 counter dnat ip to 127.0.0.55:53
-        ip daddr 127.0.0.0/8 return
-        meta skuid @uids_claude meta nfproto ipv4 tcp dport 443 counter redirect to :8443
-        meta skuid @uids_claude meta nfproto ipv4 tcp dport 80 counter redirect to :8008
-        meta skuid @uids_personal meta nfproto ipv4 tcp dport 443 counter redirect to :8444
-        meta skuid @uids_personal meta nfproto ipv4 tcp dport 80 counter redirect to :8009
+        meta skuid @uids_claude meta nfproto ipv4 udp dport 53 counter dnat ip to 198.18.0.2:53
+        meta skuid @uids_claude meta nfproto ipv4 tcp dport 53 counter dnat ip to 198.18.0.2:53
+        meta skuid @uids_personal meta nfproto ipv4 udp dport 53 counter dnat ip to 198.18.0.3:53
+        meta skuid @uids_personal meta nfproto ipv4 tcp dport 53 counter dnat ip to 198.18.0.3:53
     }
 
     chain filter_out {
         type filter hook output priority 0; policy accept;
-        meta skuid != @agent_uids return
-        # After the redirect above, allowed traffic is local; everything else (UDP/QUIC, SSH, other ports, IPv6) is
-        # refused. Match the destination, not "oif lo": the packet is re-routed to loopback after the nat hook, but
-        # later chains of the same hook still see the original output interface.
+        # an agent user reaches its own proxy only (not the other user's, which would swap in that user's token)
+        meta skuid @uids_claude ip daddr 198.18.0.2 accept
+        meta skuid @uids_personal ip daddr 198.18.0.3 accept
+        meta skuid != @uids_claude meta skuid != @uids_personal return
+        # everything else of an agent user (direct connections to an IP, UDP/QUIC, SSH, other ports, IPv6) is refused, except
+        # loopback: local services such as the resolver stub. Match the destination, not "oif lo": a packet sent to a local address
+        # is routed through lo after the nat hook, but later chains of the same hook still see the original output interface.
         ip daddr 127.0.0.0/8 accept
         ip6 daddr ::1 accept
         counter reject with icmpx admin-prohibited

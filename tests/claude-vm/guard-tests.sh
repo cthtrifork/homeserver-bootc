@@ -80,13 +80,18 @@ echo "--- egress gateway ---"
 [ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
 rules="$(sudo nft list table inet claude_egress)"
-grep -qF 'meta skuid != @agent_uids' <<<"$rules"
-grep -qF '1100-1101' <<<"$rules"
-grep -qF '1200-1201' <<<"$rules"
-# each agent user (with its podman user and subuid range) has its own proxy ports, so the proxy adds that user's token
+# each agent user (with its podman user and subuid range) has its own proxy address, so the proxy adds that user's token
 grep -qF 'meta skuid @uids_claude' <<<"$rules"
-grep -qF 'redirect to :8444' <<<"$rules"
-grep -qF 'redirect to :8009' <<<"$rules"
+grep -qF 'meta skuid @uids_personal' <<<"$rules"
+grep -qF '1100' <<<"$rules"
+grep -qF '1200' <<<"$rules"
+grep -qF '1101' <<<"$rules"
+grep -qF '1201' <<<"$rules"
+grep -qF 'dnat ip to 198.18.0.2:53' <<<"$rules"
+grep -qF 'dnat ip to 198.18.0.3:53' <<<"$rules"
+# a user reaches its own proxy only
+grep -qF 'meta skuid @uids_claude ip daddr 198.18.0.2 accept' <<<"$rules"
+grep -qF 'meta skuid @uids_personal ip daddr 198.18.0.3 accept' <<<"$rules"
 # the gateway runs as its own system user, outside the agent UIDs
 [ "$(id -u ironproxy)" -lt 1000 ]
 # the agent cannot run without the egress proxy

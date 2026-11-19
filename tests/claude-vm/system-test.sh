@@ -56,7 +56,7 @@ graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "g
 [ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs24-full-i18n installed?"; exit 1; }
 
 echo "--- egress gateway ---"
-for u in nft ca proxy dns; do
+for u in nft ca proxy; do
     unit="claude-vm-egress-$u.service"
     if ! timeout 30 bash -c "until systemctl is-active --quiet $unit; do sleep 1; done"; then
         echo "$unit is not active"
@@ -69,19 +69,18 @@ done
 test -x /usr/libexec/claude-vm/egress-proxy
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
-grep -qF '127.0.0.1:8443' <<<"$tcp"
-grep -qF '127.0.0.1:8008' <<<"$tcp"
-# the second agent user has its own pair of ports, so the proxy adds that user's token
-grep -qF '127.0.0.1:8444' <<<"$tcp"
-grep -qF '127.0.0.1:8009' <<<"$tcp"
-grep -qF '127.0.0.55:53' <<<"$udp"
+# each agent user has its own proxy address (on lo), so the proxy adds that user's token: web and DNS on each
+for addr in 198.18.0.2 198.18.0.3; do
+    grep -qF "$addr:443" <<<"$tcp"
+    grep -qF "$addr:80" <<<"$tcp"
+    grep -qF "$addr:53" <<<"$udp"
+done
 # the proxy binary is installed under /usr/libexec (bin_t); in the packaged httpd_t domain SELinux denies its upstream connections
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
-# the allowlist in iron-proxy.yaml feeds the proxy, the DNS filter (its list is built at start) and the CA; guard-tests.sh compares the sandbox copy
+# the allowlist in iron-proxy.yaml is the only list
 test -s /usr/share/claude-vm/egress/iron-proxy.yaml
-[ "$(grep -c '^server=/' /run/claude-vm-egress-dns/servers)" = "$(claude-vm-egress allowed | wc -l)" ]
 claude-vm-egress allowed | grep -qx github.com
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
