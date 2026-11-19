@@ -171,7 +171,7 @@ must_fail sudo -u '#100000' curl -sSf --max-time 10 -o /dev/null https://example
 as_agent openssl s_client -connect api.github.com:443 -servername api.github.com </dev/null 2>/dev/null | grep -qF 'claude-vm egress gateway CA'
 # the placeholder token the gh wrapper sends is swapped for the user's token; with no App seeded the call is refused (403)
 # for the API hosts, while anonymous reads (public repositories) still work
-as_agent git ls-remote https://github.com/octocat/Hello-World.git HEAD >/dev/null
+as_agent git -C /var/home/claude ls-remote https://github.com/octocat/Hello-World.git HEAD >/dev/null
 # plain HTTP is matched on the Host header (the address is pinned so DNS does not answer first)
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
 # blocked requests are logged to the journal; check the claude-vm-egress summary (one "count time scheme host" line per host)
