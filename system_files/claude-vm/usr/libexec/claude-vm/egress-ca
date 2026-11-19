@@ -1,34 +1,23 @@
 #!/usr/bin/bash
-# Runs as root (claude-vm-egress-ca.service) before the egress proxies. Makes the private CA iron-proxy signs its certificates
-# with: it ends TLS for every allowlisted host (to swap the GitHub token in), so agents and containers must trust it. The CA may
-# only sign for the allowlisted names (X.509 name constraints), so a leaked key cannot vouch for any other host to a client that
-# honours them (OpenSSL, Go, Node do). The key is readable by the proxy user only. It is created once and kept across image
-# updates; it is made again only when the allowlist changes. The certificate goes into the system trust store.
+# Runs as root (claude-vm-egress-ca.service) before the egress proxies. iron-proxy ends TLS for every allowlisted host (to swap
+# the GitHub token in), so the agents and containers must trust a private CA: made here once, on first boot, and kept across image
+# updates. The key is readable by the proxy user only and never in the image. The certificate goes into the system trust store.
 set -euo pipefail
 
-umask 077
 dir=/var/lib/claude-vm/ca
 anchor=/etc/pki/ca-trust/source/anchors/claude-vm-egress-ca.pem
-allowlist=/usr/share/claude-vm/egress/iron-proxy.yaml
 
-names="$(grep -oP '^\s+- "\*\.\K[^"]+' "$allowlist" | tr '\n' ' ')"
-constraints=""
-for domain in $names; do constraints+="${constraints:+,}permitted;DNS:$domain"; done
-
-if [[ ! -s $dir/ca.key || ! -s $dir/ca.crt || "$(cat "$dir/names" 2>/dev/null)" != "$names" ]]; then
-    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 3650 \
-        -subj "/CN=claude-vm egress gateway CA" \
-        -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \
-        -addext "keyUsage=critical,keyCertSign,cRLSign" \
-        -addext "nameConstraints=critical,$constraints" \
-        -keyout "$dir/ca.key.new" -out "$dir/ca.crt.new"
-    chown root:ironproxy "$dir/ca.key.new"
-    chmod 0640 "$dir/ca.key.new"
-    chmod 0644 "$dir/ca.crt.new"
-    mv -f "$dir/ca.key.new" "$dir/ca.key"
-    mv -f "$dir/ca.crt.new" "$dir/ca.crt"
-    printf '%s' "$names" >"$dir/names"
-    echo "egress-ca: new CA for the allowlist"
+if [[ ! -s $dir/ca.key || ! -s $dir/ca.crt ]]; then
+    (
+        umask 077
+        openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 3650 \
+            -subj "/CN=claude-vm egress gateway CA" \
+            -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign" \
+            -keyout "$dir/ca.key" -out "$dir/ca.crt"
+    )
+    chown root:ironproxy "$dir/ca.key"
+    chmod 0640 "$dir/ca.key"
+    chmod 0644 "$dir/ca.crt"
 fi
 
 if ! cmp -s "$dir/ca.crt" "$anchor"; then
@@ -36,5 +25,4 @@ if ! cmp -s "$dir/ca.crt" "$anchor"; then
     # Not `update-ca-trust extract` here: atomic-update-ca-trust.service runs it by itself when the anchors change, and two runs
     # at once fail with "ln: ... File exists". Starting the unit waits for a run that is already going.
     systemctl start atomic-update-ca-trust.service
-    echo "egress-ca: CA added to the system trust store"
 fi

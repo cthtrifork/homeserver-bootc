@@ -366,7 +366,7 @@ varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
 
 **One allowlist.** The `transforms: allowlist` block of `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` (one
 `"*.<domain>"` line each, covering the domain and its subdomains) is the list: iron-proxy enforces it, the DNS filter builds its
-dnsmasq list from it at start, and `claude-vm-egress allowed` and the CA's name constraints read it. Nothing is generated at build
+dnsmasq list from it at start, and `claude-vm-egress allowed` reads it. Nothing is generated at build
 time and nothing is copied: `managed-settings.json` sets no `sandbox.network.allowedDomains`, because Claude Code cannot read a
 file and the gateway enforces the list for every process anyway. Without it, a sandboxed command that reaches for a host is
 decided by the session's permission mode: allowed in `bypassPermissions` (the VM's default), a prompt in manual and
@@ -375,8 +375,7 @@ every mode. To allow another host, add it to `iron-proxy.yaml`.
 
 **TLS is intercepted for every allowlisted host.** iron-proxy ends TLS with a CA created on the VM at first boot
 (`/var/lib/claude-vm/ca`, key readable by the proxy user only, never in the image), so it can swap the token in and write an
-audit line per request. The CA has X.509 name constraints for exactly the allowlisted domains, so a leaked key cannot vouch for any
-other host to clients that check them (OpenSSL, Go, Node). Its certificate is in the system trust store and in `NODE_EXTRA_CA_CERTS`
+audit line per request. Its certificate is in the system trust store and in `NODE_EXTRA_CA_CERTS`
 of the agent services (Claude Code is Node); podman containers get the host's bundle mounted over the usual paths
 (`podman-containers.conf`), which covers images that read `/etc/ssl/certs/ca-certificates.crt` or `/etc/pki/tls/certs/ca-bundle.crt`
 and tools that honour `SSL_CERT_FILE`. Tools with their own trust store (Java keystores, some Python/Go programs that pin a bundle)

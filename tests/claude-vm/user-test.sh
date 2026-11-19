@@ -167,7 +167,7 @@ must_fail as_agent curl -sSf --max-time 10 -o /dev/null --resolve example.com:44
 must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
 must_fail sudo -u '#100000' curl -sSf --max-time 10 -o /dev/null https://example.com
 # the gateway ends TLS for every allowlisted host (to swap the GitHub token in): the certificate is signed by our CA, which the
-# system trusts (the curl above succeeded), and the name constraints limit it to allowlisted names
+# system trusts (the curl above succeeded)
 as_agent openssl s_client -connect api.github.com:443 -servername api.github.com </dev/null 2>/dev/null | grep -qF 'claude-vm egress gateway CA'
 # the placeholder token the gh wrapper sends is swapped for the user's token; with no App seeded the call is refused (403)
 # for the API hosts, while anonymous reads (public repositories) still work
