@@ -271,8 +271,8 @@ accounts by tmpfiles.d (so they follow the image on upgrade).
   in bypass-permissions mode; the sandbox, deny rules and egress gateway are the limits. Only managed hooks run
   (`allowManagedHooksOnly`), so hooks in cloned repositories are ignored. Keys and values are documented by
   [managed settings](https://code.claude.com/docs/en/managed-settings.md); changes to this file are in git.
-- **Bash sandbox:** required (`bubblewrap`). It limits writes to the paths in the diagram above, reaches only allowlisted hosts and
-  cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose` are excluded because rootless podman cannot run inside
+- **Bash sandbox:** required (`bubblewrap`). It limits writes to the paths in the diagram above, reaches only allowlisted hosts (enforced by the egress
+  gateway, not by a list in the sandbox settings) and cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose` are excluded because rootless podman cannot run inside
   it; they run containers as a separate UID (see below) and the podman socket is reachable from the sandbox (unix sockets are allowed, see below). It is a guardrail,
   not a hard boundary: the proxy filters by hostname, so broad hosts such as `github.com` can carry data out, and MCP servers and
   hooks are not covered.
@@ -366,9 +366,12 @@ varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
 
 **One allowlist.** The `transforms: allowlist` block of `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` (one
 `"*.<domain>"` line each, covering the domain and its subdomains) is the list: iron-proxy enforces it, the DNS filter builds its
-dnsmasq list from it at start, and `claude-vm-egress allowed` and the CA's name constraints read it. The one copy is the sandbox's
-`allowedDomains` in `managed-settings.json` (Claude Code cannot read a file); `tests/claude-vm/guard-tests.sh` fails when it
-differs. Nothing is generated at build time. To allow another host, add it to both.
+dnsmasq list from it at start, and `claude-vm-egress allowed` and the CA's name constraints read it. Nothing is generated at build
+time and nothing is copied: `managed-settings.json` sets no `sandbox.network.allowedDomains`, because Claude Code cannot read a
+file and the gateway enforces the list for every process anyway. Without it, a sandboxed command that reaches for a host is
+decided by the session's permission mode: allowed in `bypassPermissions` (the VM's default), a prompt in manual and
+`acceptEdits`, refused in `dontAsk`, and in Auto mode only when the command names the host. The gateway refuses unlisted hosts in
+every mode. To allow another host, add it to `iron-proxy.yaml`.
 
 **TLS is intercepted for every allowlisted host.** iron-proxy ends TLS with a CA created on the VM at first boot
 (`/var/lib/claude-vm/ca`, key readable by the proxy user only, never in the image), so it can swap the token in and write an

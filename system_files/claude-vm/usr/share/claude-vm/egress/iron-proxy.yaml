@@ -14,8 +14,7 @@ tls:
 transforms:
   # THE allowlist: default deny, "*.example.com" covers example.com and every subdomain. One domain per line in exactly this
   # form: claude-vm-egress, the DNS filter (claude-vm-egress-dns.service) and the CA's name constraints (claude-vm-egress-ca) read
-  # it from here. The sandbox's allowedDomains in managed-settings.json is the one copy (Claude Code cannot read a file);
-  # tests/claude-vm/guard-tests.sh fails when it differs.
+  # it from here. managed-settings.json deliberately has no sandbox allowedDomains (see docs/claude-vm/README.md).
   - name: allowlist
     config:
       domains:

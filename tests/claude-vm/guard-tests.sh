@@ -93,12 +93,10 @@ grep -qF 'redirect to :8009' <<<"$rules"
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"
 
-echo "--- the allowlist and the sandbox's copy ---"
-# the allowlist in iron-proxy.yaml is the list; managed-settings.json (read by Claude Code, which cannot read a file) has a copy
-domains="$(grep -oP '^\s+- "\*\.\K[^"]+' /usr/share/claude-vm/egress/iron-proxy.yaml | sort)"
-[ -n "$domains" ]
-sandbox="$(jq -r '.sandbox.network.allowedDomains[]' /etc/claude-code/managed-settings.json | sort)"
-[ "$sandbox" = "$(printf '%s\n' "$domains" "$(awk '{ print "*." $0 }' <<<"$domains")" | sort)" ] || { echo "managed-settings.json allowedDomains differs from the allowlist in iron-proxy.yaml"; exit 1; }
+echo "--- one allowlist ---"
+# the allowlist in iron-proxy.yaml is the only list: no copy in the sandbox settings (the gateway enforces it for every process)
+grep -qP '^\s+- "\*\.anthropic\.com"' /usr/share/claude-vm/egress/iron-proxy.yaml
+jq -e '.sandbox.network | has("allowedDomains") | not' /etc/claude-code/managed-settings.json >/dev/null || { echo "managed-settings.json has its own allowedDomains"; exit 1; }
 
 echo "--- users and home directories ---"
 # An agent's home is private: owned by it, no group or other access. claude-vm-podman@<agent> adds a traverse-only ACL entry for
