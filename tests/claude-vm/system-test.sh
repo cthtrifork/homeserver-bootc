@@ -95,7 +95,7 @@ for u in claude claude-rc-personal; do
     if sudo -u "$u" cat "/run/claude-vm/egress/$u-github-token" >/dev/null 2>&1; then echo "$u can read its token"; exit 1; fi
 done
 # the CA is in the system trust store and may only sign for allowlisted names
-openssl verify -CAfile /etc/pki/tls/certs/ca-bundle.crt /var/lib/claude-vm/ca/ca.crt
+openssl verify -CAfile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /var/lib/claude-vm/ca/ca.crt
 openssl x509 -in /var/lib/claude-vm/ca/ca.crt -noout -ext nameConstraints | grep -qF 'DNS:github.com'
 
 echo "--- staged-update notice ---"
