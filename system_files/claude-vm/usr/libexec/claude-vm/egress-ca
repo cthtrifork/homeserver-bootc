@@ -33,6 +33,8 @@ fi
 
 if ! cmp -s "$dir/ca.crt" "$anchor"; then
     install -m 0644 "$dir/ca.crt" "$anchor"
-    update-ca-trust extract
+    # Not `update-ca-trust extract` here: atomic-update-ca-trust.service runs it by itself when the anchors change, and two runs
+    # at once fail with "ln: ... File exists". Starting the unit waits for a run that is already going.
+    systemctl start atomic-update-ca-trust.service
     echo "egress-ca: CA added to the system trust store"
 fi
