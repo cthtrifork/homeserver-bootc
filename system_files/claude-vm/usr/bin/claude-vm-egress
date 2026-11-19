@@ -26,9 +26,9 @@ blocked)
     if ((raw)); then
         exec journalctl --no-pager -o cat -b -u 'claude-vm-egress-proxy@*' "$@" | jq -c "$refused"
     fi
-    # one line per host: count, last time, scheme, host (a request that carries no SNI, e.g. an IP address, has no host)
+    # one line per host: count, last time, scheme, host (https is a request with an SNI; iron-proxy says mode "mitm" for plain HTTP too)
     journalctl --no-pager -o cat -b -u 'claude-vm-egress-proxy@*' "$@" |
-        jq -Rr "fromjson? | $refused | [.time, (if .audit.mode == \"mitm\" then \"https\" else \"http\" end), ((.audit.host // \"(no host)\") | sub(\":[0-9]+\$\"; \"\"))] | join(\" \")" |
+        jq -Rr "fromjson? | $refused | [.time, (if (.audit.sni // \"\") != \"\" then \"https\" else \"http\" end), ((.audit.host // \"(no host)\") | sub(\":[0-9]+\$\"; \"\"))] | join(\" \")" |
         awk '{ key = $2 " " $3; count[key]++; last[key] = $1 } END { for (k in count) print count[k], last[k], k }' |
         sort -k1,1nr -k4,4
     ;;
