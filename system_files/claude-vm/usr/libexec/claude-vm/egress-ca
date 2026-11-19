@@ -1,7 +1,6 @@
 #!/usr/bin/bash
-# Runs as root (claude-vm-egress-ca.service) before the egress proxies. iron-proxy ends TLS for every allowlisted host (to swap
-# the GitHub token in), so the agents and containers must trust a private CA: made here once, on first boot, and kept across image
-# updates. The key is readable by the proxy user only and never in the image. The certificate goes into the system trust store.
+# Runs as root (claude-vm-egress-ca.service) before the proxies. The agents' proxies end TLS to swap the GitHub token in, so the agents
+# trust a private CA: made once on first boot, kept across updates, key readable by the proxy user only, never in the image.
 set -euo pipefail
 
 dir=/var/lib/claude-vm/ca

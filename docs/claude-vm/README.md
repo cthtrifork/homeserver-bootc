@@ -178,22 +178,11 @@ Rotate an App key by re-running step 1. Claude logins live in `~/.claude/` and s
 
 ## GitHub access
 
-Each agent user acts as its own GitHub App (a bot), not as a person with a personal token, so repositories and permissions
-can differ per user. An App's private key lives only in `/etc/claude-vm/github-app/<user>/` (root, 0600). The template
-units `claude-vm-github-token@<user>.timer` and `.service` run `refresh-github-token <user>` as root every 30 minutes (and at
-boot): it signs a JWT, trades it for a one-hour installation token and hands it to the egress gateway
-(`/run/claude-vm/egress/<user>/github-token`, root:`ironproxy`, tmpfs). **The agent never holds the token.** It sends a
-placeholder (`proxy-gh-token`: the `gh` wrapper in `/usr/libexec/claude-vm/bin` sets it as `GH_TOKEN`, and the git credential helper
-in `/etc/gitconfig` passes it as the password), and [iron-proxy](https://github.com/paradigmxyz/iron-proxy) swaps in the user's token
-in `Authorization` headers (Bearer, `token` and HTTP Basic alike) before the request leaves. Which user is calling is known from
-the proxy port: nftables sends each user (and their podman user and subuid range) to its own iron-proxy instance (same `iron-proxy.yaml`,
-ports from `proxy-<user>.env`, that user's token directory mounted as `/run/claude-vm/egress/current`), which re-reads the token
-file every minute. A user cannot read any token or the CA key. Requests to the GitHub API without the placeholder are
-refused (403); git's first request carries no credentials, so the git hosts let those through (public repositories clone
-anonymously). Until an App is seeded the API calls fail with 403 (`secret_unavailable` in the proxy log).
-
-The agent can still use GitHub through the gateway with everything the App is allowed, so what the token protects is its
-secrecy (it cannot be written to an allowed host, a log or a transcript), not what it can do.
+Each agent user acts as its own GitHub App (a bot), so repositories and permissions can differ per user. The App's private key lives
+only in `/etc/claude-vm/github-app/<user>/` (root, 0600). `claude-vm-github-token@<user>.timer` runs `refresh-github-token` as root
+every 30 minutes and hands a one-hour installation token to the egress gateway. **The agent never holds the token**: `gh` and git send
+the placeholder `proxy-gh-token` and the gateway swaps the real one in ([Egress gateway](#egress-gateway)). The agent can still do
+everything the App allows, so narrow its permissions and repositories.
 
 Create an App per user:
 
@@ -204,7 +193,6 @@ Create an App per user:
    the **installation ID** (the number at the end of `https://github.com/settings/installations/<id>`).
 3. `sudo claude-vm-seed-github-app <user> <app-id> <installation-id> ./key.pem`, then delete the `.pem`.
 
-The token carries the App's permissions on every repository it is installed on, so narrow them in the App's settings.
 Check with `journalctl -u claude-vm-github-token@<user>` and `sudo -u <user> gh api /installation/repositories`.
 
 ## Signed commits
@@ -350,48 +338,27 @@ sequenceDiagram
 
 ## Egress gateway
 
-Everything the agent users start, including rootless podman containers, reaches only hosts on one allowlist, enforced in the
-kernel by UID (`claude`, `claude-rc-personal` and the podman subuid ranges), independent of the sandbox.
+Everything the agent users start, including rootless podman containers, is confined by UID in the kernel to one proxy that enforces a
+single allowlist, independent of the sandbox. The config is the code: [`egress.nft`](../../system_files/claude-vm/usr/share/claude-vm/egress.nft)
+and [`egress/`](../../system_files/claude-vm/usr/share/claude-vm/egress/) (`iron-proxy.yaml` holds the allowlist).
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | puts a proxy address per agent user and one for containers on `lo` (198.18.0.2, .3 and .4), and nftables sends that user's DNS (any server) to its proxy and rejects everything else that leaves the machine: direct connections to an IP, QUIC, SSH, other ports, IPv6, and the other user's proxy (a user reaches its own proxy on ports 53, 80 and 443 only) |
-| `claude-vm-egress-ca` | makes the private CA the proxy signs with (once; kept across updates, made again only when the allowlist changes) |
-| `claude-vm-egress-proxy@<instance>` | iron-proxy, one per agent user and one shared by their containers (`containers`, TLS passthrough): answers DNS (every name resolves to the proxy's own address), ends TLS (agents only), refuses names not on the allowlist (403), swaps in that user's GitHub token (agents only). `claude-vm-egress-proxy` is the service the agents depend on; it requires all three |
+| `claude-vm-egress-nft` | an address per proxy on `lo`, and the nftables rules: a user's DNS goes to its proxy, everything else that leaves the machine is refused |
+| `claude-vm-egress-ca` | makes the private CA the agents' proxies sign with, once |
+| `claude-vm-egress-proxy@<instance>` | [iron-proxy](https://github.com/paradigmxyz/iron-proxy): one per agent user, one shared by their containers |
 
-Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. The remote-control services require these units.
-SELinux is enforcing, which is why iron-proxy is installed under `/usr/libexec/claude-vm/`, and systemd-resolved's varlink socket is
-root-only so `nss-resolve` cannot bypass the DNS redirect.
-
-**How traffic gets to the proxy.** An agent's DNS goes to its proxy, which answers every name with its own address, so the web traffic
-arrives there without redirect rules and nothing is forwarded to a real resolver. The address is on `lo` but is not a loopback
-address (198.18.0.x): a container's own loopback is not the host's, so it could not reach a 127.x answer. Whatever a process does
-instead (a fixed IP, another resolver, `--network=host`, a subuid, IPv6, the other user's proxy) is refused by nftables by UID, and
-a rootless container's root cannot change the host's network or firewall. Each user reaches only its own proxy: not the other agent's, and a container not the agents'. The proxy picks the upstream from the SNI or Host, never
-from the address the client dialled, and refuses a Host that differs from the SNI. `tests/claude-vm/user-test.sh` checks these
-paths from the agent and from containers ("containers cannot get around the proxy").
-
-**One allowlist.** The `transforms: allowlist` block of `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` (one
-`"*.<domain>"` line each, covering the domain and its subdomains) is the list: iron-proxy enforces it and `claude-vm-egress allowed` reads it. Nothing is generated at build
-time and nothing is copied: `managed-settings.json` sets no `sandbox.network.allowedDomains`, because Claude Code cannot read a
-file and the gateway enforces the list for every process anyway. Without it, a sandboxed command that reaches for a host is
-decided by the session's permission mode: allowed in `bypassPermissions` (the VM's default), a prompt in manual and
-`acceptEdits`, refused in `dontAsk`, and in Auto mode only when the command names the host. The gateway refuses unlisted hosts in
-every mode. To allow another host, add it to `iron-proxy.yaml`.
-
-**TLS is ended for the agents, passed through for containers.** The agents' proxies end TLS with a CA created on the VM at first boot
-(`/var/lib/claude-vm/ca`, key readable by the proxy user only, never in the image), so they can swap the token in and write an audit
-line per request. Its certificate is in the system trust store and in `NODE_EXTRA_CA_CERTS` of the agent services (Claude Code is
-Node). Tools with their own trust store (Java keystores, some Python/Go programs that pin a bundle) fail with a certificate error on
-every host. Containers need none of this: their traffic goes to a fourth proxy (`claude-vm-egress-proxy@containers`, same
-`iron-proxy.yaml`, `IRON_TLS_MODE=sni-only`) that reads the SNI of the ClientHello, enforces the allowlist and passes the TLS through
-untouched, so a container sees the real certificates, `podman build` steps work, and no GitHub token is ever swapped into a
-container. To swap a credential in for another host, add a `secrets` rule to `iron-proxy.yaml` and have `refresh-github-token`
-write the file.
-
-**What a block looks like.** Every name resolves (to the proxy), so a name off the allowlist is a 403 from the proxy, and a direct
-connection to an IP is "connection refused". SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises
-blocked requests since boot (`--raw` plus any `journalctl` argument for each one), `claude-vm-egress allowed` prints the list.
+- **Every name resolves to the user's proxy**, which refuses names off the allowlist (403). Direct connections to an IP, other ports,
+  IPv6 and another user's proxy are refused by nftables. The proxy addresses (198.18.0.x) are not loopback, so containers reach them too.
+- **The agents' proxies end TLS** with the CA (trusted system-wide and via `NODE_EXTRA_CA_CERTS`) to swap the GitHub token in. Tools
+  with their own trust store fail on every host. **Containers pass TLS through** (`IRON_TLS_MODE=sni-only`), so they need no CA and
+  never see a token.
+- **One allowlist.** To allow a host, add it to `iron-proxy.yaml`. `managed-settings.json` sets no `sandbox.network.allowedDomains`: the
+  gateway enforces the list for every process, so the sandbox only follows the permission mode (allowed in `bypassPermissions`, a prompt
+  in manual and `acceptEdits`, refused in `dontAsk`, in Auto only when the command names the host).
+- **Blocks** show as a 403 or "connection refused". `sudo claude-vm-egress blocked` summarises them, `claude-vm-egress allowed` lists the hosts.
+- Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. SSH and git-over-SSH are blocked; use HTTPS remotes.
+- A guardrail, not a hard boundary: an allowed host that accepts writes can carry data out.
 
 ## Operating notes
 

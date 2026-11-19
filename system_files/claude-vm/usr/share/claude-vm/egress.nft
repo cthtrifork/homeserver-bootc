@@ -1,9 +1,7 @@
-# Egress gateway: sends the DNS of the agent users to their own proxy and refuses everything else that leaves the machine.
-# Each agent user has its own iron-proxy (so the proxy adds that user's GitHub token); their containers (the podman users and the
-# subuid ranges, see claude-vm.containerfile) share a fourth that only passes TLS through. A proxy answers every name with its own
-# address (egress/iron-proxy.yaml, proxy-<instance>.env), so web traffic needs no redirect. The addresses are put on lo by
-# claude-vm-egress-nft.service: not loopback addresses, so that containers (whose own loopback is not the host's) can reach them.
-# The mapping UID -> proxy address is written twice below (a map and a set); keep the two in step.
+# Egress gateway: a user's DNS goes to its own iron-proxy, which answers every name with its own address; everything else that leaves
+# the machine is refused. One proxy per agent user and one shared by their containers (the podman users and subuid ranges). The
+# addresses are put on lo by claude-vm-egress-nft.service; not loopback ones, so that containers can reach them too.
+# The map and the set hold the same UID -> address rows; keep them in step (guard-tests.sh checks).
 table inet claude_egress
 delete table inet claude_egress
 

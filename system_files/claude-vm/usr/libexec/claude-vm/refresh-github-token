@@ -1,7 +1,6 @@
 #!/usr/bin/bash
-# Runs as root (claude-vm-github-token@<user>.service). Signs a short-lived JWT with that user's GitHub App private
-# key, trades it for a one-hour installation token and hands the token to the egress gateway (iron-proxy), which swaps it in for
-# the placeholder in that user's requests to GitHub. The private key never leaves /etc/claude-vm and the agent user never sees the token at all.
+# Runs as root (claude-vm-github-token@<user>.service): trades the user's GitHub App key for a one-hour installation token and hands
+# it to the egress gateway, which swaps it in for the placeholder. The key stays in /etc/claude-vm; the agent never sees the token.
 set -euo pipefail
 
 user="${1:?Usage: $0 <user>}"

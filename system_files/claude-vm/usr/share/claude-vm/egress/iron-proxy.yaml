@@ -1,10 +1,6 @@
-# Config of the egress gateway's iron-proxy (https://github.com/paradigmxyz/iron-proxy). One instance runs per agent user
-# (claude-vm-egress-proxy@<instance>): the addresses come from proxy-<instance>.env (IRON_* variables override this file) and each
-# instance sees its own user's token as /run/claude-vm/egress/current/github-token. See docs/claude-vm/README.md.
-# iron-proxy is also the DNS server of the agent users (egress.nft sends their DNS here): every name resolves to proxy_ip, so web
-# traffic arrives here, and names that are not on the allowlist are refused at the proxy (403). Nothing is forwarded to a real
-# resolver. The addresses below are the claude user's; proxy-<instance>.env overrides them per instance (the two agent users, and
-# the containers, which share one proxy that passes TLS through without ending it).
+# iron-proxy of the egress gateway: one instance per agent user and one for their containers (claude-vm-egress-proxy@<instance>).
+# proxy-<instance>.env overrides the addresses (IRON_*); the values here are the claude user's. It is also the DNS server: every name
+# resolves to proxy_ip, and names off the allowlist get a 403. See docs/claude-vm/README.md.
 dns:
   listen: "198.18.0.2:53"
   proxy_ip: "198.18.0.2"
@@ -17,7 +13,7 @@ tls:
   ca_cert: /var/lib/claude-vm/ca/ca.crt # made by claude-vm-egress-ca
   ca_key: /var/lib/claude-vm/ca/ca.key
 transforms:
-  # THE allowlist: default deny, "*.example.com" covers example.com and every subdomain. claude-vm-egress reads it from here (with yq). managed-settings.json deliberately has no sandbox allowedDomains (see docs/claude-vm/README.md).
+  # The allowlist: default deny. "*.example.com" covers example.com and its subdomains. claude-vm-egress reads it with yq.
   - name: allowlist
     config:
       domains:
@@ -85,10 +81,8 @@ transforms:
         - "*.wikipedia.org"
         - "*.www.cisa.gov"
 
-  # The agent sends the placeholder "proxy-gh-token" (the gh wrapper and the git credential helper) and the proxy swaps in the
-  # user's GitHub App token, in Bearer, token and HTTP Basic Authorization headers alike. A request without the placeholder passes
-  # unchanged (git's first request carries no credentials, it waits for a 401). The containers' proxy runs this same file in
-  # sni-only mode (proxy-containers.env): no TLS is ended there, so this transform has nothing to swap.
+  # The agent sends the placeholder "proxy-gh-token" (gh, the git credential helper) and the proxy swaps in the user's GitHub token in
+  # Bearer, token and Basic Authorization headers; a request without it passes unchanged. Nothing to swap in the containers' sni-only instance.
   - name: secrets
     config:
       secrets:

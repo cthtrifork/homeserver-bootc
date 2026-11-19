@@ -1,5 +1,5 @@
 [Unit]
-Description=Claude VM egress gateway: allowlist proxy for %i (iron-proxy: DNS, allowlist, GitHub token swap; TLS passthrough for containers)
+Description=Claude VM egress gateway: iron-proxy for %i
 After=systemd-resolved.service claude-vm-egress-ca.service claude-vm-egress-nft.service systemd-tmpfiles-setup.service
 Wants=systemd-resolved.service
 Requires=claude-vm-egress-ca.service claude-vm-egress-nft.service
@@ -8,8 +8,7 @@ PartOf=claude-vm-egress-proxy.service
 [Service]
 User=ironproxy
 Group=ironproxy
-# one proxy per agent user, so it holds that user's token only: the addresses come from proxy-<user>.env and the user's token
-# directory (the containers' instance has none) is mounted as /run/claude-vm/egress/current (a directory, not the file, so a renamed-in new token is seen)
+# the user's token directory is mounted as a directory, not a file, so that a renamed-in new token is seen (the containers' instance has none)
 EnvironmentFile=/usr/share/claude-vm/egress/proxy-%i.env
 ExecStart=/usr/libexec/claude-vm/egress-proxy -config /usr/share/claude-vm/egress/iron-proxy.yaml
 Restart=always
