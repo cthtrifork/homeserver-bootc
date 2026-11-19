@@ -16,6 +16,8 @@ Group=claude-rc-personal
 WorkingDirectory=/var/home/claude-rc-personal/workspace
 Environment=HOME=/var/home/claude-rc-personal
 Environment=DISABLE_AUTOUPDATER=1
+# the egress gateway signs GitHub with its own CA (claude-vm-egress-ca), and Node does not read the system store
+Environment=NODE_EXTRA_CA_CERTS=/etc/pki/ca-trust/source/anchors/claude-vm-egress-ca.pem
 Environment=CLAUDE_VM_NAME=%H-rc-personal
 # rootless podman needs a runtime dir (user@1101 is started by lingering, see 15-claude-rc-personal.conf)
 Environment=XDG_RUNTIME_DIR=/run/user/1101

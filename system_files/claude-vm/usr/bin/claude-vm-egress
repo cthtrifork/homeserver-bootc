@@ -22,14 +22,14 @@ blocked)
     if ((raw)); then
         exec journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@"
     fi
-    # lines look like: <time> <host> egress-proxy[pid]: <host> egress_blocked: https example.com client=10.0.0.1
-    # (no SNI, e.g. an IP address, leaves the host empty)
+    # lines look like: <time> <host> egress-proxy[pid]: egress_blocked: https example.com client=10.0.0.1
+    # (no SNI, e.g. an IP address, shows as "-")
     journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@" |
         awk '
             /egress_blocked: / {
                 rest = substr($0, index($0, "egress_blocked: ") + 16)
                 split(rest, f, " ")
-                host = (f[2] ~ /^client=/ || f[2] == "") ? "(no SNI)" : f[2]
+                host = (f[2] ~ /^client=/ || f[2] == "" || f[2] == "-") ? "(no SNI)" : f[2]
                 key = f[1] " " host
                 count[key]++
                 last[key] = $1

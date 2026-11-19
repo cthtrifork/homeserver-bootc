@@ -56,7 +56,7 @@ graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "g
 [ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs24-full-i18n installed?"; exit 1; }
 
 echo "--- egress gateway ---"
-for u in nft proxy dns; do
+for u in nft ca proxy dns; do
     unit="claude-vm-egress-$u.service"
     if ! timeout 30 bash -c "until systemctl is-active --quiet $unit; do sleep 1; done"; then
         echo "$unit is not active"
@@ -71,15 +71,36 @@ tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
 grep -qF '127.0.0.1:8443' <<<"$tcp"
 grep -qF '127.0.0.1:8008' <<<"$tcp"
+# the second agent user has its own pair of ports, so the proxy adds that user's token
+grep -qF '127.0.0.1:8444' <<<"$tcp"
+grep -qF '127.0.0.1:8009' <<<"$tcp"
 grep -qF '127.0.0.55:53' <<<"$udp"
-# the proxy runs from a bin_t copy of nginx; in the packaged httpd_t domain SELinux denies its upstream connections
+# the proxy runs from a bin_t copy of the Envoy binary; in the packaged httpd_t domain SELinux denies its upstream connections
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
 # one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
-for f in /usr/share/claude-vm/egress/{allowlist.txt,nginx-allow.map,dnsmasq-servers}; do test -s "$f"; done
+for f in /usr/share/claude-vm/egress/{allowlist.txt,envoy.json,intercepts.json,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
 claude-vm-egress allowed | grep -qx portableinfo.cloud
+
+echo "--- egress gateway: GitHub token injection and CA ---"
+# the CA key is root-only; Envoy reads the certificates and the secrets, the agents read neither
+[ "$(stat -c %a:%U /var/lib/claude-vm/ca-private)" = "700:root" ]
+[ "$(stat -c %a:%U:%G /var/lib/claude-vm/ca/git.key)" = "640:root:envoy" ]
+[ "$(stat -c %a:%U:%G /run/claude-vm/envoy)" = "750:root:envoy" ]
+for u in claude claude-rc-personal; do
+    for g in api git; do
+        f="/run/claude-vm/envoy/$u-$g.json"
+        [ "$(stat -c %a:%U:%G "$f")" = "640:root:envoy" ]
+        jq -e '.resources[0].generic_secret.secret | has("inline_string")' "$f" >/dev/null 2>&1 || sudo jq -e '.resources[0].generic_secret.secret | has("inline_string")' "$f" >/dev/null
+    done
+    if sudo -u "$u" cat "/run/claude-vm/envoy/$u-api.json" >/dev/null 2>&1; then echo "$u can read its injected token"; exit 1; fi
+    if sudo -u "$u" cat /var/lib/claude-vm/ca/git.key >/dev/null 2>&1; then echo "$u can read a gateway certificate key"; exit 1; fi
+done
+# the CA is in the system trust store and may only sign the intercepted names
+openssl verify -CAfile /etc/pki/tls/certs/ca-bundle.crt /var/lib/claude-vm/ca/git.pem
+sudo openssl x509 -in /var/lib/claude-vm/ca-private/ca.pem -noout -ext nameConstraints | grep -qF 'DNS:github.com'
 
 echo "--- staged-update notice ---"
 sudo bootc status --format json | jq -e '.status | has("staged")' >/dev/null

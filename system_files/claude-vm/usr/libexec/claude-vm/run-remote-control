@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-# Started by claude-remote-control.service. GitHub access comes from the `gh` wrapper next to this script, which
-# reads the App installation token that claude-vm-github-token.timer keeps fresh in /run/claude-vm/github-token.
+# Started by claude-remote-control.service. GitHub access needs no token here: the egress gateway adds the user's
+# App installation token (kept fresh by claude-vm-github-token@<user>.timer) to requests to GitHub.
 set -euo pipefail
 
 exec claude remote-control --name "${CLAUDE_VM_NAME:-$(hostname -s)}" "$@"

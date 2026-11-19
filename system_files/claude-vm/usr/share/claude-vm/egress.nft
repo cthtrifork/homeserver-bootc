@@ -1,4 +1,6 @@
-# Egress gateway: redirects traffic of the agent UIDs to the local allowlist proxy and DNS filter.
+# Egress gateway: redirects traffic of the agent UIDs to the local allowlist proxy and DNS filter. Each agent user (with the
+# podman user that runs its containers and that user's subuid range, see claude-vm.containerfile) has its own proxy ports, so
+# the proxy adds that user's GitHub token. The ports are listed in build_files/claude-vm/egress_allowlist.py (USERS).
 table inet claude_egress
 delete table inet claude_egress
 
@@ -9,6 +11,18 @@ table inet claude_egress {
         elements = { 1100-1101, 1200-1201, 100000-231071 }
     }
 
+    set uids_claude {
+        type uid
+        flags interval
+        elements = { 1100, 1200, 100000-165535 }
+    }
+
+    set uids_personal {
+        type uid
+        flags interval
+        elements = { 1101, 1201, 165536-231071 }
+    }
+
     chain nat_out {
         type nat hook output priority -100; policy accept;
         meta skuid != @agent_uids return
@@ -16,8 +30,10 @@ table inet claude_egress {
         meta nfproto ipv4 udp dport 53 counter dnat ip to 127.0.0.55:53
         meta nfproto ipv4 tcp dport 53 counter dnat ip to 127.0.0.55:53
         ip daddr 127.0.0.0/8 return
-        meta nfproto ipv4 tcp dport 443 counter redirect to :8443
-        meta nfproto ipv4 tcp dport 80 counter redirect to :8008
+        meta skuid @uids_claude meta nfproto ipv4 tcp dport 443 counter redirect to :8443
+        meta skuid @uids_claude meta nfproto ipv4 tcp dport 80 counter redirect to :8008
+        meta skuid @uids_personal meta nfproto ipv4 tcp dport 443 counter redirect to :8444
+        meta skuid @uids_personal meta nfproto ipv4 tcp dport 80 counter redirect to :8009
     }
 
     chain filter_out {

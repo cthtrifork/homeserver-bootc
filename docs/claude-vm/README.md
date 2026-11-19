@@ -41,7 +41,7 @@ flowchart TB
         subgraph ROOT["ROOT-OWNED"]
             direction LR
             TOK["GitHub App key<br/>+ token refresher"]
-            GW["Egress gateway<br/>nftables, nginx, dnsmasq"]
+            GW["Egress gateway<br/>nftables, Envoy, dnsmasq"]
             CFG["Managed policy<br/>allowlist, read-only /usr,<br/>updates, SSH"]
         end
     end
@@ -181,10 +181,17 @@ Rotate an App key by re-running step 1. Claude logins live in `~/.claude/` and s
 Each agent user acts as its own GitHub App (a bot), not as a person with a personal token, so repositories and permissions
 can differ per user. An App's private key lives only in `/etc/claude-vm/github-app/<user>/` (root, 0600). The template
 units `claude-vm-github-token@<user>.timer` and `.service` run `refresh-github-token <user>` as root every 30 minutes (and at
-boot): it signs a JWT, trades it for a one-hour installation token and writes it to `/run/claude-vm/<user>/github-token`
-(0640 root:`<user>`, tmpfs). Nothing holds the token in an environment variable: the `gh` wrapper in
-`/usr/libexec/claude-vm/bin` (first on the service's `PATH`, and the git credential helper in `/etc/gitconfig`) reads the
-calling user's token file on every call. A user cannot read another user's token or any private key.
+boot): it signs a JWT, trades it for a one-hour installation token and hands it to the egress gateway
+(`/run/claude-vm/envoy/<user>-{api,git}.json`, root:`envoy`, tmpfs). **The agent never holds the token.** Envoy ends TLS for
+`github.com`, `gist.github.com`, `api.github.com` and `uploads.github.com` and adds the calling user's token to every request
+(`Bearer` for the API, Basic with `x-access-token` for git), replacing any `Authorization` header the client sent. The `gh`
+wrapper in `/usr/libexec/claude-vm/bin` and the git credential helper only supply a placeholder so `gh` agrees to run. Which
+user is calling is known from the proxy port: nftables sends each user (and their podman user and subuid range) to its own
+listener. A user cannot read any token, the CA key or a private key. Until an App is seeded the gateway sends requests
+without credentials, so public repositories still clone.
+
+The agent can still use GitHub through the gateway with everything the App is allowed, so what the token protects is its
+secrecy (it cannot be written to an allowed host, a log or a transcript), not what it can do.
 
 Create an App per user:
 
@@ -346,17 +353,28 @@ kernel by UID (`claude`, `claude-rc-personal` and the podman subuid ranges), ind
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | nftables: redirects DNS to dnsmasq and HTTPS/HTTP to nginx, rejects everything else (QUIC, SSH, other ports, IPv6) |
-| `claude-vm-egress-proxy` | nginx, no TLS interception: reads the SNI (or HTTP `Host`) and drops unlisted names and IP literals |
+| `claude-vm-egress-nft` | nftables: redirects DNS to dnsmasq and HTTPS/HTTP to the proxy (own ports per agent user), rejects everything else (QUIC, SSH, other ports, IPv6) |
+| `claude-vm-egress-ca` | makes the private CA and the certificates for the GitHub hosts the proxy intercepts (once; the CA is kept across updates) |
+| `claude-vm-egress-proxy` | Envoy: reads the SNI (or HTTP `Host`), drops unlisted names and IP literals, passes everything except the GitHub hosts through untouched, and adds the GitHub token there |
 | `claude-vm-egress-dns` | dnsmasq: resolves only allowlisted domains |
 
 Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. The remote-control services require all three
-units. SELinux is enforcing, which is why nginx runs from a copy under `/usr/libexec/claude-vm/`, and systemd-resolved's
+units. SELinux is enforcing, which is why Envoy runs from a copy under `/usr/libexec/claude-vm/`, and systemd-resolved's
 varlink socket is root-only so `nss-resolve` cannot bypass the DNS filter.
 
 **One allowlist.** `build_files/claude-vm/egress-allowlist.txt` has one domain per line (subdomains included).
 `egress_allowlist.py` fails the image build on an invalid, duplicate or redundant entry and derives the sandbox's
-`allowedDomains` and the nginx and dnsmasq maps from it. To allow another host, add it and rebuild.
+`allowedDomains`, the Envoy configuration and the dnsmasq list from it. To allow another host, add it and rebuild.
+
+**TLS interception is limited to GitHub.** Only the hosts in `INTERCEPTS` (`egress_allowlist.py`) are terminated, with
+certificates from a CA created on the VM at first boot (`/var/lib/claude-vm/ca-private`, root only, never in the image). It
+carries X.509 name constraints for exactly those hosts, so even a leaked key cannot vouch for any other host to clients that
+check them (OpenSSL, Go, Node). Its certificate is in the system trust store and in `NODE_EXTRA_CA_CERTS` of the agent
+services; podman containers get the host's bundle mounted over the usual paths (`podman-containers.conf`), which covers images
+that read `/etc/ssl/certs/ca-certificates.crt` or `/etc/pki/tls/certs/ca-bundle.crt` and tools that honour `SSL_CERT_FILE`.
+Tools with their own trust store (Java keystores, some Python/Go programs that pin a bundle) fail on GitHub with a certificate
+error. Everything else, including all Anthropic traffic, is still passed through by SNI. To add another intercepted host or
+credential, extend `INTERCEPTS` and `refresh-github-token`.
 
 **What a block looks like.** Usually "could not resolve host"; a listed name blocked at the proxy shows as a connection reset
 (HTTPS) or a 403 (HTTP). SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises

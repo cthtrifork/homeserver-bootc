@@ -1,0 +1,55 @@
+#!/usr/bin/bash
+# Runs as root (claude-vm-egress-ca.service) before the egress proxy. Makes the private CA whose certificates the gateway
+# presents for the hosts it intercepts to add the GitHub token (see egress_allowlist.py, INTERCEPTS), and one certificate per
+# host group. The CA key stays in /var/lib/claude-vm/ca-private (root only); Envoy and the agents only ever see certificates.
+# The CA may only sign for the intercepted host names (X.509 name constraints), so a leaked CA key cannot impersonate any
+# other host to a client that honours them (OpenSSL, Go, Node do). It is created once and kept across image updates; it is made
+# again only when the set of intercepted names changes. The public certificate is added to the system trust store.
+set -euo pipefail
+
+umask 077
+conf=/usr/share/claude-vm/egress/intercepts.json
+priv=/var/lib/claude-vm/ca-private
+pub=/var/lib/claude-vm/ca
+anchor=/etc/pki/ca-trust/source/anchors/claude-vm-egress-ca.pem
+
+names="$(jq -r '[.[].hosts[]] | unique | join(" ")' "$conf")"
+constraints=""
+for host in $names; do constraints+="${constraints:+,}permitted;DNS:$host"; done
+
+if [[ ! -s $priv/ca.key || ! -s $priv/ca.pem || "$(cat "$priv/names" 2>/dev/null)" != "$names" ]]; then
+    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 3650 \
+        -subj "/CN=claude-vm egress gateway CA" \
+        -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \
+        -addext "keyUsage=critical,keyCertSign,cRLSign" \
+        -addext "nameConstraints=critical,$constraints" \
+        -keyout "$priv/ca.key.new" -out "$priv/ca.pem.new"
+    mv -f "$priv/ca.key.new" "$priv/ca.key"
+    mv -f "$priv/ca.pem.new" "$priv/ca.pem"
+    printf '%s' "$names" >"$priv/names"
+    echo "egress-ca: new CA for: $names"
+fi
+
+# One certificate per host group; made at every start (cheap), so a changed host list needs no extra step.
+for group in $(jq -r '.[].name' "$conf"); do
+    sans="$(jq -r --arg g "$group" '.[] | select(.name == $g) | .hosts | map("DNS:" + .) | join(",")' "$conf")"
+    key="$pub/$group.key"
+    crt="$pub/$group.pem"
+    openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -subj "/CN=claude-vm egress $group" \
+        -keyout "$key.new" -out "$key.csr"
+    openssl x509 -req -in "$key.csr" -CA "$priv/ca.pem" -CAkey "$priv/ca.key" -CAcreateserial -days 825 \
+        -extfile <(printf 'subjectAltName=%s\nbasicConstraints=critical,CA:FALSE\nextendedKeyUsage=serverAuth\n' "$sans") \
+        -out "$crt.new"
+    rm -f "$key.csr"
+    chown root:envoy "$key.new" "$crt.new"
+    chmod 0640 "$key.new" "$crt.new"
+    mv -f "$key.new" "$key"
+    mv -f "$crt.new" "$crt"
+done
+rm -f "$priv/ca.srl"
+
+if ! cmp -s "$priv/ca.pem" "$anchor"; then
+    install -m 0644 "$priv/ca.pem" "$anchor"
+    update-ca-trust extract
+    echo "egress-ca: CA added to the system trust store"
+fi

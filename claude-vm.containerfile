@@ -6,6 +6,9 @@ FROM quay.io/fedora/fedora-bootc:45 AS base
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 
+# The egress gateway's proxy: only the binary is used (the image's Ubuntu userland is not). Renovate moves the tag.
+FROM docker.io/envoyproxy/envoy:v1.39.6 AS envoy
+
 FROM base AS final
 
 ARG CLAUDE_CODE_VERSION=2.1.325 # renovate: datasource=npm depName=@anthropic-ai/claude-code
@@ -16,7 +19,7 @@ ARG LIGHTHOUSE_VERSION=13.6.0 # renovate: datasource=npm depName=lighthouse
 # `podman compose`), plus linters/formatters
 # (ShellCheck, yamllint, jq/yq; shfmt, hadolint and actionlint are installed below).
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
-# (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + nginx (stream/SNI) + dnsmasq make up the
+# (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + Envoy (SNI allowlist, adds the GitHub token) + dnsmasq make up the
 # egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
 # Node 24 (the Active LTS line, packaged by Fedora as the parallel-installable nodejs24): nodejs24-bin and nodejs24-npm-bin are
 # the packages that provide /usr/bin/node, npm and npx (via alternatives); the plain nodejs/nodejs22 packages are not installed.
@@ -37,7 +40,7 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs24 nodejs24-bin nodejs24-npm nodejs24-npm-bin nodejs24-full-i18n golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck yamllint make ripgrep tmux tree cloc qemu-guest-agent \
-        nftables nginx nginx-mod-stream dnsmasq \
+        nftables dnsmasq \
         chromium ffmpeg-free \
     && dnf clean all \
     && rm -f /etc/dnf/repos.override.d/50-mirror.repo
@@ -104,19 +107,19 @@ COPY --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
 COPY --chmod=0644 policy.json /etc/containers/policy.json
 COPY --chmod=0644 system_files/homeserver/etc/containers/registries.d/ghcr.yaml /etc/containers/registries.d/ghcr.yaml
 # Egress allowlist: validate it (fails the build on a bad entry) and derive the sandbox's allowedDomains and the
-# gateway's nginx/dnsmasq lists from the one source file.
+# gateway's Envoy and dnsmasq configuration from the one source file.
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     python3 /ctx/build_files/claude-vm/egress_allowlist.py /ctx/build_files/claude-vm/egress-allowlist.txt \
         /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
 
-# The egress proxy runs from a copy of nginx under /usr/libexec (bin_t -> unconfined_service_t, like the other
-# claude-vm helpers). The packaged binary runs in httpd_t, which SELinux does not let connect to upstream servers
+# The egress proxy is the Envoy binary, installed under /usr/libexec (bin_t -> unconfined_service_t, like the other claude-vm
+# helpers). A packaged web proxy runs in httpd_t, which SELinux does not let connect to upstream servers
 # (avc: denied { name_connect } ... tcontext=http_port_t) unless httpd_can_network_connect is on, which allows all ports.
-RUN install -m 0755 /usr/sbin/nginx /usr/libexec/claude-vm/egress-proxy
+COPY --from=envoy --chmod=0755 /usr/local/bin/envoy /usr/libexec/claude-vm/egress-proxy
 
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-app /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
-        claude-vm-egress-nft.service claude-vm-egress-proxy.service claude-vm-egress-dns.service \
+        claude-vm-egress-nft.service claude-vm-egress-ca.service claude-vm-egress-proxy.service claude-vm-egress-dns.service \
         claude-vm-podman@claude.service claude-vm-upgrade-poll.timer claude-vm-upgrade-check.timer
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the

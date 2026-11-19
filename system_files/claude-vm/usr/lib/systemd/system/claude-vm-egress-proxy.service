@@ -1,19 +1,22 @@
 [Unit]
-Description=Claude VM egress gateway: allowlist proxy (SNI/Host)
-After=systemd-resolved.service
+Description=Claude VM egress gateway: allowlist proxy (Envoy: SNI/Host allowlist, GitHub token injection)
+After=systemd-resolved.service claude-vm-egress-ca.service systemd-tmpfiles-setup.service
 Wants=systemd-resolved.service
+Requires=claude-vm-egress-ca.service
 
 [Service]
-User=nginx
-Group=nginx
-# a copy of nginx (see claude-vm.containerfile): the packaged binary's httpd_t domain may not connect to upstreams
-ExecStart=/usr/libexec/claude-vm/egress-proxy -e stderr -c /usr/share/claude-vm/egress-nginx.conf
+User=envoy
+Group=envoy
+# the Envoy binary installed under /usr/libexec (see claude-vm.containerfile): a packaged proxy would run in httpd_t, which SELinux does not let connect to upstreams
+ExecStart=/usr/libexec/claude-vm/egress-proxy --config-path /usr/share/claude-vm/egress/envoy.json --disable-hot-restart --log-level warn --log-format-escaped
 Restart=always
 RestartSec=2
+LimitNOFILE=65536
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
 NoNewPrivileges=yes
+ReadOnlyPaths=/run/claude-vm/envoy /var/lib/claude-vm/ca
 
 [Install]
 WantedBy=multi-user.target

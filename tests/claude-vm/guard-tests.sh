@@ -83,6 +83,12 @@ rules="$(sudo nft list table inet claude_egress)"
 grep -qF 'meta skuid != @agent_uids' <<<"$rules"
 grep -qF '1100-1101' <<<"$rules"
 grep -qF '1200-1201' <<<"$rules"
+# each agent user (with its podman user and subuid range) has its own proxy ports, so the proxy adds that user's token
+grep -qF 'meta skuid @uids_claude' <<<"$rules"
+grep -qF 'redirect to :8444' <<<"$rules"
+grep -qF 'redirect to :8009' <<<"$rules"
+# the gateway runs as its own system user, outside the agent UIDs
+[ "$(id -u envoy)" -lt 1000 ]
 # the agent cannot run without the egress proxy
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"

@@ -143,7 +143,7 @@ in your home directory, see below):
 
 - **Languages:** `python3` with `pip`, `node` with `npm`, `go`. `pip --user`, `npm -g` and `go install` write to the home
   directory and are already on `PATH`.
-- **Git and GitHub:** `git`, `gh` (wrapped to use the GitHub App token, see `CLAUDE.md`).
+- **Git and GitHub:** `git`, `gh` (the GitHub App token is added by the egress gateway, see `CLAUDE.md`).
 - **Search and counting:** `rg` (ripgrep), `cloc` (lines of code per language), `tree`, `jq`, `yq`.
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
 - **Kubernetes (offline tooling, no cluster access):** `kubectl`, `helm`, `kustomize`, `kubeconform`.
