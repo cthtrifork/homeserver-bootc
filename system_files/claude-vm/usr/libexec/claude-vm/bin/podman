@@ -18,7 +18,4 @@ if [[ ! -S "$sock" ]]; then
     echo "podman: $sock is missing; is claude-vm-podman@$(id -un).service running?" >&2
     exit 125
 fi
-# podman-remote builds the container spec itself, so the defaults in containers.conf (the egress gateway's CA bundle, see volumes and
-# env there) come from its own config, not from the service's: read the same root-owned file.
-export CONTAINERS_CONF=/usr/share/claude-vm/podman-containers.conf
 exec /usr/bin/podman-remote --url "unix://$sock" "$@"

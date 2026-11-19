@@ -1,5 +1,5 @@
 [Unit]
-Description=Claude VM egress gateway: allowlist proxy for %i (iron-proxy: DNS, allowlist, GitHub token swap)
+Description=Claude VM egress gateway: allowlist proxy for %i (iron-proxy: DNS, allowlist, GitHub token swap; TLS passthrough for containers)
 After=systemd-resolved.service claude-vm-egress-ca.service claude-vm-egress-nft.service systemd-tmpfiles-setup.service
 Wants=systemd-resolved.service
 Requires=claude-vm-egress-ca.service claude-vm-egress-nft.service
@@ -9,7 +9,7 @@ PartOf=claude-vm-egress-proxy.service
 User=ironproxy
 Group=ironproxy
 # one proxy per agent user, so it holds that user's token only: the addresses come from proxy-<user>.env and the user's token
-# directory is mounted as /run/claude-vm/egress/current (a directory, not the file, so a renamed-in new token is seen)
+# directory (the containers' instance has none) is mounted as /run/claude-vm/egress/current (a directory, not the file, so a renamed-in new token is seen)
 EnvironmentFile=/usr/share/claude-vm/egress/proxy-%i.env
 ExecStart=/usr/libexec/claude-vm/egress-proxy -config /usr/share/claude-vm/egress/iron-proxy.yaml
 Restart=always
@@ -23,7 +23,7 @@ NoNewPrivileges=yes
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 TemporaryFileSystem=/run/claude-vm/egress:ro
-BindReadOnlyPaths=/run/claude-vm/egress/%i:/run/claude-vm/egress/current
+BindReadOnlyPaths=-/run/claude-vm/egress/%i:/run/claude-vm/egress/current
 ReadOnlyPaths=/var/lib/claude-vm/ca
 
 [Install]

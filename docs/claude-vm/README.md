@@ -355,9 +355,9 @@ kernel by UID (`claude`, `claude-rc-personal` and the podman subuid ranges), ind
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | puts a proxy address per agent user on `lo` (198.18.0.2, 198.18.0.3), and nftables sends that user's DNS (any server) to its proxy and rejects everything else that leaves the machine: direct connections to an IP, QUIC, SSH, other ports, IPv6, and the other user's proxy (a user reaches its own proxy on ports 53, 80 and 443 only) |
+| `claude-vm-egress-nft` | puts a proxy address per agent user and one for containers on `lo` (198.18.0.2, .3 and .4), and nftables sends that user's DNS (any server) to its proxy and rejects everything else that leaves the machine: direct connections to an IP, QUIC, SSH, other ports, IPv6, and the other user's proxy (a user reaches its own proxy on ports 53, 80 and 443 only) |
 | `claude-vm-egress-ca` | makes the private CA the proxy signs with (once; kept across updates, made again only when the allowlist changes) |
-| `claude-vm-egress-proxy@<user>` | iron-proxy, one per agent user: answers DNS (every name resolves to the proxy's own address), ends TLS, refuses names not on the allowlist (403), swaps in that user's GitHub token. `claude-vm-egress-proxy` is the service the agents depend on; it requires both |
+| `claude-vm-egress-proxy@<instance>` | iron-proxy, one per agent user and one shared by their containers (`containers`, TLS passthrough): answers DNS (every name resolves to the proxy's own address), ends TLS (agents only), refuses names not on the allowlist (403), swaps in that user's GitHub token (agents only). `claude-vm-egress-proxy` is the service the agents depend on; it requires all three |
 
 Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. The remote-control services require these units.
 SELinux is enforcing, which is why iron-proxy is installed under `/usr/libexec/claude-vm/`, and systemd-resolved's varlink socket is
@@ -367,7 +367,7 @@ root-only so `nss-resolve` cannot bypass the DNS redirect.
 arrives there without redirect rules and nothing is forwarded to a real resolver. The address is on `lo` but is not a loopback
 address (198.18.0.x): a container's own loopback is not the host's, so it could not reach a 127.x answer. Whatever a process does
 instead (a fixed IP, another resolver, `--network=host`, a subuid, IPv6, the other user's proxy) is refused by nftables by UID, and
-a rootless container's root cannot change the host's network or firewall. The proxy picks the upstream from the SNI or Host, never
+a rootless container's root cannot change the host's network or firewall. Each user reaches only its own proxy: not the other agent's, and a container not the agents'. The proxy picks the upstream from the SNI or Host, never
 from the address the client dialled, and refuses a Host that differs from the SNI. `tests/claude-vm/user-test.sh` checks these
 paths from the agent and from containers ("containers cannot get around the proxy").
 
@@ -379,15 +379,15 @@ decided by the session's permission mode: allowed in `bypassPermissions` (the VM
 `acceptEdits`, refused in `dontAsk`, and in Auto mode only when the command names the host. The gateway refuses unlisted hosts in
 every mode. To allow another host, add it to `iron-proxy.yaml`.
 
-**TLS is intercepted for every allowlisted host.** iron-proxy ends TLS with a CA created on the VM at first boot
-(`/var/lib/claude-vm/ca`, key readable by the proxy user only, never in the image), so it can swap the token in and write an
-audit line per request. Its certificate is in the system trust store and in `NODE_EXTRA_CA_CERTS`
-of the agent services (Claude Code is Node); podman containers get the host's bundle mounted over the usual paths
-(`podman-containers.conf`), which covers images that read `/etc/ssl/certs/ca-certificates.crt` or `/etc/pki/tls/certs/ca-bundle.crt`
-and tools that honour `SSL_CERT_FILE`. Tools with their own trust store (Java keystores, some Python/Go programs that pin a bundle)
-fail with a certificate error on every host. iron-proxy also has a `sni-only` mode that passes TLS through without a CA, but it is
-per proxy, not per host, so it cannot be combined with the token swap. To swap a credential in for another host, add a `secrets`
-rule to `iron-proxy.yaml` and have `refresh-github-token` write the file.
+**TLS is ended for the agents, passed through for containers.** The agents' proxies end TLS with a CA created on the VM at first boot
+(`/var/lib/claude-vm/ca`, key readable by the proxy user only, never in the image), so they can swap the token in and write an audit
+line per request. Its certificate is in the system trust store and in `NODE_EXTRA_CA_CERTS` of the agent services (Claude Code is
+Node). Tools with their own trust store (Java keystores, some Python/Go programs that pin a bundle) fail with a certificate error on
+every host. Containers need none of this: their traffic goes to a fourth proxy (`claude-vm-egress-proxy@containers`, same
+`iron-proxy.yaml`, `IRON_TLS_MODE=sni-only`) that reads the SNI of the ClientHello, enforces the allowlist and passes the TLS through
+untouched, so a container sees the real certificates, `podman build` steps work, and no GitHub token is ever swapped into a
+container. To swap a credential in for another host, add a `secrets` rule to `iron-proxy.yaml` and have `refresh-github-token`
+write the file.
 
 **What a block looks like.** Every name resolves (to the proxy), so a name off the allowlist is a 403 from the proxy, and a direct
 connection to an IP is "connection refused". SSH and git-over-SSH are blocked; use HTTPS remotes. `sudo claude-vm-egress blocked` summarises

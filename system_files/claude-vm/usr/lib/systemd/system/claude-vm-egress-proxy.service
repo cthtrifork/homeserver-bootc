@@ -1,8 +1,8 @@
 [Unit]
-Description=Claude VM egress gateway: allowlist proxies (one per agent user)
+Description=Claude VM egress gateway: allowlist proxies (one per agent user, one for containers)
 Documentation=file:///usr/share/claude-vm/egress/
-After=claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service
-Requires=claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service
+After=claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service claude-vm-egress-proxy@containers.service
+Requires=claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service claude-vm-egress-proxy@containers.service
 
 [Service]
 # stands for the instances, so the units that need the gateway name one service

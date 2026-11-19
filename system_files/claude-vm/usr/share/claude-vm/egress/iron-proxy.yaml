@@ -1,9 +1,10 @@
 # Config of the egress gateway's iron-proxy (https://github.com/paradigmxyz/iron-proxy). One instance runs per agent user
-# (claude-vm-egress-proxy@<user>): the ports come from proxy-<user>.env (IRON_* variables override this file) and each
+# (claude-vm-egress-proxy@<instance>): the addresses come from proxy-<instance>.env (IRON_* variables override this file) and each
 # instance sees its own user's token as /run/claude-vm/egress/current/github-token. See docs/claude-vm/README.md.
 # iron-proxy is also the DNS server of the agent users (egress.nft sends their DNS here): every name resolves to proxy_ip, so web
 # traffic arrives here, and names that are not on the allowlist are refused at the proxy (403). Nothing is forwarded to a real
-# resolver. The addresses below are the claude user's; proxy-<user>.env overrides them per instance.
+# resolver. The addresses below are the claude user's; proxy-<instance>.env overrides them per instance (the two agent users, and
+# the containers, which share one proxy that passes TLS through without ending it).
 dns:
   listen: "198.18.0.2:53"
   proxy_ip: "198.18.0.2"
@@ -86,24 +87,20 @@ transforms:
         - "*.www.cisa.gov"
 
   # The agent sends the placeholder "proxy-gh-token" (the gh wrapper and the git credential helper) and the proxy swaps in the
-  # user's GitHub App token, in Bearer, token and HTTP Basic Authorization headers alike. The API hosts refuse a request without
-  # the placeholder; git's first request carries no credentials (it waits for a 401), so the git hosts let those through.
+  # user's GitHub App token, in Bearer, token and HTTP Basic Authorization headers alike. A request without the placeholder passes
+  # unchanged (git's first request carries no credentials, it waits for a 401). The containers' proxy runs this same file in
+  # sni-only mode (proxy-containers.env): no TLS is ended there, so this transform has nothing to swap.
   - name: secrets
     config:
       secrets:
         - source: {type: file, path: /run/claude-vm/egress/current/github-token, ttl: 1m}
           proxy_value: proxy-gh-token
           match_headers: [Authorization]
-          require: true
           rules:
             - host: api.github.com
               require_tls: true
             - host: uploads.github.com
               require_tls: true
-        - source: {type: file, path: /run/claude-vm/egress/current/github-token, ttl: 1m}
-          proxy_value: proxy-gh-token
-          match_headers: [Authorization]
-          rules:
             - host: github.com
               require_tls: true
             - host: gist.github.com

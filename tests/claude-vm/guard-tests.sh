@@ -83,15 +83,18 @@ rules="$(sudo nft list table inet claude_egress)"
 # each agent user (with its podman user and subuid range) has its own proxy address, so the proxy adds that user's token
 grep -qF 'meta skuid @uids_claude' <<<"$rules"
 grep -qF 'meta skuid @uids_personal' <<<"$rules"
+grep -qF 'meta skuid @uids_containers' <<<"$rules"
 grep -qF '1100' <<<"$rules"
 grep -qF '1200' <<<"$rules"
 grep -qF '1101' <<<"$rules"
 grep -qF '1201' <<<"$rules"
 grep -qF 'dnat ip to 198.18.0.2:53' <<<"$rules"
 grep -qF 'dnat ip to 198.18.0.3:53' <<<"$rules"
+grep -qF 'dnat ip to 198.18.0.4:53' <<<"$rules"
 # a user reaches its own proxy only, on the proxy's ports only
 grep -qF 'meta skuid @uids_claude ip daddr 198.18.0.2 tcp dport { 53, 80, 443 } accept' <<<"$rules"
 grep -qF 'meta skuid @uids_personal ip daddr 198.18.0.3 tcp dport { 53, 80, 443 } accept' <<<"$rules"
+grep -qF 'meta skuid @uids_containers ip daddr 198.18.0.4 tcp dport { 53, 80, 443 } accept' <<<"$rules"
 # the gateway runs as its own system user, outside the agent UIDs
 [ "$(id -u ironproxy)" -lt 1000 ]
 # the agent cannot run without the egress proxy

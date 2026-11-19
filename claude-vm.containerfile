@@ -105,7 +105,7 @@ COPY --chmod=0644 policy.json /etc/containers/policy.json
 COPY --chmod=0644 system_files/homeserver/etc/containers/registries.d/ghcr.yaml /etc/containers/registries.d/ghcr.yaml
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-app /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
-        claude-vm-egress-nft.service claude-vm-egress-ca.service claude-vm-egress-proxy.service claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service \
+        claude-vm-egress-nft.service claude-vm-egress-ca.service claude-vm-egress-proxy.service claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service claude-vm-egress-proxy@containers.service \
         claude-vm-podman@claude.service claude-vm-upgrade-poll.timer claude-vm-upgrade-check.timer
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the

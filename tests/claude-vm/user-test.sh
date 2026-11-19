@@ -179,6 +179,7 @@ as_agent git -C /var/home/claude ls-remote https://github.com/octocat/Hello-Worl
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' -H 'Host: example.com' https://github.com/)" = 400 ]
 # nor can the other user's proxy or an IPv6 address be reached
 must_fail as_agent curl -sS --max-time 10 -o /dev/null http://198.18.0.3
+must_fail as_agent curl -sS --max-time 10 -o /dev/null http://198.18.0.4
 must_fail as_agent curl -sSf -6 --max-time 10 -o /dev/null "https://[2606:4700:4700::1111]/"
 # plain HTTP is matched on the Host header
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' http://example.com)" = "403" ]
@@ -225,20 +226,24 @@ container_blocked --network=host --user 1000:1000 "$img" curl -sSf --max-time 10
 echo "--- containers cannot get around the proxy ---"
 alpine=mirror.gcr.io/library/alpine:latest
 agent_podman pull -q "$alpine" >/dev/null
-# the proxy of the agent is reachable (it answers 403: its own address is no allowed Host), the other user's proxy is not: it would swap
-# in the other user's GitHub token. Neither is the other user's DNS.
-[ "$(agent_podman run --rm --pull=never "$img" curl -s --max-time 10 -o /dev/null -w '%{http_code}' http://198.18.0.2)" = "403" ]
-container_blocked "$img" curl -sS --max-time 10 -o /dev/null http://198.18.0.3
-container_blocked --network=host "$img" curl -sS --max-time 10 -o /dev/null http://198.18.0.3
-container_blocked --network=host --user 1000:1000 "$img" curl -sS --max-time 10 -o /dev/null http://198.18.0.3
+# containers share one proxy that passes TLS through (no CA in the container): it answers 403 for a plain-HTTP Host that is not
+# allowed, and the agents' proxies (which would swap in a GitHub token) are not reachable from a container, on any network
+[ "$(agent_podman run --rm --pull=never "$img" curl -s --max-time 10 -o /dev/null -w '%{http_code}' http://198.18.0.4)" = "403" ]
+for addr in 198.18.0.2 198.18.0.3; do
+    container_blocked "$img" curl -sS --max-time 10 -o /dev/null "http://$addr"
+    container_blocked --network=host "$img" curl -sS --max-time 10 -o /dev/null "http://$addr"
+    container_blocked --network=host --user 1000:1000 "$img" curl -sS --max-time 10 -o /dev/null "http://$addr"
+done
+# the TLS of an allowed host reaches the container untouched: the container trusts only the public CAs and the connection verifies
+agent_podman run --rm --pull=never "$img" curl -sS --max-time 20 -o /dev/null https://api.github.com
 # IPv6 is refused
 container_blocked "$img" curl -sSf -6 --max-time 10 -o /dev/null "https://[2606:4700:4700::1111]/"
 container_blocked --network=host --user 1000:1000 "$img" curl -sSf -6 --max-time 10 -o /dev/null "https://[2606:4700:4700::1111]/"
-# a DNS query to a public resolver, from the pasta network, the host network and a subuid, is answered by the proxy of the agent
+# a DNS query to a public resolver, from the pasta network, the host network and a subuid, is answered by the containers' proxy
 for opts in "" "--network=host" "--network=host --user 1000:1000"; do
     # shellcheck disable=SC2086
     answer="$(agent_podman run --rm --pull=never $opts "$alpine" nslookup example.com 8.8.8.8 2>&1 || true)"
-    grep -qF 198.18.0.2 <<<"$answer" || { echo "DNS from a container ($opts) was not answered by the proxy: $answer"; exit 1; }
+    grep -qF 198.18.0.4 <<<"$answer" || { echo "DNS from a container ($opts) was not answered by the proxy: $answer"; exit 1; }
 done
 # root in a rootless container has no rights on the host's network: it cannot add an address or change the routes there
 agent_podman run --rm --pull=never --network=host --cap-add=NET_ADMIN "$alpine" sh -c 'ip addr add 198.18.0.9/32 dev lo' >/dev/null 2>&1 && { echo "a container changed the host's network"; exit 1; }

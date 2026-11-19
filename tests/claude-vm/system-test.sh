@@ -69,8 +69,8 @@ done
 test -x /usr/libexec/claude-vm/egress-proxy
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
-# each agent user has its own proxy address (on lo), so the proxy adds that user's token: web and DNS on each
-for addr in 198.18.0.2 198.18.0.3; do
+# each agent user has its own proxy address (on lo), so the proxy adds that user's token, and the containers share a fourth that passes TLS through: web and DNS on each
+for addr in 198.18.0.2 198.18.0.3 198.18.0.4; do
     grep -qF "$addr:443" <<<"$tcp"
     grep -qF "$addr:80" <<<"$tcp"
     grep -qF "$addr:53" <<<"$udp"
@@ -86,7 +86,7 @@ claude-vm-egress allowed | grep -qx portableinfo.cloud
 
 echo "--- egress gateway: GitHub token swap and CA ---"
 # one proxy per agent user, each holding that user's token only
-for u in claude claude-rc-personal; do systemctl is-active --quiet "claude-vm-egress-proxy@$u.service"; done
+for u in claude claude-rc-personal containers; do systemctl is-active --quiet "claude-vm-egress-proxy@$u.service"; done
 # the CA key is readable by the proxy user only; the agents read neither it nor a token
 [ "$(stat -c %a:%U:%G /var/lib/claude-vm/ca/ca.key)" = "640:root:ironproxy" ]
 [ "$(stat -c %a:%U:%G /run/claude-vm/egress)" = "750:root:ironproxy" ]
