@@ -127,13 +127,17 @@ if id -nG claude-rc-personal | tr ' ' '\n' | grep -qxE 'wheel|claude'; then
     echo "claude-rc-personal must not be in wheel or share claude's group"
     exit 1
 fi
-if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u claude-rc-personal test -x /run/claude-vm/claude; then
+if sudo -u claude-rc-personal test -r /var/home/claude/.claude.json || sudo -u claude-rc-personal test -x /run/claude-vm/egress/claude; then
     echo "claude-rc-personal can read claude's files"
     exit 1
 fi
-# each agent user has its own GitHub App: the token directories are private
-[ "$(stat -c %U:%G:%a /run/claude-vm/claude)" = "root:claude:750" ]
-[ "$(stat -c %U:%G:%a /run/claude-vm/claude-rc-personal)" = "root:claude-rc-personal:750" ]
+# each agent user has its own GitHub App: the token directories belong to the egress gateway, which no agent user can enter
+[ "$(stat -c %U:%G:%a /run/claude-vm/egress)" = "root:ironproxy:750" ]
+[ "$(stat -c %U:%G:%a /run/claude-vm/egress/claude)" = "root:ironproxy:750" ]
+[ "$(stat -c %U:%G:%a /run/claude-vm/egress/claude-rc-personal)" = "root:ironproxy:750" ]
+for u in claude claude-rc-personal; do
+    if sudo -u "$u" test -x /run/claude-vm/egress; then echo "$u can enter the token directory"; exit 1; fi
+done
 [ "$(stat -c %a /etc/claude-vm)" = "700" ]
 
 echo "--- ssh ---"
@@ -168,7 +172,7 @@ for u in claude claude-rc-personal; do
 done
 if sudo -u claude-rc-personal test -x /run/claude-vm-podman/claude; then echo "claude-rc-personal reaches claude's podman socket"; exit 1; fi
 # the podman user cannot read the agent's secrets, whatever a container asks for
-if sudo -u claude-podman test -r /var/home/claude/.claude/.credentials.json || sudo -u claude-podman test -x /run/claude-vm/claude; then
+if sudo -u claude-podman test -r /var/home/claude/.claude/.credentials.json || sudo -u claude-podman test -x /run/claude-vm/egress/claude; then
     echo "claude-podman can reach claude's secrets"
     exit 1
 fi
