@@ -116,7 +116,7 @@ secret_blocked -v /var/home/claude/workspace/secret-link:/x
 sudo -u claude rm -f /var/home/claude/workspace/secret-link /var/home/claude/.claude/podman-test-secret
 # the signing key and the token are out of reach as well
 if agent_podman run --rm --pull=never --privileged -v /var/home/claude/.ssh:/x "$img_s" ls /x >/dev/null 2>&1; then echo "container listed ~/.ssh"; exit 1; fi
-if agent_podman run --rm --pull=never --privileged -v /run/claude-vm/envoy:/x "$img_s" ls /x >/dev/null 2>&1; then echo "container listed the token directory"; exit 1; fi
+if agent_podman run --rm --pull=never --privileged -v /run/claude-vm/egress:/x "$img_s" ls /x >/dev/null 2>&1; then echo "container listed the token directory"; exit 1; fi
 
 echo "--- containers read and write the workspace; the agent can use what they write ---"
 ws=/var/home/claude/workspace/podman-acl-test
@@ -161,16 +161,17 @@ as_agent getent hosts github.com >/dev/null
 [ "$(dns_rcode example.com)" = 5 ]
 # blocked: not on the list (DNS refused), IP literal (no SNI), other ports, subuid range (host-network containers)
 must_fail as_agent getent hosts example.com
-must_fail as_agent curl -sS --max-time 10 -o /dev/null https://example.com
-must_fail as_agent curl -sS --max-time 10 -o /dev/null https://1.1.1.1
-must_fail as_agent curl -sS --max-time 10 -o /dev/null --resolve example.com:443:93.184.216.34 https://example.com
+must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://example.com
+must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://1.1.1.1
+must_fail as_agent curl -sSf --max-time 10 -o /dev/null --resolve example.com:443:93.184.216.34 https://example.com
 must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
-must_fail sudo -u '#100000' curl -sS --max-time 10 -o /dev/null https://example.com
-# GitHub is the one place the gateway ends TLS (to add the token): the certificate there is ours, everywhere else the real one
+must_fail sudo -u '#100000' curl -sSf --max-time 10 -o /dev/null https://example.com
+# the gateway ends TLS for every allowlisted host (to swap the GitHub token in): the certificate is signed by our CA, which the
+# system trusts (the curl above succeeded), and the name constraints limit it to allowlisted names
 as_agent openssl s_client -connect api.github.com:443 -servername api.github.com </dev/null 2>/dev/null | grep -qF 'claude-vm egress gateway CA'
-if as_agent openssl s_client -connect objects.githubusercontent.com:443 -servername objects.githubusercontent.com </dev/null 2>/dev/null | grep -qF 'claude-vm egress gateway CA'; then echo "the gateway intercepts a host it should pass through"; exit 1; fi
-# the placeholder token the gh wrapper sends must not reach GitHub: with no token seeded the call is anonymous and works
-as_agent gh api /rate_limit >/dev/null
+# the placeholder token the gh wrapper sends is swapped for the user's token; with no App seeded the call is refused (403)
+# for the API hosts, while anonymous reads (public repositories) still work
+as_agent git ls-remote https://github.com/octocat/Hello-World.git HEAD >/dev/null
 # plain HTTP is matched on the Host header (the address is pinned so DNS does not answer first)
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
 # blocked requests are logged to the journal; check the claude-vm-egress summary (one "count time scheme host" line per host)

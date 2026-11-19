@@ -18,7 +18,7 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
   separate rootless user (`<you>-podman`), confined by the same egress gateway, and can only see `~/workspace` (mount repos
   from there with `-v ~/workspace/<repo>:/src`; they cannot mount `~/.claude`, `~/.ssh` or anything else in your home, and no
   flag changes that). There is no Docker.
-- Git over HTTPS and `gh` use a GitHub App installation token that the egress gateway adds to requests to GitHub; you never hold it (the `GH_TOKEN` you see is a placeholder, so do not look for the real token or try to print it). There are no SSH keys on this VM, so use `https://` remotes. Tools with their own CA bundle may reject GitHub's certificate (the gateway signs it with its own CA): point them at `/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem`.
+- Git over HTTPS and `gh` use a GitHub App installation token that the egress gateway swaps in for the placeholder you send (the `GH_TOKEN` you see is that placeholder, so do not look for the real token or try to print it). There are no SSH keys on this VM, so use `https://` remotes. The gateway ends TLS for every allowed host with its own CA, so a tool with its own CA bundle may reject certificates: point it at `/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem`.
 - A new image is staged within 30 minutes of its release (`bootc upgrade`, no reboot). The OS applies it nightly at 03:00
   (`bootc upgrade --apply`) and the VM reboots into it, which ends running sessions. You cannot reboot it yourself; do not try to apply updates.
 - `/etc/claude-code/` (managed settings and this file) is root-owned. You cannot and should not change your own policy.

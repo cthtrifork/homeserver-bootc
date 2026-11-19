@@ -1,5 +1,5 @@
 [Unit]
-Description=Claude VM egress gateway: CA and certificates for the intercepted hosts
+Description=Claude VM egress gateway: CA for the allowlisted hosts
 DefaultDependencies=no
 After=local-fs.target systemd-sysusers.service systemd-tmpfiles-setup.service
 Before=claude-vm-egress-proxy.service

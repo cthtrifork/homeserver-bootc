@@ -2,8 +2,9 @@
 # Show what the egress gateway allows and what it blocked.
 #   claude-vm-egress allowed             # the allowlist (a domain also covers its subdomains)
 #   claude-vm-egress blocked [--raw] [journalctl args]
-#                                        # blocked HTTPS/HTTP requests since boot, one line per host: count, last seen,
-#                                        # scheme, host (--raw: every request; other args go to journalctl, e.g. --since -1h).
+#                                        # refused HTTPS/HTTP requests since boot, one line per host: count, last seen,
+#                                        # scheme, host (--raw: every refused request as JSON; other args go to journalctl,
+#                                        # e.g. --since -1h).
 #                                        # Reading the journal needs root or the adm/wheel group: use sudo.
 # DNS refusals are not logged, so a name that never resolves does not show up under "blocked".
 set -euo pipefail
@@ -19,23 +20,17 @@ blocked)
         raw=1
         shift
     fi
+    # iron-proxy logs one JSON audit line per request to the journal: a request it refused has audit.action "reject"
+    # (rejected_by: allowlist, secrets, ...). Tests and the proxy's own noise stay out.
+    refused='select(.msg == "request" and .audit.action == "reject")'
     if ((raw)); then
-        exec journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@"
+        exec journalctl --no-pager -o cat -b -u 'claude-vm-egress-proxy@*' "$@" | jq -c "$refused"
     fi
-    # lines look like: <time> <host> egress-proxy[pid]: egress_blocked: https example.com client=10.0.0.1
-    # (no SNI, e.g. an IP address, shows as "-")
-    journalctl --no-pager -o short-iso -b -u claude-vm-egress-proxy -g egress_blocked "$@" |
-        awk '
-            /egress_blocked: / {
-                rest = substr($0, index($0, "egress_blocked: ") + 16)
-                split(rest, f, " ")
-                host = (f[2] ~ /^client=/ || f[2] == "" || f[2] == "-") ? "(no SNI)" : f[2]
-                key = f[1] " " host
-                count[key]++
-                last[key] = $1
-            }
-            END { for (k in count) print count[k], last[k], k }
-        ' | sort -k1,1nr -k4,4
+    # one line per host: count, last time, scheme, host (a request that carries no SNI, e.g. an IP address, has no host)
+    journalctl --no-pager -o cat -b -u 'claude-vm-egress-proxy@*' "$@" |
+        jq -Rr "fromjson? | $refused | [.time, (if .audit.mode == \"mitm\" then \"https\" else \"http\" end), ((.audit.host // \"(no host)\") | sub(\":[0-9]+\$\"; \"\"))] | join(\" \")" |
+        awk '{ key = $2 " " $3; count[key]++; last[key] = $1 } END { for (k in count) print count[k], last[k], k }' |
+        sort -k1,1nr -k4,4
     ;;
 *)
     echo "usage: claude-vm-egress allowed | blocked [journalctl args]" >&2

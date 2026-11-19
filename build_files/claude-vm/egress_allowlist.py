@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Validate the egress allowlist and derive the sandbox, Envoy and dnsmasq configuration from it.
+"""Validate the egress allowlist and derive the sandbox, iron-proxy and dnsmasq configuration from it.
 
 usage: egress_allowlist.py ALLOWLIST MANAGED_SETTINGS_JSON OUTDIR
 """
@@ -49,268 +49,57 @@ def validate(entries):
     return problems
 
 
-# One gateway listener pair per agent user, chosen by egress.nft from the UID of the process that connects. The ports are
-# also in egress.nft; the user names are also in refresh-github-token's callers (claude-vm-github-token@<user>).
-USERS = [("claude", 8443, 8008), ("claude-rc-personal", 8444, 8009)]
-
-# Hosts whose TLS the gateway terminates, to add the calling user's GitHub token. Everything else is passed through by SNI.
-# A group's `secret` file is written by refresh-github-token; `prefix` is put in front of its content. Keep the names in
-# step with that script and with egress-ca (which makes one certificate per group).
-INTERCEPTS = [
-    {"name": "api", "hosts": ["api.github.com", "uploads.github.com"], "prefix": "Bearer "},
-    {"name": "git", "hosts": ["github.com", "gist.github.com"], "prefix": "Basic "},
-]
-SECRET_DIR = "/run/claude-vm/envoy"
-CA_DIR = "/var/lib/claude-vm/ca"
-SYSTEM_CA_BUNDLE = "/etc/pki/tls/certs/ca-bundle.crt"
-ENVOY = "type.googleapis.com/envoy.extensions"
-DNS_CACHE = {"name": "egress_dns", "dns_lookup_family": "V4_ONLY"}
-
-def covered(host, domains):
-    return any(host == d or host.endswith("." + d) for d in domains)
+# One iron-proxy per agent user (egress.nft sends each user to its own ports), so the proxy adds that user's GitHub token.
+USERS = [("claude", 8443, 8008, 19090), ("claude-rc-personal", 8444, 8009, 19091)]
+# Hosts that get the user's GitHub token in place of the placeholder the agent sends (gh, git). API hosts refuse a request
+# without the placeholder; git's first request carries no credentials at all (it waits for a 401), so the git hosts do not.
+GITHUB_API_HOSTS = ["api.github.com", "uploads.github.com"]
+GITHUB_GIT_HOSTS = ["github.com", "gist.github.com"]
+TOKEN_PLACEHOLDER = "proxy-gh-token"  # also in the gh wrapper
+SECRET_DIR = "/run/claude-vm/egress"  # written by refresh-github-token
+CA_DIR = "/var/lib/claude-vm/ca"  # made by egress-ca
 
 
-def log(prefix, extra_filter=None):
-    entry = {
-        "name": "envoy.access_loggers.stderr",
-        "typed_config": {
-            "@type": f"{ENVOY}.access_loggers.stream.v3.StderrAccessLog",
-            "log_format": {"text_format_source": {"inline_string": prefix + " client=%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%\n"}},
-        },
-    }
-    if extra_filter:
-        entry["filter"] = extra_filter
-    return [entry]
+def iron_proxy_config(user, https_port, http_port, metrics_port, domains):
+    for host in GITHUB_API_HOSTS + GITHUB_GIT_HOSTS:
+        if not any(host == d or host.endswith("." + d) for d in domains):
+            raise SystemExit(f"{host} (GitHub token injection) is not on the allowlist")
+    allow = "".join(f'        - "{d}"\n        - "*.{d}"\n' for d in domains)
 
+    def rules(hosts):
+        return "".join(f'            - host: "{h}"\n              require_tls: true\n' for h in hosts)
 
-def hcm(name, route_config, http_filters, **extra):
-    return {
-        "name": "envoy.filters.network.http_connection_manager",
-        "typed_config": {
-            "@type": f"{ENVOY}.filters.network.http_connection_manager.v3.HttpConnectionManager",
-            "stat_prefix": name,
-            "strip_any_host_port": True,
-            "route_config": route_config,
-            "http_filters": http_filters + [
-                {"name": "envoy.filters.http.router", "typed_config": {"@type": f"{ENVOY}.filters.http.router.v3.Router"}}
-            ],
-            **extra,
-        },
-    }
-
-
-def dfp_filter():
-    return {
-        "name": "envoy.filters.http.dynamic_forward_proxy",
-        "typed_config": {"@type": f"{ENVOY}.filters.http.dynamic_forward_proxy.v3.FilterConfig", "dns_cache_config": DNS_CACHE},
-    }
-
-
-def drop_client_authorization():
-    # Whatever the client sends is not trusted (the gh wrapper sends a placeholder): without this, a gateway that has no
-    # token yet would pass the placeholder on and GitHub would answer 401 even to anonymous reads of public repositories.
-    return {
-        "name": "envoy.filters.http.header_mutation",
-        "typed_config": {
-            "@type": f"{ENVOY}.filters.http.header_mutation.v3.HeaderMutation",
-            "mutations": {"request_mutations": [{"remove": "authorization"}]},
-        },
-    }
-
-
-def deny_vhost():
-    return {
-        "name": "blocked",
-        "domains": ["*"],
-        "routes": [{"match": {"prefix": "/"}, "direct_response": {"status": 403, "body": {"inline_string": "blocked by the claude-vm egress allowlist\n"}}}],
-    }
-
-
-def https_listener(user, port, domains):
-    chains = []
-    exact = set()
-    for group in INTERCEPTS:
-        exact.update(group["hosts"])
-        vhosts = [
-            {
-                "name": host.replace(".", "_"),
-                "domains": [host],
-                "routes": [
-                    {
-                        "match": {"prefix": "/"},
-                        "route": {"cluster": "dfp_tls"},
-                        # the filter takes the port from :authority, and clients send none for 443
-                        "typed_per_filter_config": {
-                            "envoy.filters.http.dynamic_forward_proxy": {
-                                "@type": f"{ENVOY}.filters.http.dynamic_forward_proxy.v3.PerRouteConfig",
-                                "host_rewrite_literal": f"{host}:443",
-                            }
-                        },
-                    }
-                ],
-            }
-            for host in group["hosts"]
-        ]
-        injector = {
-            "name": "envoy.filters.http.credential_injector",
-            "typed_config": {
-                "@type": f"{ENVOY}.filters.http.credential_injector.v3.CredentialInjector",
-                # without a token (App not set up yet) the request goes out unauthenticated instead of failing
-                "allow_request_without_credential": True,
-                "overwrite": True,
-                "credential": {
-                    "name": "envoy.http.injected_credentials.generic",
-                    "typed_config": {
-                        "@type": f"{ENVOY}.http.injected_credentials.generic.v3.Generic",
-                        "header": "Authorization",
-                        "header_value_prefix": group["prefix"],
-                        "credential": {
-                            "name": "credential",
-                            "sds_config": {
-                                "path_config_source": {
-                                    "path": f"{SECRET_DIR}/{user}-{group['name']}.json",
-                                    "watched_directory": {"path": SECRET_DIR},
-                                }
-                            },
-                        },
-                    },
-                },
-            },
-        }
-        chains.append(
-            {
-                "filter_chain_match": {"server_names": list(group["hosts"])},
-                "transport_socket": {
-                    "name": "envoy.transport_sockets.tls",
-                    "typed_config": {
-                        "@type": f"{ENVOY}.transport_sockets.tls.v3.DownstreamTlsContext",
-                        "common_tls_context": {
-                            "alpn_protocols": ["http/1.1"],
-                            "tls_certificates": [
-                                {
-                                    "certificate_chain": {"filename": f"{CA_DIR}/{group['name']}.pem"},
-                                    "private_key": {"filename": f"{CA_DIR}/{group['name']}.key"},
-                                }
-                            ],
-                        },
-                    },
-                },
-                "filters": [
-                    hcm(
-                        f"{user}_{group['name']}",
-                        {"name": "intercept", "virtual_hosts": vhosts + [deny_vhost()]},
-                        [drop_client_authorization(), injector, dfp_filter()],
-                    )
-                ],
-            }
-        )
-    names = [n for d in domains for n in (d, f"*.{d}") if n not in exact]
-    chains.append(
-        {
-            "filter_chain_match": {"server_names": names},
-            "filters": [
-                {
-                    "name": "envoy.filters.network.sni_dynamic_forward_proxy",
-                    "typed_config": {
-                        "@type": f"{ENVOY}.filters.network.sni_dynamic_forward_proxy.v3.FilterConfig",
-                        "dns_cache_config": DNS_CACHE,
-                        "port_value": 443,
-                    },
-                },
-                {
-                    "name": "envoy.filters.network.tcp_proxy",
-                    "typed_config": {"@type": f"{ENVOY}.filters.network.tcp_proxy.v3.TcpProxy", "stat_prefix": f"{user}_sni", "cluster": "dfp_tcp"},
-                },
-            ],
-        }
-    )
-    return {
-        "name": f"https_{user}",
-        "address": {"socket_address": {"address": "127.0.0.1", "port_value": port}},
-        "listener_filters": [
-            {"name": "envoy.filters.listener.tls_inspector", "typed_config": {"@type": f"{ENVOY}.filters.listener.tls_inspector.v3.TlsInspector"}}
-        ],
-        "filter_chains": chains,
-        # not on the list (or no SNI at all, e.g. an IP address): refused upstream, so the client sees a reset
-        "default_filter_chain": {
-            "filters": [
-                {
-                    "name": "envoy.filters.network.tcp_proxy",
-                    "typed_config": {
-                        "@type": f"{ENVOY}.filters.network.tcp_proxy.v3.TcpProxy",
-                        "stat_prefix": f"{user}_blocked",
-                        "cluster": "blackhole",
-                        "access_log": log("egress_blocked: https %REQUESTED_SERVER_NAME%"),
-                    },
-                }
-            ]
-        },
-    }
-
-
-def http_listener(user, port, domains):
-    allowed = {
-        "name": "allowed",
-        "domains": [n for d in domains for n in (d, f"*.{d}")],
-        "routes": [{"match": {"prefix": "/"}, "route": {"cluster": "dfp_tcp"}}],
-    }
-    return {
-        "name": f"http_{user}",
-        "address": {"socket_address": {"address": "127.0.0.1", "port_value": port}},
-        "filter_chains": [
-            {
-                "filters": [
-                    hcm(
-                        f"{user}_http",
-                        {"name": "plain", "virtual_hosts": [allowed, deny_vhost()]},
-                        [dfp_filter()],
-                        # the blocked line is for requests the allowlist refused (a 403 the upstream sent is logged too)
-                        access_log=log("egress_blocked: http %REQ(:AUTHORITY)%", {"status_code_filter": {"comparison": {"op": "EQ", "value": {"default_value": 403, "runtime_key": "egress.http_403"}}}}),
-                    )
-                ]
-            }
-        ],
-    }
-
-
-def envoy_config(domains):
-    for group in INTERCEPTS:
-        for host in group["hosts"]:
-            if not covered(host, domains):
-                raise SystemExit(f"intercepted host '{host}' is not on the allowlist")
-    dfp = {"@type": f"{ENVOY}.clusters.dynamic_forward_proxy.v3.ClusterConfig", "dns_cache_config": DNS_CACHE}
-    cluster = {"lb_policy": "CLUSTER_PROVIDED", "cluster_type": {"name": "envoy.clusters.dynamic_forward_proxy", "typed_config": dfp}}
-    return {
-        # SDS (the injected credentials) refuses to load without a node identity
-        "node": {"id": "claude-vm-egress", "cluster": "claude-vm-egress"},
-        "static_resources": {
-            "listeners": [l for user, https, http in USERS for l in (https_listener(user, https, domains), http_listener(user, http, domains))],
-            "clusters": [
-                {"name": "dfp_tcp", **cluster},
-                {
-                    "name": "dfp_tls",
-                    **cluster,
-                    # Envoy sets the SNI and checks the certificate against the resolved host name by itself
-                    "transport_socket": {
-                        "name": "envoy.transport_sockets.tls",
-                        "typed_config": {
-                            "@type": f"{ENVOY}.transport_sockets.tls.v3.UpstreamTlsContext",
-                            "common_tls_context": {"validation_context": {"trusted_ca": {"filename": SYSTEM_CA_BUNDLE}}},
-                        },
-                    },
-                },
-                {
-                    "name": "blackhole",
-                    "type": "STATIC",
-                    "connect_timeout": "1s",
-                    "load_assignment": {
-                        "cluster_name": "blackhole",
-                        "endpoints": [{"lb_endpoints": [{"endpoint": {"address": {"socket_address": {"address": "127.0.0.1", "port_value": 9}}}}]}],
-                    },
-                },
-            ],
-        }
-    }
+    # JSON-compatible YAML would do, but this is meant to be read: iron-proxy takes one flat file.
+    return f"""# Generated by egress_allowlist.py for {user}; do not edit (see docs/claude-vm/README.md, "Egress gateway").
+dns:
+  enabled: false # dnsmasq filters DNS, nftables sends the traffic here
+proxy:
+  http_listen: "127.0.0.1:{http_port}"
+  https_listen: "127.0.0.1:{https_port}"
+metrics:
+  listen: "127.0.0.1:{metrics_port}" # the default is :9090 on every address, and each user's proxy needs its own
+tls:
+  ca_cert: "{CA_DIR}/ca.crt"
+  ca_key: "{CA_DIR}/ca.key"
+transforms:
+  - name: allowlist
+    config:
+      domains:
+{allow}  - name: secrets
+    config:
+      secrets:
+        - source: {{type: file, path: "{SECRET_DIR}/{user}-github-token", ttl: 1m}}
+          proxy_value: "{TOKEN_PLACEHOLDER}"
+          match_headers: ["Authorization"]
+          require: true
+          rules:
+{rules(GITHUB_API_HOSTS)}        - source: {{type: file, path: "{SECRET_DIR}/{user}-github-token", ttl: 1m}}
+          proxy_value: "{TOKEN_PLACEHOLDER}"
+          match_headers: ["Authorization"]
+          rules:
+{rules(GITHUB_GIT_HOSTS)}log:
+  level: "info"
+"""
 
 
 def build(allowlist, settings_path, outdir):
@@ -328,8 +117,8 @@ def build(allowlist, settings_path, outdir):
 
     outdir.mkdir(parents=True, exist_ok=True)
     (outdir / "allowlist.txt").write_text("".join(f"{d}\n" for d in domains))
-    (outdir / "envoy.json").write_text(json.dumps(envoy_config(domains), indent=2) + "\n")
-    (outdir / "intercepts.json").write_text(json.dumps(INTERCEPTS, indent=2) + "\n")
+    for user, https_port, http_port, metrics_port in USERS:
+        (outdir / f"iron-proxy-{user}.yaml").write_text(iron_proxy_config(user, https_port, http_port, metrics_port, domains))
     (outdir / "dnsmasq-servers").write_text("".join(f"server=/{d}/{RESOLVER}\n" for d in domains))
     return domains
 

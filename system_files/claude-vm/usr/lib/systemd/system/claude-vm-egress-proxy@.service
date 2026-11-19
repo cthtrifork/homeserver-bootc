@@ -1,0 +1,23 @@
+[Unit]
+Description=Claude VM egress gateway: allowlist proxy for %i (iron-proxy: allowlist, GitHub token swap)
+After=systemd-resolved.service claude-vm-egress-ca.service systemd-tmpfiles-setup.service
+Wants=systemd-resolved.service
+Requires=claude-vm-egress-ca.service
+PartOf=claude-vm-egress-proxy.service
+
+[Service]
+User=ironproxy
+Group=ironproxy
+# one proxy per agent user, so it holds that user's token only (ports and config: build_files/claude-vm/egress_allowlist.py)
+ExecStart=/usr/libexec/claude-vm/egress-proxy -config /usr/share/claude-vm/egress/iron-proxy-%i.yaml
+Restart=always
+RestartSec=2
+LimitNOFILE=65536
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+ReadOnlyPaths=/run/claude-vm/egress /var/lib/claude-vm/ca
+
+[Install]
+WantedBy=multi-user.target

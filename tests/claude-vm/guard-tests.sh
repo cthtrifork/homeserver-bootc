@@ -88,7 +88,7 @@ grep -qF 'meta skuid @uids_claude' <<<"$rules"
 grep -qF 'redirect to :8444' <<<"$rules"
 grep -qF 'redirect to :8009' <<<"$rules"
 # the gateway runs as its own system user, outside the agent UIDs
-[ "$(id -u envoy)" -lt 1000 ]
+[ "$(id -u ironproxy)" -lt 1000 ]
 # the agent cannot run without the egress proxy
 requires="$(systemctl show -p Requires --value claude-remote-control.service)"
 grep -qF claude-vm-egress-proxy <<<"$requires"
