@@ -1,8 +1,8 @@
 # Hosts the claude user may reach: its sandboxed commands, rootless podman containers and Claude Code itself.
 # One domain per line. A domain covers itself and all its subdomains (no "*." prefix). Lowercase, no ports or paths.
-# Validated and expanded at image build time by egress_allowlist.py, which writes:
-#   - sandbox.network.allowedDomains in /etc/claude-code/managed-settings.json (Claude Code's own proxy)
-#   - the iron-proxy and dnsmasq configuration of the egress gateway (see docs/claude-vm/README.md)
+# Read as is by claude-vm-egress and claude-vm-egress-ca. The same domains are listed in iron-proxy.yaml ("*.<domain>"),
+# dnsmasq-servers (server=/<domain>/...) and sandbox.network.allowedDomains in managed-settings.json (the domain and
+# "*.<domain>"); tests/claude-vm/guard-tests.sh fails when one of them differs. To allow another host, add it to all four.
 
 # Claude Code / Remote Control
 anthropic.com

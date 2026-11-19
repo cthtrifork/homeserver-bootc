@@ -11,7 +11,7 @@ set -euo pipefail
 
 case "${1:-}" in
 allowed)
-    exec cat /usr/share/claude-vm/egress/allowlist.txt
+    exec sed 's/#.*//;/^[[:space:]]*$/d' /usr/share/claude-vm/egress/allowlist.txt
     ;;
 blocked)
     shift

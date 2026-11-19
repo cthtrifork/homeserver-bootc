@@ -8,8 +8,10 @@ PartOf=claude-vm-egress-proxy.service
 [Service]
 User=ironproxy
 Group=ironproxy
-# one proxy per agent user, so it holds that user's token only (ports and config: build_files/claude-vm/egress_allowlist.py)
-ExecStart=/usr/libexec/claude-vm/egress-proxy -config /usr/share/claude-vm/egress/iron-proxy-%i.yaml
+# one proxy per agent user, so it holds that user's token only: the ports come from proxy-<user>.env and the user's token
+# directory is mounted as /run/claude-vm/egress/current (a directory, not the file, so a renamed-in new token is seen)
+EnvironmentFile=/usr/share/claude-vm/egress/proxy-%i.env
+ExecStart=/usr/libexec/claude-vm/egress-proxy -config /usr/share/claude-vm/egress/iron-proxy.yaml
 Restart=always
 RestartSec=2
 LimitNOFILE=65536
@@ -17,7 +19,9 @@ PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
 NoNewPrivileges=yes
-ReadOnlyPaths=/run/claude-vm/egress /var/lib/claude-vm/ca
+TemporaryFileSystem=/run/claude-vm/egress:ro
+BindReadOnlyPaths=/run/claude-vm/egress/%i:/run/claude-vm/egress/current
+ReadOnlyPaths=/var/lib/claude-vm/ca
 
 [Install]
 WantedBy=multi-user.target

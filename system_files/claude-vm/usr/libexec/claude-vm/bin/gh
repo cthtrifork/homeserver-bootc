@@ -2,7 +2,7 @@
 # `gh` for the agent users. The agent holds no GitHub token: the egress gateway adds the user's current GitHub App token to
 # every request to GitHub (see docs/claude-vm/README.md), swapping it in for the placeholder. `gh` (and
 # `gh auth git-credential`, which /etc/gitconfig runs) only refuse to work without some token, so give them the placeholder
-# the gateway looks for (TOKEN_PLACEHOLDER in build_files/claude-vm/egress_allowlist.py).
+# the gateway looks for (proxy_value in /usr/share/claude-vm/egress/iron-proxy.yaml).
 # Comes first on the service's PATH.
 set -euo pipefail
 

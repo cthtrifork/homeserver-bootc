@@ -6,7 +6,7 @@ set -euo pipefail
 
 user="${1:?Usage: $0 <user>}"
 src="/etc/claude-vm/github-app/$user"
-dest="/run/claude-vm/egress/$user-github-token"
+dest="/run/claude-vm/egress/$user/github-token"
 
 b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '='; }
 
@@ -28,7 +28,7 @@ token="$(curl -fsS --max-time 30 -X POST \
 
 # iron-proxy re-reads the file (ttl 1m) and uses its exact contents, so no trailing newline. Written to a temporary file first
 # and renamed, so the gateway never reads half a token.
-tmp="$(mktemp "/run/claude-vm/egress/.$user-github-token.XXXXXX")"
+tmp="$(mktemp "/run/claude-vm/egress/$user/.github-token.XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
 chown root:ironproxy "$tmp"
 chmod 0640 "$tmp"

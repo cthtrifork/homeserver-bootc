@@ -79,8 +79,8 @@ grep -qF '127.0.0.55:53' <<<"$udp"
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
-# one allowlist (build_files/claude-vm/egress-allowlist.txt) feeds the gateway and the sandbox's allowedDomains
-for f in /usr/share/claude-vm/egress/{allowlist.txt,iron-proxy-claude.yaml,iron-proxy-claude-rc-personal.yaml,dnsmasq-servers}; do test -s "$f"; done
+# the allowlist (usr/share/claude-vm/egress/allowlist.txt) and its copies for the gateway and the sandbox (guard-tests.sh compares them)
+for f in /usr/share/claude-vm/egress/{allowlist.txt,iron-proxy.yaml,dnsmasq-servers}; do test -s "$f"; done
 claude-vm-egress allowed | grep -qx github.com
 claude-vm-egress allowed | grep -qx portableinfo.cloud
 
@@ -90,9 +90,11 @@ for u in claude claude-rc-personal; do systemctl is-active --quiet "claude-vm-eg
 # the CA key is readable by the proxy user only; the agents read neither it nor a token
 [ "$(stat -c %a:%U:%G /var/lib/claude-vm/ca/ca.key)" = "640:root:ironproxy" ]
 [ "$(stat -c %a:%U:%G /run/claude-vm/egress)" = "750:root:ironproxy" ]
+# each proxy sees its own user's token directory only, under the same name
+[ "$(sudo nsenter -t "$(systemctl show -p MainPID --value claude-vm-egress-proxy@claude.service)" -m ls /run/claude-vm/egress)" = current ]
 for u in claude claude-rc-personal; do
     if sudo -u "$u" cat /var/lib/claude-vm/ca/ca.key >/dev/null 2>&1; then echo "$u can read the CA key"; exit 1; fi
-    if sudo -u "$u" cat "/run/claude-vm/egress/$u-github-token" >/dev/null 2>&1; then echo "$u can read its token"; exit 1; fi
+    if sudo -u "$u" cat "/run/claude-vm/egress/$u/github-token" >/dev/null 2>&1; then echo "$u can read its token"; exit 1; fi
 done
 # the CA is in the system trust store and may only sign for allowlisted names
 openssl verify -CAfile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /var/lib/claude-vm/ca/ca.crt

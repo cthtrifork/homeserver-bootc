@@ -103,12 +103,6 @@ COPY system_files/claude-vm/ /
 COPY --chmod=0644 cosign.pub /etc/pki/cosign/cosign.pub
 COPY --chmod=0644 policy.json /etc/containers/policy.json
 COPY --chmod=0644 system_files/homeserver/etc/containers/registries.d/ghcr.yaml /etc/containers/registries.d/ghcr.yaml
-# Egress allowlist: validate it (fails the build on a bad entry) and derive the sandbox's allowedDomains and the
-# gateway's iron-proxy and dnsmasq configuration from the one source file.
-RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
-    python3 /ctx/build_files/claude-vm/egress_allowlist.py /ctx/build_files/claude-vm/egress-allowlist.txt \
-        /etc/claude-code/managed-settings.json /usr/share/claude-vm/egress
-
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-app /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
         claude-vm-egress-nft.service claude-vm-egress-ca.service claude-vm-egress-proxy.service claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service claude-vm-egress-dns.service \

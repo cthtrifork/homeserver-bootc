@@ -1,6 +1,6 @@
 # Egress gateway: redirects traffic of the agent UIDs to the local allowlist proxy and DNS filter. Each agent user (with the
 # podman user that runs its containers and that user's subuid range, see claude-vm.containerfile) has its own proxy ports, so
-# the proxy adds that user's GitHub token. The ports are listed in build_files/claude-vm/egress_allowlist.py (USERS).
+# the proxy adds that user's GitHub token. The ports are in proxy-<user>.env next to this file.
 table inet claude_egress
 delete table inet claude_egress
 

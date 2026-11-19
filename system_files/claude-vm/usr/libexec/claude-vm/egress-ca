@@ -11,7 +11,7 @@ dir=/var/lib/claude-vm/ca
 anchor=/etc/pki/ca-trust/source/anchors/claude-vm-egress-ca.pem
 allowlist=/usr/share/claude-vm/egress/allowlist.txt
 
-names="$(tr '\n' ' ' <"$allowlist")"
+names="$(sed 's/#.*//' "$allowlist" | tr -s ' \t\n' ' ')"
 constraints=""
 for domain in $names; do constraints+="${constraints:+,}permitted;DNS:$domain"; done
 

@@ -1,0 +1,108 @@
+# Config of the egress gateway's iron-proxy (https://github.com/paradigmxyz/iron-proxy). One instance runs per agent user
+# (claude-vm-egress-proxy@<user>): the ports come from proxy-<user>.env (IRON_* variables override this file) and each
+# instance sees its own user's token as /run/claude-vm/egress/current/github-token. See docs/claude-vm/README.md.
+dns:
+  enabled: false # dnsmasq filters DNS, nftables (egress.nft) sends the traffic here
+proxy:
+  http_listen: "127.0.0.1:8008"
+  https_listen: "127.0.0.1:8443"
+metrics:
+  listen: "127.0.0.1:19090" # the default is :9090 on every address
+tls:
+  ca_cert: /var/lib/claude-vm/ca/ca.crt # made by claude-vm-egress-ca
+  ca_key: /var/lib/claude-vm/ca/ca.key
+transforms:
+  # Default deny. "*.example.com" covers example.com and every subdomain. Keep this list equal to allowlist.txt (guard-tests.sh).
+  - name: allowlist
+    config:
+      domains:
+        - "*.anthropic.com"
+        - "*.api.first.org"
+        - "*.astral.sh"
+        - "*.blob.core.windows.net"
+        - "*.bun.sh"
+        - "*.cgr.dev"
+        - "*.claude.ai"
+        - "*.claude.com"
+        - "*.cloudflare.com"
+        - "*.context7.com"
+        - "*.crates.io"
+        - "*.debian.org"
+        - "*.developer.apple.com"
+        - "*.developer.mozilla.org"
+        - "*.developers.redhat.com"
+        - "*.docker.com"
+        - "*.docker.io"
+        - "*.docs.python.org"
+        - "*.fedoraproject.org"
+        - "*.files.pythonhosted.org"
+        - "*.fluxcd.io"
+        - "*.frame.claudeusercontent.com"
+        - "*.frame.staging.claudeusercontent.com"
+        - "*.gcr.io"
+        - "*.ghcr.io"
+        - "*.github.blog"
+        - "*.github.com"
+        - "*.githubassets.com"
+        - "*.githubcopilot.com"
+        - "*.githubusercontent.com"
+        - "*.go.dev"
+        - "*.json.schemastore.org"
+        - "*.kubernetes.io"
+        - "*.mcr.microsoft.com"
+        - "*.nodejs.org"
+        - "*.npmjs.com"
+        - "*.npmjs.org"
+        - "*.nuget.org"
+        - "*.nvd.nist.gov"
+        - "*.oneuptime.com"
+        - "*.osv.dev"
+        - "*.plugins.gradle.org"
+        - "*.portableinfo.cloud"
+        - "*.proxy.golang.org"
+        - "*.pypi.org"
+        - "*.quay.io"
+        - "*.readthedocs.io"
+        - "*.registry.access.redhat.com"
+        - "*.registry.k8s.io"
+        - "*.repo.maven.apache.org"
+        - "*.rubygems.org"
+        - "*.rustup.rs"
+        - "*.s3.amazonaws.com"
+        - "*.security.snyk.io"
+        - "*.sigstore.dev"
+        - "*.stackoverflow.com"
+        - "*.static.rust-lang.org"
+        - "*.storage.googleapis.com"
+        - "*.sum.golang.org"
+        - "*.wails.io"
+        - "*.webkit.org"
+        - "*.wikipedia.org"
+        - "*.www.cisa.gov"
+
+  # The agent sends the placeholder "proxy-gh-token" (the gh wrapper and the git credential helper) and the proxy swaps in the
+  # user's GitHub App token, in Bearer, token and HTTP Basic Authorization headers alike. The API hosts refuse a request without
+  # the placeholder; git's first request carries no credentials (it waits for a 401), so the git hosts let those through.
+  - name: secrets
+    config:
+      secrets:
+        - source: {type: file, path: /run/claude-vm/egress/current/github-token, ttl: 1m}
+          proxy_value: proxy-gh-token
+          match_headers: [Authorization]
+          require: true
+          rules:
+            - host: api.github.com
+              require_tls: true
+            - host: uploads.github.com
+              require_tls: true
+        - source: {type: file, path: /run/claude-vm/egress/current/github-token, ttl: 1m}
+          proxy_value: proxy-gh-token
+          match_headers: [Authorization]
+          rules:
+            - host: github.com
+              require_tls: true
+            - host: gist.github.com
+              require_tls: true
+
+log:
+  level: info
