@@ -89,9 +89,9 @@ grep -qF '1101' <<<"$rules"
 grep -qF '1201' <<<"$rules"
 grep -qF 'dnat ip to 198.18.0.2:53' <<<"$rules"
 grep -qF 'dnat ip to 198.18.0.3:53' <<<"$rules"
-# a user reaches its own proxy only
-grep -qF 'meta skuid @uids_claude ip daddr 198.18.0.2 accept' <<<"$rules"
-grep -qF 'meta skuid @uids_personal ip daddr 198.18.0.3 accept' <<<"$rules"
+# a user reaches its own proxy only, on the proxy's ports only
+grep -qF 'meta skuid @uids_claude ip daddr 198.18.0.2 tcp dport { 53, 80, 443 } accept' <<<"$rules"
+grep -qF 'meta skuid @uids_personal ip daddr 198.18.0.3 tcp dport { 53, 80, 443 } accept' <<<"$rules"
 # the gateway runs as its own system user, outside the agent UIDs
 [ "$(id -u ironproxy)" -lt 1000 ]
 # the agent cannot run without the egress proxy

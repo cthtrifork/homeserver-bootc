@@ -166,6 +166,8 @@ must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://example.com
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://1.1.1.1
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null --resolve example.com:443:93.184.216.34 https://example.com
 must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
+# the proxy address answers on the proxy's ports only: sshd listens on it too
+must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/198.18.0.2/22'
 must_fail sudo -u '#100000' curl -sSf --max-time 10 -o /dev/null https://example.com
 # the gateway ends TLS for every allowlisted host (to swap the GitHub token in): the certificate is signed by our CA, which the
 # system trusts (the curl above succeeded)

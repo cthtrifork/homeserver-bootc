@@ -355,7 +355,7 @@ kernel by UID (`claude`, `claude-rc-personal` and the podman subuid ranges), ind
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | puts a proxy address per agent user on `lo` (198.18.0.2, 198.18.0.3), and nftables sends that user's DNS (any server) to its proxy and rejects everything else that leaves the machine: direct connections to an IP, QUIC, SSH, other ports, IPv6, and the other user's proxy |
+| `claude-vm-egress-nft` | puts a proxy address per agent user on `lo` (198.18.0.2, 198.18.0.3), and nftables sends that user's DNS (any server) to its proxy and rejects everything else that leaves the machine: direct connections to an IP, QUIC, SSH, other ports, IPv6, and the other user's proxy (a user reaches its own proxy on ports 53, 80 and 443 only) |
 | `claude-vm-egress-ca` | makes the private CA the proxy signs with (once; kept across updates, made again only when the allowlist changes) |
 | `claude-vm-egress-proxy@<user>` | iron-proxy, one per agent user: answers DNS (every name resolves to the proxy's own address), ends TLS, refuses names not on the allowlist (403), swaps in that user's GitHub token. `claude-vm-egress-proxy` is the service the agents depend on; it requires both |
 

@@ -29,9 +29,12 @@ table inet claude_egress {
 
     chain filter_out {
         type filter hook output priority 0; policy accept;
-        # an agent user reaches its own proxy only (not the other user's, which would swap in that user's token)
-        meta skuid @uids_claude ip daddr 198.18.0.2 accept
-        meta skuid @uids_personal ip daddr 198.18.0.3 accept
+        # an agent user reaches its own proxy only (not the other user's, which would swap in that user's token), and only the
+        # proxy's ports: sshd and the other services that listen on every address also listen on the proxy address
+        meta skuid @uids_claude ip daddr 198.18.0.2 tcp dport { 53, 80, 443 } accept
+        meta skuid @uids_claude ip daddr 198.18.0.2 udp dport 53 accept
+        meta skuid @uids_personal ip daddr 198.18.0.3 tcp dport { 53, 80, 443 } accept
+        meta skuid @uids_personal ip daddr 198.18.0.3 udp dport 53 accept
         meta skuid != @uids_claude meta skuid != @uids_personal return
         # everything else of an agent user (direct connections to an IP, UDP/QUIC, SSH, other ports, IPv6) is refused, except
         # loopback: local services such as the resolver stub. Match the destination, not "oif lo": a packet sent to a local address
