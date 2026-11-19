@@ -81,8 +81,10 @@ echo "egress-proxy runs as: $proxy_label"
 if grep -qF httpd_t <<<"$proxy_label"; then echo "egress-proxy must not run in httpd_t"; exit 1; fi
 # the allowlist in iron-proxy.yaml is the only list
 test -s /usr/share/claude-vm/egress/iron-proxy.yaml
-claude-vm-egress allowed | grep -qx github.com
-claude-vm-egress allowed | grep -qx portableinfo.cloud
+# capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
+allowed="$(claude-vm-egress allowed)"
+grep -qx github.com <<<"$allowed"
+grep -qx portableinfo.cloud <<<"$allowed"
 
 echo "--- egress gateway: GitHub token swap and CA ---"
 # one proxy per agent user, each holding that user's token only
