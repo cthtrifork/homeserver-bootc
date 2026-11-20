@@ -41,7 +41,7 @@ flowchart TB
         subgraph ROOT["ROOT-OWNED"]
             direction LR
             TOK["GitHub App key<br/>+ token refresher"]
-            GW["Egress gateway<br/>nftables + iron-proxy<br/>(DNS, allowlist, token swap)"]
+            GW["Egress gateway<br/>nftables + dnsmasq + iron-proxy<br/>(allowlist, token swap)"]
             CFG["Managed policy<br/>allowlist, read-only /usr,<br/>updates, SSH"]
         end
     end
@@ -341,6 +341,37 @@ sequenceDiagram
 Everything the agent users start, including rootless podman containers, is confined by UID in the kernel to one proxy that enforces a
 single allowlist, independent of the sandbox. The config is the code: [`egress.nft`](../../system_files/claude-vm/usr/share/claude-vm/egress.nft)
 and [`egress/`](../../system_files/claude-vm/usr/share/claude-vm/egress/) (`iron-proxy.yaml` holds the allowlist).
+
+```mermaid
+flowchart LR
+    A["Agent<br/>claude / rc-personal"]
+    C["Container<br/>podman, rootless"]
+
+    subgraph K["nftables, by UID"]
+        direction TB
+        D["1 · DNS :53<br/>to dnsmasq"]
+        WA["3 · :80/:443, any IP<br/>to its own proxy"]
+        WC["3 · :80/:443, any IP<br/>to the containers' proxy"]
+        X["everything else is refused<br/>direct IP, other ports, IPv6,<br/>another user's proxy"]
+    end
+
+    DNS["dnsmasq 127.0.0.55<br/>2 · allowlisted names only"]
+    PA["iron-proxy per agent user<br/>127.0.0.2 / .3<br/>ends TLS, swaps in the token"]
+    PC["iron-proxy for containers<br/>127.0.0.4<br/>TLS passed through, no token"]
+    T[("GitHub token<br/>root-only")]
+    I(("4 · allowlisted<br/>hosts"))
+
+    A --> D
+    C --> D
+    D --> DNS
+    A --> WA --> PA
+    C --> WC --> PC
+    T -.-> PA
+    PA --> I
+    PC --> I
+    A -.->|refused| X
+    C -.->|refused| X
+```
 
 | Unit | What it does |
 | --- | --- |
