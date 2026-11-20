@@ -450,6 +450,33 @@ from then on the VM updates itself with `bootc upgrade` like any other, so the c
 VM. The first-boot setup above (GitHub App, signing key, Claude login) is still done by hand over SSH. The package is private
 until you make it public under the repository's Packages settings.
 
+### Seeding with cloud-init (optional)
+
+The image has `cloud-init`, configured in `/etc/cloud/cloud.cfg.d/90-claude-vm.cfg` to do one job: run `write_files` and
+`runcmd` from a NoCloud disk, so the first-boot setup can come from a Kubernetes Secret instead of SSH. Only `NoCloud` is in
+`datasource_list`, so on a VM without a `cidata` disk cloud-init stays off and nothing changes. Users, SSH keys, hostname and
+network stay with the image (those cloud-init modules are not enabled), and the image deletes cloud-init's `sshd-keygen`
+drop-in so the VM keeps making its own SSH host keys. The root is grown by the base image's `bootc-generic-growpart.service`.
+
+In KubeVirt, point `cloudInitNoCloud.secretRef.name` at a Secret whose `userdata` key holds, for example:
+
+```yaml
+#cloud-config
+write_files:
+  - path: /run/claude-vm-seed.pem
+    permissions: "0600"
+    content: |
+      -----BEGIN RSA PRIVATE KEY-----
+      ...
+runcmd:
+  - [claude-vm-seed-github-app, claude, "<app-id>", "<installation-id>", /run/claude-vm-seed.pem]
+  - [rm, -f, /run/claude-vm-seed.pem]
+```
+
+`runcmd` runs once per instance in the final stage, after boot, so the helper may call `systemctl`. cloud-init keeps its own copy
+of the user data under `/var/lib/cloud/` (root only, like `/etc/claude-vm`), so the key is on disk twice; `sudo cloud-init clean`
+removes it. The Claude login still needs an interactive `/login`.
+
 ## Tests
 
 `tests/claude-vm/` runs in QEMU when a non-draft pull request has the `e2e` label: tools, idle services, policy, users, home

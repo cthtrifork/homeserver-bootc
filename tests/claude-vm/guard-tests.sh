@@ -151,6 +151,15 @@ sshd_config="$(sshd -T)"
 # case-insensitive: OpenSSH 10.5 (Fedora 45) prints `PasswordAuthentication no`, older releases printed it lowercase
 grep -qix 'passwordauthentication no' <<<"$sshd_config"
 
+echo "--- cloud-init (only for a KubeVirt cidata disk) ---"
+rpm -q cloud-init
+# only NoCloud, so ds-identify leaves cloud-init off on a VM without a cidata disk (this one): adding "None" would turn it on everywhere
+grep -qx 'datasource_list: \[NoCloud\]' /etc/cloud/cloud.cfg.d/90-claude-vm.cfg
+if systemctl is-active --quiet cloud-init.target; then echo "cloud-init must be inert without a cidata disk"; exit 1; fi
+# its sshd-keygen drop-in would stop the image's host key generation, and cloud-init's ssh module is not used
+if [ -n "$(find /usr/lib/systemd/system -name 'disable-sshd-keygen-if-cloud-init-active.conf')" ]; then echo "the cloud-init sshd-keygen drop-in must be removed"; exit 1; fi
+ls /etc/ssh/ssh_host_*_key >/dev/null
+
 echo "--- podman isolation ---"
 # containers run as separate UIDs (claude-vm-podman@<agent>.service), not as the agents
 [ "$(id -u claude-podman)" = "1200" ]
