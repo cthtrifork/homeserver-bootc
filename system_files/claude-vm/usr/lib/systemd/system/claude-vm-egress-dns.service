@@ -1,0 +1,20 @@
+[Unit]
+Description=Claude VM egress gateway: allowlist DNS filter
+After=systemd-resolved.service
+Wants=systemd-resolved.service
+
+[Service]
+# starts as root to bind port 53 and drops to dnsmasq itself, like Fedora's own dnsmasq.service
+# the domains to forward are those of the allowlist in iron-proxy.yaml, one server=/<domain>/<resolver stub> each
+RuntimeDirectory=claude-vm-egress-dns
+ExecStartPre=/bin/sh -c "yq '.transforms[] | select(.name == \"allowlist\") | .config.domains[] | .[2:]' /usr/share/claude-vm/egress/iron-proxy.yaml | sed 's#.*#server=/&/127.0.0.53#' > /run/claude-vm-egress-dns/servers"
+ExecStart=/usr/sbin/dnsmasq --keep-in-foreground --pid-file= --user=dnsmasq --group=dnsmasq --conf-file=/usr/share/claude-vm/egress-dnsmasq.conf
+Restart=always
+RestartSec=2
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

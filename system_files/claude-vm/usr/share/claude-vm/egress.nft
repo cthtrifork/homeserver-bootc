@@ -1,6 +1,6 @@
-# Egress gateway: a user's DNS goes to its own iron-proxy, which answers every name with its own address; everything else that leaves
-# the machine is refused. One proxy per agent user and one shared by their containers (the podman users and subuid ranges). The
-# addresses are put on lo by claude-vm-egress-nft.service; not loopback ones, so that containers can reach them too.
+# Egress gateway: the DNS and the web traffic (80/443) of the agent users are redirected to local services; everything else that
+# leaves the machine is refused. DNS goes to dnsmasq (only allowlisted names resolve). Web traffic goes to the caller's iron-proxy:
+# one per agent user and one shared by their containers (the podman users and subuid ranges), each on its own loopback address.
 # The map and the set hold the same UID -> address rows; keep them in step (guard-tests.sh checks).
 table inet claude_egress
 delete table inet claude_egress
@@ -9,31 +9,33 @@ table inet claude_egress {
     map proxy {
         type uid : ipv4_addr
         flags interval
-        elements = { 1100 : 198.18.0.2, 1101 : 198.18.0.3, 1200-1201 : 198.18.0.4, 100000-231071 : 198.18.0.4 }
+        elements = { 1100 : 127.0.0.2, 1101 : 127.0.0.3, 1200-1201 : 127.0.0.4, 100000-231071 : 127.0.0.4 }
     }
 
     set proxy_of {
         type uid . ipv4_addr
         flags interval
-        elements = { 1100 . 198.18.0.2, 1101 . 198.18.0.3, 1200-1201 . 198.18.0.4, 100000-231071 . 198.18.0.4 }
+        elements = { 1100 . 127.0.0.2, 1101 . 127.0.0.3, 1200-1201 . 127.0.0.4, 100000-231071 . 127.0.0.4 }
     }
 
     chain nat_out {
         type nat hook output priority -100; policy accept;
-        meta skuid @proxy udp dport 53 dnat ip to meta skuid map @proxy : 53
-        meta skuid @proxy tcp dport 53 dnat ip to meta skuid map @proxy : 53
+        # DNS first (the resolver stub lives on 127.0.0.53), then leave other loopback traffic alone
+        meta skuid @proxy udp dport 53 dnat ip to 127.0.0.55:53
+        meta skuid @proxy tcp dport 53 dnat ip to 127.0.0.55:53
+        meta skuid @proxy ip daddr 127.0.0.0/8 return
+        meta skuid @proxy tcp dport { 80, 443 } dnat ip to meta skuid map @proxy
     }
 
     chain filter_out {
         type filter hook output priority 0; policy accept;
-        # a user reaches its own proxy only (another one could swap in another user's GitHub token), and only the proxy's ports:
-        # sshd and the other services that listen on every address listen on the proxy address too
-        meta skuid . ip daddr @proxy_of tcp dport { 53, 80, 443 } accept
-        meta skuid . ip daddr @proxy_of udp dport 53 accept
         meta skuid != @proxy return
-        # everything else of an agent user (a direct connection to an IP, UDP/QUIC, SSH, other ports, IPv6) is refused, except
-        # loopback: local services such as the resolver stub. Match the destination, not "oif lo": a packet sent to a local address
-        # is routed through lo after the nat hook, but later chains of the same hook still see the original output interface.
+        # a user reaches its own proxy only (another one could swap in another user's GitHub token), and only on 80/443
+        meta skuid . ip daddr @proxy_of tcp dport { 80, 443 } accept
+        ip daddr { 127.0.0.2, 127.0.0.3, 127.0.0.4 } reject
+        # everything else of an agent user (a direct connection that was not redirected, UDP/QUIC, SSH, other ports, IPv6) is refused,
+        # except loopback: local services such as the resolver stub. Match the destination, not "oif lo": a packet sent to a local
+        # address is routed through lo after the nat hook, but later chains of the same hook still see the original output interface.
         ip daddr 127.0.0.0/8 accept
         ip6 daddr ::1 accept
         counter reject with icmpx admin-prohibited

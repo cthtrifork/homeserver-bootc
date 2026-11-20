@@ -81,16 +81,17 @@ echo "--- egress gateway ---"
 [ "$(stat -c %a /run/systemd/resolve/io.systemd.Resolve)" = 600 ]
 # capture first: with pipefail, `cmd | grep -q` fails with SIGPIPE (141) when grep exits at the first match
 rules="$(sudo nft list table inet claude_egress)"
-# each agent user has its own proxy address and their containers (the podman users and subuid ranges) share a fourth: the map is the
-# DNS target and says who is an agent, the set says which address each may reach. Both must list every row (they are kept in step by hand).
-for row in '1100 : 198.18.0.2' '1101 : 198.18.0.3' '1200-1201 : 198.18.0.4' '100000-231071 : 198.18.0.4'; do
+# each agent user has its own proxy (loopback address) and their containers (the podman users and subuid ranges) share a third: the map
+# is the redirect target and says who is an agent, the set says which address each may reach. Both must list every row (kept in step by hand).
+for row in '1100 : 127.0.0.2' '1101 : 127.0.0.3' '1200-1201 : 127.0.0.4' '100000-231071 : 127.0.0.4'; do
     grep -qF "$row" <<<"$rules"
     grep -qF "${row/ : / . }" <<<"$rules"
 done
-grep -qF 'dnat ip to meta skuid map @proxy:53' <<<"$rules"
-# a user reaches its own proxy only, on the proxy's ports only; every other agent connection is refused
-grep -qF 'meta skuid . ip daddr @proxy_of tcp dport { 53, 80, 443 } accept' <<<"$rules"
-grep -qF 'meta skuid . ip daddr @proxy_of udp dport 53 accept' <<<"$rules"
+grep -qF 'dnat ip to 127.0.0.55:53' <<<"$rules"
+grep -qF 'tcp dport { 80, 443 } dnat ip to meta skuid map @proxy' <<<"$rules"
+# a user reaches its own proxy only, on 80/443; every other agent connection is refused
+grep -qF 'meta skuid . ip daddr @proxy_of tcp dport { 80, 443 } accept' <<<"$rules"
+grep -qF 'ip daddr { 127.0.0.2, 127.0.0.3, 127.0.0.4 } reject' <<<"$rules"
 grep -qF 'meta skuid != @proxy return' <<<"$rules"
 # the gateway runs as its own system user, outside the agent UIDs
 [ "$(id -u ironproxy)" -lt 1000 ]
