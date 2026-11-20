@@ -163,7 +163,7 @@ in your home directory, see below):
 
 ## Network and filesystem reminders
 
-- Writes are limited to `~/workspace`, `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
+- Writes are limited to `~/workspace`, `/tmp` (private to your service through `PrivateTmp=yes`, so other users cannot see it; still prefer `$TMPDIR`), `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`.
 - Only hosts in `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` are reachable. If a command fails with a network error,
   report the host instead of retrying; adding a host means editing that file and rebuilding the image.
 - `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt. Containers run as

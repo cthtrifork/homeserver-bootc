@@ -50,6 +50,7 @@
     ],
     "filesystem": {
       "allowWrite": [
+        "/tmp",
         "~/.npm-global",
         "~/.npm",
         "~/.local",
