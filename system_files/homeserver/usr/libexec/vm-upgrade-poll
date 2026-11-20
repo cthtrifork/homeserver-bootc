@@ -23,6 +23,16 @@ status="$(rpm-ostree status --json 2>/dev/null | jq -c '
     | {booted_version: ($b.version // ""),
        booted_digest: (($b["container-image-reference-digest"] // "") | ltrimstr("sha256:") | .[0:12]),
        staged_version: ($s.version // "")}' 2>/dev/null || true)"
+# last_error: bootc's own "error: ..." line (e.g. "Insufficient free space ... required: 1.1 GB") from whichever upgrade unit is currently
+# failed, empty otherwise so the page clears it once an upgrade works. Only a string for the page to show; nothing here is run.
+err=""
+for u in bootc-fetch-apply-updates.service claude-vm-upgrade-check.service; do
+    if systemctl is-failed --quiet "$u"; then
+        err+="$(journalctl -u "$u" -n 30 -o cat 2>/dev/null | grep '^error:' | tail -n 1 || true)"$'\n'
+    fi
+done
+err="$(tail -c 400 <<<"${err%$'\n'}")"
+status="$(jq -c --arg e "$err" '. + {last_error: $e}' <<<"${status:-{\}}" 2>/dev/null || echo "${status:-{\}}")"
 if ! curl --fail --silent --show-error --max-time 10 --request POST --header 'Content-Type: application/json' \
     --data "${status:-{\}}" "$url/report" >/dev/null; then
     # Most likely the DNS record does not exist yet, or the page is down: try again next minute, without failing the unit.
