@@ -36,11 +36,15 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
 
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs24 nodejs24-bin nodejs24-npm nodejs24-npm-bin nodejs24-full-i18n golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
-        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck yamllint make ripgrep tmux tree cloc qemu-guest-agent \
+        openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck yamllint make ripgrep tmux tree cloc qemu-guest-agent cloud-init \
         nftables dnsmasq \
         chromium ffmpeg-free \
     && dnf clean all \
     && rm -f /etc/dnf/repos.override.d/50-mirror.repo
+
+# cloud-init ships a drop-in that stops sshd-keygen whenever cloud-init is active, expecting cloud-init's own ssh module to make the
+# host keys. That module is not used here (see 90-claude-vm.cfg), so without this a VM with a cidata disk would boot with no host keys.
+RUN find /usr/lib/systemd/system -name disable-sshd-keygen-if-cloud-init-active.conf -delete
 
 # Rootless podman runs as separate UIDs, not as the agents: claude-podman (1200) and claude-rc-personal-podman (1201, see
 # sysusers.d). The agents get no subuid range, so they cannot start a user namespace of their own, and /usr/bin/podman is
