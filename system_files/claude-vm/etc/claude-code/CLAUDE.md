@@ -7,8 +7,8 @@ You are running on a bootc VM (`claude-vm`) as the unprivileged user `claude`. T
 - `/usr` is read-only and part of the OS image; you cannot install packages (no `dnf`, no sudo). Do not try to work
   around it. Tools you need beyond the image go in your home directory: `npm -g` (prefix `~/.npm-global`),
   `pip install --user`, `go install` (`~/go/bin`) are already on `PATH`.
-- Work in `~/workspace`. The Bash sandbox lets commands write only there and to `~/.npm-global`, `~/.npm`, `~/.local`,
-  `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries).
+- Work in `~/workspace`. The Bash sandbox lets commands write only there and to `/tmp` (private to your service, see
+  `PrivateTmp=yes`), `~/.npm-global`, `~/.npm`, `~/.local`, `~/.cache` and `~/go`, and reach only the allowlisted hosts (GitHub, npm, PyPI, Go, common container registries).
   Everything you start, including podman containers, goes through an egress gateway that blocks all other hosts
   (DNS lookups are refused, connections reset). Approving a prompt does not change that; the user adds a host by
   editing `system_files/claude-vm/usr/share/claude-vm/egress/iron-proxy.yaml` and rebuilding the image. If a command fails with a permission
