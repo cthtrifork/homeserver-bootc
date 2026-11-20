@@ -389,7 +389,8 @@ flowchart LR
   never see a token.
 - **One allowlist.** To allow a host, add it to `iron-proxy.yaml`. `managed-settings.json` sets no `sandbox.network.allowedDomains`: the
   gateway enforces the list for every process, so the sandbox only follows the permission mode (allowed in `bypassPermissions`, a prompt
-  in manual and `acceptEdits`, refused in `dontAsk`, in Auto only when the command names the host).
+  in manual and `acceptEdits`, refused in `dontAsk`, in Auto only when the command names the host). `run-remote-control` therefore starts new sessions with `--permission-mode bypassPermissions`, so git, `gh` and the registries work without prompts;
+  a session started in another mode (client selector) gets the prompts back.
 - **Blocks** show as a 403 or "connection refused". `sudo claude-vm-egress blocked` summarises them, `claude-vm-egress allowed` lists the hosts.
 - Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. SSH and git-over-SSH are blocked; use HTTPS remotes.
 - A guardrail, not a hard boundary: an allowed host that accepts writes can carry data out.
