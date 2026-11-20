@@ -133,7 +133,7 @@ flowchart LR
   Each service has its own memory/CPU caps (percent of VM RAM; see the unit files), so size the VM for the sum
   (2 vCPU / 4 GB light use, 4-8 vCPU / 8-16 GB for parallel builds, 30 GB+ disk for podman). Override with a drop-in in
   `/etc/systemd/system/<service>.d/`.
-- **SSH:** key-only for `caspertdk` (sudo), with the same public keys as the home server. The agents have no sudo.
+- **SSH:** key-only for `caspertdk` (sudo), with the same public keys as the home server. The agents have no sudo, but are in `systemd-journal` (via `sysusers.d/claude.conf`) so they can read the system journal.
 - **Updates:** `claude-vm-upgrade-check.timer` runs `bootc upgrade` (stage only, no reboot) every 30 minutes, so a new image is downloaded soon
   after it is published and shows as staged on the Update VMs page. `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so
   the staged image (or a newer one) reboots the VM and ends running sessions (Remote Control brings them back for about four hours). Drop
@@ -389,7 +389,8 @@ flowchart LR
   never see a token.
 - **One allowlist.** To allow a host, add it to `iron-proxy.yaml`. `managed-settings.json` sets no `sandbox.network.allowedDomains`: the
   gateway enforces the list for every process, so the sandbox only follows the permission mode (allowed in `bypassPermissions`, a prompt
-  in manual and `acceptEdits`, refused in `dontAsk`, in Auto only when the command names the host).
+  in manual and `acceptEdits`, refused in `dontAsk`, in Auto only when the command names the host). `run-remote-control` therefore starts new sessions with `--permission-mode bypassPermissions`, so git, `gh` and the registries work without prompts;
+  a session started in another mode (client selector) gets the prompts back.
 - **Blocks** show as a 403 or "connection refused". `sudo claude-vm-egress blocked` summarises them, `claude-vm-egress allowed` lists the hosts.
 - Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. SSH and git-over-SSH are blocked; use HTTPS remotes.
 - A guardrail, not a hard boundary: an allowed host that accepts writes can carry data out.

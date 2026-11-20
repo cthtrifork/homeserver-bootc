@@ -3,4 +3,7 @@
 # App installation token (kept fresh by claude-vm-github-token@<user>.timer) to requests to GitHub.
 set -euo pipefail
 
-exec claude remote-control --name "${CLAUDE_VM_NAME:-$(hostname -s)}" "$@"
+# New sessions start in bypassPermissions, the mode the managed policy defaults to. In any other mode (Auto, manual) the sandbox refuses or
+# asks for every host it does not know, so git, gh and the registries fail although the egress gateway allows them; the gateway, not the
+# prompts, is the network boundary here (see "One allowlist" in docs/claude-vm/README.md). A flag in "$@" or the client's mode selector overrides this.
+exec claude remote-control --name "${CLAUDE_VM_NAME:-$(hostname -s)}" --permission-mode bypassPermissions "$@"

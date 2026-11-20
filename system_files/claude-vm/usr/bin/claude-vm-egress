@@ -5,7 +5,7 @@
 #                                        # refused HTTPS/HTTP requests since boot, one line per host: count, last seen,
 #                                        # scheme, host (--raw: every refused request as JSON; other args go to journalctl,
 #                                        # e.g. --since -1h).
-#                                        # Reading the journal needs root or the adm/wheel group: use sudo.
+#                                        # Reading the journal needs root or the adm/wheel/systemd-journal group (the agent users are in systemd-journal).
 # DNS refusals are not logged, so a name that never resolves does not show up under "blocked".
 set -euo pipefail
 
