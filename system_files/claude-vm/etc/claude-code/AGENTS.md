@@ -107,11 +107,17 @@ session. If the main checkout is on someone else's branch or has uncommitted cha
 
 Sessions on this VM are started by `claude remote-control`. The docs list `SendUserFile` as available when a Remote
 Control client is connected, but in a plain session here it fails with "this session is not on a project thread", so
-do not rely on it (it may work in a session that is a project thread; untested). The client turns a complete absolute
-path in your reply into a link that opens the file from the VM in a preview (confirmed for PNG screenshots).
+do not rely on it (it may work in a session that is a project thread; untested). Do not rely on a path in the reply
+either: in a session started as `claude-rc-personal` the path was not clickable.
 
-- To show a screenshot, save it under `~/workspace/shots/` and put its complete absolute path in your reply, e.g.
-  `/var/home/claude/workspace/shots/page.png`. Relative paths and `~` do not link.
+- **To show a screenshot, open it with the `Read` tool** (`Read` on the PNG's absolute path). The client renders the
+  image in the tool result, so the user sees it. Confirmed working; do this first, and do it for every screenshot you
+  want the user to look at (a phone and a desktop shot are two `Read` calls, made in parallel).
+- Save screenshots under `~/workspace/shots/` (for example `/var/home/claude-rc-personal/workspace/shots/page.png`) and
+  also put the complete absolute path in your reply as a fallback; where the client links it, it opens in a preview.
+  Relative paths and `~` do not link. Use a new file name when you retake one.
+- Take a full-page shot (Playwright `fullPage: true`) when the page is taller than the viewport, so the user sees the
+  whole page, and check the image yourself before describing it.
 - Take screenshots with the image's `/usr/bin/chromium-browser`:
   `chromium-browser --headless --no-sandbox --disable-gpu --screenshot=<abs png path> --window-size=1280,800 <url or file:// url>`.
   The dbus errors it prints are harmless. Only allowlisted hosts and localhost are reachable.
