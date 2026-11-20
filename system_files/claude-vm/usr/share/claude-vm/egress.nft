@@ -1,6 +1,8 @@
-# Egress gateway: a user's DNS goes to its own iron-proxy, which answers every name with its own address; everything else that leaves
-# the machine is refused. One proxy per agent user and one shared by their containers (the podman users and subuid ranges). The
-# addresses are put on lo by claude-vm-egress-nft.service; not loopback ones, so that containers can reach them too.
+# Egress gateway: a user's DNS goes to its own iron-proxy, which answers every name with 198.19.0.1; web traffic to that address is
+# redirected to the caller's proxy; everything else that leaves the machine is refused. One proxy per agent user and one shared by
+# their containers (the podman users and subuid ranges). 198.19.0.1 is not assigned to any interface (Claude Code's sandbox proxy
+# refuses names that resolve to an address of this machine; claude-vm-egress-nft.service only routes it). The proxies listen on
+# addresses on lo, not loopback ones, so that containers can reach them too.
 # The map and the set hold the same UID -> address rows; keep them in step (guard-tests.sh checks).
 table inet claude_egress
 delete table inet claude_egress
@@ -22,6 +24,7 @@ table inet claude_egress {
         type nat hook output priority -100; policy accept;
         meta skuid @proxy udp dport 53 dnat ip to meta skuid map @proxy : 53
         meta skuid @proxy tcp dport 53 dnat ip to meta skuid map @proxy : 53
+        meta skuid @proxy ip daddr 198.19.0.1 tcp dport { 80, 443 } dnat ip to meta skuid map @proxy
     }
 
     chain filter_out {

@@ -349,7 +349,7 @@ and [`egress/`](../../system_files/claude-vm/usr/share/claude-vm/egress/) (`iron
 | `claude-vm-egress-proxy@<instance>` | [iron-proxy](https://github.com/paradigmxyz/iron-proxy): one per agent user, one shared by their containers |
 
 - **Every name resolves to the user's proxy**, which refuses names off the allowlist (403). Direct connections to an IP, other ports,
-  IPv6 and another user's proxy are refused by nftables. The proxy addresses (198.18.0.x) are not loopback, so containers reach them too.
+  IPv6 and another user's proxy are refused by nftables. Names resolve to 198.19.0.1, an address no interface owns (Claude Code's sandbox proxy refuses names that resolve to an address of this machine), and nftables redirects it to the caller's proxy; the proxies listen on non-loopback addresses (198.18.0.x), so containers reach them too.
 - **The agents' proxies end TLS** with the CA (trusted system-wide and via `NODE_EXTRA_CA_CERTS`) to swap the GitHub token in. Tools
   with their own trust store fail on every host. **Containers pass TLS through** (`IRON_TLS_MODE=sni-only`), so they need no CA and
   never see a token.

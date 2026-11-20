@@ -157,17 +157,18 @@ PY
 }
 # allowed: on the list (DNS + TLS through the proxy)
 as_agent curl -sS --max-time 20 -o /dev/null https://github.com
-[ "$(as_agent getent hosts github.com | cut -d' ' -f1)" = 198.18.0.2 ]
-[ "$(dns_answer github.com 127.0.0.53)" = "0 198.18.0.2" ]
-[ "$(dns_answer example.com 8.8.8.8)" = "0 198.18.0.2" ]
+[ "$(as_agent getent hosts github.com | cut -d' ' -f1)" = 198.19.0.1 ]
+[ "$(dns_answer github.com 127.0.0.53)" = "0 198.19.0.1" ]
+[ "$(dns_answer example.com 8.8.8.8)" = "0 198.19.0.1" ]
 # blocked: not on the list (the proxy answers 403), IP literal (refused), other ports, subuid range (host-network containers)
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' https://example.com)" = 403 ]
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://example.com
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://1.1.1.1
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null --resolve example.com:443:93.184.216.34 https://example.com
 must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
-# the proxy address answers on the proxy's ports only: sshd listens on it too
+# the proxy addresses answer on the proxy's ports only: sshd listens on them too
 must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/198.18.0.2/22'
+must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/198.19.0.1/22'
 must_fail sudo -u '#100000' curl -sSf --max-time 10 -o /dev/null https://example.com
 # the gateway ends TLS for every allowlisted host (to swap the GitHub token in): the certificate is signed by our CA, which the
 # system trusts (the curl above succeeded)
@@ -243,7 +244,7 @@ container_blocked --network=host --user 1000:1000 "$img" curl -sSf -6 --max-time
 for opts in "" "--network=host" "--network=host --user 1000:1000"; do
     # shellcheck disable=SC2086
     answer="$(agent_podman run --rm --pull=never $opts "$alpine" nslookup example.com 8.8.8.8 2>&1 || true)"
-    grep -qF 198.18.0.4 <<<"$answer" || { echo "DNS from a container ($opts) was not answered by the proxy: $answer"; exit 1; }
+    grep -qF 198.19.0.1 <<<"$answer" || { echo "DNS from a container ($opts) was not answered by the proxy: $answer"; exit 1; }
 done
 # root in a rootless container has no rights on the host's network: it cannot add an address or change the routes there
 agent_podman run --rm --pull=never --network=host --cap-add=NET_ADMIN "$alpine" sh -c 'ip addr add 198.18.0.9/32 dev lo' >/dev/null 2>&1 && { echo "a container changed the host's network"; exit 1; }

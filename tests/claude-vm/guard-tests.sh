@@ -87,6 +87,7 @@ for row in '1100 : 198.18.0.2' '1101 : 198.18.0.3' '1200-1201 : 198.18.0.4' '100
     grep -qF "${row/ : / . }" <<<"$rules"
 done
 grep -qF 'dnat ip to meta skuid map @proxy:53' <<<"$rules"
+grep -qF 'ip daddr 198.19.0.1 tcp dport { 80, 443 } dnat ip to meta skuid map @proxy' <<<"$rules"
 # a user reaches its own proxy only, on the proxy's ports only; every other agent connection is refused
 grep -qF 'meta skuid . ip daddr @proxy_of tcp dport { 53, 80, 443 } accept' <<<"$rules"
 grep -qF 'meta skuid . ip daddr @proxy_of udp dport 53 accept' <<<"$rules"

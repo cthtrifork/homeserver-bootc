@@ -86,6 +86,11 @@ allowed="$(claude-vm-egress allowed)"
 grep -qx github.com <<<"$allowed"
 grep -qx portableinfo.cloud <<<"$allowed"
 
+# the sandbox proxy of Claude Code refuses names that resolve to an address of this machine: the address the proxies answer with must
+# not be assigned to any interface (it is only routed, and redirected by nftables)
+if ip -4 addr show | grep -qF 198.19.0.1; then echo "198.19.0.1 must not be assigned to an interface"; exit 1; fi
+ip route get 198.19.0.1 >/dev/null
+
 echo "--- egress gateway: GitHub token swap and CA ---"
 # one proxy per agent user, each holding that user's token only
 for u in claude claude-rc-personal containers; do systemctl is-active --quiet "claude-vm-egress-proxy@$u.service"; done

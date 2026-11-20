@@ -14,8 +14,11 @@ RemainAfterExit=yes
 ExecStart=/usr/sbin/ip addr replace 198.18.0.2/32 dev lo
 ExecStart=/usr/sbin/ip addr replace 198.18.0.3/32 dev lo
 ExecStart=/usr/sbin/ip addr replace 198.18.0.4/32 dev lo
+# the address the proxies answer with: routed (so connect() succeeds even without a default route), not assigned to an interface
+ExecStart=/usr/sbin/ip route replace 198.19.0.1/32 dev lo
 ExecStart=/usr/sbin/nft -f /usr/share/claude-vm/egress.nft
 ExecStop=/usr/sbin/nft delete table inet claude_egress
+ExecStop=/usr/sbin/ip route del 198.19.0.1/32 dev lo
 ExecStop=/usr/sbin/ip addr del 198.18.0.2/32 dev lo
 ExecStop=/usr/sbin/ip addr del 198.18.0.3/32 dev lo
 ExecStop=/usr/sbin/ip addr del 198.18.0.4/32 dev lo

@@ -1,9 +1,10 @@
 # iron-proxy of the egress gateway: one instance per agent user and one for their containers (claude-vm-egress-proxy@<instance>).
 # proxy-<instance>.env overrides the addresses (IRON_*); the values here are the claude user's. It is also the DNS server: every name
-# resolves to proxy_ip, and names off the allowlist get a 403. See docs/claude-vm/README.md.
+# resolves to proxy_ip, a virtual address that egress.nft redirects to the caller's own proxy, and names off the allowlist get a 403.
+# See docs/claude-vm/README.md.
 dns:
   listen: "198.18.0.2:53"
-  proxy_ip: "198.18.0.2"
+  proxy_ip: "198.19.0.1"
 proxy:
   http_listen: "198.18.0.2:80"
   https_listen: "198.18.0.2:443"
