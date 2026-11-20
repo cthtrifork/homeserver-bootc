@@ -441,6 +441,15 @@ published, and have nothing to build for others.
 3. Boot it (for example with `virt-install --import --disk output/qcow2/disk.qcow2`), SSH in as your user, and do the
    [first-boot setup](#first-boot-setup-once-per-vm-per-agent-user).
 
+## Run it on KubeVirt
+
+`publish-claude-vm-containerdisk.yaml` (manual dispatch, input `tag`) builds a 60 GiB qcow2 from `config-claude-vm.toml` and
+pushes it as a KubeVirt containerDisk to `ghcr.io/cthtrifork/homeserver-bootc/claude-vm-containerdisk:<tag>`. The
+[talos-gitops](https://github.com/cthtrifork/talos-gitops) cluster imports it once into a PVC with CDI (`source: registry`);
+from then on the VM updates itself with `bootc upgrade` like any other, so the containerDisk only needs rebuilding for a new
+VM. The first-boot setup above (GitHub App, signing key, Claude login) is still done by hand over SSH. The package is private
+until you make it public under the repository's Packages settings.
+
 ## Tests
 
 `tests/claude-vm/` runs in QEMU when a non-draft pull request has the `e2e` label: tools, idle services, policy, users, home

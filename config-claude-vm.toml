@@ -1,0 +1,5 @@
+# bootc-image-builder config for the claude-vm KubeVirt disk. The root filesystem is sized here so the
+# VM does not depend on a first-boot grow step; keep it in step with the DataVolume in talos-gitops.
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "60 GiB"

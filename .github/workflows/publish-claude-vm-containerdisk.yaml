@@ -1,0 +1,78 @@
+name: Publish claude-vm containerDisk
+
+# Builds a qcow2 of claude-vm-bootc and publishes it as a KubeVirt containerDisk
+# (ghcr.io/<repo>/claude-vm-containerdisk). CDI imports it once into a PVC (DataVolume source "registry");
+# after that the VM updates itself with `bootc upgrade`, so this only has to run when the first-boot
+# disk should change (a new VM, or a rebuild after a breaking image change).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "claude-vm-bootc image tag to turn into a disk"
+        type: string
+        required: true
+        default: "latest"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}/claude-vm-bootc
+  DISK_IMAGE: ghcr.io/${{ github.repository }}/claude-vm-containerdisk
+
+jobs:
+  publish:
+    name: Build and push the containerDisk
+    # Pinned: ubuntu-latest (26.04) breaks osbuild's /dev mount (permission denied), see create-vmdk-image.yaml
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Delete huge unnecessary tools folder
+        run: |
+          rm -rf /opt/hostedtoolcache
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make registry credentials available for sudo
+        run: |
+          sudo mkdir -p /root/.config/containers
+          sudo cp "${XDG_RUNTIME_DIR}/containers/auth.json" /root/.config/containers/auth.json
+
+      - name: Create the qcow2
+        id: bib
+        uses: ublue-os/bootc-image-builder-action@b98784c42327746e107a6a753b64f44823bdbf2f # main
+        with:
+          config-file: ./config-claude-vm.toml
+          type: qcow2
+          rootfs: xfs
+          image: ${{ env.IMAGE }}:${{ inputs.tag }}
+
+      # KubeVirt containerDisk format: the disk at /disk/, owned by the qemu user (107)
+      - name: Build and push the containerDisk
+        env:
+          TAG: ${{ inputs.tag }}
+          DISK_PATH: ${{ steps.bib.outputs.output-path }}
+        run: |
+          set -euo pipefail
+          ctx="$(mktemp -d)"
+          sudo cp "${DISK_PATH}" "${ctx}/disk.qcow2"
+          sudo chown "$(id -u):$(id -g)" "${ctx}/disk.qcow2"
+          printf 'FROM scratch\nADD --chown=107:107 disk.qcow2 /disk/disk.qcow2\n' > "${ctx}/Containerfile"
+          podman build -t "${DISK_IMAGE}:${TAG}" "${ctx}"
+          podman push "${DISK_IMAGE}:${TAG}"
