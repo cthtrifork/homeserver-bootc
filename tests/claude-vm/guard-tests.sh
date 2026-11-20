@@ -102,9 +102,10 @@ grep -qF claude-vm-egress-proxy <<<"$requires"
 echo "--- one allowlist ---"
 # iron-proxy.yaml is the source: the sandbox list in managed-settings.json is generated from it (each "*.d" becomes "d" and "*.d", the
 # form Claude Code matches), so the sandbox never asks about a host the gateway allows. The gateway enforces it for every process.
+# A leading "*" (allow all, not in the docs) is tried on top of the list and ignored here; if it works the list can go.
 yq -e '.transforms[] | select(.name == "allowlist") | .config.domains | contains(["*.anthropic.com"])' /usr/share/claude-vm/egress/iron-proxy.yaml >/dev/null
 want="$(yq -o=json '[.transforms[] | select(.name == "allowlist") | .config.domains[] | (sub("^\\*\\.";""), .)] | sort' /usr/share/claude-vm/egress/iron-proxy.yaml)"
-have="$(jq -c '.sandbox.network.allowedDomains | sort' /etc/claude-code/managed-settings.json)"
+have="$(jq -c '.sandbox.network.allowedDomains | map(select(. != "*")) | sort' /etc/claude-code/managed-settings.json)"
 [ "$(jq -c . <<<"$want")" = "$have" ] || { echo "sandbox.network.allowedDomains in managed-settings.json is out of sync with iron-proxy.yaml"; exit 1; }
 
 echo "--- users and home directories ---"

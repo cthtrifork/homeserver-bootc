@@ -389,7 +389,8 @@ flowchart LR
   never see a token.
 - **One allowlist.** To allow a host, add it to `iron-proxy.yaml`, then add it to `sandbox.network.allowedDomains` in `managed-settings.json` (each
   `*.d` entry becomes `d` and `*.d`; `guard-tests.sh` fails when the two lists differ). The gateway enforces the list for every process; the
-  sandbox list only keeps Claude Code from prompting for or refusing a host the gateway allows, in any permission mode.
+  sandbox list only keeps Claude Code from prompting for or refusing a host the gateway allows, in any permission mode. The list starts with `"*"` (allow all): the docs only list exact domains and `*.domain`, so the explicit entries stay
+  until a session in a non-bypass mode is seen to reach a host without a prompt.
 - **Blocks** show as a 403 or "connection refused". `sudo claude-vm-egress blocked` summarises them, `claude-vm-egress allowed` lists the hosts.
 - Root, `caspertdk`, `bootc upgrade`, dnf and the Pinggy tunnel are not restricted. SSH and git-over-SSH are blocked; use HTTPS remotes.
 - A guardrail, not a hard boundary: an allowed host that accepts writes can carry data out.

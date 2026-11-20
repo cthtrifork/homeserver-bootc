@@ -75,6 +75,7 @@
     "network": {
       "allowAllUnixSockets": true,
       "allowedDomains": [
+        "*",
         "anthropic.com",
         "api.first.org",
         "astral.sh",
