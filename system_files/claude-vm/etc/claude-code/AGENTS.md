@@ -169,6 +169,11 @@ in your home directory, see below):
 - `podman` and `podman-compose` are excluded from the sandbox and allowed without an approval prompt. Containers run as
   `<user>-podman`: mount repos with `-v ~/workspace/<repo>:/src` (no `:Z` needed); `/usr/bin/podman` is not executable for you.
   Files a container writes into `~/workspace` are owned by `<user>-podman` but stay writable for you (default ACL).
+- `podman` is only a proxy to that other user's API, so images and containers live in that user's storage, not in root's or
+  yours. To see or free container disk space (it is often the largest consumer, many GB of leftover images), run plain
+  `podman system df` and `podman image prune -a` as yourself. Never give the user `sudo podman` or `runuser -u <user>-podman --
+  podman ...`: `sudo podman` shows empty root storage and `runuser` fails ("unable to create a new pause process"). Each VM user has
+  its own podman storage, so you can only prune your own.
 - `dig`, `nslookup` and `getent hosts` are excluded from the sandbox (its network namespace cannot reach the local resolver), so
   they run unsandboxed and prompt-free. They still go through the egress gateway's DNS filter by UID: only allowlisted names
   resolve. Other tools resolve names through the sandbox proxy, which needs no exclusion.
