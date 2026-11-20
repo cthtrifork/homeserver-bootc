@@ -344,12 +344,14 @@ and [`egress/`](../../system_files/claude-vm/usr/share/claude-vm/egress/) (`iron
 
 | Unit | What it does |
 | --- | --- |
-| `claude-vm-egress-nft` | an address per proxy on `lo`, and the nftables rules: a user's DNS goes to its proxy, everything else that leaves the machine is refused |
+| `claude-vm-egress-nft` | the nftables rules: a user's DNS goes to dnsmasq and its web traffic to its proxy, everything else that leaves the machine is refused |
+| `claude-vm-egress-dns` | dnsmasq: resolves only the allowlisted names |
 | `claude-vm-egress-ca` | makes the private CA the agents' proxies sign with, once |
 | `claude-vm-egress-proxy@<instance>` | [iron-proxy](https://github.com/paradigmxyz/iron-proxy): one per agent user, one shared by their containers |
 
-- **Every name resolves to the user's proxy**, which refuses names off the allowlist (403). Direct connections to an IP, other ports,
-  IPv6 and another user's proxy are refused by nftables. The proxy addresses (198.18.0.x) are not loopback, so containers reach them too.
+- **Only allowlisted names resolve.** Web traffic (80/443) goes to the caller's proxy, whatever address it was sent to, and the proxy
+  picks the upstream from the SNI or Host and refuses names off the allowlist (403). Other ports, IPv6 and another user's proxy are
+  refused by nftables.
 - **The agents' proxies end TLS** with the CA (trusted system-wide and via `NODE_EXTRA_CA_CERTS`) to swap the GitHub token in. Tools
   with their own trust store fail on every host. **Containers pass TLS through** (`IRON_TLS_MODE=sni-only`), so they need no CA and
   never see a token.

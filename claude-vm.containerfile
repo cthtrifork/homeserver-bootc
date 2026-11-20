@@ -16,7 +16,7 @@ ARG LIGHTHOUSE_VERSION=13.6.0 # renovate: datasource=npm depName=lighthouse
 # `podman compose`), plus linters/formatters
 # (ShellCheck, yamllint, jq/yq; shfmt, hadolint and actionlint are installed below).
 # bubblewrap + socat are what Claude Code's Bash sandbox needs on Linux; passt gives rootless podman its networking
-# (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + iron-proxy (DNS, allowlist, swaps in the GitHub token) make up the
+# (weak dependencies are off); tree is used by tests/diagnostics.sh. nftables + dnsmasq + iron-proxy (allowlist, swaps in the GitHub token) make up the
 # egress allowlist gateway for the agent user (see docs/claude-vm/README.md).
 # Node 24 (the Active LTS line, packaged by Fedora as the parallel-installable nodejs24): nodejs24-bin and nodejs24-npm-bin are
 # the packages that provide /usr/bin/node, npm and npx (via alternatives); the plain nodejs/nodejs22 packages are not installed.
@@ -37,7 +37,7 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
 RUN dnf -y install --setopt=install_weak_deps=False \
         bash python3 python3-pip nodejs24 nodejs24-bin nodejs24-npm nodejs24-npm-bin nodejs24-full-i18n golang podman podman-remote podman-compose shadow-utils fuse-overlayfs acl \
         openssh-clients bubblewrap socat skopeo passt git-core gh jq yq ShellCheck yamllint make ripgrep tmux tree cloc qemu-guest-agent \
-        nftables iproute \
+        nftables dnsmasq \
         chromium ffmpeg-free \
     && dnf clean all \
     && rm -f /etc/dnf/repos.override.d/50-mirror.repo
@@ -105,7 +105,7 @@ COPY --chmod=0644 policy.json /etc/containers/policy.json
 COPY --chmod=0644 system_files/homeserver/etc/containers/registries.d/ghcr.yaml /etc/containers/registries.d/ghcr.yaml
 RUN chmod 0755 /usr/bin/claude-vm-seed-github-app /usr/bin/claude-vm-signing-key /usr/bin/claude-vm-ssh-address /usr/bin/claude-vm-egress /usr/libexec/claude-vm/* \
     && systemctl enable claude-remote-control.service qemu-guest-agent.service bootc-fetch-apply-updates.timer \
-        claude-vm-egress-nft.service claude-vm-egress-ca.service claude-vm-egress-proxy.service claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service claude-vm-egress-proxy@containers.service \
+        claude-vm-egress-nft.service claude-vm-egress-ca.service claude-vm-egress-proxy.service claude-vm-egress-proxy@claude.service claude-vm-egress-proxy@claude-rc-personal.service claude-vm-egress-proxy@containers.service claude-vm-egress-dns.service \
         claude-vm-podman@claude.service claude-vm-upgrade-poll.timer claude-vm-upgrade-check.timer
 
 # var-tmpfiles is skipped: CI bind-mounts the runner's dnf cache at /var/cache/libdnf5 (owned by the

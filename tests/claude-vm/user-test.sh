@@ -141,9 +141,9 @@ echo "--- egress allowlist: claude user and podman subuid range ---"
 as_agent() { sudo -u claude -H "$@"; }
 # set -e ignores a failing "! cmd", so negative checks go through this
 must_fail() { if "$@" >/dev/null 2>&1; then echo "should have been blocked: $*"; diagnose; exit 1; fi; }
-# the DNS of the agent is answered by its proxy: every name resolves to the proxy address, whatever resolver is asked
-# (a raw UDP query to the stub in /etc/resolv.conf, and to a public resolver that nftables redirects)
-dns_answer() {
+# raw UDP DNS query as claude to a resolver; prints the response code (0 ok, 5 refused). The stub in /etc/resolv.conf and a public
+# resolver both end up at the DNS filter: nftables redirects the DNS of the agent users
+dns_rcode() {
     as_agent python3 - "$1" "$2" <<'PY'
 import socket, struct, sys
 name, server = sys.argv[1], sys.argv[2]
@@ -151,23 +151,25 @@ query = struct.pack(">HHHHHH", 1, 0x0100, 1, 0, 0, 0) + b"".join(bytes([len(p)])
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.settimeout(5)
 sock.sendto(query, (server, 53))
-reply = sock.recv(512)
-print(reply[3] & 15, ".".join(str(b) for b in reply[-4:]))
+print(sock.recv(512)[3] & 15)
 PY
 }
 # allowed: on the list (DNS + TLS through the proxy)
 as_agent curl -sS --max-time 20 -o /dev/null https://github.com
-[ "$(as_agent getent hosts github.com | cut -d' ' -f1)" = 198.18.0.2 ]
-[ "$(dns_answer github.com 127.0.0.53)" = "0 198.18.0.2" ]
-[ "$(dns_answer example.com 8.8.8.8)" = "0 198.18.0.2" ]
-# blocked: not on the list (the proxy answers 403), IP literal (refused), other ports, subuid range (host-network containers)
-[ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' https://example.com)" = 403 ]
+as_agent getent hosts github.com >/dev/null
+# the DNS filter itself: a listed name is answered, anything else is refused (rcode 5), whatever resolver is asked
+[ "$(dns_rcode github.com 127.0.0.53)" = 0 ]
+[ "$(dns_rcode example.com 127.0.0.53)" = 5 ]
+[ "$(dns_rcode example.com 8.8.8.8)" = 5 ]
+# blocked: not on the list (DNS refused), IP literal, other ports, subuid range (host-network containers)
+must_fail as_agent getent hosts example.com
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://example.com
 must_fail as_agent curl -sSf --max-time 10 -o /dev/null https://1.1.1.1
-must_fail as_agent curl -sSf --max-time 10 -o /dev/null --resolve example.com:443:93.184.216.34 https://example.com
+# a name pinned to an address bypasses the DNS filter but not the proxy: it is redirected there and refused (403)
+[ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:443:93.184.216.34 https://example.com)" = 403 ]
 must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/github.com/22'
 # the proxy address answers on the proxy's ports only: sshd listens on it too
-must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/198.18.0.2/22'
+must_fail as_agent timeout 10 bash -c 'exec 3<>/dev/tcp/127.0.0.2/22'
 must_fail sudo -u '#100000' curl -sSf --max-time 10 -o /dev/null https://example.com
 # the gateway ends TLS for every allowlisted host (to swap the GitHub token in): the certificate is signed by our CA, which the
 # system trusts (the curl above succeeded)
@@ -178,11 +180,11 @@ as_agent git -C /var/home/claude ls-remote https://github.com/octocat/Hello-Worl
 # a Host that differs from the SNI is refused (400): an allowed name cannot be used to reach another one
 [ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' -H 'Host: example.com' https://github.com/)" = 400 ]
 # nor can the other user's proxy or an IPv6 address be reached
-must_fail as_agent curl -sS --max-time 10 -o /dev/null http://198.18.0.3
-must_fail as_agent curl -sS --max-time 10 -o /dev/null http://198.18.0.4
+must_fail as_agent curl -sS --max-time 10 -o /dev/null http://127.0.0.3
+must_fail as_agent curl -sS --max-time 10 -o /dev/null http://127.0.0.4
 must_fail as_agent curl -sSf -6 --max-time 10 -o /dev/null "https://[2606:4700:4700::1111]/"
-# plain HTTP is matched on the Host header
-[ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' http://example.com)" = "403" ]
+# plain HTTP is matched on the Host header (the address is pinned so DNS does not refuse first)
+[ "$(as_agent curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
 # blocked requests are logged to the journal; check the claude-vm-egress summary (one "count time scheme host" line per host)
 for _ in $(seq 30); do blocked="$(sudo claude-vm-egress blocked)"; grep -qE ' http example\.com$' <<<"$blocked" && break; sleep 1; done
 echo "--- claude-vm-egress blocked ---"
@@ -220,16 +222,15 @@ container_blocked "$img" curl -sSf --max-time 10 -o /dev/null https://1.1.1.1
 container_blocked --network=host "$img" curl -sSf --max-time 10 -o /dev/null https://example.com
 container_blocked --network=host --user 1000:1000 "$img" curl -sSf --max-time 10 -o /dev/null https://example.com
 container_blocked --network=host --user 1000:1000 "$img" curl -sSf --max-time 10 -o /dev/null https://1.1.1.1
-# plain HTTP to a name that is not on the list is answered with 403 by the proxy
-[ "$(agent_podman run --rm --pull=never "$img" curl -s --max-time 10 -o /dev/null -w '%{http_code}' http://example.com)" = "403" ]
+# plain HTTP to a name that is not on the list is answered with 403 by the proxy (address pinned so DNS does not refuse first)
+[ "$(agent_podman run --rm --pull=never "$img" curl -s --max-time 10 -o /dev/null -w '%{http_code}' --resolve example.com:80:93.184.216.34 http://example.com)" = "403" ]
 
 echo "--- containers cannot get around the proxy ---"
 alpine=mirror.gcr.io/library/alpine:latest
 agent_podman pull -q "$alpine" >/dev/null
-# containers share one proxy that passes TLS through (no CA in the container): it answers 403 for a plain-HTTP Host that is not
-# allowed, and the agents' proxies (which would swap in a GitHub token) are not reachable from a container, on any network
-[ "$(agent_podman run --rm --pull=never "$img" curl -s --max-time 10 -o /dev/null -w '%{http_code}' http://198.18.0.4)" = "403" ]
-for addr in 198.18.0.2 198.18.0.3; do
+# containers share one proxy that passes TLS through (no CA in the container); the agents' proxies (which would swap in a GitHub
+# token) are not reachable from a container, on any network
+for addr in 127.0.0.2 127.0.0.3; do
     container_blocked "$img" curl -sS --max-time 10 -o /dev/null "http://$addr"
     container_blocked --network=host "$img" curl -sS --max-time 10 -o /dev/null "http://$addr"
     container_blocked --network=host --user 1000:1000 "$img" curl -sS --max-time 10 -o /dev/null "http://$addr"
@@ -239,11 +240,15 @@ agent_podman run --rm --pull=never "$img" curl -sS --max-time 20 -o /dev/null ht
 # IPv6 is refused
 container_blocked "$img" curl -sSf -6 --max-time 10 -o /dev/null "https://[2606:4700:4700::1111]/"
 container_blocked --network=host --user 1000:1000 "$img" curl -sSf -6 --max-time 10 -o /dev/null "https://[2606:4700:4700::1111]/"
-# a DNS query to a public resolver, from the pasta network, the host network and a subuid, is answered by the containers' proxy
+# a DNS query to a public resolver, from the pasta network, the host network and a subuid, is answered by the DNS filter: a listed name
+# resolves, anything else does not
 for opts in "" "--network=host" "--network=host --user 1000:1000"; do
     # shellcheck disable=SC2086
-    answer="$(agent_podman run --rm --pull=never $opts "$alpine" nslookup example.com 8.8.8.8 2>&1 || true)"
-    grep -qF 198.18.0.4 <<<"$answer" || { echo "DNS from a container ($opts) was not answered by the proxy: $answer"; exit 1; }
+    listed="$(agent_podman run --rm --pull=never $opts "$alpine" nslookup github.com 8.8.8.8 2>&1 || true)"
+    # shellcheck disable=SC2086
+    unlisted="$(agent_podman run --rm --pull=never $opts "$alpine" nslookup example.com 8.8.8.8 2>&1 || true)"
+    grep -q 'Name:' <<<"$listed" || { echo "a listed name did not resolve in a container ($opts): $listed"; exit 1; }
+    if grep -q 'Name:' <<<"$unlisted"; then echo "an unlisted name resolved in a container ($opts): $unlisted"; exit 1; fi
 done
 # root in a rootless container has no rights on the host's network: it cannot add an address or change the routes there
 agent_podman run --rm --pull=never --network=host --cap-add=NET_ADMIN "$alpine" sh -c 'ip addr add 198.18.0.9/32 dev lo' >/dev/null 2>&1 && { echo "a container changed the host's network"; exit 1; }

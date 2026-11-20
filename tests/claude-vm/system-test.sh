@@ -56,7 +56,7 @@ graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "g
 [ "$graphemes" = "7" ] || { echo "node: Intl.Segmenter is broken (got '$graphemes'): is nodejs24-full-i18n installed?"; exit 1; }
 
 echo "--- egress gateway ---"
-for u in nft ca proxy; do
+for u in nft ca proxy dns; do
     unit="claude-vm-egress-$u.service"
     if ! timeout 30 bash -c "until systemctl is-active --quiet $unit; do sleep 1; done"; then
         echo "$unit is not active"
@@ -69,12 +69,13 @@ done
 test -x /usr/libexec/claude-vm/egress-proxy
 tcp="$(ss -ltnH)"
 udp="$(ss -lunH)"
-# each agent user has its own proxy address (on lo), so the proxy adds that user's token, and the containers share a fourth that passes TLS through: web and DNS on each
-for addr in 198.18.0.2 198.18.0.3 198.18.0.4; do
+# each agent user has its own proxy on its own loopback address, so the proxy adds that user's token, and the containers share a third
+# that passes TLS through; dnsmasq answers the DNS
+for addr in 127.0.0.2 127.0.0.3 127.0.0.4; do
     grep -qF "$addr:443" <<<"$tcp"
     grep -qF "$addr:80" <<<"$tcp"
-    grep -qF "$addr:53" <<<"$udp"
 done
+grep -qF '127.0.0.55:53' <<<"$udp"
 # the proxy binary is installed under /usr/libexec (bin_t); in the packaged httpd_t domain SELinux denies its upstream connections
 proxy_label="$(ps -o label= -C egress-proxy | head -n 1)"
 echo "egress-proxy runs as: $proxy_label"
