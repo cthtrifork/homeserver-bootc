@@ -133,7 +133,7 @@ flowchart LR
   Each service has its own memory/CPU caps (percent of VM RAM; see the unit files), so size the VM for the sum
   (2 vCPU / 4 GB light use, 4-8 vCPU / 8-16 GB for parallel builds, 30 GB+ disk for podman). Override with a drop-in in
   `/etc/systemd/system/<service>.d/`.
-- **SSH:** key-only for `caspertdk` (sudo), with the same public keys as the home server. The agents have no sudo.
+- **SSH:** key-only for `caspertdk` (sudo), with the same public keys as the home server. The agents have no sudo, but are in `systemd-journal` (via `sysusers.d/claude.conf`) so they can read the system journal.
 - **Updates:** `claude-vm-upgrade-check.timer` runs `bootc upgrade` (stage only, no reboot) every 30 minutes, so a new image is downloaded soon
   after it is published and shows as staged on the Update VMs page. `bootc-fetch-apply-updates.timer` runs `bootc upgrade --apply` at 03:00, so
   the staged image (or a newer one) reboots the VM and ends running sessions (Remote Control brings them back for about four hours). Drop
