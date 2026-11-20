@@ -252,7 +252,7 @@ accounts by tmpfiles.d (so they follow the image on upgrade).
 | Skill | Use |
 |---|---|
 | `urlshare` | Read a page the egress allowlist does not cover: ask `urlshare.portableinfo.cloud` (the approval service in the talos-gitops `claude-system` namespace), the owner approves the exact URL, the pod fetches it once. Same skill as the claude-runner pod; the VM reaches it through the gateway like any other allowlisted host (`portableinfo.cloud`) |
-| `diagrams` | Draw a diagram the user can look at: SVG rendered to a PNG with the image's headless Chromium (shared as an absolute path under `~/workspace/shots/`), or Mermaid for a README |
+| `diagrams` | Show the user a diagram or screenshots: SVG or HTML rendered to a PNG with the image's headless Chromium and shared as an absolute path under `~/workspace/shots/`, Playwright captures of a page at phone width, or Mermaid for a README |
 
 ## Security model
 
