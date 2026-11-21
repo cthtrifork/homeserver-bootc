@@ -141,6 +141,6 @@ tests the images already built when the label is added, so adding the label does
 
 ## Run it on KubeVirt
 
-`publish-homeserver-containerdisk.yaml` (manual dispatch, input `tag`) builds a 256 GiB qcow2 from `config-homeserver.toml` and pushes it as a
+`publish-homeserver-containerdisk.yaml` (manual dispatch, input `tag`) builds a 100 GiB qcow2 from `config-homeserver.toml` and pushes it as a
 KubeVirt containerDisk to `ghcr.io/cthtrifork/homeserver-bootc/homeserver-containerdisk:<tag>`. The disk holds the baked-in secrets, so keep that
 package private. [talos-gitops](https://github.com/cthtrifork/talos-gitops) imports it once into a PVC with CDI; after that the VM updates itself with `bootc upgrade`.
