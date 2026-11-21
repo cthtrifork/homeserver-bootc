@@ -138,3 +138,9 @@ podman build \
 `tests/homeserver/system-test.sh` and `user-test.sh`, run in QEMU when a pull request has the `e2e` label. The build tests each image when it finishes, and `e2e.yaml`
 tests the images already built when the label is added, so adding the label does not rebuild anything. The shared
 `tests/diagnostics.sh` runs for every image, and `tests/verify-cosign.sh` for the home server images.
+
+## Run it on KubeVirt
+
+`publish-homeserver-containerdisk.yaml` (manual dispatch, input `tag`) builds a 256 GiB qcow2 from `config-homeserver.toml` and pushes it as a
+KubeVirt containerDisk to `ghcr.io/cthtrifork/homeserver-bootc/homeserver-containerdisk:<tag>`. The disk holds the baked-in secrets, so keep that
+package private. [talos-gitops](https://github.com/cthtrifork/talos-gitops) imports it once into a PVC with CDI; after that the VM updates itself with `bootc upgrade`.
