@@ -27,7 +27,7 @@ jobs:
   publish:
     name: Build and push the containerDisk
     # Pinned: ubuntu-latest (26.04) breaks osbuild's /dev mount (permission denied), see create-vmdk-image.yaml
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 90
     permissions:
       contents: read
