@@ -1,0 +1,4 @@
+# bootc-image-builder config for the homeserver KubeVirt disk; keep the size in step with the DataVolume in talos-gitops.
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "256 GiB"
