@@ -144,3 +144,12 @@ tests the images already built when the label is added, so adding the label does
 `publish-homeserver-containerdisk.yaml` (manual dispatch, input `tag`) builds a 100 GiB qcow2 from `config-homeserver.toml` and pushes it as a
 KubeVirt containerDisk to `ghcr.io/cthtrifork/homeserver-bootc/homeserver-containerdisk:<tag>`. The disk holds the baked-in secrets, so keep that
 package private. [talos-gitops](https://github.com/cthtrifork/talos-gitops) imports it once into a PVC with CDI; after that the VM updates itself with `bootc upgrade`.
+
+### Per-deployment config with cloud-init (optional)
+
+The image has `cloud-init`, configured in `/etc/cloud/cloud.cfg.d/90-homeserver.cfg` to do one job: run `write_files` and `runcmd` from a NoCloud disk, so what differs
+between installs (extra disks and their mounts, for example) comes from the deployment instead of the image. Only `NoCloud` is in `datasource_list`, so on a machine without a
+`cidata` disk cloud-init stays off and nothing changes. Users, SSH keys, hostname and network stay with the image (those cloud-init modules are not enabled), and the image deletes
+cloud-init's `sshd-keygen` drop-in so the machine keeps making its own SSH host keys. In KubeVirt, point `cloudInitNoCloud.secretRef.name` at a Secret whose `userdata` key holds the
+`#cloud-config`. Same mechanism as the [claude-vm](../claude-vm/README.md#seeding-with-cloud-init-optional) image.
+
