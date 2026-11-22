@@ -10,6 +10,9 @@ log() {
 # We dont want pinggy running on the gui container
 systemctl disable pinggy.service
 
+# The laptop is not a cluster VM: it must not poll the Update VMs page
+systemctl disable vm-upgrade-poll.timer
+
 log "Enabling system services"
 
 # GUI

@@ -20,6 +20,12 @@ for s in $CORE_SERVICES; do
 done
 echo "✅ core services are OK"
 
+if systemctl is-enabled --quiet vm-upgrade-poll.timer; then
+    echo "vm-upgrade-poll.timer must be disabled on the GUI image"
+    exit 1
+fi
+echo "✅ vm-upgrade-poll.timer is disabled"
+
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"

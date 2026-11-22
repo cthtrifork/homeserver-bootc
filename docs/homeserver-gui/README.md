@@ -49,6 +49,7 @@ flowchart TD
   the graphical target is the default.
 - **Boot:** Plymouth theme `bgrt-better-luks`, kernel args `quiet rhgb`, initramfs rebuilt with dracut.
 - **No pinggy tunnel:** `build_files/gui/21-systemd.sh` disables `pinggy.service`.
+- **No Update VMs poll:** the same script disables `vm-upgrade-poll.timer`; this laptop is not a cluster VM.
 - **Updates:** `bootc-fetch-apply-updates.timer` runs daily at 00:30 and `bootc upgrade` does not reboot, because
   this is a client machine. Drop-ins are in `usr/lib/systemd/system/bootc-fetch-apply-updates.*.d/`.
 
