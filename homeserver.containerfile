@@ -45,6 +45,10 @@ RUN jq -r .packages[] /usr/share/rpm-ostree/treefile.json > /usr/local/share/boo
 RUN cat /usr/local/share/bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove
 
+# cloud-init ships a drop-in that stops sshd-keygen whenever cloud-init is active, expecting cloud-init's own ssh module to make the host keys.
+# That module is not used here (see /etc/cloud/cloud.cfg.d/90-homeserver.cfg), so without this a VM with a cidata disk would boot with no host keys.
+RUN find /usr/lib/systemd/system -name disable-sshd-keygen-if-cloud-init-active.conf -delete
+
 # AGE and SOPS
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh
 

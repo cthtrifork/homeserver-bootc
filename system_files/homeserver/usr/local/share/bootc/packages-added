@@ -49,3 +49,4 @@ qemu-kvm
 #libvirt
 #virt-install
 #virt-viewer
+cloud-init
