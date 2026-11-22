@@ -1,7 +1,7 @@
 # Extra disks of the KubeVirt VM (talos-gitops k8s/virtualmachines/homeserver-vm): blank virtio disks found by their serial. Docs: docs/homeserver/README.md.
-# x-systemd.makefs formats a blank disk once, x-systemd.growfs follows an expanded volume, x-systemd.mkdir creates the mount point and nofail lets a VM without
-# the disks (a bare-metal or libvirt run) boot all the same.
-# The home disk replaces /var/home (/home): the account and its dotfiles are made on it at the first boot. Recreating the VM starts from a blank one.
-/dev/disk/by-id/virtio-home       /var/home       xfs  defaults,nofail,x-systemd.makefs,x-systemd.growfs,x-systemd.device-timeout=10s  0 0
-# Scratch that may be lost at any time. /workspace is a link to it (the root is read-only on a bootc system).
-/dev/disk/by-id/virtio-workspace  /var/workspace  xfs  defaults,nofail,x-systemd.makefs,x-systemd.growfs,x-systemd.mkdir,x-systemd.device-timeout=10s  0 0
+# x-systemd.makefs formats a blank disk once, x-systemd.growfs follows an expanded volume, x-systemd.mkdir creates the mount point and nofail lets a machine
+# without the disks (a bare-metal or libvirt run) boot all the same.
+# The home disk is /var/home (/home): the account and its dotfiles are made on it at the first boot. Recreating the VM starts from a blank one.
+/dev/disk/by-id/virtio-home       /var/home                      xfs  defaults,nofail,x-systemd.makefs,x-systemd.growfs,x-systemd.device-timeout=10s                   0 0
+# Scratch that may be lost at any time, mounted inside the home (nested: systemd mounts /var/home first).
+/dev/disk/by-id/virtio-workspace  /var/home/caspertdk/workspace  xfs  defaults,nofail,x-systemd.makefs,x-systemd.growfs,x-systemd.mkdir,x-systemd.device-timeout=10s  0 0

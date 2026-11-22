@@ -145,22 +145,22 @@ tests the images already built when the label is added, so adding the label does
 KubeVirt containerDisk to `ghcr.io/cthtrifork/homeserver-bootc/homeserver-containerdisk:<tag>`. The disk holds the baked-in secrets, so keep that
 package private. [talos-gitops](https://github.com/cthtrifork/talos-gitops) imports it once into a PVC with CDI; after that the VM updates itself with `bootc upgrade`.
 
-### Extra disks: `/var/home` and `/workspace`
+### Extra disks: `/var/home` and `/var/home/caspertdk/workspace`
 
 The VM has two more virtio disks next to the root disk, as the claude-rc pod has two volumes (talos-gitops `k8s/virtualmachines/homeserver-vm`):
 
 | Serial (`/dev/disk/by-id/virtio-<serial>`) | Mounted on | For |
 |---|---|---|
 | `home` | `/var/home` (`/home`) | the home directory, to be backed up later |
-| `workspace` | `/var/workspace` (`/workspace` is a link to it) | scratch that may be lost at any time |
+| `workspace` | `/var/home/caspertdk/workspace` (inside the home) | scratch that may be lost at any time |
 
 All of it is in the image, none of it by hand: `system_files/homeserver/etc/fstab` (blank disk formatted once by `x-systemd.makefs`, grown with the volume by `x-systemd.growfs`,
-`nofail` so a machine without the disks still boots), the link `system_files/homeserver/workspace` and `etc/tmpfiles.d/15-workspace.conf` (the disk root belongs to UID 1010).
+`nofail` so a machine without the disks still boots), and `etc/tmpfiles.d/15-caspertdk-workspace.conf` (the workspace root belongs to UID 1010; `11-caspertdk-ssh.conf` does the same for the home).
 
 - **Order of changes:** merge this image first (the VM picks it up with `bootc upgrade`), then add the disks in talos-gitops and recreate or restart the VM. The reverse order boots into an image
   that ignores the disks, which is harmless.
 - **Home on its own disk:** the first boot on a blank home disk creates the account and its dotfiles on it (`bootc-system-setup`, `bootc-user-setup@`). The home that lives on the root disk is
   hidden behind the mount, not deleted; the VM is recreated rather than migrated.
-- **Check:** `findmnt /var/home /var/workspace`, `ls -l /workspace`, `systemctl --failed`. A disk that did not appear shows as a failed `dev-disk-by\x2did-virtio\x2d<serial>.device` after 10 s.
-- **Grow:** expand the PVC in talos-gitops (`lvm-fast` allows it online); the guest follows at the next mount or with `sudo xfs_growfs /var/home`.
+- **Check:** `findmnt /var/home /var/home/caspertdk/workspace`, `ls -ld /var/home/caspertdk /var/home/caspertdk/workspace`, `systemctl --failed`. A disk that did not appear shows as a failed `dev-disk-by\x2did-virtio\x2d<serial>.device` after 10 s.
+- **Grow:** expand the PVC in talos-gitops (`lvm-fast` allows it online); the guest follows at the next mount or with `sudo xfs_growfs /var/home` (or the workspace path).
 - **Backup later:** the `home` disk is a separate PVC (`homeserver-vm-home`), so a backup tool can take it without the rootdisk.
