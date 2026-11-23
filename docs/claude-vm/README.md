@@ -143,7 +143,7 @@ flowchart LR
   MetalLB address of `claude-vm-upgrade-lb`). It reports the booted and staged ostree deployment (`rpm-ostree status --json`, local), then, when a
   click is waiting, starts `bootc-fetch-apply-updates.service`, the unit the 03:00 timer runs. The answer is only `{"upgrade": true|false}`, so the
   cluster never sends a command; at most one upgrade per hour. Nothing is seeded: until the DNS record exists the poll only logs that the page is
-  unreachable. Access control is the cluster's NetworkPolicy, which lets only the VMs' addresses reach the poll listener. Check with
+  unreachable. Access control is a per-VM token, read from the virtiofs share `upgrade-token` (`run-vmupgrade.mount`); without it the service is skipped. Check with
   `journalctl -u claude-vm-upgrade-poll`. The homeserver image ships the same script (`usr/libexec/vm-upgrade-poll`); keep the two identical.
 - **Versions:** Claude Code and Playwright are pinned by `ARG ... # renovate:` lines in the containerfile, crane, hadolint,
   actionlint, shfmt, kubectl, helm, kustomize, kubeconform and flux-schema in `build_files/claude-vm-utilities.sh`. The rest is Fedora packages.

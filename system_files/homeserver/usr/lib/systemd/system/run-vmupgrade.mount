@@ -1,0 +1,9 @@
+[Unit]
+Description=Poll token of this VM, shared by the cluster over virtiofs
+ConditionPathExistsGlob=/sys/fs/virtiofs/*/tag
+
+[Mount]
+What=upgrade-token
+Where=/run/vmupgrade
+Type=virtiofs
+Options=ro,nodev,nosuid,noexec
