@@ -6,14 +6,20 @@
 # The claim answer is only {"upgrade": true|false}: nothing from the network is run or used as an argument, so the cluster can at
 # worst ask for an upgrade of the image this machine already tracks.
 # The page is at the hardcoded name below (a Cloudflare A record, DNS only, to the MetalLB address of claude-vm-upgrade-lb). Access control
-# is the cluster's NetworkPolicy, which lets only the known VM addresses reach the poll listener. The same script ships in the claude-vm
-# and homeserver images; keep the two copies identical.
+# is the per-VM X-Upgrade-Token from the virtiofs share run-vmupgrade.mount. The same script ships in the claude-vm and homeserver
+# images; keep the two copies identical.
 set -euo pipefail
 
 vm="${1:?usage: poll-upgrade <vm-name>}"
 url="http://vm-upgrade.portableinfo.cloud/api/v1/vms/$vm"
+token_file=/run/vmupgrade/token
 stamp="$STATE_DIRECTORY/last"
 min_interval=3600
+
+# the token goes in on stdin, not the arguments
+poll_curl() {
+    { [ -r "$token_file" ] && printf 'header = "X-Upgrade-Token: %s"\n' "$(tr -d '[:space:]' <"$token_file")" || true; } | curl --config - "$@"
+}
 
 # 1. Report. Never fatal: an unreadable status is sent as {} and the page shows "unknown". The report also counts as a poll, so it
 # runs even inside the rate-limit window below (the page then still shows the VM alive).
@@ -33,7 +39,7 @@ for u in bootc-fetch-apply-updates.service claude-vm-upgrade-check.service; do
 done
 err="$(tail -c 400 <<<"${err%$'\n'}")"
 status="$(jq -c --arg e "$err" '. + {last_error: $e}' <<<"${status:-{\}}" 2>/dev/null || echo "${status:-{\}}")"
-if ! curl --fail --silent --show-error --max-time 10 --request POST --header 'Content-Type: application/json' \
+if ! poll_curl --fail --silent --show-error --max-time 10 --request POST --header 'Content-Type: application/json' \
     --data "${status:-{\}}" "$url/report" >/dev/null; then
     # Most likely the DNS record does not exist yet, or the page is down: try again next minute, without failing the unit.
     echo "update page unreachable at $url"
@@ -46,7 +52,7 @@ if [ -e "$stamp" ] && [ $(($(date +%s) - $(stat -c %Y "$stamp"))) -lt "$min_inte
     exit 0
 fi
 
-answer="$(curl --fail --silent --show-error --max-time 10 --request POST "$url/claim")"
+answer="$(poll_curl --fail --silent --show-error --max-time 10 --request POST "$url/claim")"
 
 if [ "$(jq -r '.upgrade // false' <<<"$answer")" = "true" ]; then
     touch "$stamp"

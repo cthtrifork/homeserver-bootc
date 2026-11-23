@@ -1,8 +1,9 @@
 [Unit]
 Description=Report to the Update VMs page and ask whether to run bootc upgrade
 Documentation=file:///usr/share/doc/claude-vm/README.md
-After=network-online.target
-Wants=network-online.target
+ConditionPathExists=/run/vmupgrade/token
+After=network-online.target run-vmupgrade.mount
+Wants=network-online.target run-vmupgrade.mount
 
 [Service]
 Type=oneshot
