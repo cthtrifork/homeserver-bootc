@@ -54,7 +54,7 @@ RUN echo "claude-podman:100000:65536" >> /etc/subuid && echo "claude-podman:1000
 RUN echo "claude-rc-personal-podman:165536:65536" >> /etc/subuid && echo "claude-rc-personal-podman:165536:65536" >> /etc/subgid
 RUN chgrp 1210 /usr/bin/podman && chmod 0750 /usr/bin/podman
 
-# crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize, kubeconform (not packaged in Fedora 45): pinned release binaries, checksum-verified. Versions live in
+# crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize, kubeconform, flux-schema (not packaged in Fedora 45): pinned release binaries, checksum-verified. Versions live in
 # build_files/claude-vm-utilities.sh (Renovate `# renovate:` comments); downloads are kept in the CI runner cache.
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
     /ctx/build_files/claude-vm-utilities.sh

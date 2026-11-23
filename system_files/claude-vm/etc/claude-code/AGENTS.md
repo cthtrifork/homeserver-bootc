@@ -152,7 +152,7 @@ in your home directory, see below):
 - **Git and GitHub:** `git`, `gh` (the GitHub App token is added by the egress gateway, see `CLAUDE.md`).
 - **Search and counting:** `rg` (ripgrep), `cloc` (lines of code per language), `tree`, `jq`, `yq`.
 - **Linters and formatters:** `shellcheck`, `shfmt`, `yamllint`, `hadolint`, `actionlint`.
-- **Kubernetes (offline tooling, no cluster access):** `kubectl`, `helm`, `kustomize`, `kubeconform`.
+- **Kubernetes (offline tooling, no cluster access):** `kubectl`, `helm`, `kustomize`, `kubeconform`, `flux-schema` (validates Flux and Kubernetes manifests against its built-in schema catalog, offline: `flux-schema validate <path>`).
 - **Containers:** rootless `podman` and `podman compose` (a wrapper to your own podman user's API, so containers see only
   `~/workspace`, not the rest of your home), `skopeo`, `crane`. There is no Docker.
 - **Browser:** `chromium-browser` (headless screenshots) and Playwright, which uses that browser (see above).

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs iron-proxy (the egress gateway), crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize and kubeconform, checksum-verified (see download-lib.sh).
+# Installs iron-proxy (the egress gateway), crane, hadolint, actionlint, shfmt, kubectl, helm, kustomize, kubeconform and flux-schema, checksum-verified (see download-lib.sh).
 set -euo pipefail
 
 BIN_DIR="/usr/bin"
@@ -31,7 +31,6 @@ download_if_missing "$CRANE_TGZ" "${base}/go-containerregistry_Linux_x86_64.tar.
 fetch "$work/crane.sum" "${base}/checksums.txt"
 verify "$CRANE_TGZ" go-containerregistry_Linux_x86_64.tar.gz "$work/crane.sum"
 tar -xzf "$CRANE_TGZ" -C "$BIN_DIR" crane
-crane version
 
 log "Installing hadolint"
 HADOLINT_VERSION=v2.15.1 # renovate: datasource=github-releases depName=hadolint/hadolint
@@ -41,7 +40,6 @@ download_if_missing "$HADOLINT_BIN" "${base}/hadolint-linux-x86_64"
 fetch "$work/hadolint.sum" "${base}/checksums.sha256"
 verify "$HADOLINT_BIN" hadolint-linux-x86_64 "$work/hadolint.sum"
 install -o root -g root -m 0755 "$HADOLINT_BIN" "$BIN_DIR/hadolint"
-hadolint --version
 
 log "Installing actionlint"
 ACTIONLINT_VERSION=v1.7.12 # renovate: datasource=github-releases depName=rhysd/actionlint
@@ -52,7 +50,6 @@ download_if_missing "$ACTIONLINT_TGZ" "${base}/actionlint_${ver}_linux_amd64.tar
 fetch "$work/actionlint.sum" "${base}/actionlint_${ver}_checksums.txt"
 verify "$ACTIONLINT_TGZ" "actionlint_${ver}_linux_amd64.tar.gz" "$work/actionlint.sum"
 tar -xzf "$ACTIONLINT_TGZ" -C "$BIN_DIR" actionlint
-actionlint -version
 
 log "Installing shfmt"
 # The release has no checksum file: pin the sha256 GitHub reports for the asset, and update it with the version.
@@ -63,7 +60,6 @@ download_if_missing "$SHFMT_BIN" "https://github.com/mvdan/sh/releases/download/
 echo "${SHFMT_SHA256}  shfmt" >"$work/shfmt.sum"
 verify "$SHFMT_BIN" shfmt "$work/shfmt.sum"
 install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
-shfmt --version
 
 log "Installing kubectl"
 # Keep within one minor version of the cluster. dl.k8s.io publishes a bare sha256 file (no file name in it).
@@ -75,7 +71,6 @@ fetch "$work/kubectl.sha256" "${base}/kubectl.sha256"
 echo "$(cat "$work/kubectl.sha256")  kubectl" >"$work/kubectl.sum"
 verify "$KUBECTL_BIN" kubectl "$work/kubectl.sum"
 install -o root -g root -m 0755 "$KUBECTL_BIN" "$BIN_DIR/kubectl"
-kubectl version --client
 
 log "Installing helm"
 HELM_VERSION=v4.3.2 # renovate: datasource=github-releases depName=helm/helm
@@ -85,7 +80,6 @@ download_if_missing "$HELM_TGZ" "https://get.helm.sh/${helm_tarball}"
 fetch "$work/helm.sum" "https://get.helm.sh/${helm_tarball}.sha256sum"
 verify "$HELM_TGZ" "$helm_tarball" "$work/helm.sum"
 tar -xzf "$HELM_TGZ" -C "$BIN_DIR" --strip-components=1 linux-amd64/helm
-helm version --short
 
 log "Installing kustomize"
 # The release tag contains a slash (kustomize/v...), so it is URL-encoded in the download path.
@@ -96,7 +90,6 @@ download_if_missing "$KUSTOMIZE_TGZ" "${base}/kustomize_v${KUSTOMIZE_VERSION}_li
 fetch "$work/kustomize.sum" "${base}/checksums.txt"
 verify "$KUSTOMIZE_TGZ" "kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" "$work/kustomize.sum"
 tar -xzf "$KUSTOMIZE_TGZ" -C "$BIN_DIR" kustomize
-kustomize version
 
 log "Installing kubeconform"
 KUBECONFORM_VERSION=v0.8.0 # renovate: datasource=github-releases depName=yannh/kubeconform
@@ -106,4 +99,14 @@ download_if_missing "$KUBECONFORM_TGZ" "${base}/kubeconform-linux-amd64.tar.gz"
 fetch "$work/kubeconform.sum" "${base}/CHECKSUMS"
 verify "$KUBECONFORM_TGZ" kubeconform-linux-amd64.tar.gz "$work/kubeconform.sum"
 tar -xzf "$KUBECONFORM_TGZ" -C "$BIN_DIR" kubeconform
-kubeconform -v
+
+log "Installing flux-schema"
+# Validates Kubernetes and Flux manifests against the built-in schema catalog, so it works without cluster access or network.
+FLUX_SCHEMA_VERSION=v0.18.0 # renovate: datasource=github-releases depName=fluxcd/flux-schema
+ver="${FLUX_SCHEMA_VERSION#v}"
+FLUX_SCHEMA_TGZ="$(tmp_name flux-schema "$FLUX_SCHEMA_VERSION" tar.gz)"
+base="https://github.com/fluxcd/flux-schema/releases/download/${FLUX_SCHEMA_VERSION}"
+download_if_missing "$FLUX_SCHEMA_TGZ" "${base}/flux-schema_${ver}_linux_amd64.tar.gz"
+fetch "$work/flux-schema.sum" "${base}/flux-schema_${ver}_checksums.txt"
+verify "$FLUX_SCHEMA_TGZ" "flux-schema_${ver}_linux_amd64.tar.gz" "$work/flux-schema.sum"
+tar -xzf "$FLUX_SCHEMA_TGZ" -C "$BIN_DIR" flux-schema
