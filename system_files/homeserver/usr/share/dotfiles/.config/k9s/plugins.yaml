@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/plugins.json
 # Define several plugins in a single file in the K9s root configuration
 # $XDG_CONFIG_HOME/k9s/plugins.yaml
 plugins:
@@ -14,7 +15,7 @@ plugins:
       - kubectl get secret --context $CONTEXT -n $NAMESPACE $NAME -o jsonpath='{.data.ca\.crt}' | base64 -d | openssl storeutl -noout -text -certs /dev/stdin |& less
 
   secret-openssl-tls:
-    shortCut: Shift-O
+    shortCut: Shift-T
     confirm: false
     description: Openssl tls.crt
     scopes:
@@ -190,7 +191,7 @@ plugins:
         | less -K
 
   reconcile-iua:
-    shortCut: Shift-A
+    shortCut: Shift-R
     confirm: false
     description: Flux reconcile image update
     scopes:
@@ -226,7 +227,7 @@ plugins:
         | less -K
 
   toggle-inputprovider:
-    shortCut: Shift-N
+    shortCut: Shift-T
     confirm: false
     scopes:
       - resourcesetinputprovider
@@ -339,3 +340,162 @@ plugins:
         kustomizations.kustomize.toolkit.fluxcd.io -o json
         | jq -r '.items[] | select(.spec.suspend==true) | [.metadata.namespace,.metadata.name,.spec.suspend] | @tsv'
         | less -K
+
+  # KubeVirt (requires virtctl, installed by build_files/core/09-utilities.sh)
+
+  kubevirt-restart:
+    shortCut: r
+    confirm: true
+    dangerous: true
+    description: Restart VM
+    scopes:
+      - virtualmachines
+    command: virtctl
+    background: false
+    args:
+      - restart
+      - $NAME
+      - -n
+      - $NAMESPACE
+      - --context
+      - $CONTEXT
+
+  kubevirt-pause:
+    shortCut: p
+    confirm: true
+    description: Pause VMI
+    scopes:
+      - virtualmachineinstances
+    command: virtctl
+    background: false
+    args:
+      - pause
+      - vmi
+      - $NAME
+      - -n
+      - $NAMESPACE
+      - --context
+      - $CONTEXT
+
+  kubevirt-unpause:
+    shortCut: u
+    confirm: true
+    description: Unpause VMI
+    scopes:
+      - virtualmachineinstances
+    command: virtctl
+    background: false
+    args:
+      - unpause
+      - vmi
+      - $NAME
+      - -n
+      - $NAMESPACE
+      - --context
+      - $CONTEXT
+
+  kubevirt-console:
+    shortCut: o
+    confirm: false
+    description: Serial console
+    scopes:
+      - virtualmachineinstances
+    command: virtctl
+    background: false
+    args:
+      - console
+      - $NAME
+      - -n
+      - $NAMESPACE
+      - --context
+      - $CONTEXT
+
+  # CloudNativePG (requires kubectl-cnpg)
+
+  cnpg-status:
+    shortCut: s
+    confirm: false
+    description: CNPG status
+    scopes:
+      - clusters
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl cnpg status $NAME -n $NAMESPACE --context \"$CONTEXT\" 2>&1 | less -R"
+
+  cnpg-status-verbose:
+    shortCut: Shift-S
+    confirm: false
+    override: true
+    description: CNPG status (verbose)
+    scopes:
+      - clusters
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl cnpg status $NAME -n $NAMESPACE --context \"$CONTEXT\" --verbose 2>&1 | less -R"
+
+  cnpg-psql:
+    shortCut: p
+    confirm: false
+    description: CNPG psql shell
+    scopes:
+      - clusters
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl cnpg psql $NAME -n $NAMESPACE --context \"$CONTEXT\""
+
+  cnpg-reload:
+    shortCut: r
+    confirm: true
+    description: CNPG reload
+    scopes:
+      - clusters
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl cnpg reload $NAME -n $NAMESPACE --context \"$CONTEXT\" 2>&1 | less -R"
+
+  cnpg-restart:
+    shortCut: Shift-R
+    confirm: true
+    dangerous: true
+    description: CNPG restart
+    scopes:
+      - clusters
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl cnpg restart $NAME -n $NAMESPACE --context \"$CONTEXT\" 2>&1 | less -R"
+
+  cnpg-logs:
+    shortCut: l
+    confirm: false
+    description: CNPG cluster logs
+    scopes:
+      - clusters
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl cnpg logs cluster $NAME -f -n $NAMESPACE --context \"$CONTEXT\" | kubectl cnpg logs pretty"
+
+  # kubectl df-pv (requires kubectl-df-pv)
+
+  df-pv:
+    shortCut: Shift-D
+    confirm: false
+    description: PVC disk usage (df-pv)
+    scopes:
+      - persistentvolumeclaims
+    command: bash
+    background: false
+    args:
+      - -c
+      - "kubectl df-pv --context $CONTEXT -n $NAMESPACE 2>&1 | less -R"
