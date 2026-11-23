@@ -6,4 +6,6 @@ ConditionPathExistsGlob=/sys/fs/virtiofs/*/tag
 What=upgrade-token
 Where=/run/vmupgrade
 Type=virtiofs
-Options=ro,nodev,nosuid,noexec
+# The share's own label (virtiofs_t) leaves PID 1 (init_t) unable to read the token symlinks, so ConditionPathExists in the poll
+# unit failed. Labelled as /run content instead, which init_t may read.
+Options=ro,nodev,nosuid,noexec,context=system_u:object_r:var_run_t:s0

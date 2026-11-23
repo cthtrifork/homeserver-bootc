@@ -97,7 +97,7 @@ Manage the install cache with `ghostty +ssh-cache` (for example `--prune=30d`).
 `http://vm-upgrade.portableinfo.cloud` (hardcoded; a Cloudflare A record, DNS only), and starts `bootc-fetch-apply-updates.service` when a click is
 waiting. That unit already runs every 10 minutes (`bootc-fetch-apply-updates.timer.d/updates.conf`), so the button only brings the next upgrade
 forward; it reboots only if a new image exists. At most one button upgrade per hour. Until the DNS record exists the poll only logs that the page
-is unreachable. The page needs this VM's token, read from the virtiofs share `upgrade-token` (`run-vmupgrade.mount`); without it the service is skipped. Check with `journalctl -u vm-upgrade-poll`. The claude-vm image ships the same script; keep the two identical.
+is unreachable. The page needs this VM's token, read from the virtiofs share `upgrade-token` (`run-vmupgrade.mount`, mounted with `context=...var_run_t` because SELinux denies `init_t` reading the share's default `virtiofs_t` symlinks); without it the service is skipped. Check with `journalctl -u vm-upgrade-poll`. The claude-vm image ships the same script; keep the two identical.
 
 ## Secrets (sops + age)
 
