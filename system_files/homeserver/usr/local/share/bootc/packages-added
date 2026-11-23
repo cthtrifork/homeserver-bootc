@@ -29,6 +29,7 @@ tmux
 podman-compose
 fzf
 bat
+yamllint
 
 ##################
 # Other          #
