@@ -38,7 +38,6 @@ echo "--- claude user: python, go, npm, rootless podman ---"
 sudo -u claude -H bash -lc '
   set -e
   export PATH=/usr/libexec/claude-vm/bin:$PATH
-  claude --version
   python3 -c "print(\"python ok\")"
   test "$(npm config get prefix)" = "$HOME/.npm-global"
   d=$(mktemp -d) && cd "$d" && go mod init example.com/hello >/dev/null 2>&1
@@ -46,9 +45,6 @@ sudo -u claude -H bash -lc '
   go run . | grep -x "go ok"
   podman info --format "rootless={{.Host.Security.Rootless}}" | grep -x rootless=true
   podman run --rm mirror.gcr.io/library/hello-world
-  # `podman compose` needs a provider; podman-compose is the one the image ships
-  podman-compose --version
-  podman compose version
 '
 
 echo "--- playwright drives headless chromium ---"

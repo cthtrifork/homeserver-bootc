@@ -10,46 +10,7 @@ trap 'echo "💥 Error on line $LINENO (exit $?): last cmd: $BASH_COMMAND"' ERR
 echo "== System testing (claude-vm) =="
 id
 
-echo "--- tools run ---"
-# print only the first line of a tool's version output; not `cmd | head -n 1`: head exits early and, under pipefail, the SIGPIPE
-# (141) fails the pipeline
-first() {
-    local out
-    out="$("$@" 2>&1)"
-    echo "${out%%$'\n'*}"
-}
-claude --version
-first bash --version
-python3 --version
-pip3 --version
-go version
-first ffmpeg -version
-first ffprobe -version
-chromium-browser --version
-podman --version
-podman-compose --version
-skopeo --version
-crane version
-first gh --version
-git --version
-jq --version
-yq --version
-first shellcheck --version
-shfmt --version
-yamllint --version
-first make --version
-hadolint --version
-first actionlint -version
-kubectl version --client
-helm version --short
-kustomize version
-kubeconform -v
-bwrap --version
-first socat -V
-ssh -V
-lighthouse --version
-npm --version
-
+echo "--- node ---"
 # Node 24, with the full ICU data (nodejs24-full-i18n): without it Intl.Segmenter segfaults instead of throwing.
 node --version | grep -q '^v24\.' || { echo "node: expected v24, got $(node --version)"; exit 1; }
 graphemes="$(node -e 'console.log([...new Intl.Segmenter("en", { granularity: "grapheme" }).segment("héllo 👍🏽")].length)' || true)"

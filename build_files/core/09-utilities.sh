@@ -160,8 +160,16 @@ download_if_missing_cmd "$FLUX_TGZ" /ctx/build_files/github-release-url.sh fluxc
 extract "$FLUX_TGZ"
 "$BIN_DIR/flux" completion bash >"$COMPLETION_DIR/flux"
 
+log "Installing flux-schema"
+FLUX_SCHEMA_VERSION="v0.18.0" # renovate: datasource=github-releases depName=fluxcd/flux-schema
+FLUX_SCHEMA_TGZ="$(tmp_name flux-schema "$FLUX_SCHEMA_VERSION" tar.gz)"
+download_if_missing_cmd "$FLUX_SCHEMA_TGZ" /ctx/build_files/github-release-url.sh fluxcd/flux-schema "flux-schema_${FLUX_SCHEMA_VERSION#v}_${MACHINE}_${PLATFORM_ARCH}.tar.gz" "$FLUX_SCHEMA_VERSION"
+# The release tarball is flat (LICENSE, README.md, flux-schema): stripping a component would drop the binary
+extract "$FLUX_SCHEMA_TGZ" flux-schema
+"$BIN_DIR/flux-schema" completion bash >"$COMPLETION_DIR/flux-schema"
+
 log "Installing kustomize"
-KUSTOMIZE_VERSION="kustomize/v5.7.1" # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
+KUSTOMIZE_VERSION="kustomize/v5.8.3" # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
 KUSTOMIZE_TGZ="$(tmp_name kustomize "$KUSTOMIZE_VERSION" tar.gz)"
 download_if_missing_cmd "$KUSTOMIZE_TGZ" /ctx/build_files/github-release-url.sh kubernetes-sigs/kustomize "${MACHINE}.${PLATFORM_ARCH}.tar.gz" "$KUSTOMIZE_VERSION"
 extract "$KUSTOMIZE_TGZ"
@@ -294,7 +302,7 @@ extract "$ACT_TGZ" act
 log "Verifying installed binaries"
 # tar skips archive members it cannot find without failing, so check every expected binary exists
 EXPECTED_BINS=(
-    act age copa cosign crane fresh flux flux-operator-mcp gh helm jq k9s kind kubecolor kubectl
+    act age copa cosign crane fresh flux flux-operator-mcp flux-schema gh helm jq k9s kind kubecolor kubectl
     kubectl-cnpg kubectl-df-pv kubectl-oidc_login kubectl-virt kubelogin kustomize lazydocker
     lazygit lazyjournal mkcert numr omnictl shfmt sops talosctl tldr virtctl witr yq
 )

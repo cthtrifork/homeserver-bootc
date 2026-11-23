@@ -35,7 +35,7 @@ flowchart TD
 - **Packages:** `system_files/homeserver/usr/local/share/bootc/packages-added` and `packages-removed` (tmux, direnv,
   fzf, bat, podman-compose, azure-cli, qemu-kvm, firewalld and so on).
 - **Static tools** installed by `build_files/core/09-utilities.sh` (versions pinned with `# renovate:` comments): age,
-  sops, gh, kubectl and plugins, kind, flux, kustomize, helm, k9s, talosctl, omnictl, mkcert, jq, yq, cosign, copa,
+  sops, gh, kubectl and plugins, kind, flux, flux-schema, kustomize, helm, k9s, talosctl, omnictl, mkcert, jq, yq, cosign, copa,
   shfmt, lazygit, lazydocker, lazyjournal and a few more. Docker CE comes from `10-server-docker-ce.sh`.
 - **Services:** sshd, docker and podman sockets, qemu-guest-agent, `pinggy.service` (SSH tunnel, see below),
   `libvirt-workaround.service` (relabels libvirt paths), `swtpm-label-workaround.service` (bind-mounts a correctly
