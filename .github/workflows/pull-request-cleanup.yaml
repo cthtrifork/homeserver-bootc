@@ -43,7 +43,7 @@ jobs:
       # The PAT owns the packages (GITHUB_TOKEN does not). delete-tags would untag with empty manifests, which GHCR
       # rejects (HTTP 400), so delete whole images and protect all others: latest, latest-*, main-*, the other PRs' pr-* tags.
       - name: Delete the images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           use-regex: true

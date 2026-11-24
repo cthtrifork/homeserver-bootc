@@ -39,7 +39,7 @@ jobs:
     steps:
       - name: Delete Images Older Than 90 Days
         if: false
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           older-than: 90 days
@@ -52,14 +52,14 @@ jobs:
           # dry-run: true
 
       - name: Delete Untagged Images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-untagged: true
           packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Delete old PR Images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           # Not delete-tags: for multi-tag images (pr-*, sha-*) the action unlinks
@@ -71,7 +71,7 @@ jobs:
           packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Delete ghost images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           delete-ghost-images: true
@@ -79,7 +79,7 @@ jobs:
           packages: homeserver-bootc/${{ matrix.image }}
 
       - name: Clean up old images
-        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        uses: dataaxiom/ghcr-cleanup-action@ac45a8c04b1eb4b27974ca79a0a74f344c93664b # v1.3.0
         with:
           token: ${{ secrets.PAT_RENOVATEBOT }}
           # Prune old main images: everything younger than 30 days is kept, plus the
