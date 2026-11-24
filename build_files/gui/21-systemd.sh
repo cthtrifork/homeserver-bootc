@@ -18,6 +18,10 @@ log "Enabling system services"
 # GUI
 systemctl set-default graphical.target
 
+# Virtualization (virt-manager): libvirt's modular daemons are socket-activated but none are enabled by default.
+# Enabling a base socket also enables its -ro and -admin sockets (Also=).
+systemctl enable virtqemud.socket virtnetworkd.socket virtstoraged.socket virtnodedevd.socket virtnwfilterd.socket virtsecretd.socket
+
 # Power management
 systemctl enable tlp.service
 systemctl enable tlp-pd.service
