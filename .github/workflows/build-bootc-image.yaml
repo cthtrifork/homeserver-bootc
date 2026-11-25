@@ -216,7 +216,19 @@ jobs:
         env:
           LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
+          BUILDCACHE_REGISTRY: 192.168.1.240:5000/buildcache
         run: |
+          # Layer cache in the cluster registry (zot), so every self-hosted runner starts warm: pull requests read it, main also
+          # writes it. Hosted runners cannot reach zot and build without it.
+          cache_args=(--layers=false)
+          if [[ "${{ runner.environment }}" == "self-hosted" ]]; then
+            cache="${BUILDCACHE_REGISTRY}/${IMAGE_NAME}"
+            cache_args=(--layers --cache-from "${cache}" --build-arg "CACHE_BUST=$(date -u +%G-%V)")
+            if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+              cache_args+=(--cache-to "${cache}")
+            fi
+          fi
+
           # Build a labels array from the multi-line env var
           labels=()
           while IFS= read -r line; do
@@ -234,7 +246,7 @@ jobs:
             --build-arg "NO_PROXY=${NO_PROXY}" \
             --format docker \
             --tls-verify=true \
-            --layers=false \
+            "${cache_args[@]}" \
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \

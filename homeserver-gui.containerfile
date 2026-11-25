@@ -22,6 +22,9 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
 # tsflags=nodocs: do not install files marked as documentation (man pages and /usr/share/doc included). /usr/share/doc is
 # deleted at the end of the build anyway (build_files/post/90-cleanup.sh), so this only saves writing it.
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True\ntsflags=nodocs" >> /etc/dnf/dnf.conf
+# Changes every week (the workflow passes it): the layers after it expire then, so the layer cache never freezes package updates
+ARG CACHE_BUST=0
+RUN echo "layer cache key: ${CACHE_BUST}"
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
 RUN [ -e /etc/subuid ] || touch /etc/subuid; \
