@@ -1,9 +1,11 @@
 # syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+FROM quay.io/fedora/fedora-bootc:45 AS base
+
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM quay.io/fedora/fedora-bootc:45 AS final
+FROM base AS final
 # Repo hosts, pinned instead of the metalinks; keep in step with the arc-runner egress policy in talos-gitops.
 ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
