@@ -235,9 +235,12 @@ jobs:
 
           # Build a labels array from the multi-line env var
           labels=()
-          while IFS= read -r line; do
-            labels+=( --label "$line" )
-          done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+          # TEST: no per-run labels on self-hosted builds, to see if they break the layer cache
+          if [[ "${{ runner.environment }}" != "self-hosted" ]]; then
+            while IFS= read -r line; do
+              labels+=( --label "$line" )
+            done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+          fi
 
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
