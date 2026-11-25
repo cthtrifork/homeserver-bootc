@@ -217,15 +217,19 @@ jobs:
           LABELS: ${{ steps.metadata.outputs.labels }}
           DOCKER_BUILDKIT: "1"
           BUILDCACHE_REGISTRY: 192.168.1.240:5000/buildcache
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Layer cache in the cluster registry (zot), so every self-hosted runner starts warm: pull requests read it, main also
-          # writes it. Hosted runners cannot reach zot and build without it.
+          # Layer cache in the cluster registry (zot), so every self-hosted runner starts warm. Everyone reads main's cache; main
+          # writes it, a pull request writes its own (pr-<number>) for its next runs. Hosted runners cannot reach zot.
           cache_args=(--layers=false)
           if [[ "${{ runner.environment }}" == "self-hosted" ]]; then
             cache="${BUILDCACHE_REGISTRY}/${IMAGE_NAME}"
             cache_args=(--layers --cache-from "${cache}" --build-arg "CACHE_BUST=$(date -u +%G-%V)")
             if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
               cache_args+=(--cache-to "${cache}")
+            elif [[ -n "${PR_NUMBER}" ]]; then
+              pr_cache="${BUILDCACHE_REGISTRY}/pr-${PR_NUMBER}/${IMAGE_NAME}"
+              cache_args+=(--cache-from "${pr_cache}" --cache-to "${pr_cache}")
             fi
           fi
 
