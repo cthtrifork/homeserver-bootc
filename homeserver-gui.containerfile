@@ -1,11 +1,12 @@
 # syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+ARG CORE_IMAGE=core
 FROM quay.io/fedora/fedora-bootc:45 AS base
 
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM base AS final
+FROM base AS core
 # Repo hosts, pinned instead of the metalinks; keep in step with the arc-runner egress policy in talos-gitops.
 ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
@@ -22,6 +23,9 @@ RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
 # tsflags=nodocs: do not install files marked as documentation (man pages and /usr/share/doc included). /usr/share/doc is
 # deleted at the end of the build anyway (build_files/post/90-cleanup.sh), so this only saves writing it.
 RUN echo -e "keepcache=True\nmetadata_expire=6h\nip_resolve=4\nfastestmirror=True\ntsflags=nodocs" >> /etc/dnf/dnf.conf
+# Changes every week (the workflow passes it): the layers after it expire then, so the layer cache never freezes package updates
+ARG CACHE_BUST=0
+RUN echo "layer cache key: ${CACHE_BUST}"
 RUN dnf -y install dnf5-plugins && dnf5 config-manager setopt keepcache=1
 
 RUN [ -e /etc/subuid ] || touch /etc/subuid; \
@@ -39,18 +43,14 @@ RUN { \
 # Set timezone
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
-# Registry auth
-ARG REGISTRY_URL
-ARG REGISTRY_USERNAME
-
-RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds,required=true \
-    /ctx/build_files/container-auth.sh
-
 # PREPARE PACKAGES
-RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
-  dnf -y install --setopt install_weak_deps=false rsync && \
-  rsync -rvpKl /ctx/system_files/homeserver/ /ctx/system_files/homeserver-gui/ \
-  /
+# COPY instead of a bind mount: the layer cache hashes COPY, but never reuses a RUN with a --mount from another stage
+COPY --from=ctx_build /system_files/homeserver/ /tmp/system_files/homeserver/
+COPY --from=ctx_build /system_files/homeserver-gui/ /tmp/system_files/homeserver-gui/
+RUN dnf -y install --setopt install_weak_deps=false rsync && \
+  rsync -rvpKl /tmp/system_files/homeserver/ /tmp/system_files/homeserver-gui/ \
+  / && \
+  rm -rf /tmp/system_files
 
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed /usr/local/share/kde-bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove
@@ -62,6 +62,16 @@ RUN dnf group install -y multimedia && \
 
 # Set default applications
 #RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
+
+# Everything above is secret-free and goes in the layer cache (core). Everything below uses secrets and is built on
+# top of it without the cache; CI passes CORE_IMAGE (the built core image), a plain build uses the stage.
+FROM ${CORE_IMAGE} AS final
+# Registry auth
+ARG REGISTRY_URL
+ARG REGISTRY_USERNAME
+
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds,required=true \
+    /ctx/build_files/container-auth.sh
 
 # AGE and SOPS
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh
