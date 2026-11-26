@@ -1,11 +1,12 @@
 # syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+ARG CORE_IMAGE=core
 FROM quay.io/fedora/fedora-bootc:45 AS base
 
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM base AS final
+FROM base AS core
 # Repo host, pinned instead of the metalink; keep in step with the arc-runner egress policy in talos-gitops.
 ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
@@ -31,12 +32,9 @@ RUN { \
 # Set timezone
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
-# Registry auth
-ARG REGISTRY_URL
-ARG REGISTRY_USERNAME
-
-RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds,required=true \
-    /ctx/build_files/container-auth.sh
+# Weekly cache key from CI: the layer cache is rebuilt once a week so package updates come in
+ARG CACHE_BUST=0
+RUN echo "layer cache key: ${CACHE_BUST}"
 
 # PREPARE PACKAGES
 COPY --chmod=0644 ./system_files/homeserver/usr/local/share/bootc/* /usr/local/share/bootc/
@@ -48,6 +46,16 @@ RUN cat /usr/local/share/bootc/packages-added | grep -vE '^#' | xargs -r dnf -y 
 # cloud-init ships a drop-in that stops sshd-keygen whenever cloud-init is active, expecting cloud-init's own ssh module to make the host keys.
 # That module is not used here (see /etc/cloud/cloud.cfg.d/90-homeserver.cfg), so without this a VM with a cidata disk would boot with no host keys.
 RUN find /usr/lib/systemd/system -name disable-sshd-keygen-if-cloud-init-active.conf -delete
+
+# Everything above is secret-free and goes in the layer cache (core). Everything below uses secrets and is built on
+# top of it without the cache; CI passes CORE_IMAGE (the built core image), a plain build uses the stage.
+FROM ${CORE_IMAGE} AS final
+# Registry auth
+ARG REGISTRY_URL
+ARG REGISTRY_USERNAME
+
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds,required=true \
+    /ctx/build_files/container-auth.sh
 
 # AGE and SOPS
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh

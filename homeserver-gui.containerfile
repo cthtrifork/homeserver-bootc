@@ -1,11 +1,12 @@
 # syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+ARG CORE_IMAGE=core
 FROM quay.io/fedora/fedora-bootc:45 AS base
 
 FROM scratch AS ctx_build
 COPY build_files/ /build_files/
 COPY system_files/ /system_files/
 
-FROM base AS final
+FROM base AS core
 # Repo hosts, pinned instead of the metalinks; keep in step with the arc-runner egress policy in talos-gitops.
 ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
 ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
@@ -62,7 +63,9 @@ RUN dnf group install -y multimedia && \
 # Set default applications
 #RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
 
-# Secret steps come last: the layer cache stops at the first RUN with a secret mount
+# Everything above is secret-free and goes in the layer cache (core). Everything below uses secrets and is built on
+# top of it without the cache; CI passes CORE_IMAGE (the built core image), a plain build uses the stage.
+FROM ${CORE_IMAGE} AS final
 # Registry auth
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME

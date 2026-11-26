@@ -221,46 +221,58 @@ jobs:
         run: |
           # Layer cache in the cluster registry (zot), so every self-hosted runner starts warm. Everyone reads main's cache; main
           # writes it, a pull request writes its own (pr-<number>) for its next runs. Hosted runners cannot reach zot.
-          cache_args=(--layers=false)
+          # Two builds there: the "core" stage (no secrets) goes through the cache, then the final stage (secrets, labels)
+          # is built on top of it without the cache, so no secret layer or per-run label reaches zot or breaks the cache keys.
+          # Hosted runners build the whole file at once, without a cache.
+          labels=()
+          while IFS= read -r line; do
+            labels+=( --label "$line" )
+          done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+
+          common_args=(
+            --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}"
+            --build-arg REGISTRY_URL=ghcr.io
+            --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }}
+            --build-arg REPOSITORY="${{ github.repository_owner }}/${{ github.event.repository.name }}"
+            --build-arg "HTTP_PROXY=${HTTP_PROXY}"
+            --build-arg "HTTPS_PROXY=${HTTPS_PROXY}"
+            --build-arg "NO_PROXY=${NO_PROXY}"
+            --format docker
+            --tls-verify=true
+            -v /home/runner/.cache/dnf:/var/cache/libdnf5:z
+            -v /home/runner/.cache/tmp:/runner/cache:z
+          )
+          final_args=(--layers=false)
+
           if [[ "${{ runner.environment }}" == "self-hosted" ]]; then
+            core_image="localhost/${IMAGE_NAME}-core:${DOCKER_TAG}"
             cache="${BUILDCACHE_REGISTRY}/${IMAGE_NAME}"
-            cache_args=(--layers --cache-from "${cache}" --build-arg "CACHE_BUST=$(date -u +%G-%V)")
+            cache_args=(--layers --cache-from "${cache}")
             if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
               cache_args+=(--cache-to "${cache}")
             elif [[ -n "${PR_NUMBER}" ]]; then
               pr_cache="${BUILDCACHE_REGISTRY}/pr-${PR_NUMBER}/${IMAGE_NAME}"
               cache_args+=(--cache-from "${pr_cache}" --cache-to "${pr_cache}")
             fi
-          fi
-
-          # Build a labels array from the multi-line env var
-          labels=()
-          # TEST: no per-run labels on self-hosted builds, to see if they break the layer cache
-          if [[ "${{ runner.environment }}" != "self-hosted" ]]; then
-            while IFS= read -r line; do
-              labels+=( --label "$line" )
-            done <<< "${{ env.DOCKER_METADATA_OUTPUT_LABELS }}"
+            sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
+              --target core \
+              --build-arg "CACHE_BUST=$(date -u +%G-%V)" \
+              "${common_args[@]}" \
+              "${cache_args[@]}" \
+              -t "${core_image}" \
+              ${{ env.CONTEXT }}
+            final_args+=(--build-arg "CORE_IMAGE=${core_image}" --pull=never)
           fi
 
           sudo /usr/bin/buildah bud -f ${{ env.CONTAINERFILE }} \
             "${labels[@]}" \
-            --build-arg REGISTRY_USERNAME="${{ github.repository_owner }}" \
-            --build-arg REGISTRY_URL=ghcr.io \
-            --build-arg PINGGY_HOST=${{ vars.PINGGY_HOST }} \
-            --build-arg REPOSITORY="${{ github.repository_owner }}/${{ github.event.repository.name }}" \
-            --build-arg "HTTP_PROXY=${HTTP_PROXY}" \
-            --build-arg "HTTPS_PROXY=${HTTPS_PROXY}" \
-            --build-arg "NO_PROXY=${NO_PROXY}" \
-            --format docker \
-            --tls-verify=true \
-            "${cache_args[@]}" \
+            "${common_args[@]}" \
+            "${final_args[@]}" \
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN \
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN \
             --secret id=creds,src=/tmp/creds \
             --secret id=agekey,src=/tmp/AGE_KEY \
             --secret id=github_api_token,src=/tmp/GITHUB_API_TOKEN \
-            -v /home/runner/.cache/dnf:/var/cache/libdnf5:z \
-            -v /home/runner/.cache/tmp:/runner/cache:z \
             -t ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} \
             ${{ env.CONTEXT }}
 
