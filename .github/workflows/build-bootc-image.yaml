@@ -20,6 +20,8 @@ env:
   DEFAULT_TAG: "latest"
   CONTEXT: ./
   TRIVY_VERSION: v0.76.2 # renovate: datasource=github-releases depName=aquasecurity/trivy
+  TRIVY_SKIP_VERSION_CHECK: true
+  TRIVY_DISABLE_TELEMETRY: true
   CRANE_VERSION: v0.22.1 # renovate: datasource=github-releases packageName=google/go-containerregistry
 
 jobs:

@@ -3,6 +3,11 @@
     "update.mode": "none",
     "update.showReleaseNotes": false,
     "telemetry.telemetryLevel": "off",
+    "telemetry.feedback.enabled": false,
+    "workbench.enableExperiments": false,
+    "workbench.startupEditor": "none",
+    "workbench.welcomePage.walkthroughs.openOnInstall": false,
+    "workbench.tips.enabled": false,
     "extensions.autoUpdate": false,
     "extensions.autoCheckUpdates": false,
     "git.confirmSync": false
