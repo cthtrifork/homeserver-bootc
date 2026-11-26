@@ -42,13 +42,6 @@ RUN { \
 # Set timezone
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
-# Registry auth
-ARG REGISTRY_URL
-ARG REGISTRY_USERNAME
-
-RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds,required=true \
-    /ctx/build_files/container-auth.sh
-
 # PREPARE PACKAGES
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
   dnf -y install --setopt install_weak_deps=false rsync && \
@@ -65,6 +58,14 @@ RUN dnf group install -y multimedia && \
 
 # Set default applications
 #RUN xdg-mime default dev.ghostty.Ghostty.desktop x-scheme-handler/terminal
+
+# Secret steps come last: the layer cache stops at the first RUN with a secret mount
+# Registry auth
+ARG REGISTRY_URL
+ARG REGISTRY_USERNAME
+
+RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=creds,required=true \
+    /ctx/build_files/container-auth.sh
 
 # AGE and SOPS
 RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx --mount=type=secret,id=agekey,required=true /ctx/build_files/sops.sh
