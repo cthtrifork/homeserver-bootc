@@ -223,7 +223,7 @@ jobs:
           # writes it, a pull request writes its own (pr-<number>) for its next runs. Hosted runners cannot reach zot.
           # Two builds there: the "core" stage (no secrets) goes through the cache, then the final stage (secrets, labels)
           # is built on top of it without the cache, so no secret layer or per-run label reaches zot or breaks the cache keys.
-          # Hosted runners build the whole file at once, without a cache.
+          # Hosted runners, and containerfiles without a core stage, build the whole file at once, without a cache.
           labels=()
           while IFS= read -r line; do
             labels+=( --label "$line" )
@@ -244,7 +244,8 @@ jobs:
           )
           final_args=(--layers=false)
 
-          if [[ "${{ runner.environment }}" == "self-hosted" ]]; then
+          # Only containerfiles with a "core" stage (homeserver, homeserver-gui) use the cache; others build in one go.
+          if [[ "${{ runner.environment }}" == "self-hosted" ]] && grep -qiE '^FROM .* AS core$' "${{ env.CONTAINERFILE }}"; then
             core_image="localhost/${IMAGE_NAME}-core:${DOCKER_TAG}"
             cache="${BUILDCACHE_REGISTRY}/${IMAGE_NAME}"
             cache_args=(--layers --cache-from "${cache}")
