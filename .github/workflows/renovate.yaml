@@ -59,7 +59,7 @@ jobs:
         with:
           configurationFile: .github/workflows/renovate-config.js
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: '44' # Renovate's github-actions manager updates this itself
+          renovate-version: '45' # Renovate's github-actions manager updates this itself
         env:
           LOG_LEVEL: debug
           RENOVATE_DRY_RUN: full
@@ -150,7 +150,7 @@ jobs:
         with:
           configurationFile: .github/workflows/renovate-config.js
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: '44' # Renovate's github-actions manager updates this itself
+          renovate-version: '45' # Renovate's github-actions manager updates this itself
         env:
           LOG_LEVEL: ${{ inputs.log_level || 'info' }}
           RENOVATE_GHCR_TOKEN: ${{ github.token }} # ghcr.io lookups (see renovate-config.js)
