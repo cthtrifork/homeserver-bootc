@@ -43,10 +43,13 @@ RUN { \
 RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
 # PREPARE PACKAGES
-RUN --mount=type=bind,from=ctx_build,src=/,dst=/ctx \
-  dnf -y install --setopt install_weak_deps=false rsync && \
-  rsync -rvpKl /ctx/system_files/homeserver/ /ctx/system_files/homeserver-gui/ \
-  /
+# COPY instead of a bind mount: the layer cache hashes COPY, but never reuses a RUN with a --mount from another stage
+COPY --from=ctx_build /system_files/homeserver/ /tmp/system_files/homeserver/
+COPY --from=ctx_build /system_files/homeserver-gui/ /tmp/system_files/homeserver-gui/
+RUN dnf -y install --setopt install_weak_deps=false rsync && \
+  rsync -rvpKl /tmp/system_files/homeserver/ /tmp/system_files/homeserver-gui/ \
+  / && \
+  rm -rf /tmp/system_files
 
 RUN cat /usr/local/share/bootc/packages-added /usr/local/share/kde-bootc/packages-added | grep -vE '^#' | xargs -r dnf -y install --allowerasing --setopt install_weak_deps=false && \
     cat /usr/local/share/bootc/packages-removed /usr/local/share/kde-bootc/packages-removed | grep -vE '^#' | xargs -r dnf -y remove
