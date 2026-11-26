@@ -43,7 +43,7 @@ flowchart TD
   Zed updates arrive with the image, via Renovate and `bootc upgrade`.
 - **VS Code does not self-update and sends no telemetry.** It comes from Microsoft's repo at build time, so updates also
   arrive with the image. The dotfiles sync restores `~/.config/Code/User/settings.json` (`update.mode: none`,
-  `extensions.autoUpdate` and `extensions.autoCheckUpdates` off, `telemetry.telemetryLevel: off`) and
+  `extensions.autoUpdate` and `extensions.autoCheckUpdates` off, `telemetry.telemetryLevel: off`, no experiments, feedback, welcome page or tips) and
   `~/.vscode/argv.json` (`enable-crash-reporter: false`) on every boot, so a change made in the editor is undone.
 - **Defaults:** Danish console keymap, hostname `kde-homeserver`, VS Code extensions installed in the image (`/usr/share/vscode-extensions`, selected by `VSCODE_EXTENSIONS`), and
   the graphical target is the default.
