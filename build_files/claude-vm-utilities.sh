@@ -12,7 +12,7 @@ trap 'rm -rf "$work"' EXIT
 
 log "Installing iron-proxy"
 # The egress gateway. Under /usr/libexec (bin_t, so it runs unconfined and may connect upstream), next to the other claude-vm helpers.
-IRON_PROXY_VERSION=v0.59.0 # renovate: datasource=github-releases depName=paradigmxyz/iron-proxy
+IRON_PROXY_VERSION=v0.61.0 # renovate: datasource=github-releases depName=paradigmxyz/iron-proxy
 ver="${IRON_PROXY_VERSION#v}"
 IRON_PROXY_TGZ="$(tmp_name iron-proxy "$IRON_PROXY_VERSION" tar.gz)"
 base="https://github.com/paradigmxyz/iron-proxy/releases/download/${IRON_PROXY_VERSION}"
