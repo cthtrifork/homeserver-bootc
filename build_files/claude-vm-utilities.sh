@@ -63,7 +63,7 @@ install -o root -g root -m 0755 "$SHFMT_BIN" "$BIN_DIR/shfmt"
 
 log "Installing kubectl"
 # Keep within one minor version of the cluster. dl.k8s.io publishes a bare sha256 file (no file name in it).
-KUBECTL_VERSION=v1.37.2 # renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION=v1.37.3 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_BIN="$(tmp_name kubectl "$KUBECTL_VERSION" bin)"
 base="https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64"
 download_if_missing "$KUBECTL_BIN" "${base}/kubectl"
