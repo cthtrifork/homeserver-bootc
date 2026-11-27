@@ -26,6 +26,15 @@ if systemctl is-enabled --quiet vm-upgrade-poll.timer; then
 fi
 echo "✅ vm-upgrade-poll.timer is disabled"
 
+# rootless podman needs privileged newuidmap/newgidmap; the booted image (not just the build) must still have them
+for f in /usr/bin/newuidmap /usr/bin/newgidmap; do
+    [[ "$(stat -c '%u:%g %a' "$f")" == "0:0 4755" ]] || {
+        echo "$f must be root:root 4755, got: $(stat -c '%U:%G %a' "$f")"
+        exit 1
+    }
+done
+echo "✅ newuidmap/newgidmap are setuid root"
+
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"
