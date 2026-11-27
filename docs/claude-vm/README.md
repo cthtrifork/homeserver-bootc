@@ -260,6 +260,9 @@ accounts by tmpfiles.d (so they follow the image on upgrade).
   in bypass-permissions mode; the sandbox, deny rules and egress gateway are the limits. Only managed hooks run
   (`allowManagedHooksOnly`), so hooks in cloned repositories are ignored. Keys and values are documented by
   [managed settings](https://code.claude.com/docs/en/managed-settings.md); changes to this file are in git.
+  The `cluster-ops` relay's Remote Control tools (`mcp__claude-code-remote__` `list_environments`, `create_session`, `list_sessions`,
+  `get_session`, `list_events`, `send_message`) are in `permissions.allow`, so asking the `claude-k8s-helper` session needs no prompt.
+  Other `claude-code-remote` tools (archive, interrupt, triggers, environment edits) stay unlisted and still prompt.
 - **Bash sandbox:** required (`bubblewrap`). It limits writes to the paths in the diagram above, reaches only allowlisted hosts (enforced by the egress
   gateway, not by a list in the sandbox settings) and cannot read `~/.claude/.credentials.json`. `podman` and `podman-compose` are excluded because rootless podman cannot run inside
   it; they run containers as a separate UID (see below) and the podman socket is reachable from the sandbox (unix sockets are allowed, see below). It is a guardrail,
