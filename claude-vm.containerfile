@@ -27,7 +27,7 @@ ARG LIGHTHOUSE_VERSION=13.6.0 # renovate: datasource=npm depName=lighthouse
 # image is not used: it needs a third-party repo and extra egress hosts at build time only, but gives Claude little more.
 # Fedora RPMs follow the base image (quay.io/fedora/fedora-bootc, bumped by Renovate).
 # Repo host, pinned instead of the metalink; keep in step with the arc-runner egress policy in talos-gitops.
-ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
+ARG FEDORA_MIRROR=https://dl.fedoraproject.org/pub/fedora
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
       '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
