@@ -8,7 +8,7 @@ COPY system_files/ /system_files/
 
 FROM base AS core
 # Repo hosts, pinned instead of the metalinks; keep in step with the arc-runner egress policy in talos-gitops.
-ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
+ARG FEDORA_MIRROR=https://dl.fedoraproject.org/pub/fedora
 ARG RPMFUSION_MIRROR=https://download1.rpmfusion.org
 # Removed in build_files/post/90-cleanup.sh.
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
