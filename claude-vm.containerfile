@@ -8,7 +8,7 @@ COPY build_files/ /build_files/
 
 FROM base AS final
 
-ARG CLAUDE_CODE_VERSION=2.1.331 # renovate: datasource=npm depName=@anthropic-ai/claude-code
+ARG CLAUDE_CODE_VERSION=2.1.332 # renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG PLAYWRIGHT_VERSION=1.65.1 # renovate: datasource=npm depName=playwright
 ARG LIGHTHOUSE_VERSION=13.6.0 # renovate: datasource=npm depName=lighthouse
 
