@@ -660,7 +660,7 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@881c63bd87e38389154debd8331404ce7ca8a3ab # v4.1.4
         with:
-          cosign-release: v3.1.5 # renovate: datasource=github-releases depName=sigstore/cosign # keep the legacy signature format for containers/image
+          cosign-release: v3.1.6 # renovate: datasource=github-releases depName=sigstore/cosign # keep the legacy signature format for containers/image
 
       - name: Sign container image
         run: | #sh
