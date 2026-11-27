@@ -8,7 +8,7 @@ COPY system_files/ /system_files/
 
 FROM base AS core
 # Repo host, pinned instead of the metalink; keep in step with the arc-runner egress policy in talos-gitops.
-ARG FEDORA_MIRROR=https://mirrors.dotsrc.org/fedora
+ARG FEDORA_MIRROR=https://dl.fedoraproject.org/pub/fedora
 RUN mkdir -p /etc/dnf/repos.override.d && printf '%s\n' \
       '[fedora]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/releases/\$releasever/Everything/\$basearch/os/" \
       '[updates]' 'metalink=' "baseurl=${FEDORA_MIRROR}/linux/updates/\$releasever/Everything/\$basearch/" \
