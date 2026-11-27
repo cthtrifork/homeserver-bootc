@@ -26,7 +26,7 @@ if systemctl is-enabled --quiet vm-upgrade-poll.timer; then
 fi
 echo "✅ vm-upgrade-poll.timer is disabled"
 
-# rootless podman needs privileged newuidmap/newgidmap; the booted image (not just the build) must still have them
+# rootless podman needs privileged newuidmap/newgidmap
 for f in /usr/bin/newuidmap /usr/bin/newgidmap; do
     [[ "$(stat -c '%u:%g %a' "$f")" == "0:0 4755" ]] || {
         echo "$f must be root:root 4755, got: $(stat -c '%U:%G %a' "$f")"
